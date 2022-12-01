@@ -30,10 +30,6 @@ export const tokenStyle = Styles.style({
   $nest: {
     '&:hover': {
       background: Theme.action.hover
-    },
-    'i-image img': {
-      maxHeight: 'unset',
-      maxWidth: 'unset',
     }
   }
 })
