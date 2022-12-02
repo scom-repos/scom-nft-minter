@@ -107,7 +107,6 @@ export default class Main extends Module implements PageBlock {
       this.lblRef.caption = this._data.price === 0 ? 'All proceeds will go to following vetted wallet address:' : '';
       this.gridTokenInput.visible = true;
     } else {
-      const chainId = getChainId();
       this.lblTitle.caption = `Mint Fee: ${this._data.price} ${this._data.token?.symbol || ""}`;
       this.btnSubmit.caption = 'Mint';
       this.lblRef.caption = 'smart contract:';
@@ -313,6 +312,7 @@ export default class Main extends Module implements PageBlock {
                   padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
                   margin={{ left: 'auto', right: 'auto' }}
                   font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
+                  rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
                   onClick={this.onSubmit.bind(this)}
                 ></i-button>
               </i-vstack>
