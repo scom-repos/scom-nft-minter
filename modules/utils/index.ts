@@ -1,4 +1,4 @@
-import { BigNumber, Erc20, Wallet, IWallet } from "@ijstech/eth-wallet";
+import { BigNumber, Erc20, Wallet, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
 import { ITokenObject } from "@modules/interface";
 
 export const formatNumber = (value: any, decimals?: number) => {
@@ -51,4 +51,20 @@ export const getTokenBalance = async (token: ITokenObject) => {
     balance = await wallet.balance;
   }
   return balance;
+}
+
+export const registerSendTxEvents = (sendTxEventHandlers: ISendTxEventsOptions) => {
+  const wallet = Wallet.getInstance();
+  wallet.registerSendTxEvents({
+      transactionHash: (error: Error, receipt?: string) => {
+          if (sendTxEventHandlers.transactionHash) {
+              sendTxEventHandlers.transactionHash(error, receipt);
+          }
+      },
+      confirmation: (receipt: any) => {
+          if (sendTxEventHandlers.confirmation) {
+              sendTxEventHandlers.confirmation(receipt);
+          }
+      },
+  })
 }

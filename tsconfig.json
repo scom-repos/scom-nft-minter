@@ -11,7 +11,8 @@
         "declaration": false,        
         "baseUrl": ".",
         "paths": {
-            "@modules/*":["modules/*"]
+            "@modules/*":["modules/*"],
+            "@scom/product-contract": ["repos/product-contract"]
         }
     },
     "include": ["modules/**/*.ts","modules/**/*.tsx"],

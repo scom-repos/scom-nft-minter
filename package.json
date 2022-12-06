@@ -9,7 +9,8 @@
         "@ijstech/compiler": "^0.1.17",
         "@ijstech/components": "^0.1.29",
         "@ijstech/eth-contract": "^0.1.4",
-        "@ijstech/eth-wallet": "^0.1.26"
+        "@ijstech/eth-wallet": "0.1.26",
+        "@scom/product-contract": "file:./repos/product-contract"
     },
     "scripts": {
         "build": "rm -rf dist && npx @ijstech/compiler",

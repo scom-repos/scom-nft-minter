@@ -22,6 +22,7 @@ export interface PageBlock {
 }
 
 export interface IConfig {
+  productId?: number;
   logo?: string;
   description?: string;
   link?: string;

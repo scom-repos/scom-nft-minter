@@ -10,15 +10,16 @@ import {
   Input,
   Button
 } from '@ijstech/components';
-import { WalletPlugin } from '@ijstech/eth-wallet';
+import { IWallet, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock } from '@modules/interface';
-import { getTokenBalance } from '@modules/utils';
+import { getTokenBalance, registerSendTxEvents } from '@modules/utils';
 import { getNetworkName } from '@modules/store';
 import { connectWallet, getChainId, hasWallet } from '@modules/wallet';
 import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { Alert } from '@modules/alert';
+import { Contracts } from '@scom/product-contract';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -49,6 +50,7 @@ export default class Main extends Module implements PageBlock {
   private mdAlert: Alert;
 
   private _type: dappType | undefined;
+  private _productId: number | undefined;
   private _data: IConfig = {};
   tag: any;
   defaultEdit: boolean = true;
@@ -62,6 +64,7 @@ export default class Main extends Module implements PageBlock {
 
   async setData(data: IConfig) {
     this._data = data;
+    this._productId = data.productId;
     this.configDApp.data = data;
     this.refreshDApp();
   }
@@ -84,7 +87,34 @@ export default class Main extends Module implements PageBlock {
     this.configDApp.visible = false;
     this._data = this.configDApp.data;
     this._data.chainId = this._data.token ? getChainId() : undefined;
+    this._data.productId = this._productId;
     this.refreshDApp();
+    await this.newProduct(undefined, this.updateSpotsRemaining);
+  }
+  
+  private newProduct = async (callback?: any, confirmationCallback?: any) => {
+    if (
+      !this._data.address ||
+      this._data.maxQty === undefined ||
+      this._data.maxQty === null ||
+      this._data.price === undefined ||
+      this._data.price === null ||
+      this._data.productId >= 0
+    ) return;
+    const wallet: any = Wallet.getInstance();
+    const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
+    registerSendTxEvents({
+      transactionHash: callback,
+      confirmation: confirmationCallback
+    });
+    let receipt = await productInfo.newProduct({
+      ipfsCid: '',
+      quantity: this._data.maxQty,
+      price: Utils.toDecimals(this._data.price),
+      token: this._data.token.address || ""
+    });
+    let event = productInfo.parseNewProductEvent(receipt)[0];
+    this._productId = this._data.productId = event.productId.toNumber();
   }
 
   async discard() {
@@ -115,7 +145,7 @@ export default class Main extends Module implements PageBlock {
       } else {
         this.lblBlockchain.caption = "";
       }
-      this.lblSpotsRemaining.caption = `${this._data.maxQty??0}/${this._data.maxQty??0}`;
+      await this.updateSpotsRemaining();
       this.gridTokenInput.visible = false;
     }
     this.edtQty.value = "";
@@ -127,6 +157,17 @@ export default class Main extends Module implements PageBlock {
     this.tokenSelection.readonly = this._data.token ? true : this._data.price > 0;
     this.tokenSelection.token = this._data.token;
     this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+  }
+
+  private updateSpotsRemaining = async () => {
+    const wallet: any = Wallet.getInstance();
+    const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
+    if (this._data.productId >= 0) {
+      const product = await productInfo.products(this._data.productId);
+      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.maxQty??0}`;
+    } else {
+      this.lblSpotsRemaining.caption = `${this._data.maxQty??0}/${this._data.maxQty??0}`;
+    }
   }
 
   init() {
@@ -155,6 +196,8 @@ export default class Main extends Module implements PageBlock {
     if (!this._data || !this._data.address) return;
     this.udpateSubmitButton(true);
     const chainId = getChainId();
+    const wallet: any = Wallet.getInstance();
+    const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
     if (this._type === 'donation' && !this.tokenSelection.token) {
       this.mdAlert.message = {
         status: 'error',
@@ -193,8 +236,20 @@ export default class Main extends Module implements PageBlock {
         this.udpateSubmitButton(false);
         return;
       }
-      const quantity = this._data.maxOrderQty > 1 && this.edtQty.value ? Number(this.edtQty.value) : 1;
-      const amount = quantity * this._data.price;
+      const requireQty = this._data.maxOrderQty > 1 && this.edtQty.value ? Number(this.edtQty.value) : 1;
+      if (this._data.productId >= 0) {
+        const product = await productInfo.products(this._data.productId);
+        if (product.quantity.lt(requireQty)) {
+          this.mdAlert.message = {
+            status: 'error',
+            content: 'Out of stock'
+          };
+          this.mdAlert.showModal();
+          this.udpateSubmitButton(false);
+          return;
+        }
+      }
+      const amount = requireQty * this._data.price;
       if (balance.lt(amount)) {
         this.mdAlert.message = {
           status: 'error',
@@ -204,9 +259,10 @@ export default class Main extends Module implements PageBlock {
         this.udpateSubmitButton(false);
         return;
       }
+      await this.buyToken(requireQty);
       this.mdAlert.message = {
         status: 'success',
-        content: `Mint ${quantity} Token(s), Amount: ${amount} ${this.tokenSelection.token?.symbol??""}`
+        content: `Mint ${requireQty} Token(s), Amount: ${amount} ${this.tokenSelection.token?.symbol??""}`
       };
       this.mdAlert.showModal();
     } else {
@@ -228,6 +284,7 @@ export default class Main extends Module implements PageBlock {
         this.udpateSubmitButton(false);
         return;
       }
+      await this.buyToken(1);
       this.mdAlert.message = {
         status: 'success',
         content: `Donate ${this.edtAmount.value} ${this.tokenSelection.token?.symbol??""}`
@@ -235,6 +292,27 @@ export default class Main extends Module implements PageBlock {
       this.mdAlert.showModal();
     }
     this.udpateSubmitButton(false);
+  }
+
+  buyToken = async (quantity: number) => {
+    if (this._data.productId === undefined || this._data.productId === null) return;
+    const wallet: any = Wallet.getInstance();
+    const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
+    if (this._data.token?.address) {
+      productInfo.buy({
+        productId: this._data.productId,
+        quantity: quantity,
+        to: wallet.address
+      });
+    } else {
+      const product = await productInfo.products(this._data.productId);
+      const amount = product.price.times(quantity);
+      productInfo.buyEth({
+        productId: this._data.productId,
+        quantity: quantity,
+        to: wallet.address
+      }, amount);
+    }
   }
 
   render() {
@@ -266,7 +344,7 @@ export default class Main extends Module implements PageBlock {
           <i-vstack gap="0.5rem" padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} background={{ color: '#f1f1f1' }} verticalAlignment='space-between'>
             <i-vstack>
               <i-label id='lblTitle' font={{ bold: true, size: '1rem' }}></i-label>
-              <i-label caption="I don't have a digital wallet" font={{ size: '0.8125rem' }} link={{ href: 'https://docs.scom.dev/' }}></i-label>
+              <i-label caption="I don't have a digital wallet" font={{ size: '0.8125rem' }} link={{ href: 'https://metamask.io/' }}></i-label>
             </i-vstack>
             <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
               <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
