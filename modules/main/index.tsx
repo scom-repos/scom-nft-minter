@@ -113,8 +113,10 @@ export default class Main extends Module implements PageBlock {
       price: Utils.toDecimals(this._data.price),
       token: this._data.token.address || ""
     });
-    let event = productInfo.parseNewProductEvent(receipt)[0];
-    this._productId = this._data.productId = event.productId.toNumber();
+    if (receipt) {
+      let event = productInfo.parseNewProductEvent(receipt)[0];
+      this._productId = this._data.productId = event ? event.productId.toNumber() : undefined;
+    }
   }
 
   async discard() {
@@ -123,6 +125,29 @@ export default class Main extends Module implements PageBlock {
   }
 
   async config() { }
+
+  validate() {
+    const data = this.configDApp.data;
+    if (
+      !data || 
+      !data.token || 
+      data.price === undefined ||
+      data.price === null ||
+      data.maxOrderQty === undefined ||
+      data.maxOrderQty === null ||
+      data.maxQty === undefined ||
+      data.maxQty === null ||
+      !data.address
+    ) {
+      this.mdAlert.message = {
+        status: 'error',
+        content: 'Required field is missing.'
+      };
+      this.mdAlert.showModal();
+      return false;
+    }
+    return true;
+  }
 
   private async refreshDApp() {
     this._type = this._data.price > 0 ? 'nft-minter' : 'donation';
@@ -193,7 +218,7 @@ export default class Main extends Module implements PageBlock {
   }
 
   private async onSubmit() {
-    if (!this._data || !this._data.address) return;
+    if (!this._data || !this._data.address || !this._productId) return;
     this.udpateSubmitButton(true);
     const chainId = getChainId();
     const wallet = Wallet.getInstance();
@@ -227,7 +252,7 @@ export default class Main extends Module implements PageBlock {
         this.udpateSubmitButton(false);
         return;
       }
-      if (this._data.maxOrderQty > 1 && !this.edtQty.value && !Number.isInteger(this.edtQty.value)) {
+      if (this._data.maxOrderQty > 1 && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
         this.mdAlert.message = {
           status: 'error',
           content: 'Invalid Quantity'
@@ -249,6 +274,18 @@ export default class Main extends Module implements PageBlock {
           return;
         }
       }
+      const nftAddress = await productInfo.nft();
+      const product1155 = new Contracts.Product1155(wallet, nftAddress);
+      const tokenBalance = await product1155.balanceOf({ account: wallet.address, id: this._productId });
+      if (this._data.maxOrderQty && tokenBalance.gte(this._data.maxOrderQty - requireQty)) {
+        this.mdAlert.message = {
+          status: 'error',
+          content: 'Over Maximum Order Quantity'
+        };
+        this.mdAlert.showModal();
+        this.udpateSubmitButton(false);
+        return;
+      }
       const amount = requireQty * this._data.price;
       if (balance.lt(amount)) {
         this.mdAlert.message = {
@@ -260,11 +297,6 @@ export default class Main extends Module implements PageBlock {
         return;
       }
       await this.buyToken(requireQty);
-      this.mdAlert.message = {
-        status: 'success',
-        content: `Mint ${requireQty} Token(s), Amount: ${amount} ${this.tokenSelection.token?.symbol??""}`
-      };
-      this.mdAlert.showModal();
     } else {
       if (!this.edtAmount.value) {
         this.mdAlert.message = {
@@ -285,11 +317,6 @@ export default class Main extends Module implements PageBlock {
         return;
       }
       await this.buyToken(1);
-      this.mdAlert.message = {
-        status: 'success',
-        content: `Donate ${this.edtAmount.value} ${this.tokenSelection.token?.symbol??""}`
-      };
-      this.mdAlert.showModal();
     }
     this.udpateSubmitButton(false);
   }
@@ -298,8 +325,10 @@ export default class Main extends Module implements PageBlock {
     if (this._data.productId === undefined || this._data.productId === null) return;
     const wallet = Wallet.getInstance();
     const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
+    const product = await productInfo.products(this._data.productId);
+    console.log('product: ', product)
     if (this._data.token?.address) {
-      productInfo.buy({
+      await productInfo.buy({
         productId: this._data.productId,
         quantity: quantity,
         to: wallet.address
@@ -307,7 +336,7 @@ export default class Main extends Module implements PageBlock {
     } else {
       const product = await productInfo.products(this._data.productId);
       const amount = product.price.times(quantity);
-      productInfo.buyEth({
+      await productInfo.buyEth({
         productId: this._data.productId,
         quantity: quantity,
         to: wallet.address

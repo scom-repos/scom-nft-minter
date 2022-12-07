@@ -43,13 +43,23 @@ export default class Config extends Module {
       link: this.edtLink.value || "",
       address: this.edtAddress.value || ""
     };
-    config.price = Number(this.edtPrice.value);
+    if (this.edtPrice.value) {
+      config.price = Number(this.edtPrice.value);
+    }
     const maxQty = Number(this.edtMaxQty.value);
-    if (Number.isInteger(maxQty)) config.maxQty = maxQty;
+    if (this.edtMaxQty.value && Number.isInteger(maxQty)) {
+      config.maxQty = maxQty;
+    }
     const maxOrderQty = Number(this.edtMaxOrderQty.value);
-    if (Number.isInteger(maxOrderQty)) config.maxOrderQty = maxOrderQty;
-    if (this._logo) config.logo = this._logo;
-    if (this.tokenSelection.token) config.token = this.tokenSelection.token;
+    if (this.edtMaxOrderQty.value && Number.isInteger(maxOrderQty)) {
+      config.maxOrderQty = maxOrderQty;
+    }
+    if (this._logo) {
+      config.logo = this._logo;
+    }
+    if (this.tokenSelection.token) {
+      config.token = this.tokenSelection.token;
+    }
     return config;
   }
 
@@ -70,8 +80,7 @@ export default class Config extends Module {
   }
 
   async onChangeFile(source: Control, files: File[]) {
-    if (!files.length) return;
-    this._logo = await this.uploadLogo.toBase64(files[0]);
+    this._logo = files.length ? await this.uploadLogo.toBase64(files[0]) : undefined;
   }
 
   onRemove(source: Control, file: File) {
@@ -121,20 +130,35 @@ export default class Config extends Module {
         </i-grid-layout>
         <i-label caption='Link:'></i-label>
         <i-input id='edtLink' width='100%'></i-input>
-        <i-label caption='Token:'></i-label>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Token'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
         <nft-minter-token-selection
           id='tokenSelection'
           width='100%'
           background={{ color: Theme.input.background }}
           border={{ width: 1, style: 'solid', color: Theme.divider }}
         ></nft-minter-token-selection>
-        <i-label caption='Price:'></i-label>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Price'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
         <i-input id='edtPrice' width='100%' inputType='number'></i-input>
-        <i-label caption='Max Order Qty:'></i-label>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Max Order Qty'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
         <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>
-        <i-label caption='Max Qty:'></i-label>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Max Qty'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
         <i-input id='edtMaxQty' width='100%' inputType='number'></i-input>
-        <i-label caption='Address:'></i-label>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Address'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
         <i-input id='edtAddress' width='100%'></i-input>
       </i-vstack>
     )
