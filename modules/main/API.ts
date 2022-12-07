@@ -1,4 +1,4 @@
-import { Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
+import { Utils, Wallet } from '@ijstech/eth-wallet';
 import { ITokenObject } from '@modules/interface';
 import { Contracts as ProductContracts } from '@scom/product-contract';
 import { Contracts as ProxyContracts } from '@scom/commission-proxy';
@@ -27,7 +27,7 @@ async function getNFTBalance(productId: number) {
 }
 
 async function newProduct(
-    maxQty: number,
+    qty: number,
     price: string,
     token?: ITokenObject,
     callback?: any,
@@ -42,7 +42,8 @@ async function newProduct(
     });
     let receipt = await productInfo.newProduct({
         ipfsCid: '',
-        quantity: maxQty,
+        quantity: qty,
+        maxQuantity: 0, //FIXME
         price: Utils.toDecimals(price, token?.decimals || 18),
         token: token?.address || ""
     });

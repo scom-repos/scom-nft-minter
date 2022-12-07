@@ -12,7 +12,7 @@ import {
   Container
 } from '@ijstech/components';
 import { BigNumber, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IConfig, ITokenObject, PageBlock } from '@modules/interface';
+import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
 import { getTokenBalance, registerSendTxEvents } from '@modules/utils';
 import { getContractAddress, getNetworkName, setDataFromSCConfig } from '@modules/store';
 import { connectWallet, getChainId, hasWallet } from '@modules/wallet';
@@ -23,8 +23,6 @@ import { Alert } from '@modules/alert';
 import { buyProduct, getNFTBalance, getProductInfo, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
-
-type dappType = 'donation' | 'nft-minter'
 
 @customModule
 export default class Main extends Module implements PageBlock {
@@ -102,13 +100,13 @@ export default class Main extends Module implements PageBlock {
   
   private newProduct = async (callback?: any, confirmationCallback?: any) => {
     if (
-      this._data.maxQty === undefined ||
-      this._data.maxQty === null ||
+      this._data.qty === undefined ||
+      this._data.qty === null ||
       this._data.price === undefined ||
       this._data.price === null ||
       this._data.productId >= 0
     ) return;
-    const result = await newProduct(this._data.maxQty, this._data.price, this._data.token, callback, confirmationCallback);
+    const result = await newProduct(this._data.qty, this._data.price, this._data.token, callback, confirmationCallback);
     this._productId = this._data.productId = result.productId;
   }
 
@@ -128,8 +126,8 @@ export default class Main extends Module implements PageBlock {
       data.price === null ||
       data.maxOrderQty === undefined ||
       data.maxOrderQty === null ||
-      data.maxQty === undefined ||
-      data.maxQty === null
+      data.qty === undefined ||
+      data.qty === null
     ) {
       this.mdAlert.message = {
         status: 'error',
@@ -142,7 +140,7 @@ export default class Main extends Module implements PageBlock {
   }
 
   private async refreshDApp() {
-    this._type = new BigNumber(this._data.price).gt(0) ? 'nft-minter' : 'donation';
+    this._type = this._data.dappType;
     this.imgLogo.url = this._data.logo;
     this.markdownViewer.load(this._data.description || '');
     this.pnlLink.visible = !!this._data.link;
@@ -179,9 +177,9 @@ export default class Main extends Module implements PageBlock {
   private updateSpotsRemaining = async () => {
     if (this._data.productId >= 0) {
       const product = await getProductInfo(this._data.productId);
-      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.maxQty??0}`;
+      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.qty??0}`;
     } else {
-      this.lblSpotsRemaining.caption = `${this._data.maxQty??0}/${this._data.maxQty??0}`;
+      this.lblSpotsRemaining.caption = `${this._data.qty??0}/${this._data.qty??0}`;
     }
   }
 

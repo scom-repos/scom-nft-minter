@@ -8,8 +8,10 @@ import {
   Input,
   Upload,
   Markdown,
+  IComboItem,
+  ComboBox
 } from '@ijstech/components';
-import { IConfig } from '@modules/interface';
+import { dappType, IConfig } from '@modules/interface';
 import { textareaStyle } from './index.css';
 import { TokenSelection } from '@modules/token-selection';
 
@@ -23,6 +25,16 @@ declare global {
   }
 }
 
+const ComboDappTypeItems = [
+  {
+    value: 'nft-minter',
+    label: 'NFT Minter'
+  }, {
+    value: 'donation',
+    label: 'Donation'
+  }
+];
+
 @customModule
 @customElements("nft-minter-config")
 export default class Config extends Module {
@@ -32,21 +44,23 @@ export default class Config extends Module {
   private edtLink: Input;
   private edtPrice: Input;
   private edtMaxOrderQty: Input;
-  private edtMaxQty: Input;
+  private edtQty: Input;
   private tokenSelection: TokenSelection;
+  private comboDappType: ComboBox;
   private _logo: any;
 
   get data(): IConfig {
     const config: IConfig = {
+      dappType: (this.comboDappType.selectedItem as IComboItem).value as dappType,
       description: this.edtDescription.value || "",
       link: this.edtLink.value || ""
     };
     if (this.edtPrice.value) {
       config.price = this.edtPrice.value;
     }
-    const maxQty = Number(this.edtMaxQty.value);
-    if (this.edtMaxQty.value && Number.isInteger(maxQty)) {
-      config.maxQty = maxQty;
+    const qty = Number(this.edtQty.value);
+    if (this.edtQty.value && Number.isInteger(qty)) {
+      config.qty = qty;
     }
     const maxOrderQty = Number(this.edtMaxOrderQty.value);
     if (this.edtMaxOrderQty.value && Number.isInteger(maxOrderQty)) {
@@ -66,11 +80,12 @@ export default class Config extends Module {
     if (config.logo) {
       this.uploadLogo.preview(config.logo);
     }
+    this.comboDappType.selectedItem = ComboDappTypeItems.find(v => v.label == config.dappType);
     this._logo = config.logo;
     this.edtLink.value = config.link || "";
     this.edtPrice.value = config.price || "";
     this.edtMaxOrderQty.value = config.maxOrderQty || "";
-    this.edtMaxQty.value = config.maxQty || "";
+    this.edtQty.value = config.qty || "";
     this.edtDescription.value = config.description || "";
     this.tokenSelection.token = config.token;
     this.onMarkdownChanged();
@@ -88,9 +103,29 @@ export default class Config extends Module {
     this.markdownViewer.load(this.edtDescription.value || "");
   }
   
+  onComboDappTypeChanged() {
+    const selectedItem = this.comboDappType.selectedItem as IComboItem;
+    if (selectedItem.value == 'nft-minter') {
+      this.edtPrice.enabled = true;
+      this.edtQty.enabled = true;
+    }
+    else if (selectedItem.value == 'donation') {
+      this.edtPrice.enabled = false;
+      this.edtQty.enabled = false;
+    }
+  }
+
   render() {
     return (
       <i-vstack gap='0.5rem' padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}>
+        <i-label caption='Dapp Type:'></i-label>
+        <i-combo-box
+          id='comboDappType'
+          width='100%'
+          items={ComboDappTypeItems}
+          selectedItem={ComboDappTypeItems[0]}
+          onChanged={this.onComboDappTypeChanged.bind(this)}
+        ></i-combo-box>
         <i-label caption='Logo:'></i-label>
         <i-upload
           id='uploadLogo'
@@ -143,15 +178,15 @@ export default class Config extends Module {
         </i-hstack>
         <i-input id='edtPrice' width='100%' inputType='number'></i-input>
         <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Qty'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
+        <i-input id='edtQty' width='100%' inputType='number'></i-input>
+        <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Max Order Qty'></i-label>
           <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
-        <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>
-        <i-hstack gap={4} verticalAlignment="center">
-          <i-label caption='Max Qty'></i-label>
-          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
-        </i-hstack>
-        <i-input id='edtMaxQty' width='100%' inputType='number'></i-input>
+        <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>        
       </i-vstack>
     )
   }

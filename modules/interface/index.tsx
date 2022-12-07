@@ -21,7 +21,9 @@ export interface PageBlock {
   config: () => Promise<void>;
 }
 
+export type dappType = 'donation' | 'nft-minter';
 export interface IConfig {
+  dappType?: dappType;
   productId?: number;
   logo?: string;
   description?: string;
@@ -30,7 +32,7 @@ export interface IConfig {
   token?: ITokenObject;
   price?: string;
   maxOrderQty?: number;
-  maxQty?: number;
+  qty?: number;
 }
 
 export interface ITokenObject {
