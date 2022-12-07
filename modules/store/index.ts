@@ -1,3 +1,4 @@
+import { Wallet } from "@ijstech/eth-wallet";
 import { DefaultTokens } from "./tokens/index";
 
 export const getTokenList = (chainId: number) => {
@@ -31,6 +32,45 @@ const Networks: { [chainId: number]: string } = {
 
 export const getNetworkName = (chainId: number) => {
   return Networks[chainId] || ""
+}
+
+export interface IContractDetailInfo {
+  address: string;
+}
+
+export type ContractType = 'ProductInfo' | 'Proxy';
+
+export interface IContractInfo {
+  TriplayERC20Vault: IContractDetailInfo;
+  TriplayERC721Vault: IContractDetailInfo;
+  TriplayERC1155Vault: IContractDetailInfo;
+  TriplayPolicy: IContractDetailInfo;
+}
+
+export type ContractInfoByChainType = { [key: number]: IContractInfo };
+
+export const state = {
+  contractInfoByChain: {} as ContractInfoByChainType
+}
+
+export const setDataFromSCConfig = (options: any) => {
+  if (options.contractInfo) {
+    setContractInfo(options.contractInfo);
+  }
+}
+
+const setContractInfo = (data: ContractInfoByChainType) => {
+  state.contractInfoByChain = data;
+}
+
+const getContractInfo = (chainId: number) => {
+  return state.contractInfoByChain[chainId];
+}
+
+export const getContractAddress = (type: ContractType) => {
+  const chainId = Wallet.getInstance().chainId;
+  const contracts = getContractInfo(chainId) || {};
+  return contracts[type]?.address;
 }
 
 export * from './tokens/index';

@@ -28,10 +28,9 @@ export interface IConfig {
   link?: string;
   chainId?: number;
   token?: ITokenObject;
-  price?: number;
+  price?: string;
   maxOrderQty?: number;
   maxQty?: number;
-  address?: string;
 }
 
 export interface ITokenObject {

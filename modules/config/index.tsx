@@ -33,18 +33,16 @@ export default class Config extends Module {
   private edtPrice: Input;
   private edtMaxOrderQty: Input;
   private edtMaxQty: Input;
-  private edtAddress: Input;
   private tokenSelection: TokenSelection;
   private _logo: any;
 
   get data(): IConfig {
     const config: IConfig = {
       description: this.edtDescription.value || "",
-      link: this.edtLink.value || "",
-      address: this.edtAddress.value || ""
+      link: this.edtLink.value || ""
     };
     if (this.edtPrice.value) {
-      config.price = Number(this.edtPrice.value);
+      config.price = this.edtPrice.value;
     }
     const maxQty = Number(this.edtMaxQty.value);
     if (this.edtMaxQty.value && Number.isInteger(maxQty)) {
@@ -74,7 +72,6 @@ export default class Config extends Module {
     this.edtMaxOrderQty.value = config.maxOrderQty || "";
     this.edtMaxQty.value = config.maxQty || "";
     this.edtDescription.value = config.description || "";
-    this.edtAddress.value = config.address|| "";
     this.tokenSelection.token = config.token;
     this.onMarkdownChanged();
   }
@@ -155,11 +152,6 @@ export default class Config extends Module {
           <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtMaxQty' width='100%' inputType='number'></i-input>
-        <i-hstack gap={4} verticalAlignment="center">
-          <i-label caption='Address'></i-label>
-          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
-        </i-hstack>
-        <i-input id='edtAddress' width='100%'></i-input>
       </i-vstack>
     )
   }

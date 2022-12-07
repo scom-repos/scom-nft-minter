@@ -1,4 +1,4 @@
-{    
+{
     "env": "testnet",
     "logo": "logo",
     "main": "@modules/main",
@@ -35,6 +35,17 @@
     },
     "dependencies": {
         "@ijstech/eth-contract": "*",
-        "@scom/product-contract": "*"
+        "@scom/product-contract": "*",
+        "@scom/commission-proxy": "*"
+    },
+    "contractInfo": {
+        "43113": {
+            "ProductInfo": {
+                "address": "0xEA0eCAc60E5E012f1a6076Ee660dE5C332414BE0"
+            },
+            "Proxy": {
+                "address": "0x8FB1618654de715e53447B289754DDDADb79198D"
+            }
+        }
     }
 }
