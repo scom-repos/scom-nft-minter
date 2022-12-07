@@ -11,10 +11,10 @@ import {
   Modal,
   Icon
 } from '@ijstech/components';
-import { } from '@ijstech/eth-wallet';
 import { ITokenObject } from '@modules/interface';
-import Assets from '@modules/assets';
 import { getTokenList, ChainNativeTokenByChainId, EventId } from '@modules/store';
+import { } from '@ijstech/eth-wallet';
+import Assets from '@modules/assets';
 import { isWalletConnected, getChainId } from '@modules/wallet';
 import { buttonStyle, modalStyle, scrollbarStyle, tokenStyle } from './index.css';
 

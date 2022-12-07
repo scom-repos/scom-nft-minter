@@ -6,12 +6,12 @@ import { walletList } from "./walletList";
 const defaultChainId = 1;
 
 export function isWalletConnected() {
-  const wallet = Wallet.getInstance();
+  const wallet = Wallet.getClientInstance();
   return wallet.isConnected;
 }
 
 export async function connectWallet(walletPlugin: WalletPlugin, eventHandlers?: { [key: string]: Function }):Promise<IWallet> {
-  let wallet = Wallet.getInstance();
+  let wallet = Wallet.getClientInstance();
   const walletOptions = '';
   let providerOptions = walletOptions[walletPlugin];
   if (!wallet.chainId) {
@@ -24,7 +24,7 @@ export async function connectWallet(walletPlugin: WalletPlugin, eventHandlers?: 
       }
       const connected = !!account;
       if (connected) {
-        localStorage.setItem('walletProvider', Wallet.getInstance()?.clientSideProvider?.walletPlugin || '');
+        localStorage.setItem('walletProvider', Wallet.getClientInstance()?.clientSideProvider?.walletPlugin || '');
       }
       application.EventBus.dispatch(EventId.IsWalletConnected, connected);
     },

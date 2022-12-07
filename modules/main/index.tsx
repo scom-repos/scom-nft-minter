@@ -10,7 +10,7 @@ import {
   Input,
   Button
 } from '@ijstech/components';
-import { IWallet, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
+import { Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock } from '@modules/interface';
 import { getTokenBalance, registerSendTxEvents } from '@modules/utils';
 import { getNetworkName } from '@modules/store';
@@ -101,7 +101,7 @@ export default class Main extends Module implements PageBlock {
       this._data.price === null ||
       this._data.productId >= 0
     ) return;
-    const wallet: any = Wallet.getInstance();
+    const wallet = Wallet.getInstance();
     const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
     registerSendTxEvents({
       transactionHash: callback,
@@ -160,7 +160,7 @@ export default class Main extends Module implements PageBlock {
   }
 
   private updateSpotsRemaining = async () => {
-    const wallet: any = Wallet.getInstance();
+    const wallet = Wallet.getInstance();
     const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
     if (this._data.productId >= 0) {
       const product = await productInfo.products(this._data.productId);
@@ -196,7 +196,7 @@ export default class Main extends Module implements PageBlock {
     if (!this._data || !this._data.address) return;
     this.udpateSubmitButton(true);
     const chainId = getChainId();
-    const wallet: any = Wallet.getInstance();
+    const wallet = Wallet.getInstance();
     const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
     if (this._type === 'donation' && !this.tokenSelection.token) {
       this.mdAlert.message = {
@@ -296,7 +296,7 @@ export default class Main extends Module implements PageBlock {
 
   buyToken = async (quantity: number) => {
     if (this._data.productId === undefined || this._data.productId === null) return;
-    const wallet: any = Wallet.getInstance();
+    const wallet = Wallet.getInstance();
     const productInfo = new Contracts.ProductInfo(wallet, this._data.address);
     if (this._data.token?.address) {
       productInfo.buy({
