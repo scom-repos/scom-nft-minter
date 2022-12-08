@@ -82,6 +82,9 @@ export class TokenSelection extends Module {
         this.token = undefined;
       }
     }
+    if (this.token) {
+      this.updateTokenButton(this.token);
+    }
   }
 
   private registerEvent() {

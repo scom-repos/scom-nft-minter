@@ -319,8 +319,6 @@ export default class Main extends Module implements PageBlock {
           id='gridDApp'
           width='100%'
           height='100%'
-          maxWidth={690}
-          maxHeight={321}
           templateColumns={['60%', 'auto']}
         >
           <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
