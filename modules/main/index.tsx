@@ -124,8 +124,7 @@ export default class Main extends Module implements PageBlock {
     this._data = this.configDApp.data;
     this._data.chainId = this._data.token ? getChainId() : undefined;
     this._data.productId = this._productId;
-    this._data.qty = this._data.qty || 0;
-    this._data.price = this._data.price || '0';
+    this._data.maxPrice = this._data.maxPrice || '0';
     this.refreshDApp();
     await this.newProduct(undefined, this.updateSpotsRemaining);
   }
@@ -133,8 +132,16 @@ export default class Main extends Module implements PageBlock {
   private newProduct = async (callback?: any, confirmationCallback?: any) => {
     if (
       this._data.productId >= 0
-    ) return;
-    const result = await newProduct(this._data.qty, this._data.price, this._data.token, callback, confirmationCallback);
+    ) return;  
+    const result = await newProduct(
+      this._data.qty, 
+      this._data.maxOrderQty, 
+      this._data.price, 
+      this._data.maxPrice, 
+      this._data.token, 
+      callback, 
+      confirmationCallback
+    );
     this._productId = this._data.productId = result.productId;
   }
 
@@ -152,6 +159,8 @@ export default class Main extends Module implements PageBlock {
       !data.token || 
       data.maxOrderQty === undefined ||
       data.maxOrderQty === null ||
+      data.price === undefined ||
+      data.price === null ||
       data.qty === undefined ||
       data.qty === null
     ) {
@@ -453,7 +462,12 @@ export default class Main extends Module implements PageBlock {
 
   buyToken = async (quantity: number) => {
     if (this._data.productId === undefined || this._data.productId === null) return;
-    await buyProduct(this._data.productId, quantity, this._data.commissions, this._data.token);
+    if (this._data.dappType == 'donation') {
+      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token);
+    }
+    else if (this._data.dappType == 'nft-minter') {
+      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token);
+    }
   }
 
   render() {

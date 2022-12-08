@@ -28,7 +28,9 @@ async function getNFTBalance(productId: number) {
 
 async function newProduct(
     qty: number,
+    maxQty: number,
     price: string,
+    maxPrice: string,
     token?: ITokenObject,
     callback?: any,
     confirmationCallback?: any
@@ -40,11 +42,13 @@ async function newProduct(
         transactionHash: callback,
         confirmation: confirmationCallback
     });
+    const tokenDecimals = token?.decimals || 18;
     let receipt = await productInfo.newProduct({
         ipfsCid: '',
         quantity: qty,
-        maxQuantity: 0, //FIXME
-        price: Utils.toDecimals(price, token?.decimals || 18),
+        maxQuantity: maxQty, 
+        maxPrice: Utils.toDecimals(maxPrice, tokenDecimals), 
+        price: Utils.toDecimals(price, tokenDecimals),
         token: token?.address || ""
     });
     let productId;
@@ -70,14 +74,15 @@ function getProxyTokenAmountIn(productPrice: string, quantity: number, commissio
     return amount.plus(commissionsAmount).toFixed();
 }
 
-async function buyProduct(productId: number, quantity: number, commissions: ICommissionInfo[], token?: ITokenObject) {
+async function buyProduct(productId: number, quantity: number, amountIn: string, commissions: ICommissionInfo[], token?: ITokenObject) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
     const wallet = Wallet.getInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
-    const amount = product.price.times(quantity);
+    const isDonation = product.price.isZero();
+    const amount = isDonation ? new BigNumber(amountIn) : product.price.times(quantity);
     const _commissions = commissions.map(v => {
         return {
             to: v.walletAddress,
@@ -91,6 +96,7 @@ async function buyProduct(productId: number, quantity: number, commissions: ICom
             const txData = await productInfo.buy.txData({
                 productId: productId,
                 quantity: quantity,
+                amountIn: new BigNumber(amountIn),
                 to: wallet.address
             });
             const tokensIn =
@@ -108,7 +114,7 @@ async function buyProduct(productId: number, quantity: number, commissions: ICom
         } else {
             const txData = await productInfo.buyEth.txData({
                 productId: productId,
-                quantity: quantity,
+                quantity,
                 to: wallet.address
             }, amount);
             receipt = await proxy.ethIn({

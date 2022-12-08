@@ -41,10 +41,10 @@
     "contractInfo": {
         "43113": {
             "ProductInfo": {
-                "address": "0xf572020459e109805979d677096a9f0E309d04f7"
+                "address": "0x450e6119018a95C33e56b588B44f58F5B251Db7a"
             },
             "Proxy": {
-                "address": "0x8FB1618654de715e53447B289754DDDADb79198D"
+                "address": "0x44ef4Ff71043f491ED6D69C61aF97eaA66f76CFb"
             }
         }
     }

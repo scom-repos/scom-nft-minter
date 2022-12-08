@@ -36,6 +36,7 @@ export interface IConfig {
   chainId?: number;
   token?: ITokenObject;
   price?: string;
+  maxPrice?: string;
   maxOrderQty?: number;
   qty?: number;
   commissions?: ICommissionInfo[];

@@ -12,7 +12,8 @@ import {
   ComboBox,
   Table,
   Icon,
-  Modal
+  Modal,
+  Label
 } from '@ijstech/components';
 import { dappType, ICommissionInfo, IConfig } from '@modules/interface';
 import { textareaStyle } from './index.css';
@@ -49,6 +50,7 @@ export default class Config extends Module {
   private markdownViewer: Markdown;
   private edtLink: Input;
   private edtPrice: Input;
+  private edtMaxPrice: Input;
   private edtMaxOrderQty: Input;
   private edtQty: Input;
   private tokenSelection: TokenSelection;
@@ -100,6 +102,7 @@ export default class Config extends Module {
   async init() {
     super.init();
     this.commissionInfoList = [];
+    this.onComboDappTypeChanged();
   }
 
   get data(): IConfig {
@@ -110,6 +113,9 @@ export default class Config extends Module {
     };
     if (this.edtPrice.value) {
       config.price = this.edtPrice.value;
+    }
+    if (this.edtMaxPrice.value) {
+      config.maxPrice = this.edtMaxPrice.value;
     }
     const qty = Number(this.edtQty.value);
     if (this.edtQty.value && Number.isInteger(qty)) {
@@ -139,6 +145,7 @@ export default class Config extends Module {
     this._logo = config.logo;
     this.edtLink.value = config.link || "";
     this.edtPrice.value = config.price || "";
+    this.edtMaxPrice.value = config.maxPrice || "";
     this.edtMaxOrderQty.value = config.maxOrderQty || "";
     this.edtQty.value = config.qty || "";
     this.edtDescription.value = config.description || "";
@@ -162,12 +169,20 @@ export default class Config extends Module {
   onComboDappTypeChanged() {
     const selectedItem = this.comboDappType.selectedItem as IComboItem;
     if (selectedItem.value == 'nft-minter') {
-      this.edtPrice.enabled = true;
       this.edtQty.enabled = true;
+      this.edtPrice.enabled = true;
+      this.edtMaxPrice.enabled = false;
+      this.edtMaxPrice.value = '0';
+      this.edtQty.value = '';
+      this.edtPrice.value = '';
     }
     else if (selectedItem.value == 'donation') {
-      this.edtPrice.enabled = false;
       this.edtQty.enabled = false;
+      this.edtPrice.enabled = false;
+      this.edtMaxPrice.enabled = true;
+      this.edtMaxPrice.value = '';
+      this.edtQty.value = '1';
+      this.edtPrice.value = '0';
     }
   }
 
@@ -246,14 +261,21 @@ export default class Config extends Module {
         ></nft-minter-token-selection>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Price'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtPrice' width='100%' inputType='number'></i-input>
         <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Max Price'></i-label>
+        </i-hstack>
+        <i-input id='edtMaxPrice' width='100%' inputType='number'></i-input>        
+        <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Qty'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtQty' width='100%' inputType='number'></i-input>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Max Order Qty'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>     
         <i-hstack gap={4} verticalAlignment="center" horizontalAlignment="space-between">
