@@ -9,11 +9,16 @@ import {
   Upload,
   Markdown,
   IComboItem,
-  ComboBox
+  ComboBox,
+  Table,
+  Icon,
+  Modal
 } from '@ijstech/components';
-import { dappType, IConfig } from '@modules/interface';
+import { dappType, ICommissionInfo, IConfig } from '@modules/interface';
 import { textareaStyle } from './index.css';
 import { TokenSelection } from '@modules/token-selection';
+import { BigNumber } from '@ijstech/eth-wallet';
+import { formatNumber } from '@modules/utils';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -35,6 +40,7 @@ const ComboDappTypeItems = [
   }
 ];
 
+
 @customModule
 @customElements("nft-minter-config")
 export default class Config extends Module {
@@ -48,6 +54,53 @@ export default class Config extends Module {
   private tokenSelection: TokenSelection;
   private comboDappType: ComboBox;
   private _logo: any;
+  private tableCommissions: Table;
+  private modalAddCommission: Modal;
+  private inputWalletAddress: Input;
+  private inputShare: Input;
+  private commissionInfoList: ICommissionInfo[];
+  private commissionsTableColumns = [
+    {
+      title: 'Wallet Address',
+      fieldName: 'walletAddress',
+      key: 'walletAddress'
+    },
+    {
+      title: 'Share',
+      fieldName: 'share',
+      key: 'share',
+      onRenderCell: function (source: Control, columnData: number, rowData: any) {
+        return formatNumber(new BigNumber(columnData).times(100).toFixed(), 4) + '%';
+      }
+    },
+    {
+      title: '',
+      fieldName: '',
+      key: '',
+      textAlign: 'center' as any,
+      onRenderCell: async (source: Control, data: any, rowData: any) => {
+        const icon = new Icon(undefined, {
+          name: "times",
+          fill: "#f7d063", 
+          height: 18,
+          width: 18
+        })
+        icon.onClick = async (source: Control) => { 
+          const index = this.commissionInfoList.findIndex(v => v.walletAddress == rowData.walletAddress);
+          if (index >= 0) {
+            this.commissionInfoList.splice(index, 1);
+            this.tableCommissions.data = this.commissionInfoList;
+          }
+        }
+        return icon;
+      }
+    }
+  ]
+  
+  async init() {
+    super.init();
+    this.commissionInfoList = [];
+  }
 
   get data(): IConfig {
     const config: IConfig = {
@@ -72,6 +125,7 @@ export default class Config extends Module {
     if (this.tokenSelection.token) {
       config.token = this.tokenSelection.token;
     }
+    config.commissions = this.tableCommissions.data;
     return config;
   }
 
@@ -88,6 +142,7 @@ export default class Config extends Module {
     this.edtQty.value = config.qty || "";
     this.edtDescription.value = config.description || "";
     this.tokenSelection.token = config.token;
+    this.tableCommissions.data = config.commissions || [];
     this.onMarkdownChanged();
   }
 
@@ -113,6 +168,22 @@ export default class Config extends Module {
       this.edtPrice.enabled = false;
       this.edtQty.enabled = false;
     }
+  }
+
+  onAddCommissionClicked() {
+    this.modalAddCommission.visible = true;
+  }
+
+  onConfirmCommissionClicked() {
+    if (!this.inputWalletAddress.value || !this.inputShare.value) return;
+    this.modalAddCommission.visible = false;
+    this.commissionInfoList.push({
+      walletAddress: this.inputWalletAddress.value,
+      share: new BigNumber(this.inputShare.value).div(100).toFixed()
+    })
+    this.tableCommissions.data = this.commissionInfoList;
+    this.inputWalletAddress.value = '';
+    this.inputShare.value = '';
   }
 
   render() {
@@ -186,7 +257,60 @@ export default class Config extends Module {
           <i-label caption='Max Order Qty'></i-label>
           <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
-        <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>        
+        <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>     
+        <i-hstack gap={4} verticalAlignment="center" horizontalAlignment="space-between">
+          <i-label caption='Commissions'></i-label>
+          <i-button 
+            caption="Add" 
+            padding={{ top: '0.4rem', bottom: '0.4rem', left: '2rem', right: '2rem' }} 
+            onClick={this.onAddCommissionClicked.bind(this)}>
+          </i-button>   
+        </i-hstack>   
+        <i-table
+          id='tableCommissions'
+          data={this.commissionInfoList}
+          columns={this.commissionsTableColumns}
+        ></i-table> 
+        <i-modal
+          id='modalAddCommission' maxWidth='500px' closeIcon={{ name: 'times-circle' }}>
+          <i-grid-layout
+            width='100%'
+            verticalAlignment='center' gap={{ row: 5 }}
+            padding={{ top: '1rem', bottom: '1rem', left: '2rem', right: '2rem' }}
+            templateColumns={['1fr', '1fr']}
+            templateRows={['auto', 'auto', 'auto', 'auto']}
+            templateAreas={
+              [
+                ['title', 'title'],
+                ["lbWalletAddress", "walletAddress"],
+                ["lbShare", "share"],
+                ['btnConfirm', 'btnConfirm']
+              ]
+            }>
+
+            <i-hstack width='100%' horizontalAlignment='center' grid={{ area: 'title' }} padding={{ bottom: '1rem' }}>
+              <i-label caption="Add Commission"></i-label>
+            </i-hstack>
+
+            <i-label caption="Wallet Address" grid={{ area: 'lbWalletAddress' }} />
+            <i-input id='inputWalletAddress' grid={{ area: 'walletAddress' }} width='100%' />
+
+            <i-label caption="Share" grid={{ area: 'lbShare' }} />
+            <i-hstack verticalAlignment="center" grid={{ area: 'share' }} width='100%'>
+              <i-input id='inputShare' />
+              <i-label caption="%" />
+            </i-hstack>
+
+            <i-hstack width='100%' horizontalAlignment='center' grid={{ area: 'btnConfirm' }} padding={{ top: '1rem' }}>
+              <i-button 
+                caption="Confirm" 
+                padding={{ top: '0.4rem', bottom: '0.4rem', left: '2rem', right: '2rem' }} 
+                onClick={this.onConfirmCommissionClicked.bind(this)} 
+              />
+            </i-hstack>
+
+          </i-grid-layout>
+        </i-modal>            
       </i-vstack>
     )
   }

@@ -21,6 +21,11 @@ export interface PageBlock {
   config: () => Promise<void>;
 }
 
+export interface ICommissionInfo {
+  walletAddress: string;
+  share: string;
+}
+
 export type dappType = 'donation' | 'nft-minter';
 export interface IConfig {
   dappType?: dappType;
@@ -33,6 +38,7 @@ export interface IConfig {
   price?: string;
   maxOrderQty?: number;
   qty?: number;
+  commissions?: ICommissionInfo[];
 }
 
 export interface ITokenObject {

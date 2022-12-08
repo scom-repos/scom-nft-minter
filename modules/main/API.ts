@@ -1,5 +1,5 @@
 import { Utils, Wallet } from '@ijstech/eth-wallet';
-import { ITokenObject } from '@modules/interface';
+import { ICommissionInfo, ITokenObject } from '@modules/interface';
 import { Contracts as ProductContracts } from '@scom/product-contract';
 import { Contracts as ProxyContracts } from '@scom/commission-proxy';
 import { getContractAddress } from '@modules/store';
@@ -58,21 +58,21 @@ async function newProduct(
     };
 }
 
-async function buyProduct(productId: number, quantity: number, token?: ITokenObject) {
+async function buyProduct(productId: number, quantity: number, commissions: ICommissionInfo[], token?: ITokenObject) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
-    const tokenDecimals = token?.decimals || 18;
-    const commissions = []; //FIXME
-    // const commissions = [
-    //     { to: '', amount: Utils.toDecimals(1.0, tokenDecimals) },
-    //     { to: '', amount: Utils.toDecimals(1.5, tokenDecimals) }
-    // ]; 
     const wallet = Wallet.getInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const amount = product.price.times(quantity);
-    const commissionsAmount = commissions.map(v => v.amount).reduce((a, b) => a.plus(b));
+    const _commissions = commissions.map(v => {
+        return {
+            to: v.walletAddress,
+            amount: amount.times(v.share)
+        }
+    })
+    const commissionsAmount = _commissions.map(v => v.amount).reduce((a, b) => a.plus(b));
     let receipt;
     if (token?.address) {
         const txData = await productInfo.buy.txData({
@@ -85,7 +85,7 @@ async function buyProduct(productId: number, quantity: number, token?: ITokenObj
             token: token.address,
             amount: amount.plus(commissionsAmount),
             directTransfer: false,
-            commissions: commissions
+            commissions: _commissions
         };
         receipt = await proxy.tokenIn({
             target: productInfoAddress,
@@ -100,7 +100,7 @@ async function buyProduct(productId: number, quantity: number, token?: ITokenObj
         }, amount);
         receipt = await proxy.ethIn({
             target: productInfoAddress,
-            commissions,
+            commissions: _commissions,
             data: txData
         }, amount.plus(commissionsAmount));
     }

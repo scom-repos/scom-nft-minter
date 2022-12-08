@@ -309,7 +309,7 @@ export default class Main extends Module implements PageBlock {
 
   buyToken = async (quantity: number) => {
     if (this._data.productId === undefined || this._data.productId === null) return;
-    await buyProduct(this._data.productId, quantity, this._data.token);
+    await buyProduct(this._data.productId, quantity, this._data.commissions, this._data.token);
   }
 
   render() {
