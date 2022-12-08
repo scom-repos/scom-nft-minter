@@ -1,4 +1,4 @@
-import { Utils, Wallet } from '@ijstech/eth-wallet';
+import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ICommissionInfo, ITokenObject } from '@modules/interface';
 import { Contracts as ProductContracts } from '@scom/product-contract';
 import { Contracts as ProxyContracts } from '@scom/commission-proxy';
@@ -58,6 +58,18 @@ async function newProduct(
     };
 }
 
+function getTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]) {
+    const amount = new BigNumber(productPrice).times(quantity);
+    const _commissions = commissions.map(v => {
+        return {
+            to: v.walletAddress,
+            amount: amount.times(v.share)
+        }
+    })
+    const commissionsAmount = _commissions.map(v => v.amount).reduce((a, b) => a.plus(b));
+    return amount.plus(commissionsAmount).toFixed();
+}
+
 async function buyProduct(productId: number, quantity: number, commissions: ICommissionInfo[], token?: ITokenObject) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
@@ -111,5 +123,6 @@ export {
     getProductInfo,
     getNFTBalance,
     newProduct,
+    getTokenAmountIn,
     buyProduct
 }

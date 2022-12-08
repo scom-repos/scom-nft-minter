@@ -9,18 +9,20 @@ import {
   HStack,
   Input,
   Button,
-  Container
+  Container,
+  IEventBus,
+  application
 } from '@ijstech/components';
-import { BigNumber, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
+import { BigNumber, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
-import { getTokenBalance, registerSendTxEvents } from '@modules/utils';
-import { getContractAddress, getNetworkName, setDataFromSCConfig } from '@modules/store';
-import { connectWallet, getChainId, hasWallet } from '@modules/wallet';
+import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
+import { EventId, getContractAddress, getNetworkName, setDataFromSCConfig } from '@modules/store';
+import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@modules/wallet';
 import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { Alert } from '@modules/alert';
-import { buyProduct, getNFTBalance, getProductInfo, newProduct } from './API';
+import { buyProduct, getNFTBalance, getProductInfo, getTokenAmountIn, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -40,6 +42,7 @@ export default class Main extends Module implements PageBlock {
   private edtQty: Input;
   private lblBalance: Label;
   private btnSubmit: Button;
+  private btnApprove: Button;
   private lblRef: Label;
   private lblAddress: Label;
   private gridTokenInput: GridLayout;
@@ -51,6 +54,10 @@ export default class Main extends Module implements PageBlock {
   private _type: dappType | undefined;
   private _productId: number | undefined;
   private _data: IConfig = {};
+  private $eventBus: IEventBus;
+  private approvalModelAction: IERC20ApprovalAction;
+  private isApproving: boolean = false;
+  private tokenAmountIn: string;
   tag: any;
   defaultEdit: boolean = true;
   readonly onConfirm: () => Promise<void>;
@@ -62,8 +69,31 @@ export default class Main extends Module implements PageBlock {
     if (options) {
       setDataFromSCConfig(options);
     }
+    this.$eventBus = application.EventBus;
+    this.registerEvent();
   }
   
+  private registerEvent() {
+    this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect);
+    this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect);
+    this.$eventBus.register(this, EventId.chainChanged, () => this.onSetupPage(true));
+  }
+
+  onWalletConnect = async (connected: boolean) => {
+    let chainId = getChainId();
+    if (connected && !chainId) {
+      this.onSetupPage(true);
+    } else {
+      this.onSetupPage(connected);
+    }
+  }
+
+  private onSetupPage(isWalletConnected: boolean) {
+    if (isWalletConnected) {
+      this.initApprovalAction();
+    }
+  }
+
   getData() {
     return this._data;
   }
@@ -183,9 +213,10 @@ export default class Main extends Module implements PageBlock {
     }
   }
 
-  init() {
+  async init() {
     super.init();
-    this.initWalletData();
+    await this.initWalletData();
+    await this.onSetupPage(isWalletConnected());
   }
 
   private async initWalletData() {
@@ -196,27 +227,124 @@ export default class Main extends Module implements PageBlock {
     }
   }
 
+  private async initApprovalAction() {
+    if (!this.approvalModelAction) {
+      const proxyAddress = getContractAddress('Proxy');
+      this.approvalModelAction = getERC20ApprovalModelAction(proxyAddress, {
+        sender: this,
+        payAction: async () => {
+          await this.doSubmitAction();
+        },
+        onToBeApproved: async (token: ITokenObject) => {
+          this.btnApprove.visible = true;
+          this.btnSubmit.enabled = false;
+          if (!this.isApproving) {
+            this.btnApprove.rightIcon.visible = false;
+            this.btnApprove.caption = 'Approve';
+          }
+          this.btnApprove.enabled = true;
+          this.isApproving = false;
+        },
+        onToBePaid: async (token: ITokenObject) => {
+          this.btnApprove.visible = false;
+          this.isApproving = false;
+          this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+        },
+        onApproving: async (token: ITokenObject, receipt?: string) => {
+          this.isApproving = true;
+          this.btnApprove.rightIcon.spin = true;
+          this.btnApprove.rightIcon.visible = true;
+          this.btnApprove.caption = `Approving ${token.symbol}`;
+          this.btnSubmit.visible = false;
+          if (receipt) {
+            this.mdAlert.message = {
+              status: 'success',
+              content: receipt
+            };
+            this.mdAlert.showModal();
+          }
+        },
+        onApproved: async (token: ITokenObject) => {
+          this.btnApprove.rightIcon.visible = false;
+          this.btnApprove.caption = 'Approve';
+          this.isApproving = false;
+          this.btnSubmit.visible = true;
+          this.btnSubmit.enabled = true;
+        },
+        onApprovingError: async (token: ITokenObject, err: Error) => {
+          this.mdAlert.message = {
+            status: 'error',
+            content: err.message
+          };
+          this.mdAlert.showModal();
+          this.btnApprove.caption = 'Approve';
+          this.btnApprove.rightIcon.visible = false;
+        },      
+        onPaying: async (receipt?: string) => {
+          if (receipt) {
+            this.mdAlert.message = {
+              status: 'success',
+              content: receipt
+            };
+            this.mdAlert.showModal();
+            this.btnSubmit.enabled = false;
+            this.btnSubmit.rightIcon.visible = true;
+          }
+        },
+        onPaid: async (receipt?: any) => {
+          this.btnSubmit.rightIcon.visible = false;
+        },
+        onPayingError: async (err: Error) => {
+          this.mdAlert.message = {
+            status: 'error',
+            content: err.message
+          };
+          this.mdAlert.showModal();
+        }
+      });
+    }
+  }
+
   private async selectToken(token: ITokenObject) {
     this.lblBalance.caption = (await getTokenBalance(token)).toFixed(2);
   }
 
-  private udpateSubmitButton(submitting: boolean) {
+  private updateSubmitButton(submitting: boolean) {
     this.btnSubmit.rightIcon.spin = submitting;
     this.btnSubmit.rightIcon.visible = submitting;
   }
 
-  private async onSubmit() {
+  private onApprove() {
+    this.mdAlert.message = {
+      status: 'warning',
+      content: 'Approving'
+    };
+    this.mdAlert.showModal();
+    this.approvalModelAction.doApproveAction(this._data.token, this.tokenAmountIn);
+  }
+  
+  private async onQtyChanged() {
+    const qty = Number(this.edtQty.value);
+    if (qty === 0) {
+      this.tokenAmountIn = '0';
+    }
+    else {
+      this.tokenAmountIn = getTokenAmountIn(this._data.price, Number(this.edtQty.value), this._data.commissions);
+    }
+    this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
+  }
+
+  private async doSubmitAction() {
     if (!this._data || !this._productId) return;
-    this.udpateSubmitButton(true);
+    this.updateSubmitButton(true);
     const chainId = getChainId();
-    const wallet = Wallet.getInstance();
     if (this._type === 'donation' && !this.tokenSelection.token) {
       this.mdAlert.message = {
         status: 'error',
         content: 'Token Required'
       };
       this.mdAlert.showModal();
-      this.udpateSubmitButton(false);
+      this.updateSubmitButton(false);
       return;
     }
     if (this._type === 'nft-minter' && chainId !== this._data.chainId) {
@@ -225,7 +353,7 @@ export default class Main extends Module implements PageBlock {
         content: 'Unsupported Network'
       };
       this.mdAlert.showModal();
-      this.udpateSubmitButton(false);
+      this.updateSubmitButton(false);
       return;
     }
     const balance = await getTokenBalance(this._type === 'donation' ? this.tokenSelection.token : this._data.token);
@@ -236,7 +364,7 @@ export default class Main extends Module implements PageBlock {
           content: 'Quantity Greater Than Max Quantity'
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
       if (this._data.maxOrderQty > 1 && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
@@ -245,7 +373,7 @@ export default class Main extends Module implements PageBlock {
           content: 'Invalid Quantity'
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
       const requireQty = this._data.maxOrderQty > 1 && this.edtQty.value ? Number(this.edtQty.value) : 1;
@@ -257,7 +385,7 @@ export default class Main extends Module implements PageBlock {
             content: 'Out of stock'
           };
           this.mdAlert.showModal();
-          this.udpateSubmitButton(false);
+          this.updateSubmitButton(false);
           return;
         }
       }
@@ -268,7 +396,7 @@ export default class Main extends Module implements PageBlock {
           content: 'Over Maximum Order Quantity'
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
 
@@ -279,7 +407,7 @@ export default class Main extends Module implements PageBlock {
           content: `Insufficient ${this.tokenSelection.token.symbol} Balance`
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
       await this.buyToken(requireQty);
@@ -290,7 +418,7 @@ export default class Main extends Module implements PageBlock {
           content: 'Amount Required'
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
       if (balance.lt(this.edtAmount.value)) {
@@ -299,12 +427,21 @@ export default class Main extends Module implements PageBlock {
           content: `Insufficient ${this.tokenSelection.token.symbol} Balance`
         };
         this.mdAlert.showModal();
-        this.udpateSubmitButton(false);
+        this.updateSubmitButton(false);
         return;
       }
       await this.buyToken(1);
     }
-    this.udpateSubmitButton(false);
+    this.updateSubmitButton(false);
+  }
+
+  private async onSubmit() {
+    this.mdAlert.message = {
+      status: 'warning',
+      content: 'Confirming'
+    };
+    this.mdAlert.showModal();
+    this.approvalModelAction.doPayAction();
   }
 
   buyToken = async (quantity: number) => {
@@ -355,7 +492,7 @@ export default class Main extends Module implements PageBlock {
               <i-vstack gap='0.25rem'>
                 <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
                   <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
-                  <i-input id='edtQty' class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
+                  <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
                 </i-hstack>
                 <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
                   <i-label caption='Balance:' font={{ size: '0.875rem' }}></i-label>
@@ -380,16 +517,30 @@ export default class Main extends Module implements PageBlock {
                     font={{ size: '0.875rem' }}
                   ></i-input>
                 </i-grid-layout>
-                <i-button
-                  id='btnSubmit'
-                  width='100px'
-                  caption='Submit'
-                  padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
-                  margin={{ left: 'auto', right: 'auto' }}
-                  font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
-                  rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                  onClick={this.onSubmit.bind(this)}
-                ></i-button>
+                <i-vstack horizontalAlignment="center" gap="8px">
+                  <i-button
+                    id="btnApprove"
+                    width='100px'
+                    caption="Approve"
+                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
+                    margin={{ left: 'auto', right: 'auto' }}
+                    font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
+                    rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                    visible={false}
+                    onClick={this.onApprove.bind(this)}
+                  ></i-button>                
+                  <i-button
+                    id='btnSubmit'
+                    width='100px'
+                    caption='Submit'
+                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
+                    margin={{ left: 'auto', right: 'auto' }}
+                    font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
+                    rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                    onClick={this.onSubmit.bind(this)}
+                    enabled={false}
+                  ></i-button>
+                </i-vstack>
               </i-vstack>
               <i-vstack gap='0.25rem'>
                 <i-label id='lblRef' font={{ size: '0.75rem' }}></i-label>

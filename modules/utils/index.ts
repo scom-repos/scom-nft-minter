@@ -1,5 +1,4 @@
-import { BigNumber, Erc20, Wallet, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
-import { ITokenObject } from "@modules/interface";
+import { BigNumber } from "@ijstech/eth-wallet";
 
 export const formatNumber = (value: any, decimals?: number) => {
   let val = value;
@@ -36,35 +35,16 @@ export const formatNumberWithSeparators = (value: number, precision?: number) =>
   }
 }
 
-export const getERC20Amount = async (wallet: IWallet, tokenAddress: string, decimals: number) => {
-  let erc20 = new Erc20(wallet, tokenAddress, decimals);
-  return await erc20.balance;
-}
+export {
+  getERC20Amount,
+  getTokenBalance,
+  registerSendTxEvents
+} from './token';
 
-export const getTokenBalance = async (token: ITokenObject) => {
-  const wallet = Wallet.getInstance();
-  let balance = new BigNumber(0);
-  if (!token) return balance;
-  if (token.address) {
-    balance = await getERC20Amount(wallet, token.address, token.decimals);
-  } else {
-    balance = await wallet.balance;
-  }
-  return balance;
-}
-
-export const registerSendTxEvents = (sendTxEventHandlers: ISendTxEventsOptions) => {
-  const wallet = Wallet.getClientInstance();
-  wallet.registerSendTxEvents({
-      transactionHash: (error: Error, receipt?: string) => {
-          if (sendTxEventHandlers.transactionHash) {
-              sendTxEventHandlers.transactionHash(error, receipt);
-          }
-      },
-      confirmation: (receipt: any) => {
-          if (sendTxEventHandlers.confirmation) {
-              sendTxEventHandlers.confirmation(receipt);
-          }
-      },
-  })
-}
+export {
+  ApprovalStatus,
+  getERC20Allowance,
+  getERC20ApprovalModelAction,
+  IERC20ApprovalOptions,
+  IERC20ApprovalAction
+} from './approvalModel';
