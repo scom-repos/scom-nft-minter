@@ -22,7 +22,7 @@ import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { Alert } from '@modules/alert';
-import { buyProduct, getNFTBalance, getProductInfo, getTokenAmountIn, newProduct } from './API';
+import { buyProduct, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -124,16 +124,14 @@ export default class Main extends Module implements PageBlock {
     this._data = this.configDApp.data;
     this._data.chainId = this._data.token ? getChainId() : undefined;
     this._data.productId = this._productId;
+    this._data.qty = this._data.qty || 0;
+    this._data.price = this._data.price || '0';
     this.refreshDApp();
     await this.newProduct(undefined, this.updateSpotsRemaining);
   }
   
   private newProduct = async (callback?: any, confirmationCallback?: any) => {
     if (
-      this._data.qty === undefined ||
-      this._data.qty === null ||
-      this._data.price === undefined ||
-      this._data.price === null ||
       this._data.productId >= 0
     ) return;
     const result = await newProduct(this._data.qty, this._data.price, this._data.token, callback, confirmationCallback);
@@ -152,8 +150,6 @@ export default class Main extends Module implements PageBlock {
     if (
       !data || 
       !data.token || 
-      data.price === undefined ||
-      data.price === null ||
       data.maxOrderQty === undefined ||
       data.maxOrderQty === null ||
       data.qty === undefined ||
@@ -329,7 +325,18 @@ export default class Main extends Module implements PageBlock {
       this.tokenAmountIn = '0';
     }
     else {
-      this.tokenAmountIn = getTokenAmountIn(this._data.price, Number(this.edtQty.value), this._data.commissions);
+      this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, qty, this._data.commissions);
+    }
+    this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
+  }
+
+  private async onAmountChanged() {
+    const amount = Number(this.edtAmount.value);
+    if (amount === 0) {
+      this.tokenAmountIn = '0';
+    }
+    else {
+      this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
     }
     this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
   }
@@ -513,6 +520,7 @@ export default class Main extends Module implements PageBlock {
                     class={inputStyle}
                     inputType='number'
                     font={{ size: '0.875rem' }}
+                    onChanged={this.onAmountChanged.bind(this)}
                   ></i-input>
                 </i-grid-layout>
                 <i-vstack horizontalAlignment="center" gap="8px">

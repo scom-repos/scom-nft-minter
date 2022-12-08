@@ -134,7 +134,8 @@ export default class Config extends Module {
     if (config.logo) {
       this.uploadLogo.preview(config.logo);
     }
-    this.comboDappType.selectedItem = ComboDappTypeItems.find(v => v.label == config.dappType);
+    this.comboDappType.selectedItem = ComboDappTypeItems.find(v => v.value == config.dappType);
+    this.onComboDappTypeChanged();
     this._logo = config.logo;
     this.edtLink.value = config.link || "";
     this.edtPrice.value = config.price || "";
@@ -245,17 +246,14 @@ export default class Config extends Module {
         ></nft-minter-token-selection>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Price'></i-label>
-          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtPrice' width='100%' inputType='number'></i-input>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Qty'></i-label>
-          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtQty' width='100%' inputType='number'></i-input>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Max Order Qty'></i-label>
-          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
         </i-hstack>
         <i-input id='edtMaxOrderQty' width='100%' inputType='number'></i-input>     
         <i-hstack gap={4} verticalAlignment="center" horizontalAlignment="space-between">

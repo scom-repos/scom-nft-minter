@@ -58,8 +58,8 @@ async function newProduct(
     };
 }
 
-function getTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]) {
-    const amount = new BigNumber(productPrice).times(quantity);
+function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]) {
+    const amount = new BigNumber(productPrice).isZero() ? new BigNumber(quantity) : new BigNumber(productPrice).times(quantity);
     const _commissions = commissions.map(v => {
         return {
             to: v.walletAddress,
@@ -86,35 +86,40 @@ async function buyProduct(productId: number, quantity: number, commissions: ICom
     })
     const commissionsAmount = _commissions.map(v => v.amount).reduce((a, b) => a.plus(b));
     let receipt;
-    if (token?.address) {
-        const txData = await productInfo.buy.txData({
-            productId: productId,
-            quantity: quantity,
-            to: wallet.address
-        });
-        const tokensIn =
-        {
-            token: token.address,
-            amount: amount.plus(commissionsAmount),
-            directTransfer: false,
-            commissions: _commissions
-        };
-        receipt = await proxy.tokenIn({
-            target: productInfoAddress,
-            tokensIn,
-            data: txData
-        });
-    } else {
-        const txData = await productInfo.buyEth.txData({
-            productId: productId,
-            quantity: quantity,
-            to: wallet.address
-        }, amount);
-        receipt = await proxy.ethIn({
-            target: productInfoAddress,
-            commissions: _commissions,
-            data: txData
-        }, amount.plus(commissionsAmount));
+    try {
+        if (token?.address) {
+            const txData = await productInfo.buy.txData({
+                productId: productId,
+                quantity: quantity,
+                to: wallet.address
+            });
+            const tokensIn =
+            {
+                token: token.address,
+                amount: amount.plus(commissionsAmount),
+                directTransfer: false,
+                commissions: _commissions
+            };
+            receipt = await proxy.tokenIn({
+                target: productInfoAddress,
+                tokensIn,
+                data: txData
+            });
+        } else {
+            const txData = await productInfo.buyEth.txData({
+                productId: productId,
+                quantity: quantity,
+                to: wallet.address
+            }, amount);
+            receipt = await proxy.ethIn({
+                target: productInfoAddress,
+                commissions: _commissions,
+                data: txData
+            }, amount.plus(commissionsAmount));
+        }
+    }
+    catch(err) {
+        console.error(err);
     }
     return receipt;
 }
@@ -123,6 +128,6 @@ export {
     getProductInfo,
     getNFTBalance,
     newProduct,
-    getTokenAmountIn,
+    getProxyTokenAmountIn,
     buyProduct
 }
