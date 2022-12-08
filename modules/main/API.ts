@@ -82,7 +82,8 @@ async function buyProduct(productId: number, quantity: number, amountIn: string,
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const isDonation = product.price.isZero();
-    const amount = isDonation ? new BigNumber(amountIn) : product.price.times(quantity);
+    const tokenDecimals = token?.decimals || 18;
+    const amount = isDonation ? Utils.toDecimals(amountIn, tokenDecimals) : product.price.times(quantity);
     const _commissions = commissions.map(v => {
         return {
             to: v.walletAddress,
@@ -96,7 +97,7 @@ async function buyProduct(productId: number, quantity: number, amountIn: string,
             const txData = await productInfo.buy.txData({
                 productId: productId,
                 quantity: quantity,
-                amountIn: new BigNumber(amountIn),
+                amountIn: amount,
                 to: wallet.address
             });
             const tokensIn =
