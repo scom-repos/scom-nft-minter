@@ -87,13 +87,13 @@ async function buyProduct(productId: number, quantity: number, amountIn: string,
     const isDonation = product.price.isZero();
     const tokenDecimals = token?.decimals || 18;
     const amount = isDonation ? Utils.toDecimals(amountIn, tokenDecimals) : product.price.times(quantity);
-    const _commissions = commissions.map(v => {
+    const _commissions = (commissions || []).map(v => {
         return {
             to: v.walletAddress,
             amount: amount.times(v.share)
         }
     })
-    const commissionsAmount = _commissions.map(v => v.amount).reduce((a, b) => a.plus(b));
+    const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
         if (token?.address) {
