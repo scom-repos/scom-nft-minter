@@ -131,7 +131,7 @@ export default class Config extends Module {
     if (this.tokenSelection.token) {
       config.token = this.tokenSelection.token;
     }
-    config.commissions = this.tableCommissions.data;
+    config.commissions = this.tableCommissions.data || [];
     return config;
   }
 

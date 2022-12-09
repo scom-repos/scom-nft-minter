@@ -64,6 +64,9 @@ async function newProduct(
 
 function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]) {
     const amount = new BigNumber(productPrice).isZero() ? new BigNumber(quantity) : new BigNumber(productPrice).times(quantity);
+    if (!commissions || !commissions.length) {
+        return amount.toFixed();
+    }
     const _commissions = commissions.map(v => {
         return {
             to: v.walletAddress,
