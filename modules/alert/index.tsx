@@ -99,7 +99,7 @@ export class Alert extends Module {
   private renderContent() {
     if (!this.message.title && !this.message.content) return [];
     const lblTitle = this.message.title ? <i-label caption={this.message.title} font={{ size: '1.25rem', bold: true }}></i-label> : [];
-    const lblContent = this.message.content ? <i-label caption={this.message.content}></i-label> : [];
+    const lblContent = this.message.content ? <i-label caption={this.message.content} overflowWrap='anywhere'></i-label> : [];
     return (
       <i-vstack class="text-center" horizontalAlignment="center" gap="0.75rem" lineHeight={1.5}>
         {lblTitle}
