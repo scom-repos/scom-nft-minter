@@ -537,13 +537,12 @@ export default class Main extends Module implements PageBlock {
                     onChanged={this.onAmountChanged.bind(this)}
                   ></i-input>
                 </i-grid-layout>
-                <i-vstack horizontalAlignment="center" gap="8px">
+                <i-hstack horizontalAlignment="center" verticalAlignment='center' gap="8px">
                   <i-button
                     id="btnApprove"
                     width='100px'
                     caption="Approve"
                     padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
-                    margin={{ left: 'auto', right: 'auto' }}
                     font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
                     visible={false}
@@ -554,13 +553,12 @@ export default class Main extends Module implements PageBlock {
                     width='100px'
                     caption='Submit'
                     padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
-                    margin={{ left: 'auto', right: 'auto' }}
                     font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
                     onClick={this.onSubmit.bind(this)}
                     enabled={false}
                   ></i-button>
-                </i-vstack>
+                </i-hstack>
               </i-vstack>
               <i-vstack gap='0.25rem'>
                 <i-label id='lblRef' font={{ size: '0.75rem' }}></i-label>
