@@ -16,7 +16,7 @@ import {
 import { BigNumber, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
-import { EventId, getContractAddress, getNetworkName, setDataFromSCConfig } from '@modules/store';
+import { EventId, getContractAddress, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@modules/wallet';
 import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
@@ -74,9 +74,9 @@ export default class Main extends Module implements PageBlock {
   }
   
   private registerEvent() {
-    this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect);
-    this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect);
-    this.$eventBus.register(this, EventId.chainChanged, () => this.onSetupPage(true));
+    this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect(true));
+    this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect(false));
+    this.$eventBus.register(this, EventId.chainChanged, this.onChainChanged);
   }
 
   onWalletConnect = async (connected: boolean) => {
@@ -86,6 +86,21 @@ export default class Main extends Module implements PageBlock {
     } else {
       this.onSetupPage(connected);
     }
+    if (connected) {
+      await this.updateTokenBalance();
+    }
+  }
+
+  onChainChanged = async () => {
+    this.onSetupPage(true);
+    await this.updateTokenBalance();
+  }
+  
+  private updateTokenBalance = async () => {
+    let chainId = getChainId();
+    const _tokenList = getTokenList(chainId);
+    const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
+    this.lblBalance.caption = token ? (await getTokenBalance(token)).toFixed(2) : "0";
   }
 
   private onSetupPage(isWalletConnected: boolean) {
@@ -204,7 +219,7 @@ export default class Main extends Module implements PageBlock {
     this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
     this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
     this.lblAddress.caption = getContractAddress('ProductInfo');
-    this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
+    // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
     this.tokenSelection.token = this._data.token;
     this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
   }

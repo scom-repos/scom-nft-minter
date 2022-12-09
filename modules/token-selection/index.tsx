@@ -74,7 +74,7 @@ export class TokenSelection extends Module {
 
   private onSetup(init?: boolean) {
     this.renderTokenItems();
-    if (init && this.token) {
+    if (init && this.token && !this.readonly) {
       const chainId = getChainId();
       const _tokenList = getTokenList(chainId);
       const token = _tokenList.find(t => (t.address && t.address == this.token?.address) || (t.symbol == this.token?.symbol))
