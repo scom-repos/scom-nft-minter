@@ -421,7 +421,8 @@ export default class Main extends Module implements PageBlock {
         }
       }
       const tokenBalance = await getNFTBalance(this._productId);
-      if (this._data.maxOrderQty && tokenBalance.gte(this._data.maxOrderQty - requireQty)) {
+      const maxOrderQty = new BigNumber(this._data.maxOrderQty??0);
+      if (maxOrderQty.minus(requireQty).minus(tokenBalance).lt(0)) {
         this.mdAlert.message = {
           status: 'error',
           content: 'Over Maximum Order Quantity'
