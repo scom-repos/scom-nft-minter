@@ -209,6 +209,7 @@ export default class Config extends Module {
         <i-combo-box
           id='comboDappType'
           width='100%'
+          icon={{ width: 14, height: 14, name: 'angle-down' }}
           items={ComboDappTypeItems}
           selectedItem={ComboDappTypeItems[0]}
           onChanged={this.onComboDappTypeChanged.bind(this)}

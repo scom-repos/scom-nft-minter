@@ -77,7 +77,15 @@ function getProxyTokenAmountIn(productPrice: string, quantity: number, commissio
     return amount.plus(commissionsAmount).toFixed();
 }
 
-async function buyProduct(productId: number, quantity: number, amountIn: string, commissions: ICommissionInfo[], token?: ITokenObject) {
+async function buyProduct(
+    productId: number,
+    quantity: number,
+    amountIn: string,
+    commissions: ICommissionInfo[],
+    token?: ITokenObject,
+    callback?: any,
+    confirmationCallback?: any
+) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
     const wallet = Wallet.getInstance();
@@ -110,6 +118,10 @@ async function buyProduct(productId: number, quantity: number, amountIn: string,
                 directTransfer: false,
                 commissions: _commissions
             };
+            registerSendTxEvents({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
             receipt = await proxy.tokenIn({
                 target: productInfoAddress,
                 tokensIn,
@@ -121,6 +133,10 @@ async function buyProduct(productId: number, quantity: number, amountIn: string,
                 quantity,
                 to: wallet.address
             }, amount);
+            registerSendTxEvents({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
             receipt = await proxy.ethIn({
                 target: productInfoAddress,
                 commissions: _commissions,

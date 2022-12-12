@@ -479,10 +479,19 @@ export default class Main extends Module implements PageBlock {
   buyToken = async (quantity: number) => {
     if (this._data.productId === undefined || this._data.productId === null) return;
     if (this._data.dappType == 'donation') {
-      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token);
+      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token, undefined,
+        async () => {
+          await this.updateTokenBalance();
+        }
+      );
     }
     else if (this._data.dappType == 'nft-minter') {
-      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token);
+      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token, undefined,
+        async () => {
+          await this.updateTokenBalance();
+          await this.updateSpotsRemaining();
+        }
+      );
     }
   }
 
