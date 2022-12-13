@@ -44,6 +44,7 @@ export class TokenSelection extends Module {
   private _token: ITokenObject | undefined;
   private _readonly: boolean = false;
   public onSelectToken: selectTokenCallback;
+  private _chainId: number;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -58,6 +59,14 @@ export class TokenSelection extends Module {
   set token(value: ITokenObject | undefined) {
     this._token = value;
     this.updateTokenButton(value);
+  }
+
+  get chainId() {
+    return this._chainId;
+  }
+
+  set chainId(value: number) {
+    this._chainId = value;
   }
 
   get readonly(): boolean {
@@ -160,7 +169,7 @@ export class TokenSelection extends Module {
   }
 
   private updateTokenButton(token?: ITokenObject) {
-    const chainId = getChainId();
+    const chainId = this.chainId || getChainId();
     if (token) {
       const tokenIconPath = Assets.tokenPath(token, chainId);
       const icon = new Icon(this.btnTokens, {

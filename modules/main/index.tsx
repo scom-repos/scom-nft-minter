@@ -220,6 +220,7 @@ export default class Main extends Module implements PageBlock {
     this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
     this.lblAddress.caption = getContractAddress('ProductInfo');
     // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
+    this.tokenSelection.chainId = this._data.chainId;
     this.tokenSelection.token = this._data.token;
     this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
   }
