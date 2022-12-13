@@ -169,19 +169,19 @@ export default class Config extends Module {
   onComboDappTypeChanged() {
     const selectedItem = this.comboDappType.selectedItem as IComboItem;
     if (selectedItem.value == 'nft-minter') {
-      this.edtQty.enabled = true;
+      this.edtMaxOrderQty.enabled = true;
       this.edtPrice.enabled = true;
       this.edtMaxPrice.enabled = false;
       this.edtMaxPrice.value = '0';
-      this.edtQty.value = '';
+      this.edtMaxOrderQty.value = '';
       this.edtPrice.value = '';
     }
     else if (selectedItem.value == 'donation') {
-      this.edtQty.enabled = false;
+      this.edtMaxOrderQty.enabled = false;
       this.edtPrice.enabled = false;
       this.edtMaxPrice.enabled = true;
       this.edtMaxPrice.value = '';
-      this.edtQty.value = '1';
+      this.edtMaxOrderQty.value = '1';
       this.edtPrice.value = '0';
     }
   }
