@@ -16,6 +16,7 @@ export interface PageBlock {
 
   // Page Block Events
   edit: () => Promise<void>;
+  preview: () => Promise<void>;
   confirm: () => Promise<void>;
   discard: () => Promise<void>;
   config: () => Promise<void>;

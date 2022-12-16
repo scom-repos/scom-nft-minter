@@ -144,8 +144,23 @@ export default class Main extends Module implements PageBlock {
   }
 
   async confirm() {
-    await this.preview();
-    await this.newProduct(undefined, this.updateSpotsRemaining);
+    return new Promise<void>(async (resolve, reject) => {
+      await this.preview();
+      await this.newProduct((error: Error, receipt?: string) => {
+        if (error) {
+          this.mdAlert.message = {
+            status: 'error',
+            content: error.message
+          };
+          this.mdAlert.showModal();
+          reject(error);
+        }
+      }, this.updateSpotsRemaining);
+      if (!this._productId) {
+        reject(new Error('productId missing'));
+      }
+      resolve();
+    })
   }
   
   private newProduct = async (callback?: any, confirmationCallback?: any) => {
@@ -483,15 +498,24 @@ export default class Main extends Module implements PageBlock {
 
   buyToken = async (quantity: number) => {
     if (this._data.productId === undefined || this._data.productId === null) return;
+    const callback = (error: Error, receipt?: string) => {
+      if (error) {
+        this.mdAlert.message = {
+          status: 'error',
+          content: error.message
+        };
+        this.mdAlert.showModal();
+      }
+    };
     if (this._data.dappType == 'donation') {
-      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token, undefined,
+      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token, callback,
         async () => {
           await this.updateTokenBalance();
         }
       );
     }
     else if (this._data.dappType == 'nft-minter') {
-      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token, undefined,
+      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token, callback,
         async () => {
           await this.updateTokenBalance();
           await this.updateSpotsRemaining();
