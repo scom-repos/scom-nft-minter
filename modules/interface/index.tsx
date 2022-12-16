@@ -28,6 +28,7 @@ export interface ICommissionInfo {
 
 export type dappType = 'donation' | 'nft-minter';
 export interface IConfig {
+  name?: string;
   dappType?: dappType;
   productId?: number;
   logo?: string;

@@ -48,6 +48,7 @@ export default class Config extends Module {
   private uploadLogo: Upload;
   private edtDescription: Input;
   private markdownViewer: Markdown;
+  private edtName: Input;
   private edtLink: Input;
   private edtPrice: Input;
   private edtMaxPrice: Input;
@@ -107,6 +108,7 @@ export default class Config extends Module {
 
   get data(): IConfig {
     const config: IConfig = {
+      name: this.edtName.value || "",
       dappType: (this.comboDappType.selectedItem as IComboItem).value as dappType,
       description: this.edtDescription.value || "",
       link: this.edtLink.value || ""
@@ -140,6 +142,7 @@ export default class Config extends Module {
     if (config.logo) {
       this.uploadLogo.preview(config.logo);
     }
+    this.edtName.value = config.name || "";
     this.comboDappType.selectedItem = ComboDappTypeItems.find(v => v.value == config.dappType);
     this.onComboDappTypeChanged();
     this._logo = config.logo;
@@ -214,6 +217,11 @@ export default class Config extends Module {
           selectedItem={ComboDappTypeItems[0]}
           onChanged={this.onComboDappTypeChanged.bind(this)}
         ></i-combo-box>
+        <i-hstack gap={4} verticalAlignment="center">
+          <i-label caption='Name'></i-label>
+          <i-label caption="*" font={{ color: Theme.colors.error.main }} />
+        </i-hstack>
+        <i-input id='edtName' width='100%'></i-input>
         <i-label caption='Logo:'></i-label>
         <i-upload
           id='uploadLogo'

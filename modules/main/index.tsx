@@ -133,7 +133,7 @@ export default class Main extends Module implements PageBlock {
     this.configDApp.visible = true;
   }
 
-  async confirm() {
+  async preview() {
     this.gridDApp.visible = true;
     this.configDApp.visible = false;
     this._data = this.configDApp.data;
@@ -141,6 +141,10 @@ export default class Main extends Module implements PageBlock {
     this._data.productId = this._productId;
     this._data.maxPrice = this._data.maxPrice || '0';
     this.refreshDApp();
+  }
+
+  async confirm() {
+    await this.preview();
     await this.newProduct(undefined, this.updateSpotsRemaining);
   }
   
@@ -172,6 +176,7 @@ export default class Main extends Module implements PageBlock {
     if (
       !data || 
       !data.token || 
+      !data.name ||
       data.maxOrderQty === undefined ||
       data.maxOrderQty === null ||
       data.price === undefined ||
@@ -421,9 +426,8 @@ export default class Main extends Module implements PageBlock {
           return;
         }
       }
-      const tokenBalance = await getNFTBalance(this._productId);
       const maxOrderQty = new BigNumber(this._data.maxOrderQty??0);
-      if (maxOrderQty.minus(requireQty).minus(tokenBalance).lt(0)) {
+      if (maxOrderQty.minus(requireQty).lt(0)) {
         this.mdAlert.message = {
           status: 'error',
           content: 'Over Maximum Order Quantity'

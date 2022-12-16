@@ -44,7 +44,7 @@ async function newProduct(
     });
     const tokenDecimals = token?.decimals || 18;
     let receipt = await productInfo.newProduct({
-        ipfsCid: '',
+        uri: '',
         quantity: qty,
         maxQuantity: maxQty, 
         maxPrice: Utils.toDecimals(maxPrice, tokenDecimals), 
