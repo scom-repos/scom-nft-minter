@@ -1,7 +1,7 @@
 import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ICommissionInfo, ITokenObject } from '@modules/interface';
 import { Contracts as ProductContracts } from '@scom/product-contract';
-import { Contracts as ProxyContracts } from '@scom/commission-proxy';
+import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { getContractAddress } from '@modules/store';
 import { registerSendTxEvents } from '@modules/utils';
 

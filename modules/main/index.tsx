@@ -13,7 +13,7 @@ import {
   IEventBus,
   application
 } from '@ijstech/components';
-import { BigNumber, WalletPlugin } from '@ijstech/eth-wallet';
+import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
 import { EventId, getContractAddress, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
@@ -53,6 +53,7 @@ export default class Main extends Module implements PageBlock {
 
   private _type: dappType | undefined;
   private _productId: number | undefined;
+  private _oldData: IConfig = {};
   private _data: IConfig = {};
   private $eventBus: IEventBus;
   private approvalModelAction: IERC20ApprovalAction;
@@ -107,6 +108,80 @@ export default class Main extends Module implements PageBlock {
     if (isWalletConnected) {
       this.initApprovalAction();
     }
+  }
+
+  getActions() {
+    const actions = [
+      {
+        name: 'Settings',
+        icon: 'settings',
+        command: (builder: any, userInputData: any) => {
+          return {
+            execute: () => {
+              this._oldData = this._data;
+              if (userInputData.name) this._data.name = userInputData.name;
+              if (userInputData.dappType) this._data.dappType = userInputData.dappType;
+              if (userInputData.productId) this._data.productId = userInputData.productId;
+              if (userInputData.logo) this._data.logo = userInputData.logo;
+              if (userInputData.description) this._data.description = userInputData.description;
+              if (userInputData.link) this._data.link = userInputData.link;
+              if (userInputData.chainId) this._data.chainId = userInputData.chainId;
+              if (userInputData.price) this._data.price = userInputData.price;
+              if (userInputData.maxPrice) this._data.maxPrice = userInputData.maxPrice;
+              if (userInputData.maxOrderQty) this._data.maxOrderQty = userInputData.maxOrderQty;
+              if (userInputData.qty) this._data.qty = userInputData.qty;
+              if (userInputData.token) this._data.token = userInputData.token;
+            },
+            undo: () => {
+              this._data = this._oldData;
+            },
+            redo: () => {}
+          }
+        },
+        userInputDataSchema: {
+          type: 'object',
+          properties: {
+            "name": {
+              type: 'string'
+            },
+            "dappType": {
+              type: 'string'
+            },
+            "productId": {
+              type: 'number'
+            },
+            "logo": {
+              type: 'string'
+            },
+            "description": {
+              type: 'string'
+            },
+            "link": {
+              type: 'string'
+            },
+            "chainId": {
+              type: 'string'
+            },
+            "token": {
+              type: 'object'
+            },
+            "price": {
+              type: 'string'
+            },
+            "maxPrice": {
+              type: 'string'
+            },
+            "maxOrderQty": {
+              type: 'string'
+            },
+            "qty": {
+              type: 'string'
+            }
+          }
+        }
+      },
+    ]
+    return actions
   }
 
   getData() {
@@ -222,7 +297,7 @@ export default class Main extends Module implements PageBlock {
       this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
       this.gridTokenInput.visible = true;
     } else {
-      this.lblTitle.caption = `Mint Fee: ${this._data.price} ${this._data.token?.symbol || ""}`;
+      this.lblTitle.caption = `Mint Fee: ${this._data.price??""} ${this._data.token?.symbol || ""}`;
       this.btnSubmit.caption = 'Mint';
       this.lblRef.caption = 'smart contract:';
       if (this._data.chainId !== null && this._data.chainId !== undefined) {

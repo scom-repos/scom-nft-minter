@@ -1,12 +1,5 @@
 ## Step 1: Install packages
-Create a new directory named `repos`, go into it and run the following commands:
-```
-git clone https://github.com/scom-repos/product-master-contract.git
-```
-```
-git clone https://github.com/scom-repos/commission-proxy.git
-```
-Go back to the base directory and run the following command:
+run the following commands:
 ```sh
 docker-compose up install
 ```

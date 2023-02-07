@@ -36,18 +36,18 @@
     "dependencies": {
         "@ijstech/eth-contract": "*",
         "@scom/product-contract": "*",
-        "@scom/commission-proxy": "*"
+        "@scom/scom-commission-proxy-contract": "*"
     },
     "contractInfo": {
         "43113": {
             "ProductNFT": {
-                "address": "0xfa62A7997B6f473cf8d07D32bAdcb3C30f851e90"
+                "address": "0x17c59183df89FBFFE8eD4C98567c8a0beB3b1E1B"
             },
             "ProductInfo": {
-                "address": "0xC30BcB3adA0dbB047400a224Ac8EEf2AA12BD27d"
+                "address": "0xCFaec9a6f1fe1625AA4FB2262460cDE76202BCd9"
             },
             "Proxy": {
-                "address": "0x44ef4Ff71043f491ED6D69C61aF97eaA66f76CFb"
+                "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
             }
         }
     }
