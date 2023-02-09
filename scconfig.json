@@ -38,6 +38,7 @@
         "@scom/product-contract": "*",
         "@scom/scom-commission-proxy-contract": "*"
     },
+    "ipfsGatewayUrl": "https://ipfs.scom.dev/ipfs/",
     "contractInfo": {
         "43113": {
             "ProductNFT": {

@@ -16,7 +16,7 @@ import {
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
-import { EventId, getContractAddress, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
+import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@modules/wallet';
 import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
@@ -286,7 +286,13 @@ export default class Main extends Module implements PageBlock {
 
   private async refreshDApp() {
     this._type = this._data.dappType;
-    this.imgLogo.url = this._data.logo;
+    if (this._data.logo?.startsWith('ipfs://')) {
+      const ipfsGatewayUrl = getIPFSGatewayUrl();
+      this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+    }
+    else {
+      this.imgLogo.url = this._data.logo;
+    }
     this.markdownViewer.load(this._data.description || '');
     this.pnlLink.visible = !!this._data.link;
     this.lblLink.caption = this._data.link || '';

@@ -50,12 +50,16 @@ export interface IContractInfo {
 export type ContractInfoByChainType = { [key: number]: IContractInfo };
 
 export const state = {
-  contractInfoByChain: {} as ContractInfoByChainType
+  contractInfoByChain: {} as ContractInfoByChainType,
+  ipfsGatewayUrl: ""
 }
 
 export const setDataFromSCConfig = (options: any) => {
   if (options.contractInfo) {
     setContractInfo(options.contractInfo);
+  }
+  if (options.ipfsGatewayUrl) {
+    setIPFSGatewayUrl(options.ipfsGatewayUrl);
   }
 }
 
@@ -65,6 +69,14 @@ const setContractInfo = (data: ContractInfoByChainType) => {
 
 const getContractInfo = (chainId: number) => {
   return state.contractInfoByChain[chainId];
+}
+
+export const setIPFSGatewayUrl = (url: string) => {
+  state.ipfsGatewayUrl = url;
+}
+
+export const getIPFSGatewayUrl = () => {
+  return state.ipfsGatewayUrl;
 }
 
 export const getContractAddress = (type: ContractType) => {
