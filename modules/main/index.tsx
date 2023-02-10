@@ -114,7 +114,7 @@ export default class Main extends Module implements PageBlock {
     const actions = [
       {
         name: 'Settings',
-        icon: 'settings',
+        icon: 'cog',
         command: (builder: any, userInputData: any) => {
           return {
             execute: () => {
