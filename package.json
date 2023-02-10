@@ -10,7 +10,7 @@
         "@ijstech/components": "^0.1.29",
         "@ijstech/eth-contract": "^0.1.10",
         "@ijstech/eth-wallet": "^0.1.35",
-        "@scom/product-contract": "0.1.1",
+        "@scom/scom-product-contract": "^0.1.2",
         "@scom/scom-commission-proxy-contract": "^0.1.2"
     },
     "scripts": {

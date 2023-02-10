@@ -35,17 +35,17 @@
     },
     "dependencies": {
         "@ijstech/eth-contract": "*",
-        "@scom/product-contract": "*",
+        "@scom/scom-product-contract": "*",
         "@scom/scom-commission-proxy-contract": "*"
     },
     "ipfsGatewayUrl": "https://ipfs.scom.dev/ipfs/",
     "contractInfo": {
         "43113": {
             "ProductNFT": {
-                "address": "0x17c59183df89FBFFE8eD4C98567c8a0beB3b1E1B"
+                "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
             },
             "ProductInfo": {
-                "address": "0xCFaec9a6f1fe1625AA4FB2262460cDE76202BCd9"
+                "address": "0x23066A700753c57dCb609CE45e06ac5a7BfDb64d"
             },
             "Proxy": {
                 "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"

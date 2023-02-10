@@ -15,7 +15,7 @@ import {
   Modal,
   Label
 } from '@ijstech/components';
-import { dappType, ICommissionInfo, IConfig } from '@modules/interface';
+import { ProductType, ICommissionInfo, IConfig } from '@modules/interface';
 import { textareaStyle } from './index.css';
 import { TokenSelection } from '@modules/token-selection';
 import { BigNumber } from '@ijstech/eth-wallet';
@@ -31,7 +31,7 @@ declare global {
   }
 }
 
-const ComboDappTypeItems = [
+const ComboProductTypeItems = [
   {
     value: 'nft-minter',
     label: 'NFT Minter'
@@ -55,7 +55,7 @@ export default class Config extends Module {
   private edtMaxOrderQty: Input;
   private edtQty: Input;
   private tokenSelection: TokenSelection;
-  private comboDappType: ComboBox;
+  private comboProductType: ComboBox;
   private _logo: any;
   private tableCommissions: Table;
   private modalAddCommission: Modal;
@@ -103,13 +103,13 @@ export default class Config extends Module {
   async init() {
     super.init();
     this.commissionInfoList = [];
-    this.onComboDappTypeChanged();
+    this.onComboProductTypeChanged();
   }
 
   get data(): IConfig {
     const config: IConfig = {
       name: this.edtName.value || "",
-      dappType: (this.comboDappType.selectedItem as IComboItem).value as dappType,
+      productType: (this.comboProductType.selectedItem as IComboItem).value as ProductType,
       description: this.edtDescription.value || "",
       link: this.edtLink.value || ""
     };
@@ -143,8 +143,8 @@ export default class Config extends Module {
       this.uploadLogo.preview(config.logo);
     }
     this.edtName.value = config.name || "";
-    this.comboDappType.selectedItem = ComboDappTypeItems.find(v => v.value == config.dappType);
-    this.onComboDappTypeChanged();
+    this.comboProductType.selectedItem = ComboProductTypeItems.find(v => v.value == config.productType);
+    this.onComboProductTypeChanged();
     this._logo = config.logo;
     this.edtLink.value = config.link || "";
     this.edtPrice.value = config.price || "";
@@ -169,8 +169,8 @@ export default class Config extends Module {
     this.markdownViewer.load(this.edtDescription.value || "");
   }
   
-  onComboDappTypeChanged() {
-    const selectedItem = this.comboDappType.selectedItem as IComboItem;
+  onComboProductTypeChanged() {
+    const selectedItem = this.comboProductType.selectedItem as IComboItem;
     if (selectedItem.value == 'nft-minter') {
       this.edtMaxOrderQty.enabled = true;
       this.edtPrice.enabled = true;
@@ -210,12 +210,12 @@ export default class Config extends Module {
       <i-vstack gap='0.5rem' padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}>
         <i-label caption='Dapp Type:'></i-label>
         <i-combo-box
-          id='comboDappType'
+          id='comboProductType'
           width='100%'
           icon={{ width: 14, height: 14, name: 'angle-down' }}
-          items={ComboDappTypeItems}
-          selectedItem={ComboDappTypeItems[0]}
-          onChanged={this.onComboDappTypeChanged.bind(this)}
+          items={ComboProductTypeItems}
+          selectedItem={ComboProductTypeItems[0]}
+          onChanged={this.onComboProductTypeChanged.bind(this)}
         ></i-combo-box>
         <i-hstack gap={4} verticalAlignment="center">
           <i-label caption='Name'></i-label>

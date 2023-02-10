@@ -27,10 +27,16 @@ export interface ICommissionInfo {
   share: string;
 }
 
-export type dappType = 'donation' | 'nft-minter';
+export enum ProductType {
+  Buy = "Buy",
+  DonateToOwner = "DonateToOwner",
+  DonateToEveryone = "DonateToEveryone"
+}
+
 export interface IConfig {
   name?: string;
-  dappType?: dappType;
+  productType?: ProductType;
+  donateTo?: string;
   productId?: number;
   logo?: string;
   description?: string;

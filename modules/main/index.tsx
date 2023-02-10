@@ -14,7 +14,7 @@ import {
   application
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IConfig, ITokenObject, PageBlock, dappType } from '@modules/interface';
+import { IConfig, ITokenObject, PageBlock, ProductType } from '@modules/interface';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
 import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@modules/wallet';
@@ -22,7 +22,7 @@ import Config from '@modules/config';
 import { TokenSelection } from '@modules/token-selection';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { Alert } from '@modules/alert';
-import { buyProduct, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
+import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -51,7 +51,7 @@ export default class Main extends Module implements PageBlock {
   private configDApp: Config;
   private mdAlert: Alert;
 
-  private _type: dappType | undefined;
+  private _type: ProductType | undefined;
   private _productId: number | undefined;
   private _oldData: IConfig = {};
   private _data: IConfig = {};
@@ -117,11 +117,12 @@ export default class Main extends Module implements PageBlock {
         icon: 'cog',
         command: (builder: any, userInputData: any) => {
           return {
-            execute: () => {
+            execute: async () => {
               this._oldData = this._data;
               if (userInputData.name) this._data.name = userInputData.name;
-              if (userInputData.dappType) this._data.dappType = userInputData.dappType;
+              if (userInputData.productType) this._data.productType = userInputData.productType;
               if (userInputData.productId) this._data.productId = userInputData.productId;
+              if (userInputData.donateTo) this._data.donateTo = userInputData.donateTo;
               if (userInputData.logo) this._data.logo = userInputData.logo;
               if (userInputData.description) this._data.description = userInputData.description;
               if (userInputData.link) this._data.link = userInputData.link;
@@ -131,9 +132,24 @@ export default class Main extends Module implements PageBlock {
               if (userInputData.maxOrderQty) this._data.maxOrderQty = userInputData.maxOrderQty;
               if (userInputData.qty) this._data.qty = userInputData.qty;
               if (userInputData.token) this._data.token = userInputData.token;
+              this._productId = this._data.productId;
+              this.configDApp.data = this._data;
+              this.refreshDApp();
+              await this.newProduct((error: Error, receipt?: string) => {
+                if (error) {
+                  this.mdAlert.message = {
+                    status: 'error',
+                    content: error.message
+                  };
+                  this.mdAlert.showModal();
+                }
+              }, this.updateSpotsRemaining);
             },
             undo: () => {
               this._data = this._oldData;
+              this._productId = this._data.productId;
+              this.configDApp.data = this._data;
+              this.refreshDApp();
             },
             redo: () => {}
           }
@@ -141,15 +157,20 @@ export default class Main extends Module implements PageBlock {
         userInputDataSchema: {
           type: 'object',
           properties: {
-            "name": {
-              type: 'string'
-            },
-            "dappType": {
-              type: 'string'
-            },
-            "productId": {
-              type: 'number'
-            },
+            // "name": {
+            //   type: 'string'
+            // },
+            // "productType": {
+            //   type: 'string'
+            // },
+            "donateTo": {
+              type: 'string',
+              default: Wallet.getClientInstance().address,
+              format: "wallet-address"
+            },           
+            // "productId": {
+            //   type: 'number'
+            // },
             "logo": {
               type: 'string'
             },
@@ -159,24 +180,24 @@ export default class Main extends Module implements PageBlock {
             "link": {
               type: 'string'
             },
-            "chainId": {
-              type: 'string'
-            },
-            "token": {
-              type: 'object'
-            },
-            "price": {
-              type: 'string'
-            },
-            "maxPrice": {
-              type: 'string'
-            },
-            "maxOrderQty": {
-              type: 'string'
-            },
-            "qty": {
-              type: 'string'
-            }
+            // "chainId": {
+            //   type: 'number'
+            // },
+            // "token": {
+            //   type: 'object'
+            // },
+            // "price": {
+            //   type: 'string'
+            // },
+            // "maxPrice": {
+            //   type: 'string'
+            // },
+            // "maxOrderQty": {
+            //   type: 'number'
+            // },
+            // "qty": {
+            //   type: 'number'
+            // }
           }
         }
       },
@@ -192,6 +213,14 @@ export default class Main extends Module implements PageBlock {
     this._data = data;
     this._productId = data.productId;
     this.configDApp.data = data;
+    let contractAddress;
+    if (!this._data.commissions || this._data.commissions.length == 0) {
+      contractAddress = getContractAddress('ProductInfo');
+    }
+    else {
+      contractAddress = getContractAddress('Proxy');
+    }
+    this.approvalModelAction.setSpenderAddress(contractAddress);
     this.refreshDApp();
   }
 
@@ -243,6 +272,7 @@ export default class Main extends Module implements PageBlock {
       this._data.productId >= 0
     ) return;  
     const result = await newProduct(
+      this._data.productType,
       this._data.qty, 
       this._data.maxOrderQty, 
       this._data.price, 
@@ -285,7 +315,7 @@ export default class Main extends Module implements PageBlock {
   }
 
   private async refreshDApp() {
-    this._type = this._data.dappType;
+    this._type = this._data.productType;
     if (this._data.logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
       this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
@@ -297,12 +327,7 @@ export default class Main extends Module implements PageBlock {
     this.pnlLink.visible = !!this._data.link;
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
-    if (this._type === 'donation') {
-      this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
-      this.btnSubmit.caption = 'Submit';
-      this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
-      this.gridTokenInput.visible = true;
-    } else {
+    if (this._type === ProductType.Buy) {
       this.lblTitle.caption = `Mint Fee: ${this._data.price??""} ${this._data.token?.symbol || ""}`;
       this.btnSubmit.caption = 'Mint';
       this.lblRef.caption = 'smart contract:';
@@ -313,6 +338,11 @@ export default class Main extends Module implements PageBlock {
       }
       await this.updateSpotsRemaining();
       this.gridTokenInput.visible = false;
+    } else {
+      this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
+      this.btnSubmit.caption = 'Submit';
+      this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
+      this.gridTokenInput.visible = true;      
     }
     this.edtQty.value = "";
     this.edtAmount.value = "";
@@ -471,7 +501,7 @@ export default class Main extends Module implements PageBlock {
     if (!this._data || !this._productId) return;
     this.updateSubmitButton(true);
     const chainId = getChainId();
-    if (this._type === 'donation' && !this.tokenSelection.token) {
+    if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenSelection.token) {
       this.mdAlert.message = {
         status: 'error',
         content: 'Token Required'
@@ -480,7 +510,7 @@ export default class Main extends Module implements PageBlock {
       this.updateSubmitButton(false);
       return;
     }
-    if (this._type === 'nft-minter' && chainId !== this._data.chainId) {
+    if (this._type === ProductType.Buy && chainId !== this._data.chainId) {
       this.mdAlert.message = {
         status: 'error',
         content: 'Unsupported Network'
@@ -489,8 +519,8 @@ export default class Main extends Module implements PageBlock {
       this.updateSubmitButton(false);
       return;
     }
-    const balance = await getTokenBalance(this._type === 'donation' ? this.tokenSelection.token : this._data.token);
-    if (this._type === 'nft-minter') {
+    const balance = await getTokenBalance(this._type === ProductType.Buy ? this._data.token : this.tokenSelection.token);
+    if (this._type === ProductType.Buy) {
       if (this.edtQty.value && Number(this.edtQty.value) > this._data.maxOrderQty) {
         this.mdAlert.message = {
           status: 'error',
@@ -588,14 +618,14 @@ export default class Main extends Module implements PageBlock {
         this.mdAlert.showModal();
       }
     };
-    if (this._data.dappType == 'donation') {
-      await buyProduct(this._data.productId, quantity, this.edtAmount.value, this._data.commissions, this._data.token, callback,
+    if (this._data.productType == ProductType.DonateToOwner || this._data.productType == ProductType.DonateToEveryone) {
+      await donate(this._data.productId, this._data.donateTo, this.edtAmount.value, this._data.commissions, this._data.token, callback,
         async () => {
           await this.updateTokenBalance();
         }
       );
     }
-    else if (this._data.dappType == 'nft-minter') {
+    else if (this._data.productType == ProductType.Buy) {
       await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token, callback,
         async () => {
           await this.updateTokenBalance();
