@@ -98,15 +98,18 @@ export default class Main extends Module implements PageBlock {
   }
   
   private updateTokenBalance = async () => {
-    let chainId = getChainId();
-    const _tokenList = getTokenList(chainId);
-    const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
-    this.lblBalance.caption = token ? (await getTokenBalance(token)).toFixed(2) : "0";
+    if (!this._data.token) return;
+    try {
+      let chainId = getChainId();
+      const _tokenList = getTokenList(chainId);
+      const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
+      this.lblBalance.caption = token ? (await getTokenBalance(token)).toFixed(2) : "0";
+    } catch {}
   }
 
-  private onSetupPage(isWalletConnected: boolean) {
+  private async onSetupPage(isWalletConnected: boolean) {
     if (isWalletConnected) {
-      this.initApprovalAction();
+      await this.initApprovalAction();
     }
   }
 
@@ -353,7 +356,8 @@ export default class Main extends Module implements PageBlock {
     // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
     this.tokenSelection.chainId = this._data.chainId;
     this.tokenSelection.token = this._data.token;
-    this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+    this.updateTokenBalance();
+    // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
   }
 
   private updateSpotsRemaining = async () => {
