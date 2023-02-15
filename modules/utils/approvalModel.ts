@@ -2,7 +2,7 @@ import { BigNumber, Contracts, Wallet } from "@ijstech/eth-wallet";
 import { registerSendTxEvents } from './token';
 import {
   ITokenObject
-} from '@modules/interface';
+} from '@pageblock-nft-minter/interface';
 
 class ERC20ApprovalModel {
   private options: IERC20ApprovalOptions = {

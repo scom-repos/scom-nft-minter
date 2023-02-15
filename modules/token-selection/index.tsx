@@ -11,11 +11,11 @@ import {
   Modal,
   Icon
 } from '@ijstech/components';
-import { ITokenObject } from '@modules/interface';
-import { getTokenList, ChainNativeTokenByChainId, EventId } from '@modules/store';
+import { ITokenObject } from '@pageblock-nft-minter/interface';
+import { getTokenList, ChainNativeTokenByChainId, EventId } from '@pageblock-nft-minter/store';
 import { } from '@ijstech/eth-wallet';
-import Assets from '@modules/assets';
-import { isWalletConnected, getChainId } from '@modules/wallet';
+import Assets from '@pageblock-nft-minter/assets';
+import { isWalletConnected, getChainId } from '@pageblock-nft-minter/wallet';
 import { buttonStyle, modalStyle, scrollbarStyle, tokenStyle } from './index.css';
 
 const Theme = Styles.Theme.ThemeVars;

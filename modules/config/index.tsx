@@ -15,11 +15,11 @@ import {
   Modal,
   Label
 } from '@ijstech/components';
-import { ProductType, ICommissionInfo, IConfig } from '@modules/interface';
+import { ProductType, ICommissionInfo, IConfig } from '@pageblock-nft-minter/interface';
 import { textareaStyle } from './index.css';
-import { TokenSelection } from '@modules/token-selection';
+import { TokenSelection } from '@pageblock-nft-minter/token-selection';
 import { BigNumber } from '@ijstech/eth-wallet';
-import { formatNumber } from '@modules/utils';
+import { formatNumber } from '@pageblock-nft-minter/utils';
 
 const Theme = Styles.Theme.ThemeVars;
 

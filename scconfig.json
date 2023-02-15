@@ -1,35 +1,35 @@
 {
     "env": "testnet",
     "logo": "logo",
-    "main": "@modules/main",
-    "assets": "@modules/assets",
+    "main": "@pageblock-nft-minter/main",
+    "assets": "@pageblock-nft-minter/assets",
     "moduleDir": "modules",
     "modules": {
-        "@modules/assets": {
+        "@pageblock-nft-minter/assets": {
             "path": "assets"
         },
-        "@modules/interface": {
+        "@pageblock-nft-minter/interface": {
             "path": "interface"
         },
-        "@modules/utils": {
+        "@pageblock-nft-minter/utils": {
             "path": "utils"
         },
-        "@modules/store": {
+        "@pageblock-nft-minter/store": {
             "path": "store"
         },
-        "@modules/wallet": {
+        "@pageblock-nft-minter/wallet": {
             "path": "wallet"
         },
-        "@modules/token-selection": {
+        "@pageblock-nft-minter/token-selection": {
             "path": "token-selection"
         },
-        "@modules/alert": {
+        "@pageblock-nft-minter/alert": {
             "path": "alert"
         },
-        "@modules/config": {
+        "@pageblock-nft-minter/config": {
             "path": "config"
         },
-        "@modules/main": {
+        "@pageblock-nft-minter/main": {
             "path": "main"
         }
     },

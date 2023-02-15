@@ -1,9 +1,9 @@
 import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
-import { ProductType, ICommissionInfo, ITokenObject } from '@modules/interface';
+import { ProductType, ICommissionInfo, ITokenObject } from '@pageblock-nft-minter/interface';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
-import { getContractAddress } from '@modules/store';
-import { registerSendTxEvents } from '@modules/utils';
+import { getContractAddress } from '@pageblock-nft-minter/store';
+import { registerSendTxEvents } from '@pageblock-nft-minter/utils';
 
 async function getProductInfo(productId: number) {
     let productInfoAddress = getContractAddress('ProductInfo');

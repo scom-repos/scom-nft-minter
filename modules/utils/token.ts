@@ -1,5 +1,5 @@
 import { BigNumber, Erc20, Wallet, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
-import { ITokenObject } from "@modules/interface";
+import { ITokenObject } from "@pageblock-nft-minter/interface";
 
 export const getERC20Amount = async (wallet: IWallet, tokenAddress: string, decimals: number) => {
   try {

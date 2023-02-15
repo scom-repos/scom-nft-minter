@@ -14,14 +14,14 @@ import {
   application
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IConfig, ITokenObject, PageBlock, ProductType } from '@modules/interface';
-import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@modules/utils';
-import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@modules/store';
-import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@modules/wallet';
-import Config from '@modules/config';
-import { TokenSelection } from '@modules/token-selection';
+import { IConfig, ITokenObject, PageBlock, ProductType } from '@pageblock-nft-minter/interface';
+import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@pageblock-nft-minter/utils';
+import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@pageblock-nft-minter/store';
+import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@pageblock-nft-minter/wallet';
+import Config from '@pageblock-nft-minter/config';
+import { TokenSelection } from '@pageblock-nft-minter/token-selection';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { Alert } from '@modules/alert';
+import { Alert } from '@pageblock-nft-minter/alert';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
