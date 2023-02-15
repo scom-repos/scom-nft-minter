@@ -23,10 +23,6 @@ class ERC20ApprovalModel {
     this.options = options;
   }
 
-  set spenderAddress(value: string) {
-    this.options.spenderAddress = value
-  }
-
   private setSpenderAddress = (value: string) => {
     this.options.spenderAddress = value
   }

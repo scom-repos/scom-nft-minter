@@ -122,19 +122,19 @@ export default class Main extends Module implements PageBlock {
           return {
             execute: async () => {
               this._oldData = this._data;
-              if (userInputData.name) this._data.name = userInputData.name;
-              if (userInputData.productType) this._data.productType = userInputData.productType;
-              if (userInputData.productId) this._data.productId = userInputData.productId;
-              if (userInputData.donateTo) this._data.donateTo = userInputData.donateTo;
-              if (userInputData.logo) this._data.logo = userInputData.logo;
-              if (userInputData.description) this._data.description = userInputData.description;
-              if (userInputData.link) this._data.link = userInputData.link;
-              if (userInputData.chainId) this._data.chainId = userInputData.chainId;
-              if (userInputData.price) this._data.price = userInputData.price;
-              if (userInputData.maxPrice) this._data.maxPrice = userInputData.maxPrice;
-              if (userInputData.maxOrderQty) this._data.maxOrderQty = userInputData.maxOrderQty;
-              if (userInputData.qty) this._data.qty = userInputData.qty;
-              if (userInputData.token) this._data.token = userInputData.token;
+              if (userInputData.name != undefined) this._data.name = userInputData.name;
+              if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
+              if (userInputData.productId != undefined) this._data.productId = userInputData.productId;
+              if (userInputData.donateTo != undefined) this._data.donateTo = userInputData.donateTo;
+              if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
+              if (userInputData.description != undefined) this._data.description = userInputData.description;
+              if (userInputData.link != undefined) this._data.link = userInputData.link;
+              if (userInputData.chainId != undefined) this._data.chainId = userInputData.chainId;
+              if (userInputData.price != undefined) this._data.price = userInputData.price;
+              if (userInputData.maxPrice != undefined) this._data.maxPrice = userInputData.maxPrice;
+              if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
+              if (userInputData.qty != undefined) this._data.qty = userInputData.qty;
+              if (userInputData.token != undefined) this._data.token = userInputData.token;
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
@@ -216,14 +216,17 @@ export default class Main extends Module implements PageBlock {
     this._data = data;
     this._productId = data.productId;
     this.configDApp.data = data;
-    let contractAddress;
-    if (!this._data.commissions || this._data.commissions.length == 0) {
-      contractAddress = getContractAddress('ProductInfo');
+    if (this.approvalModelAction) {
+      let contractAddress;
+      if (!this._data.commissions || this._data.commissions.length == 0) {
+        contractAddress = getContractAddress('ProductInfo');
+      }
+      else {
+        contractAddress = getContractAddress('Proxy');
+      }
+      this.approvalModelAction.setSpenderAddress(contractAddress);
     }
-    else {
-      contractAddress = getContractAddress('Proxy');
-    }
-    this.approvalModelAction.setSpenderAddress(contractAddress);
+
     this.refreshDApp();
   }
 

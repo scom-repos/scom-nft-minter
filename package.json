@@ -1,5 +1,5 @@
 {
-    "name": "@scom/nft-minter",
+    "name": "@scom/pageblock-nft-minter",
     "version": "0.1.2",
     "engines": {
         "node": ">=18.0.0"
