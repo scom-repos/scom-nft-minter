@@ -11,7 +11,7 @@ import {
   Button,
   Container,
   IEventBus,
-  application
+  application,
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, ProductType } from '@pageblock-nft-minter/interface';
@@ -20,11 +20,12 @@ import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getToke
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@pageblock-nft-minter/wallet';
 import Config from '@pageblock-nft-minter/config';
 import { TokenSelection } from '@pageblock-nft-minter/token-selection';
-import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
+import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { Alert } from '@pageblock-nft-minter/alert';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 
 const Theme = Styles.Theme.ThemeVars;
+
 
 @customModule
 export default class Main extends Module implements PageBlock {
@@ -59,6 +60,7 @@ export default class Main extends Module implements PageBlock {
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
   private tokenAmountIn: string;
+  private oldTag: any;
   tag: any;
   defaultEdit: boolean = true;
   readonly onConfirm: () => Promise<void>;
@@ -204,6 +206,49 @@ export default class Main extends Module implements PageBlock {
           }
         }
       },
+      {
+        name: 'Theme Settings',
+        icon: 'palette',
+        command: (builder: any, userInputData: any) => {
+          return {
+            execute: async () => {
+              if (userInputData) {
+                this.oldTag = this.tag;
+                this.setTag(userInputData);
+                if (builder) builder.setTag(userInputData);
+              }
+            },
+            undo: () => {
+              if (userInputData) {
+                this.setTag(this.oldTag);
+                if (builder) builder.setTag(this.oldTag);
+              }
+            },
+            redo: () => {}
+          }
+        },
+        userInputDataSchema: {
+          type: 'object',
+          properties: {
+            backgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            fontColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputBackgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputFontColor: {
+              type: 'string',
+              format: 'color'
+            }
+          }
+        }
+      }
     ]
     return actions
   }
@@ -236,6 +281,18 @@ export default class Main extends Module implements PageBlock {
 
   async setTag(value: any) {
     this.tag = value;
+    this.updateTheme();
+  }
+
+  private updateTheme() {
+    if (this.tag?.fontColor)
+      this.style.setProperty('--text-primary', this.tag.fontColor);
+    if (this.tag?.backgroundColor)
+      this.style.setProperty('--background-main', this.tag.backgroundColor);
+    if (this.tag?.inputFontColor)
+      this.style.setProperty('--input-font_color', this.tag.inputFontColor);
+    if (this.tag?.inputBackgroundColor)
+      this.style.setProperty('--input-background', this.tag.inputBackgroundColor);
   }
 
   async edit() {
@@ -644,15 +701,17 @@ export default class Main extends Module implements PageBlock {
 
   render() {
     return (
-      <i-panel>
+      <i-panel background={{color: Theme.background.main}}>
         <i-grid-layout
           id='gridDApp'
           width='100%'
           height='100%'
-          templateColumns={['60%', 'auto']}
+          templateColumns={['repeat(2, 1fr)']}
+          gap={{column: '6.313rem'}}
+          padding={{bottom: '1.563rem'}}
         >
-          <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
-            <i-hstack horizontalAlignment='center'>
+          <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '0.5rem' }}>
+            <i-hstack margin={{bottom: '1.25rem'}}>
               <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
             </i-hstack>
             <i-markdown
@@ -660,16 +719,17 @@ export default class Main extends Module implements PageBlock {
               class={markdownStyle}
               width='100%'
               height='100%'
+              margin={{bottom: '0.563rem'}}
             ></i-markdown>
             <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem'>
-              <i-label caption='Details here: ' font={{ size: '0.875rem' }}></i-label>
-              <i-label id='lblLink' font={{ size: '0.875rem' }}></i-label>
+              <i-label caption='Details here: ' font={{size: '1rem'}}></i-label>
+              <i-label id='lblLink' font={{size: '1rem'}}></i-label>
             </i-hstack>
           </i-vstack>
-          <i-vstack gap="0.5rem" padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} background={{ color: '#f1f1f1' }} verticalAlignment='space-between'>
-            <i-vstack>
-              <i-label id='lblTitle' font={{ bold: true, size: '1rem' }}></i-label>
-              <i-label caption="I don't have a digital wallet" font={{ size: '0.8125rem' }} link={{ href: 'https://metamask.io/' }}></i-label>
+          <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '5.25rem' }} verticalAlignment='space-between'>
+            <i-vstack class="text-center" margin={{bottom: '0.25rem'}}>
+              <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
+              <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
             </i-vstack>
             <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
               <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
@@ -685,15 +745,25 @@ export default class Main extends Module implements PageBlock {
                   <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
                   <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
                 </i-hstack>
-                <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
-                  <i-label caption='Balance:' font={{ size: '0.875rem' }}></i-label>
-                  <i-label id='lblBalance' font={{ size: '0.875rem' }}></i-label>
+                <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
+                  <i-label caption="Your donation" font={{weight: 500, size: '1rem'}}></i-label>
+                  <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
+                    <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
+                    <i-label id='lblBalance' font={{ size: '1rem' }}></i-label>
+                  </i-hstack>
                 </i-hstack>
-                <i-grid-layout id='gridTokenInput' templateColumns={['60%', 'auto']} border={{ radius: 5 }} overflow="hidden">
+                <i-grid-layout
+                  id='gridTokenInput'
+                  templateColumns={['60%', 'auto']}
+                  overflow="hidden"
+                  background={{color: Theme.input.background}}
+                  font={{color: Theme.input.fontColor}}
+                  class={inputGroupStyle}
+                >
                   <nft-minter-token-selection
                     id='tokenSelection'
                     class={tokenSelectionStyle}
-                    background={{ color: '#fff' }}
+                    background={{ color: 'transparent' }}
                     width="100%"
                     readonly={true}
                     onSelectToken={this.selectToken.bind(this)}
@@ -705,38 +775,48 @@ export default class Main extends Module implements PageBlock {
                     minHeight={40}
                     class={inputStyle}
                     inputType='number'
-                    font={{ size: '0.875rem' }}
+                    font={{ size: '1.25rem' }}
+                    opacity={0.3}
                     onChanged={this.onAmountChanged.bind(this)}
                   ></i-input>
                 </i-grid-layout>
-                <i-hstack horizontalAlignment="center" verticalAlignment='center' gap="8px">
+                <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{top: '0.75rem'}}>
                   <i-button
                     id="btnApprove"
-                    width='100px'
+                    width='100%'
                     caption="Approve"
-                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
-                    font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
+                    padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                    font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                    border={{radius: 12}}
                     visible={false}
                     onClick={this.onApprove.bind(this)}
                   ></i-button>                
                   <i-button
                     id='btnSubmit'
-                    width='100px'
+                    width='100%'
                     caption='Submit'
-                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
-                    font={{ size: '0.875rem', color: Theme.colors.primary.contrastText }}
+                    padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                    font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                    background={{color: Theme.background.gradient}}
+                    border={{radius: 12}}
                     onClick={this.onSubmit.bind(this)}
                     enabled={false}
                   ></i-button>
-                </i-hstack>
+                </i-vstack>
               </i-vstack>
-              <i-vstack gap='0.25rem'>
-                <i-label id='lblRef' font={{ size: '0.75rem' }}></i-label>
-                <i-label id='lblAddress' font={{ size: '0.75rem' }} overflowWrap='anywhere'></i-label>
+              <i-vstack gap='0.25rem' margin={{top: '1rem'}}>
+                <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
+                <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
               </i-vstack>
-              <i-label caption='Terms & Condition' font={{ size: '0.75rem' }} link={{ href: 'https://docs.scom.dev/' }}></i-label>
+              <i-label
+                caption='Terms & Condition'
+                font={{ size: '0.875rem' }}
+                link={{ href: 'https://docs.scom.dev/' }}
+                opacity={0.6}
+                margin={{top: '1rem'}}
+              ></i-label>
             </i-vstack>
           </i-vstack>
         </i-grid-layout>
