@@ -105,7 +105,8 @@ export default class Main extends Module implements PageBlock {
       let chainId = getChainId();
       const _tokenList = getTokenList(chainId);
       const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
-      this.lblBalance.caption = token ? (await getTokenBalance(token)).toFixed(2) : "0";
+      const symbol = token?.symbol || '';
+      this.lblBalance.caption = token ? `${(await getTokenBalance(token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
     } catch {}
   }
 
@@ -522,7 +523,8 @@ export default class Main extends Module implements PageBlock {
   }
 
   private async selectToken(token: ITokenObject) {
-    this.lblBalance.caption = (await getTokenBalance(token)).toFixed(2);
+    const symbol = token?.symbol || '';
+    this.lblBalance.caption = `${(await getTokenBalance(token)).toFixed(2)} ${symbol}`;
   }
 
   private updateSubmitButton(submitting: boolean) {
