@@ -760,6 +760,8 @@ export default class Main extends Module implements PageBlock {
                   overflow="hidden"
                   background={{color: Theme.input.background}}
                   font={{color: Theme.input.fontColor}}
+                  height={56}
+                  verticalAlignment="center"
                   class={inputGroupStyle}
                 >
                   <nft-minter-token-selection
