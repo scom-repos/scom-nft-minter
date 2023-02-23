@@ -21,7 +21,7 @@ export const markdownStyle = Styles.style({
 export const inputStyle = Styles.style({
   $nest: {
     '> input': {
-      background: Theme.input.background,
+      background: 'transparent',
       border: 0,
       padding: '0.25rem 0.5rem',
       textAlign: 'right',
