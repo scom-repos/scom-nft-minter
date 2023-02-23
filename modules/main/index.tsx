@@ -434,6 +434,14 @@ export default class Main extends Module implements PageBlock {
     super.init();
     await this.initWalletData();
     await this.onSetupPage(isWalletConnected());
+    const defaultTag = {
+      inputFontColor: '#ffffff',
+      inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
+      fontColor: '#323232',
+      backgroundColor: '#DBDBDB'
+    }
+    const parent = this.parentElement.closest('ide-toolbar') as any;
+    if (parent) parent.setTag(defaultTag);
   }
 
   private async initWalletData() {
@@ -709,10 +717,9 @@ export default class Main extends Module implements PageBlock {
           width='100%'
           height='100%'
           templateColumns={['repeat(2, 1fr)']}
-          gap={{column: '6.313rem'}}
           padding={{bottom: '1.563rem'}}
         >
-          <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '0.5rem' }}>
+          <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' }}>
             <i-hstack margin={{bottom: '1.25rem'}}>
               <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
             </i-hstack>
