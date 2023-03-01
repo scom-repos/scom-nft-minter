@@ -305,6 +305,8 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             this._oldData = {};
             this._data = {};
             this.isApproving = false;
+            this.oldTag = {};
+            this.tag = {};
             this.defaultEdit = true;
             this.onWalletConnect = async (connected) => {
                 let chainId = wallet_1.getChainId();
@@ -398,7 +400,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     command: (builder, userInputData) => {
                         return {
                             execute: async () => {
-                                this._oldData = this._data;
+                                this._oldData = Object.assign({}, this._data);
                                 if (userInputData.name != undefined)
                                     this._data.name = userInputData.name;
                                 if (userInputData.productType != undefined)
@@ -437,12 +439,16 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                         this.mdAlert.showModal();
                                     }
                                 }, this.updateSpotsRemaining);
+                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                    builder.setData(this._data);
                             },
                             undo: () => {
-                                this._data = this._oldData;
+                                this._data = Object.assign({}, this._oldData);
                                 this._productId = this._data.productId;
                                 this.configDApp.data = this._data;
                                 this.refreshDApp();
+                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                    builder.setData(this._data);
                             },
                             redo: () => { }
                         };
@@ -500,19 +506,20 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     command: (builder, userInputData) => {
                         return {
                             execute: async () => {
-                                if (userInputData) {
-                                    this.oldTag = this.tag;
-                                    this.setTag(userInputData);
-                                    if (builder)
-                                        builder.setTag(userInputData);
-                                }
+                                if (!userInputData)
+                                    return;
+                                this.oldTag = Object.assign({}, this.tag);
+                                if (builder)
+                                    builder.setTag(userInputData);
+                                // this.setTag(userInputData);
                             },
                             undo: () => {
-                                if (userInputData) {
-                                    this.setTag(this.oldTag);
-                                    if (builder)
-                                        builder.setTag(this.oldTag);
-                                }
+                                if (!userInputData)
+                                    return;
+                                this.tag = Object.assign({}, this.oldTag);
+                                if (builder)
+                                    builder.setTag(this.tag);
+                                // this.setTag(this.oldTag);
                             },
                             redo: () => { }
                         };
@@ -565,19 +572,25 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             return this.tag;
         }
         async setTag(value) {
-            this.tag = value;
+            const newValue = value || {};
+            for (let prop in newValue) {
+                if (newValue.hasOwnProperty(prop))
+                    this.tag[prop] = newValue[prop];
+            }
             this.updateTheme();
         }
+        updateStyle(name, value) {
+            value ?
+                this.style.setProperty(name, value) :
+                this.style.removeProperty(name);
+        }
         updateTheme() {
-            var _a, _b, _c, _d;
-            if ((_a = this.tag) === null || _a === void 0 ? void 0 : _a.fontColor)
-                this.style.setProperty('--text-primary', this.tag.fontColor);
-            if ((_b = this.tag) === null || _b === void 0 ? void 0 : _b.backgroundColor)
-                this.style.setProperty('--background-main', this.tag.backgroundColor);
-            if ((_c = this.tag) === null || _c === void 0 ? void 0 : _c.inputFontColor)
-                this.style.setProperty('--input-font_color', this.tag.inputFontColor);
-            if ((_d = this.tag) === null || _d === void 0 ? void 0 : _d.inputBackgroundColor)
-                this.style.setProperty('--input-background', this.tag.inputBackgroundColor);
+            var _a, _b, _c, _d, _e;
+            this.updateStyle('--text-primary', (_a = this.tag) === null || _a === void 0 ? void 0 : _a.fontColor);
+            this.updateStyle('--background-main', (_b = this.tag) === null || _b === void 0 ? void 0 : _b.backgroundColor);
+            this.updateStyle('--input-font_color', (_c = this.tag) === null || _c === void 0 ? void 0 : _c.inputFontColor);
+            this.updateStyle('--input-background', (_d = this.tag) === null || _d === void 0 ? void 0 : _d.inputBackgroundColor);
+            this.updateStyle('--colors-primary-main', (_e = this.tag) === null || _e === void 0 ? void 0 : _e.buttonBackgroundColor);
         }
         async edit() {
             this.gridDApp.visible = false;
@@ -682,18 +695,27 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
         }
         async init() {
-            super.init();
-            await this.initWalletData();
-            await this.onSetupPage(wallet_1.isWalletConnected());
             const defaultTag = {
                 inputFontColor: '#ffffff',
                 inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
                 fontColor: '#323232',
                 backgroundColor: '#DBDBDB'
             };
-            const parent = this.parentElement.closest('ide-toolbar');
-            if (parent)
-                parent.setTag(defaultTag);
+            const toolbar = this.parentElement.closest('ide-toolbar');
+            if (toolbar) {
+                this.setTag(defaultTag);
+                toolbar.setTag(defaultTag);
+            }
+            const element = this.parentElement.closest('sc-page-viewer-page-element');
+            if (element) {
+                element.style.setProperty('--text-primary', defaultTag.fontColor);
+                element.style.setProperty('--background-main', defaultTag.backgroundColor);
+                element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+                element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+            }
+            super.init();
+            await this.initWalletData();
+            await this.onSetupPage(wallet_1.isWalletConnected());
         }
         async initWalletData() {
             const selectedProvider = localStorage.getItem('walletProvider');
