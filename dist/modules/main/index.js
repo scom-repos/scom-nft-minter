@@ -691,9 +691,20 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                 fontColor: '#323232',
                 backgroundColor: '#DBDBDB'
             };
-            const parent = this.parentElement.closest('ide-toolbar');
-            if (parent)
-                parent.setTag(defaultTag);
+            const toolbar = this.parentElement.closest('ide-toolbar');
+            if (toolbar)
+                toolbar.setTag(defaultTag);
+            const element = this.parentElement.closest('sc-page-viewer-page-element');
+            if (element) {
+                if (defaultTag === null || defaultTag === void 0 ? void 0 : defaultTag.fontColor)
+                    element.style.setProperty('--text-primary', defaultTag.fontColor);
+                if (defaultTag === null || defaultTag === void 0 ? void 0 : defaultTag.backgroundColor)
+                    element.style.setProperty('--background-main', defaultTag.backgroundColor);
+                if (defaultTag === null || defaultTag === void 0 ? void 0 : defaultTag.inputFontColor)
+                    element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+                if (defaultTag === null || defaultTag === void 0 ? void 0 : defaultTag.inputBackgroundColor)
+                    element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+            }
         }
         async initWalletData() {
             const selectedProvider = localStorage.getItem('walletProvider');
