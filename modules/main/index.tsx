@@ -440,8 +440,19 @@ export default class Main extends Module implements PageBlock {
       fontColor: '#323232',
       backgroundColor: '#DBDBDB'
     }
-    const parent = this.parentElement.closest('ide-toolbar') as any;
-    if (parent) parent.setTag(defaultTag);
+    const toolbar = this.parentElement.closest('ide-toolbar') as any;
+    if (toolbar) toolbar.setTag(defaultTag);
+    const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
+    if (element) {
+      if (defaultTag?.fontColor)
+        element.style.setProperty('--text-primary', defaultTag.fontColor);
+      if (defaultTag?.backgroundColor)
+        element.style.setProperty('--background-main', defaultTag.backgroundColor);
+      if (defaultTag?.inputFontColor)
+        element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+      if (defaultTag?.inputBackgroundColor)
+        element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+    }
   }
 
   private async initWalletData() {

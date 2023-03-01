@@ -6241,7 +6241,7 @@ function BufferBigIntNotDefined () {
         Tsize: item.size
       })
     };
-    Links.sort(linkComparator);
+
     try {
       const dirUnixFS = new UnixFS({
         type: 'directory',
@@ -13719,7 +13719,6 @@ __export(exports, {
   TreeView: () => TreeView,
   Unobserve: () => Unobserve,
   Upload: () => Upload,
-  UploadModal: () => UploadModal,
   VStack: () => VStack,
   Video: () => Video,
   application: () => application,
@@ -17869,8 +17868,6 @@ var applicationStyle = style({
 var src_exports2 = {};
 __export(src_exports2, {
   hashContent: () => hashContent,
-  hashFile: () => hashFile,
-  hashFiles: () => hashFiles,
   hashItems: () => hashItems,
   parse: () => parse
 });
@@ -17879,16 +17876,14 @@ function parse(cid) {
   return import_ipfs_utils.default.parse(cid);
 }
 async function hashItems(items, version) {
-  let result = await import_ipfs_utils.default.hashItems(items || [], version);
-  result.type = "dir";
-  result.links = items;
-  return result;
+  return await import_ipfs_utils.default.hashItems(items || [], version);
 }
 async function hashContent(content, version) {
   if (version == void 0)
     version = 1;
-  if (content.length == 0)
+  if (content.length == 0) {
     return await import_ipfs_utils.default.hashContent("", version);
+  }
   let result;
   if (version == 1) {
     result = await import_ipfs_utils.default.hashFile(content, version, {
@@ -17898,102 +17893,7 @@ async function hashContent(content, version) {
     });
   } else
     result = await import_ipfs_utils.default.hashFile(content, version);
-  result.type = "file";
-  return result;
-}
-async function hashFile(file, version) {
-  if (version == void 0)
-    version = 1;
-  if (file.size == 0)
-    return await import_ipfs_utils.default.hashContent("", version);
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(file);
-    reader.addEventListener("error", (event) => {
-      reject("Error occurred reading file");
-    });
-    reader.addEventListener("load", async (event) => {
-      const data = new Uint8Array(event.target.result);
-      let result = await import_ipfs_utils.default.hashFile(data, version, {
-        rawLeaves: true,
-        maxChunkSize: 1048576,
-        maxChildrenPerNode: 1024
-      });
-      resolve(result);
-    });
-  });
-}
-function convertToTree(items) {
-  const root = {
-    $idx: {},
-    links: []
-  };
-  for (const item of items) {
-    if (item.path && item.cid) {
-      const paths = item.path.split("/");
-      let node = root;
-      for (const path of paths) {
-        if (path) {
-          if (!node.$idx[path]) {
-            let item2 = {
-              $idx: {},
-              links: [],
-              name: path,
-              type: "dir"
-            };
-            node.$idx[path] = item2;
-            node.links.push(item2);
-          }
-          ;
-          node = node.$idx[path];
-        }
-        ;
-      }
-      ;
-      delete node.links;
-      delete node.$idx;
-      node.type = "file";
-      node.size = item.cid.size;
-      node.cid = item.cid.cid;
-    }
-    ;
-  }
-  ;
-  return root;
-}
-async function hashTree(tree) {
-  delete tree.$idx;
-  let items = tree.links;
-  if (items) {
-    for (const item of items) {
-      delete item.$idx;
-      if (item.type == "dir") {
-        await hashTree(item);
-      }
-      ;
-    }
-    ;
-    let cid = await hashItems(items);
-    tree.type = "dir";
-    tree.cid = cid.cid;
-    tree.size = cid.size;
-  }
-  ;
-  return tree;
-}
-async function hashFiles(files, version) {
-  if (version == void 0)
-    version = 1;
-  return new Promise(async (resolve, reject) => {
-    try {
-      let tree = convertToTree(files);
-      let cid = await hashTree(tree);
-      resolve(cid);
-    } catch (err) {
-      reject(err);
-    }
-    ;
-  });
+  return result.cid;
 }
 
 // packages/image/src/style/image.css.ts
@@ -18423,1210 +18323,6 @@ var Button = class extends Control {
 Button = __decorateClass([
   customElements2("i-button")
 ], Button);
-
-// packages/upload/src/style/upload.css.ts
-var Theme6 = theme_exports.ThemeVars;
-cssRule("i-upload", {
-  margin: "1rem 0",
-  listStyle: "none",
-  minHeight: 200,
-  minWidth: 200,
-  height: "100%",
-  width: "100%",
-  display: "flex",
-  flexWrap: "wrap",
-  $nest: {
-    ".i-upload-wrapper": {
-      position: "relative",
-      border: `2px dashed ${Theme6.divider}`,
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      marginBottom: "1rem"
-    },
-    "i-upload-drag": {
-      position: "absolute",
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    },
-    ".i-upload-drag_area": {
-      marginTop: "4rem"
-    },
-    ".i-upload-dragger_active": {
-      border: `2px dashed ${Theme6.colors.primary.main}`,
-      backgroundColor: Theme6.colors.info.light,
-      opacity: "0.8"
-    },
-    'input[type="file"]': {
-      display: "none"
-    },
-    ".i-upload_preview": {
-      display: "none",
-      minHeight: 200,
-      position: "relative",
-      overflow: "hidden",
-      width: "100%",
-      height: "100%"
-    },
-    ".i-upload_preview img": {
-      maxHeight: "inherit",
-      maxWidth: "100%"
-    },
-    ".i-upload_preview-img": {
-      maxHeight: "inherit",
-      maxWidth: "100%",
-      display: "table"
-    },
-    ".i-upload_preview-crop": {
-      position: "absolute",
-      border: `1px dashed ${Theme6.background.paper}`,
-      width: 150,
-      height: 150,
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%, -50%)",
-      boxSizing: "border-box",
-      boxShadow: "0 0 0 9999em",
-      color: "rgba(0, 0, 0, 0.5)",
-      overflow: "hidden",
-      cursor: "crosshair"
-    },
-    ".i-upload_preview-remove": {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      visibility: "hidden",
-      opacity: 0,
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "rgba(0, 0, 0, 0.58)",
-      cursor: "pointer",
-      $nest: {
-        "> span": {
-          padding: "1rem",
-          border: "2px solid #fff",
-          borderRadius: "5px",
-          color: "#fff",
-          fontWeight: "bold"
-        }
-      }
-    },
-    ".i-upload_preview:hover .i-upload_preview-remove.active": {
-      visibility: "visible",
-      opacity: 1
-    },
-    ".i-upload_list": {
-      margin: "1rem 0 2rem",
-      display: "flex",
-      gap: 7,
-      width: "100%"
-    },
-    ".i-upload_list.i-upload_list-picture": {
-      flexDirection: "row"
-    },
-    ".i-upload_list.i-upload_list-text": {
-      flexDirection: "column",
-      alignContent: "center"
-    },
-    ".i-upload_list.i-upload_list-text i-icon": {
-      position: "unset"
-    },
-    ".i-upload_list-item": {
-      display: "inline-flex",
-      position: "relative",
-      justifyContent: "space-between"
-    },
-    ".i-upload_list-item:hover i-icon": {
-      display: "block"
-    },
-    ".i-upload_list.i-upload_list-text .i-upload_list-item:hover": {
-      backgroundColor: Theme6.background.default
-    },
-    ".i-upload_list.i-upload_list-text .i-upload_list-item": {
-      width: "100%",
-      padding: ".25rem"
-    },
-    ".i-upload_list-item .i-upload_list-img": {
-      width: 100,
-      height: 50,
-      objectFit: "cover"
-    },
-    ".i-upload_list-item i-icon": {
-      cursor: "pointer",
-      position: "absolute",
-      right: -5,
-      top: -5,
-      display: "none"
-    }
-  }
-});
-
-// packages/upload/src/upload.ts
-var Theme7 = theme_exports.ThemeVars;
-var fileId = 1;
-var genFileId = () => Date.now() + fileId++;
-var UploadDrag = class extends Control {
-  constructor(parent, options) {
-    super(parent, options);
-    this.counter = 0;
-  }
-  get caption() {
-    return this._caption;
-  }
-  set caption(value) {
-    this._caption = value;
-    this._labelElm.textContent = this._caption || "";
-    if (!value)
-      this._labelElm.style.display = "none";
-    else
-      this._labelElm.style.display = "";
-  }
-  get disabled() {
-    return this._disabled;
-  }
-  set disabled(value) {
-    this._disabled = value;
-  }
-  handleOnDragEnter(source, event) {
-    var _a;
-    source.preventDefault();
-    if (this.disabled)
-      return;
-    this.counter++;
-    (_a = this.parentElement) == null ? void 0 : _a.classList.add("i-upload-dragger_active");
-  }
-  handleOnDragOver(source, event) {
-    source.preventDefault();
-  }
-  handleOnDragLeave(source, event) {
-    var _a;
-    if (this.disabled)
-      return;
-    this.counter--;
-    if (this.counter === 0) {
-      (_a = this.parentElement) == null ? void 0 : _a.classList.remove("i-upload-dragger_active");
-    }
-  }
-  async getFiles(files) {
-    let result = [];
-    async function addFile2(entry) {
-      return new Promise((resolve, reject) => {
-        entry.file(async (file) => {
-          const rawFile = file;
-          rawFile.path = entry.fullPath;
-          rawFile.cid = await hashFile(file);
-          result.push(rawFile);
-          resolve();
-        }, reject);
-      });
-    }
-    ;
-    function getEntries(entry) {
-      return new Promise((resolve) => {
-        let dirReader = entry.createReader();
-        dirReader.readEntries((entries) => {
-          resolve(entries);
-        });
-      });
-    }
-    ;
-    async function getFiles(entries) {
-      for (let i = 0; i < entries.length; i++) {
-        let entry = entries[i];
-        if (entry == null ? void 0 : entry.isFile)
-          await addFile2(entry);
-        else if (entry == null ? void 0 : entry.isDirectory) {
-          let entries2 = await getEntries(entry);
-          await getFiles(entries2);
-        }
-        ;
-      }
-      ;
-    }
-    ;
-    return new Promise(async (resolve) => {
-      for (let i = 0; i < files.length; i++) {
-        let entry = files[i].webkitGetAsEntry();
-        if (entry == null ? void 0 : entry.isFile) {
-          await addFile2(entry);
-        } else if (entry == null ? void 0 : entry.isDirectory) {
-          let entries = await getEntries(entry);
-          await getFiles(entries);
-        }
-      }
-      ;
-      resolve(result);
-    });
-  }
-  async handleOnDrop(source, event) {
-    var _a, _b;
-    source.preventDefault();
-    if (this.disabled)
-      return;
-    this.counter = 0;
-    (_a = this.parentElement) == null ? void 0 : _a.classList.remove("i-upload-dragger_active");
-    const accept = (_b = this.parentElement) == null ? void 0 : _b.getAttribute("accept");
-    if (!accept) {
-      if (this.onDrop)
-        this.onDrop(this, await this.getFiles(source.dataTransfer.items));
-      return;
-    }
-    ;
-    const valids = [].slice.call(source.dataTransfer.files).filter((file) => {
-      const { type, name } = file;
-      const extension = name.indexOf(".") > -1 ? `.${name.split(".").pop()}` : "";
-      const baseType = type.replace(/\/.*$/, "");
-      return accept.split(",").map((type2) => type2.trim()).filter((type2) => type2).some((acceptedType) => {
-        if (/\..+$/.test(acceptedType)) {
-          return extension === acceptedType;
-        }
-        if (/\/\*$/.test(acceptedType)) {
-          return baseType === acceptedType.replace(/\/\*$/, "");
-        }
-        if (/^[^\/]+\/[^\/]+$/.test(acceptedType)) {
-          return type === acceptedType;
-        }
-        return false;
-      });
-    });
-    if (this.onDrop)
-      this.onDrop(this, valids);
-  }
-  init() {
-    if (!this._wrapperElm) {
-      super.init();
-      this.onDrop = this.getAttribute("onDrop", true) || this.onDrop;
-      this._wrapperElm = this.createElement("div", this);
-      this._wrapperElm.classList.add("i-upload-drag_area");
-      this._labelElm = this.createElement("span", this._wrapperElm);
-      this._labelElm.style.color = Theme7.text.primary;
-      this.caption = this.getAttribute("caption", true);
-      this.disabled = this.getAttribute("disabled", true);
-      this.addEventListener("dragenter", this.handleOnDragEnter.bind(this));
-      this.addEventListener("dragover", this.handleOnDragOver.bind(this));
-      this.addEventListener("dragleave", this.handleOnDragLeave.bind(this));
-      this.addEventListener("drop", this.handleOnDrop.bind(this));
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-UploadDrag = __decorateClass([
-  customElements2("i-upload-drag")
-], UploadDrag);
-var Upload = class extends Control {
-  constructor(parent, options) {
-    super(parent, options, {
-      multiple: false
-    });
-    this._dt = new DataTransfer();
-    this._fileList = [];
-    this.handleRemoveImagePreview = (event) => {
-      if (!this.isPreviewing || !this.enabled)
-        return;
-      event.stopPropagation();
-      const file = this._dt.files.length ? this._dt.files[0] : void 0;
-      this.clear();
-      if (this.onRemoved)
-        this.onRemoved(this, file);
-    };
-    this.toBase64 = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  }
-  get caption() {
-    return this._caption;
-  }
-  set caption(value) {
-    this._caption = value;
-  }
-  get accept() {
-    return this._accept;
-  }
-  set accept(value) {
-    this._accept = value;
-    this._fileElm && value && this._fileElm.setAttribute("accept", `${value}`);
-  }
-  get draggable() {
-    return this._draggable;
-  }
-  set draggable(value) {
-    this._draggable = value;
-    if (value)
-      this.classList.add("el-upload-dragger");
-    else
-      this.classList.remove("el-upload-dragger");
-  }
-  get multiple() {
-    return this._multiple;
-  }
-  set multiple(value) {
-    this._multiple = value;
-    if (this._fileElm && value)
-      this._fileElm.setAttribute("multiple", `${value}`);
-  }
-  get fileList() {
-    return this._fileList;
-  }
-  set fileList(value) {
-    this._fileList = value;
-    if (value && value.length) {
-      value.forEach((f) => {
-        this._dt.items.add(f);
-      });
-      if (this._fileElm) {
-        this._fileElm.files = this._dt.files;
-        this.updateFileListUI(this._fileElm.files);
-      }
-    }
-  }
-  get enabled() {
-    return super.enabled;
-  }
-  set enabled(value) {
-    super.enabled = value;
-    if (this._uploadDragElm)
-      this._uploadDragElm.disabled = !value || !this.draggable;
-    if (!this._previewRemoveElm)
-      return;
-    if (value)
-      this._previewRemoveElm.classList.add("active");
-    else
-      this._previewRemoveElm.classList.remove("active");
-  }
-  addFile(file) {
-    this._dt.items.add(file);
-    this._fileList.push(file);
-    if (this.onAdded)
-      this.onAdded(this, file);
-  }
-  previewFile(files) {
-    if (!files || !files.length)
-      return;
-    const imgUrl = URL.createObjectURL(files[files.length - 1]);
-    this.preview(imgUrl);
-  }
-  handleUpload(source, event) {
-    const files = source.target.files;
-    this.proccessFiles(files);
-  }
-  async proccessFiles(files) {
-    if (!files || !files.length)
-      return;
-    if (!this.fileList)
-      this._dt = new DataTransfer();
-    for (let i = 0; i < files.length; i++) {
-      let file = files[i];
-      file.uid = genFileId();
-      if (!!this.onUploading)
-        await this.checkBeforeUpload(file);
-      else
-        this.addFile(file);
-    }
-    this.updateFileListUI(this._dt.files);
-    this.previewFile(this._dt.files);
-    if (this.onChanged)
-      this.onChanged(this, this.fileList);
-  }
-  async checkBeforeUpload(file) {
-    const before = this.onUploading(this, file);
-    if (before && before.then) {
-      before.then((value) => {
-        if (value)
-          this.addFile(file);
-      }, () => {
-        if (this.onRemoved)
-          this.onRemoved(this, file);
-      });
-    } else {
-      if (this.onRemoved)
-        this.onRemoved(this, file);
-    }
-  }
-  updateFileListUI(files) {
-    if (this._fileListElm) {
-      this._fileListElm.innerHTML = "";
-      for (let file of files) {
-        const itemElm = this.createElement("div", this._fileListElm);
-        itemElm.classList.add("i-upload_list-item");
-        if (file.type.includes("image/")) {
-          this._fileListElm.classList.add("i-upload_list-picture");
-          const imgElm = new Image();
-          imgElm.src = URL.createObjectURL(file);
-          imgElm.classList.add("i-upload_list-img");
-          imgElm.onload = function() {
-            URL.revokeObjectURL(imgElm.src);
-          };
-          itemElm.appendChild(imgElm);
-        } else {
-          this._fileListElm.classList.add("i-upload_list-text");
-          const spanElm = this.createElement("span", itemElm);
-          spanElm.textContent = file.name;
-        }
-        const removeIcon = new Icon(void 0, {
-          width: 12,
-          height: 12,
-          fill: Theme7.action.active,
-          name: "trash"
-        });
-        itemElm.appendChild(removeIcon);
-        removeIcon.addEventListener("click", () => this.handleRemove(file));
-      }
-      this._fileListElm.style.display = files.length ? "flex" : "none";
-    }
-  }
-  renderPreview() {
-    this._previewElm = this.createElement("div", this._wrapperElm);
-    this._previewElm.classList.add("i-upload_preview");
-    this._wrapImgElm = this.createElement("div", this._previewElm);
-    this._wrapImgElm.classList.add("i-upload_preview-img");
-    this._previewRemoveElm = this.createElement("div", this._previewElm);
-    if (this.enabled) {
-      this._previewRemoveElm.classList.add("active");
-    } else {
-      this._previewRemoveElm.classList.remove("active");
-    }
-    this._previewRemoveElm.classList.add("i-upload_preview-remove");
-    this._previewRemoveElm.onclick = this.handleRemoveImagePreview;
-    const span = this.createElement("span", this._previewRemoveElm);
-    span.style.fontFamily = Theme7.typography.fontFamily;
-    span.innerHTML = "Click to remove";
-  }
-  handleRemove(file) {
-    const rawFile = file;
-    for (let i = 0; i < this._dt.items.length; i++) {
-      if (rawFile.uid === this._dt.files[i].uid) {
-        this._dt.items.remove(i);
-        this.fileList = this._fileList.filter((f) => f.uid !== rawFile.uid);
-        if (this.onRemoved)
-          this.onRemoved(this, file);
-        break;
-      }
-    }
-    this._fileElm.files = this._dt.files;
-    this.updateFileListUI(this._dt.files);
-    if (!this._dt.items.length)
-      this.clear();
-  }
-  preview(uri) {
-    if (!uri)
-      return;
-    this.isPreviewing = true;
-    this._wrapImgElm.innerHTML = "";
-    this._previewImgElm = new Image2();
-    this._wrapImgElm.appendChild(this._previewImgElm);
-    this._previewImgElm.url = uri;
-    this._previewElm.style.display = "block";
-    this._wrapperFileElm.style.display = "none";
-    if (this._uploadDragElm)
-      this._uploadDragElm.style.display = "none";
-  }
-  clear() {
-    this._fileElm.value = "";
-    this._wrapperFileElm.style.display = "block";
-    if (this._uploadDragElm)
-      this._uploadDragElm.style.display = this.draggable ? "flex" : "none";
-    if (this._previewElm)
-      this._previewElm.style.display = "none";
-    this._wrapImgElm && (this._wrapImgElm.innerHTML = "");
-    if (this._fileListElm)
-      this._fileListElm.style.display = "none";
-    this._dt = new DataTransfer();
-    this.isPreviewing = false;
-    this._fileList = [];
-  }
-  async upload(endpoint) {
-    let cid = await hashFiles(this._fileList);
-    let result = await application.postData(endpoint, cid);
-    console.dir(result);
-  }
-  addFiles() {
-  }
-  addFolder() {
-  }
-  init() {
-    if (!this.initialized) {
-      super.init();
-      this._wrapperElm = this.createElement("div", this);
-      this._wrapperElm.classList.add("i-upload-wrapper");
-      this._wrapperFileElm = this.createElement("div", this._wrapperElm);
-      this.caption = this.getAttribute("caption", true);
-      this.draggable = this.getAttribute("draggable", true, false);
-      this._uploadDragElm = new UploadDrag(this, {
-        caption: this.caption,
-        disabled: !this.enabled || !this.draggable,
-        onDrop: (source, value) => {
-          value && this.proccessFiles(value);
-        }
-      });
-      this._wrapperElm.appendChild(this._uploadDragElm);
-      this._fileElm = this.createElement("input", this._wrapperFileElm);
-      this._fileElm.type = "file";
-      this.multiple = this.getAttribute("multiple", true);
-      this.accept = this.getAttribute("accept");
-      if (!this.enabled)
-        this._fileElm.setAttribute("disabled", "");
-      const btn = new Button(this, {
-        caption: "Choose an image"
-      });
-      btn.className = `i-upload_btn ${!this.enabled && "disabled"}`;
-      this._wrapperFileElm.appendChild(btn);
-      const fileListAttr = this.getAttribute("showFileList", true);
-      if (fileListAttr && !this._fileListElm) {
-        this._fileListElm = this.createElement("div", this);
-        this._fileListElm.classList.add("i-upload_list");
-        this._fileListElm.style.display = "none";
-      }
-      this.renderPreview();
-      const fileList = this.getAttribute("fileList", true);
-      fileList && (this.fileList = fileList);
-      this._wrapperElm.addEventListener("click", (event) => {
-        event.stopPropagation();
-        if (!this.enabled)
-          return;
-        if (!this.isPreviewing)
-          this._fileElm.click();
-      });
-      this._fileElm.addEventListener("change", this.handleUpload.bind(this));
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Upload = __decorateClass([
-  customElements2("i-upload")
-], Upload);
-
-// packages/link/src/style/link.css.ts
-var Theme8 = theme_exports.ThemeVars;
-cssRule("i-link", {
-  display: "block",
-  cursor: "pointer",
-  textTransform: "inherit",
-  $nest: {
-    "&:hover *": {
-      color: Theme8.colors.primary.dark
-    },
-    "> a": {
-      display: "inline",
-      transition: "all .3s",
-      textDecoration: "underline",
-      color: "inherit",
-      fontSize: "inherit",
-      fontWeight: "inherit",
-      fontFamily: "inherit",
-      textTransform: "inherit"
-    }
-  }
-});
-
-// packages/link/src/link.ts
-var Link = class extends Control {
-  constructor(parent, options) {
-    super(parent, options, {
-      target: "_blank"
-    });
-  }
-  get href() {
-    return this._href;
-  }
-  set href(value) {
-    this._href = typeof value === "string" ? value : "";
-    if (this._linkElm)
-      this._linkElm.href = this._href;
-  }
-  get target() {
-    return this._target;
-  }
-  set target(value) {
-    this._target = value;
-    if (this._linkElm)
-      this._linkElm.target = value;
-  }
-  append(children) {
-    if (!this._linkElm) {
-      this._linkElm = this.createElement("a", this);
-    }
-    this._linkElm.appendChild(children);
-  }
-  _handleClick(event, stopPropagation) {
-    event.preventDefault();
-    window.open(this._linkElm.href, this._linkElm.target);
-    return super._handleClick(event);
-  }
-  addChildControl(control) {
-    if (this._linkElm)
-      this._linkElm.appendChild(control);
-  }
-  removeChildControl(control) {
-    if (this._linkElm && this._linkElm.contains(control))
-      this._linkElm.removeChild(control);
-  }
-  init() {
-    if (!this.initialized) {
-      super.init();
-      if (!this._linkElm)
-        this._linkElm = this.createElement("a", this);
-      this.classList.add("i-link");
-      const hrefAttr = this.getAttribute("href", true);
-      hrefAttr && (this.href = hrefAttr);
-      const targetAttr = this.getAttribute("target", true);
-      targetAttr && (this._linkElm.target = targetAttr);
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Link = __decorateClass([
-  customElements2("i-link")
-], Link);
-
-// packages/label/src/style/label.css.ts
-var Theme9 = theme_exports.ThemeVars;
-var captionStyle = style({
-  display: "inline-block",
-  color: Theme9.text.primary,
-  fontFamily: Theme9.typography.fontFamily,
-  fontSize: Theme9.typography.fontSize
-});
-
-// packages/label/src/label.ts
-var Label = class extends Control {
-  constructor(parent, options) {
-    super(parent, options);
-  }
-  get caption() {
-    return this.captionSpan.innerHTML;
-  }
-  set caption(value) {
-    this.captionSpan.innerHTML = value || "";
-  }
-  get link() {
-    if (!this._link) {
-      this._link = new Link(this, {
-        href: "#",
-        target: "_blank",
-        font: this.font
-      });
-      this._link.append(this.captionSpan);
-      this.appendChild(this._link);
-    }
-    return this._link;
-  }
-  set link(value) {
-    if (this._link) {
-      this._link.prepend(this.captionSpan);
-      this._link.remove();
-    }
-    this._link = value;
-    if (this._link) {
-      this._link.append(this.captionSpan);
-      this.appendChild(this._link);
-    }
-  }
-  set height(value) {
-    this.setPosition("height", value);
-    if (this.captionSpan)
-      this.captionSpan.style.height = value + "px";
-  }
-  set width(value) {
-    this.setPosition("width", value);
-    if (this.captionSpan)
-      this.captionSpan.style.width = value + "px";
-  }
-  get wordBreak() {
-    return this.style.wordBreak;
-  }
-  set wordBreak(value) {
-    this.style.wordBreak = value;
-  }
-  get overflowWrap() {
-    return this.style.overflowWrap;
-  }
-  set overflowWrap(value) {
-    this.style.overflowWrap = value;
-  }
-  init() {
-    if (!this.captionSpan) {
-      let childNodes = [];
-      for (let i = 0; i < this.childNodes.length; i++) {
-        childNodes.push(this.childNodes[i]);
-      }
-      this.captionSpan = this.createElement("span", this);
-      this.classList.add(captionStyle);
-      this.caption = this.getAttribute("caption", true) || "";
-      if (childNodes && childNodes.length) {
-        for (let i = 0; i < childNodes.length; i++) {
-          this.captionSpan.appendChild(childNodes[i]);
-        }
-      }
-      const linkAttr = this.getAttribute("link", true);
-      if (linkAttr) {
-        const link = new Link(this, {
-          ...linkAttr,
-          font: this.font
-        });
-        this.link = link;
-      }
-      const wordBreak = this.getAttribute("wordBreak", true);
-      if (wordBreak)
-        this.wordBreak = wordBreak;
-      const overflowWrap = this.getAttribute("overflowWrap", true);
-      if (overflowWrap)
-        this.overflowWrap = overflowWrap;
-      super.init();
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Label = __decorateClass([
-  customElements2("i-label")
-], Label);
-
-// packages/modal/src/style/modal.css.ts
-var Theme10 = theme_exports.ThemeVars;
-var wrapperStyle = style({
-  position: "fixed",
-  left: 0,
-  top: 0,
-  width: "100%",
-  height: "100%",
-  backgroundColor: "rgba(12, 18, 52, 0.7)",
-  opacity: 0,
-  visibility: "hidden",
-  transform: "scale(1.1)",
-  transition: "visibility 0s linear .25s,opacity .25s 0s,transform .25s",
-  zIndex: 1e3,
-  overflow: "auto"
-});
-var noBackdropStyle = style({
-  position: "inherit",
-  top: 0,
-  left: 0,
-  opacity: 0,
-  visibility: "hidden",
-  transform: "scale(1.1)",
-  transition: "visibility 0s linear .25s,opacity .25s 0s,transform .25s",
-  zIndex: 1e3,
-  overflow: "auto",
-  width: "100%",
-  maxWidth: "inherit",
-  $nest: {
-    ".modal": {
-      margin: "0"
-    }
-  }
-});
-var visibleStyle = style({
-  opacity: "1",
-  visibility: "visible",
-  transform: "scale(1)",
-  transition: "visibility 0s linear 0s,opacity .25s 0s,transform .25s"
-});
-var modalStyle = style({
-  fontFamily: "Helvetica",
-  fontSize: "14px",
-  padding: "10px 10px 5px 10px",
-  backgroundColor: Theme10.background.modal,
-  position: "relative",
-  borderRadius: "2px",
-  minWidth: "300px",
-  width: "inherit",
-  maxWidth: "100%"
-});
-var titleStyle = style({
-  fontSize: "18px",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  $nest: {
-    "span": {
-      color: Theme10.colors.primary.main
-    },
-    "i-icon": {
-      display: "inline-block",
-      cursor: "pointer"
-    }
-  }
-});
-
-// packages/modal/src/modal.ts
-var Theme11 = theme_exports.ThemeVars;
-var showEvent = new Event("show");
-var Modal = class extends Container {
-  constructor(parent, options) {
-    super(parent, options, {
-      showClose: true,
-      showBackdrop: true,
-      closeOnBackdropClick: true,
-      popupPlacement: "center"
-    });
-  }
-  get visible() {
-    var _a;
-    return ((_a = this.wrapperDiv) == null ? void 0 : _a.classList.contains(visibleStyle)) || false;
-  }
-  set visible(value) {
-    var _a, _b;
-    if (value) {
-      this.wrapperDiv.classList.add(visibleStyle);
-      this.dispatchEvent(showEvent);
-      if (this.showBackdrop) {
-        document.body.style.overflow = "hidden";
-        const parentModal = (_a = this.parentElement) == null ? void 0 : _a.closest("i-modal");
-        if (parentModal) {
-          parentModal.wrapperDiv.style.overflow = "hidden";
-          parentModal.wrapperDiv.scrollTop = 0;
-        }
-        this.wrapperDiv.style.overflow = "hidden auto";
-      }
-    } else {
-      this.wrapperDiv.classList.remove(visibleStyle);
-      if (this.showBackdrop) {
-        const parentModal = (_b = this.parentElement) == null ? void 0 : _b.closest("i-modal");
-        if (parentModal) {
-          parentModal.wrapperDiv.style.overflow = "hidden auto";
-          document.body.style.overflow = "hidden";
-        } else {
-          document.body.style.overflow = "hidden auto";
-        }
-      }
-      this.onClose && this.onClose(this);
-    }
-  }
-  get onOpen() {
-    return this._onOpen;
-  }
-  set onOpen(callback) {
-    this._onOpen = callback;
-  }
-  get title() {
-    const titleElm = this.titleSpan.querySelector("span");
-    return (titleElm == null ? void 0 : titleElm.innerHTML) || "";
-  }
-  set title(value) {
-    const titleElm = this.titleSpan.querySelector("span");
-    titleElm && (titleElm.innerHTML = value || "");
-  }
-  get popupPlacement() {
-    return this._placement;
-  }
-  set popupPlacement(value) {
-    this._placement = value;
-  }
-  get closeIcon() {
-    return this._closeIcon;
-  }
-  set closeIcon(elm) {
-    if (this._closeIcon && this.titleSpan.contains(this._closeIcon))
-      this.titleSpan.removeChild(this._closeIcon);
-    this._closeIcon = elm;
-    if (this._closeIcon) {
-      this._closeIcon.classList.add("i-modal-close");
-      this._closeIcon.onClick = () => this.visible = false;
-      this.titleSpan.appendChild(this._closeIcon);
-    }
-  }
-  get closeOnBackdropClick() {
-    return this._closeOnBackdropClick;
-  }
-  set closeOnBackdropClick(value) {
-    this._closeOnBackdropClick = typeof value === "boolean" ? value : true;
-  }
-  get showBackdrop() {
-    return this._showBackdrop;
-  }
-  set showBackdrop(value) {
-    this._showBackdrop = typeof value === "boolean" ? value : true;
-    if (this._showBackdrop) {
-      this.wrapperDiv.classList.add(wrapperStyle);
-      this.style.position = "unset";
-    } else {
-      this.style.position = "absolute";
-      this.style.left = "0px";
-      this.style.top = "0px";
-      this.wrapperDiv.classList.add(noBackdropStyle);
-    }
-  }
-  get item() {
-    return this.modalDiv.children[0];
-  }
-  set item(value) {
-    if (value instanceof Control) {
-      this.modalDiv.innerHTML = "";
-      value && this.modalDiv.appendChild(value);
-    }
-  }
-  get position() {
-    return this._wrapperPositionAt;
-  }
-  set position(value) {
-    this._wrapperPositionAt = value;
-  }
-  positionAt(placement) {
-    if (this.showBackdrop) {
-      this.positionAtFix(placement);
-    } else {
-      this.positionAtAbsolute(placement);
-    }
-  }
-  positionAtFix(placement) {
-    let parent = document.body;
-    let coords = this.getWrapperFixCoords(parent, placement);
-    this.wrapperDiv.style.width = "100%";
-    this.wrapperDiv.style.height = "100%";
-    this.wrapperDiv.style.paddingLeft = coords.left + "px";
-    this.wrapperDiv.style.paddingTop = coords.top + "px";
-    const innerModal = this.querySelector("i-modal");
-    if (innerModal) {
-      innerModal.wrapperDiv.style.width = "0px";
-      innerModal.wrapperDiv.style.height = "0px";
-    }
-  }
-  positionAtAbsolute(placement) {
-    let parent = this._parent || this.linkTo || this.parentElement || document.body;
-    let coords;
-    if (this.position === "fixed") {
-      coords = this.getWrapperFixCoords(parent, placement);
-    } else {
-      coords = this.getWrapperAbsoluteCoords(parent, placement);
-    }
-    this.wrapperDiv.style.height = "inherit";
-    this.wrapperDiv.style.width = "inherit";
-    this.wrapperDiv.style.left = coords.left + "px";
-    this.wrapperDiv.style.top = coords.top + "px";
-  }
-  getWrapperFixCoords(parent, placement) {
-    const parentCoords = parent.getBoundingClientRect();
-    let left = 0;
-    let top = 0;
-    const parentHeight = this.showBackdrop ? (parentCoords.height || window.innerHeight) - 1 : parentCoords.height;
-    switch (placement) {
-      case "center":
-        top = parentHeight / 2 - this.modalDiv.offsetHeight / 2;
-        left = parentCoords.width / 2 - this.modalDiv.offsetWidth / 2 - 1;
-        break;
-      case "top":
-        top = this.showBackdrop ? 0 : parentCoords.top;
-        left = parentCoords.left + (parent.offsetWidth - this.modalDiv.offsetWidth) / 2 - 1;
-        break;
-      case "topLeft":
-        top = this.showBackdrop ? 0 : parentCoords.top;
-        left = parentCoords.left;
-        break;
-      case "topRight":
-        top = this.showBackdrop ? 0 : parentCoords.top;
-        left = parentCoords.left + parent.offsetWidth - this.modalDiv.offsetWidth - 1;
-        break;
-      case "bottom":
-        top = parentCoords.top + parentHeight;
-        if (this.showBackdrop)
-          top = top - this.modalDiv.offsetHeight - 1;
-        left = parentCoords.left + (parent.offsetWidth - this.modalDiv.offsetWidth) / 2 - 1;
-        break;
-      case "bottomLeft":
-        top = parentCoords.top + parentHeight;
-        if (this.showBackdrop)
-          top = top - this.modalDiv.offsetHeight;
-        left = parentCoords.left;
-        break;
-      case "bottomRight":
-        top = parentCoords.top + parentHeight;
-        if (this.showBackdrop)
-          top = top - this.modalDiv.offsetHeight;
-        left = parentCoords.left + parent.offsetWidth - this.modalDiv.offsetWidth - 1;
-        break;
-      case "rightTop":
-        top = parentCoords.top;
-        left = parentCoords.right;
-        if (parentCoords.right + this.modalDiv.offsetWidth > document.documentElement.clientWidth) {
-          left = document.documentElement.clientWidth - this.modalDiv.offsetWidth;
-        }
-        break;
-    }
-    left = left < 0 ? parentCoords.left : left;
-    top = top < 0 ? parentCoords.top : top;
-    return { top, left };
-  }
-  getWrapperAbsoluteCoords(parent, placement) {
-    const parentCoords = parent.getBoundingClientRect();
-    let left = 0;
-    let top = 0;
-    switch (placement) {
-      case "center":
-        left = (parentCoords.width - this.modalDiv.offsetWidth) / 2;
-        top = (parentCoords.height - this.modalDiv.offsetHeight) / 2;
-        break;
-      case "top":
-      case "topLeft":
-        top = this.getParentOccupiedTop();
-        left = this.getParentOccupiedLeft();
-        break;
-      case "topRight":
-        top = this.getParentOccupiedTop();
-        left = parentCoords.width - this.getParentOccupiedRight() - this.modalDiv.offsetWidth;
-        break;
-      case "bottom":
-      case "bottomLeft":
-        left = 0;
-        top = parentCoords.height;
-        break;
-      case "bottomRight":
-        top = parentCoords.height;
-        left = parentCoords.width - this.modalDiv.offsetWidth;
-        break;
-      case "rightTop":
-        top = 0;
-        left = parentCoords.width;
-        break;
-    }
-    if (placement !== "bottomRight")
-      left = left < 0 ? parentCoords.left : left;
-    top = top < 0 ? parentCoords.top : top;
-    return { top, left };
-  }
-  _handleOnShow(event) {
-    if (this.popupPlacement && this.enabled)
-      this.positionAt(this.popupPlacement);
-    if (this.enabled && this._onOpen) {
-      event.preventDefault();
-      this._onOpen(this);
-    }
-  }
-  _handleClick(event) {
-    const target = event.target;
-    if (this.closeOnBackdropClick) {
-      if (!this.modalDiv.contains(target) && this.visible)
-        this.visible = false;
-    }
-    return true;
-  }
-  updateModal(name, value) {
-    if (!isNaN(Number(value)))
-      this.modalDiv.style[name] = value + "px";
-    else
-      this.modalDiv.style[name] = value;
-  }
-  refresh() {
-    super.refresh(true);
-    if (this.visible && this.popupPlacement) {
-      this.positionAt(this.popupPlacement);
-    }
-  }
-  get background() {
-    return this._background;
-  }
-  set background(value) {
-    if (!this._background) {
-      this._background = new Background(this.modalDiv, value);
-    } else {
-      this._background.setBackgroundStyle(value);
-    }
-  }
-  get width() {
-    return !isNaN(this._width) ? this._width : this.offsetWidth;
-  }
-  set width(value) {
-    this._width = value;
-    this.updateModal("width", value);
-  }
-  get border() {
-    return this._border;
-  }
-  set border(value) {
-    this._border = new Border(this.modalDiv, value);
-  }
-  init() {
-    var _a;
-    if (!this.wrapperDiv) {
-      if ((_a = this.options) == null ? void 0 : _a.onClose)
-        this.onClose = this.options.onClose;
-      this.popupPlacement = this.getAttribute("popupPlacement", true);
-      this.closeOnBackdropClick = this.getAttribute("closeOnBackdropClick", true);
-      this.wrapperDiv = this.createElement("div", this);
-      this.showBackdrop = this.getAttribute("showBackdrop", true);
-      this.modalDiv = this.createElement("div", this.wrapperDiv);
-      this.titleSpan = this.createElement("div", this.modalDiv);
-      this.titleSpan.classList.add(titleStyle, "i-modal_header");
-      this.createElement("span", this.titleSpan);
-      this.title = this.getAttribute("title", true);
-      const closeIconAttr = this.getAttribute("closeIcon", true);
-      if (closeIconAttr) {
-        closeIconAttr.height = closeIconAttr.height || "16px";
-        closeIconAttr.width = closeIconAttr.width || "16px";
-        closeIconAttr.fill = closeIconAttr.fill || Theme11.colors.primary.main;
-        this.closeIcon = new Icon(void 0, closeIconAttr);
-      }
-      while (this.childNodes.length > 1) {
-        this.modalDiv.appendChild(this.childNodes[0]);
-      }
-      this.modalDiv.classList.add(modalStyle);
-      this.modalDiv.classList.add("modal");
-      this.addEventListener("show", this._handleOnShow.bind(this));
-      window.addEventListener("keydown", (event) => {
-        if (!this.visible)
-          return;
-        if (event.key === "Escape") {
-          this.visible = false;
-        }
-      });
-      document.body.addEventListener("click", (event) => {
-        if (!this.visible || this.showBackdrop || !this.closeOnBackdropClick)
-          return;
-        const target = event.target;
-        let parent = this._parent || this.linkTo || this.parentElement;
-        if (!this.modalDiv.contains(target) && !(parent == null ? void 0 : parent.contains(target))) {
-          this.visible = false;
-        }
-      });
-      const itemAttr = this.getAttribute("item", true);
-      if (itemAttr)
-        this.item = itemAttr;
-      super.init();
-      this.maxWidth && this.updateModal("maxWidth", this.maxWidth);
-      this.minWidth && this.updateModal("minWidth", this.minWidth);
-      this.minHeight && this.updateModal("minHeight", this.minHeight);
-      this.maxHeight && this.updateModal("maxHeight", this.maxHeight);
-      let border = this.getAttribute("border", true);
-      if (border) {
-        this._border = new Border(this.modalDiv, border);
-        this.style.border = "none";
-      }
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Modal = __decorateClass([
-  customElements2("i-modal")
-], Modal);
 
 // packages/layout/src/style/panel.css.ts
 var panelStyle = style({
@@ -20226,1182 +18922,8 @@ CardLayout = __decorateClass([
   customElements2("i-card-layout")
 ], CardLayout);
 
-// packages/upload/src/style/upload-modal.css.ts
-var Theme12 = theme_exports.ThemeVars;
-cssRule("i-upload-modal", {
-  $nest: {
-    "i-modal": {
-      position: "fixed!important",
-      zIndex: 16,
-      $nest: {
-        "> div": {
-          left: "50%!important",
-          top: "50%!important",
-          transform: "translate(-50%,-50%)!important"
-        },
-        ".modal": {
-          padding: 0,
-          height: "auto",
-          backgroundColor: Theme12.colors.primary.contrastText,
-          borderRadius: "10px",
-          boxShadow: "0 1px 5px 0 rgb(0 0 0 / 12%), 0 2px 10px 0 rgb(0 0 0 / 8%), 0 1px 20px 0 rgb(0 0 0 / 8%)",
-          overflow: "auto",
-          maxHeight: "90vh"
-        }
-      }
-    },
-    ".modal-close": {
-      position: "absolute",
-      top: "1rem",
-      right: "1rem",
-      maxHeight: "10%",
-      zIndex: 2,
-      cursor: "pointer",
-      gap: 0,
-      backgroundColor: "transparent",
-      border: 0,
-      padding: "0!important",
-      boxShadow: "none"
-    },
-    ".upload-box": {
-      borderRadius: "0.375rem",
-      padding: "3.125rem 8.5rem 3.125rem 8.125rem"
-    },
-    ".heading": {
-      display: "block",
-      fontSize: "1.625rem",
-      color: Theme12.colors.primary.dark,
-      marginBottom: "0.5rem",
-      fontWeight: 700,
-      lineHeight: 1.2,
-      textAlign: "center"
-    },
-    ".label": {
-      display: "block",
-      marginBottom: "0.5rem",
-      color: Theme12.text.primary,
-      textAlign: "center"
-    },
-    ".file-uploader-dropzone": {
-      display: "flex",
-      flexDirection: "column",
-      gridRowGap: "2rem",
-      rowGap: "1.5rem",
-      marginBottom: "2.5rem",
-      marginTop: "2rem",
-      $nest: {
-        ".droparea": {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gridRowGap: "1rem",
-          rowGap: "1rem",
-          padding: "1.875rem 0",
-          background: "rgba(255,255,255,.1)",
-          border: `1px dashed ${Theme12.colors.primary.light}`,
-          borderRadius: "0.625rem",
-          cursor: "pointer"
-        },
-        "i-upload": {
-          position: "absolute",
-          top: 0,
-          opacity: 0,
-          minHeight: "auto",
-          minWidth: "auto",
-          margin: 0,
-          zIndex: 1,
-          $nest: {
-            ".i-upload_preview-img": {
-              display: "none!important"
-            }
-          }
-        },
-        ".filelist": {
-          fontSize: "0.8rem",
-          fontWeight: 400,
-          borderBottom: "0.0625rem solid rgba(105,196,205,.25)",
-          marginBottom: "0.5rem",
-          $nest: {
-            ".file": {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTop: "0.0625rem solid rgba(105,196,205,.25)",
-              padding: "0.25rem 0",
-              minHeight: "44px",
-              gap: "5px"
-            },
-            ".status-2": {
-              $nest: {
-                "i-label": {
-                  color: "red"
-                }
-              }
-            },
-            "i-label": {
-              fontSize: "14px",
-              color: Theme12.colors.primary.dark
-            },
-            ".filename": {
-              fontWeight: 600
-            },
-            ".status": {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              $nest: {
-                "i-label": {
-                  fontStyle: "italic"
-                },
-                "i-button": {
-                  background: "transparent",
-                  boxShadow: "none",
-                  gap: 0,
-                  marginLeft: "5px",
-                  $nest: {
-                    "i-icon": {
-                      fill: `${Theme12.colors.primary.dark}!important`
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        ".pagination": {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "5px",
-          $nest: {
-            "i-button": {
-              width: "20px",
-              height: "20px",
-              borderRadius: "50%",
-              fontSize: "12px",
-              fontWeight: 700,
-              color: Theme12.colors.primary.dark,
-              backgroundColor: "transparent",
-              border: `1px solid ${Theme12.colors.primary.dark}`,
-              boxShadow: "none",
-              gap: "unset",
-              $nest: {
-                "&.active": {
-                  color: Theme12.colors.primary.contrastText,
-                  backgroundColor: Theme12.colors.primary.dark
-                },
-                "i-icon": {
-                  height: "10px!important",
-                  width: "12px!important",
-                  fill: `${Theme12.colors.primary.dark}!important`
-                }
-              }
-            }
-          }
-        },
-        ".upload-btn": {
-          background: Theme12.colors.primary.light,
-          color: Theme12.colors.primary.contrastText,
-          padding: "8px",
-          boxShadow: "none"
-        }
-      }
-    },
-    ".status-filter": {
-      display: "flex",
-      justifyContent: "space-between",
-      $nest: {
-        ".filter-bar": {
-          display: "flex",
-          gap: "10px",
-          $nest: {
-            ".filter-btn": {
-              fontSize: "14px",
-              background: "transparent",
-              color: Theme12.text.secondary,
-              boxShadow: "none"
-            },
-            ".filter-btn.filter-btn-active": {
-              fontWeight: "bold",
-              color: Theme12.colors.primary.dark
-            }
-          }
-        },
-        ".filter-actions": {
-          $nest: {
-            "i-button": {
-              background: Theme12.colors.primary.light,
-              color: Theme12.colors.primary.contrastText,
-              padding: "5px 10px",
-              fontSize: "14px",
-              boxShadow: "none"
-            }
-          }
-        }
-      }
-    },
-    ".note": {
-      display: "flex",
-      flexDirection: "column",
-      lineHeight: "1.4375rem",
-      paddingLeft: "1.25rem",
-      paddingRight: "0.25rem",
-      $nest: {
-        "&:not(:last-child)": {
-          marginBottom: "1.5rem"
-        },
-        ".head": {
-          fontSize: "14px",
-          fontWeight: 700,
-          color: Theme12.text.primary
-        },
-        ".desc": {
-          fontSize: "12px",
-          fontWeight: 400,
-          letterSpacing: 0,
-          color: Theme12.text.secondary
-        }
-      }
-    }
-  }
-});
-
-// packages/upload/src/upload-modal.ts
-var Theme13 = theme_exports.ThemeVars;
-var FILE_STATUS;
-(function(FILE_STATUS2) {
-  FILE_STATUS2[FILE_STATUS2["LISTED"] = 0] = "LISTED";
-  FILE_STATUS2[FILE_STATUS2["SUCCESS"] = 1] = "SUCCESS";
-  FILE_STATUS2[FILE_STATUS2["FAILED"] = 2] = "FAILED";
-  FILE_STATUS2[FILE_STATUS2["UPLOADING"] = 3] = "UPLOADING";
-})(FILE_STATUS || (FILE_STATUS = {}));
-var ITEMS_PER_PAGE = 5;
-var UploadModal = class extends Control {
-  constructor(parent, options) {
-    super(parent, options);
-    this.isForcedCancelled = false;
-    this.currentPage = 1;
-    this.currentFilterStatus = 0;
-    this.files = [];
-    this.fileListData = [];
-  }
-  get serverUrl() {
-    return this._serverUrl;
-  }
-  set serverUrl(value) {
-    this._serverUrl = value;
-  }
-  async show() {
-    await this.init();
-    if (!this.parentElement)
-      document.body.appendChild(this);
-    this._uploadModalElm.visible = true;
-  }
-  hide() {
-    this._uploadModalElm.visible = false;
-    this.reset();
-  }
-  onBeforeUpload(target, file) {
-    return new Promise((resolve, reject) => {
-      resolve(true);
-    });
-  }
-  filteredFileListData() {
-    return this.currentFilterStatus === 0 ? this.fileListData : this.fileListData.filter((i) => i.status === this.currentFilterStatus);
-  }
-  numPages() {
-    return Math.ceil(this.filteredFileListData().length / ITEMS_PER_PAGE);
-  }
-  setCurrentPage(page) {
-    if (page >= 1 && page <= this.numPages())
-      this.currentPage = page;
-    this.renderFileList();
-    this.renderPagination();
-  }
-  async renderFilterBar() {
-    this._filterBarElm.clearInnerHTML();
-    const listedBtnElm = new Button(this._filterBarElm, {
-      caption: `All (${this.fileListData.length})`,
-      class: `filter-btn ${this.currentFilterStatus === 0 ? "filter-btn-active" : ""}`
-    });
-    listedBtnElm.onClick = () => this.onChangeCurrentFilterStatus(0);
-    const successBtnElm = new Button(this._filterBarElm, {
-      caption: `Success (${this.fileListData.filter((i) => i.status === 1).length})`,
-      class: `filter-btn ${this.currentFilterStatus === 1 ? "filter-btn-active" : ""}`
-    });
-    successBtnElm.onClick = () => this.onChangeCurrentFilterStatus(1);
-    const failedBtnElm = new Button(this._filterBarElm, {
-      caption: `Fail (${this.fileListData.filter((i) => i.status === 2).length})`,
-      class: `filter-btn ${this.currentFilterStatus === 2 ? "filter-btn-active" : ""}`
-    });
-    failedBtnElm.onClick = () => this.onChangeCurrentFilterStatus(2);
-    const uploadingBtnElm = new Button(this._filterBarElm, {
-      caption: `Uploading (${this.fileListData.filter((i) => i.status === 3).length})`,
-      class: `filter-btn ${this.currentFilterStatus === 3 ? "filter-btn-active" : ""}`
-    });
-    uploadingBtnElm.onClick = () => this.onChangeCurrentFilterStatus(3);
-    this._filterActionsElm.clearInnerHTML();
-    if (this.currentFilterStatus === 3) {
-      const cancelBtnElm = new Button(this._filterActionsElm, {
-        caption: "Cancel"
-      });
-      cancelBtnElm.onClick = () => this.onCancel();
-    } else {
-      const clearBtnElm = new Button(this._filterActionsElm, {
-        caption: "Clear"
-      });
-      clearBtnElm.onClick = () => this.onClear();
-    }
-  }
-  async renderFileList() {
-    const fileUIData = [];
-    this._fileListElm.clearInnerHTML();
-    const filteredFileListData = this.filteredFileListData();
-    const paginatedFilteredFileListData = filteredFileListData.slice((this.currentPage - 1) * ITEMS_PER_PAGE, ITEMS_PER_PAGE * this.currentPage);
-    for (let i = 0; i < paginatedFilteredFileListData.length; i++) {
-      const fileData = paginatedFilteredFileListData[i];
-      const fileElm = new Panel(this._fileListElm, {
-        class: `file file-${i} status-${fileData.status}`
-      });
-      const fileNameElm = new Label(fileElm, {
-        caption: fileData.file.path || fileData.file.name
-      });
-      const statusElm = new Panel(fileElm, { class: "status" });
-      const percentageElm = new Label(statusElm, {
-        caption: `${fileData.percentage}%`
-      });
-      const removeBtnElm = new Button(statusElm, {
-        class: "remove-btn",
-        icon: { name: "times-circle" }
-      });
-      removeBtnElm.onClick = () => this.onRemoveFile(i);
-    }
-  }
-  async renderPagination() {
-    const numPages = this.numPages();
-    if (numPages >= 1) {
-      if (this.currentPage > numPages) {
-        this.setCurrentPage(numPages);
-      } else {
-        this._paginationElm.clearInnerHTML();
-        const prevBtn = new Button(this._paginationElm, {
-          icon: { name: "chevron-left" }
-        });
-        prevBtn.onClick = () => {
-          this.setCurrentPage(this.currentPage - 1);
-        };
-        for (let i = 1; i <= numPages; i++) {
-          const pageBtn = new Button(this._paginationElm, {
-            class: this.currentPage === i ? "active" : "",
-            caption: i.toString()
-          });
-          pageBtn.onClick = () => {
-            this.setCurrentPage(i);
-          };
-        }
-        const nexBtn = new Button(this._paginationElm, {
-          icon: { name: "chevron-right" }
-        });
-        nexBtn.onClick = () => {
-          this.setCurrentPage(this.currentPage + 1);
-        };
-      }
-    } else {
-      this._paginationElm.clearInnerHTML();
-    }
-  }
-  onChangeCurrentFilterStatus(status) {
-    this.currentFilterStatus = status;
-    this.renderFilterBar();
-    this.renderPagination();
-    this.renderFileList();
-  }
-  onClear() {
-    switch (this.currentFilterStatus) {
-      case 0:
-        this.fileListData = this.fileListData && this.fileListData.length ? this.fileListData.filter((fileData) => ![1, 2].includes(fileData.status)) : this.fileListData;
-        break;
-      case 1:
-        this.fileListData = this.fileListData && this.fileListData.length ? this.fileListData.filter((fileData) => ![1].includes(fileData.status)) : this.fileListData;
-        break;
-      case 2:
-        this.fileListData = this.fileListData && this.fileListData.length ? this.fileListData.filter((fileData) => ![2].includes(fileData.status)) : this.fileListData;
-        break;
-    }
-    this.renderFilterBar();
-    this.renderFileList();
-    this.renderPagination();
-  }
-  onCancel() {
-    this.currentRequest.abort();
-    this.isForcedCancelled = true;
-  }
-  async onChangeFile(source, files) {
-    return new Promise(async (resolve, reject) => {
-      if (!files.length)
-        reject();
-      for (let i = 0; i < files.length; i++) {
-        this.fileListData.push({ file: files[i], status: 0, percentage: 0 });
-        this.files.push(files[i]);
-      }
-      this.renderFileList();
-      this.renderFilterBar();
-      this.renderPagination();
-      this.toggle(true);
-      this._fileUploader.clear();
-    });
-  }
-  onRemove(source, file) {
-  }
-  onRemoveFile(index) {
-    this.fileListData.splice(index, 1);
-    this.files.splice(index, 1);
-    this.renderFileList();
-    this.renderFilterBar();
-    this.renderPagination();
-    if (!this.fileListData.length) {
-      this.toggle(false);
-    }
-  }
-  getDirItems(cidItem, result) {
-    var _a;
-    result = result || [];
-    if (cidItem.type == "dir") {
-      let items = [];
-      if (cidItem.links) {
-        for (let i = 0; i < ((_a = cidItem.links) == null ? void 0 : _a.length); i++) {
-          let item = cidItem.links[i];
-          if (item.type == "dir")
-            this.getDirItems(item, result);
-          items.push({
-            cid: item.cid,
-            name: item.name,
-            size: item.size,
-            type: item.type
-          });
-        }
-        ;
-      }
-      ;
-      result.push({
-        cid: cidItem.cid,
-        name: cidItem.name,
-        size: cidItem.size,
-        type: "dir",
-        links: items
-      });
-    }
-    ;
-    return result;
-  }
-  async onUpload() {
-    return new Promise(async (resolve, reject) => {
-      var _a, _b, _c;
-      if (!this.fileListData.length)
-        reject();
-      this._uploadBtnElm.caption = "Uploading files to IPFS...";
-      this.isForcedCancelled = false;
-      let cidItem = await hashFiles(this.files);
-      console.dir("### IPFS Upload ###");
-      console.dir(cidItem);
-      let uploadUrl = await application.getUploadUrl(cidItem);
-      let dirItems = this.getDirItems(cidItem);
-      for (let i = 0; i < dirItems.length; i++) {
-        let item = dirItems[i];
-        if (uploadUrl[item.cid]) {
-          await application.upload(uploadUrl[item.cid], JSON.stringify(item));
-        }
-        ;
-      }
-      ;
-      for (let i = 0; i < this.fileListData.length; i++) {
-        if (this.isForcedCancelled) {
-          break;
-        } else {
-          const file = this.fileListData[i];
-          file.url = `https://ipfs.scom.dev/ipfs/${cidItem.cid}${file.file.path || file.file.name}`;
-          if ([1, 3].includes(file.status) || !((_a = file.file.cid) == null ? void 0 : _a.cid)) {
-            continue;
-          }
-          this.fileListData[i].status = 3;
-          this.renderFilterBar();
-          if (uploadUrl[(_b = file.file.cid) == null ? void 0 : _b.cid]) {
-            try {
-              let result = await application.upload(uploadUrl[(_c = file.file.cid) == null ? void 0 : _c.cid], file.file);
-              this.fileListData[i].status = 1;
-              this.renderFilterBar();
-            } catch (err) {
-              console.log("Error! ", err);
-              this.fileListData[i].status = 2;
-            }
-          }
-          ;
-        }
-        ;
-      }
-      ;
-      this.renderFilterBar();
-      this.renderFileList();
-      this.renderPagination();
-      this._uploadBtnElm.caption = "Upload file to IPFS";
-    });
-  }
-  reset() {
-    this._fileListElm.clearInnerHTML();
-    this._paginationElm.clearInnerHTML();
-    this._uploadBtnElm.caption = "Upload file to IPFS";
-    this.fileListData = [];
-    this.toggle(false);
-  }
-  toggle(showFileList) {
-    if (showFileList) {
-      this._statusFilterElm.visible = true;
-      this._uploadBtnElm.visible = true;
-      this._notePnlElm.visible = false;
-    } else {
-      this._statusFilterElm.visible = false;
-      this._uploadBtnElm.visible = false;
-      this._notePnlElm.visible = true;
-    }
-  }
-  async init() {
-    if (!this.initialized) {
-      super.init();
-      this.serverUrl = this.getAttribute("serverUrl", true);
-      this._uploadModalElm = await Modal.create({
-        showBackdrop: true,
-        closeOnBackdropClick: false,
-        width: "800px"
-      });
-      this.appendChild(this._uploadModalElm);
-      this._uploadBoxElm = new Panel(this);
-      this._uploadBoxElm.classList.add("upload-box");
-      this._closeBtnElm = new Button(this._uploadBoxElm, {
-        icon: { name: "times" },
-        class: "modal-close",
-        onClick: () => this.hide()
-      });
-      const headingElm = new Label(this._uploadBoxElm, {
-        caption: "Upload more files"
-      });
-      headingElm.classList.add("heading");
-      const labelElm = new Label(this._uploadBoxElm, {
-        caption: "Choose file to upload to IPFS network"
-      });
-      labelElm.classList.add("label");
-      const fileUploaderDropzone = new Panel(this._uploadBoxElm);
-      fileUploaderDropzone.classList.add("file-uploader-dropzone");
-      const droparea = new Panel(fileUploaderDropzone);
-      droparea.classList.add("droparea");
-      this._fileUploader = new Upload(droparea, {
-        multiple: true,
-        draggable: true
-      });
-      this._fileUploader.onUploading = this.onBeforeUpload;
-      this._fileUploader.onChanged = (source, files) => this.onChangeFile(source, files);
-      this._fileUploader.onRemoved = () => this.onRemove;
-      const image = new Image2(droparea, { width: 60, height: 60 });
-      image.classList.add("icon");
-      image.url = `${LibPath}assets/img/file-icon.png`;
-      const dargLabelElm = new Label(droparea, {
-        caption: "Drag and drop your files here"
-      });
-      this._statusFilterElm = new Panel(fileUploaderDropzone);
-      this._statusFilterElm.classList.add("status-filter");
-      this._statusFilterElm.visible = false;
-      this._filterBarElm = new Panel(this._statusFilterElm);
-      this._filterBarElm.classList.add("filter-bar");
-      this._filterActionsElm = new Panel(this._statusFilterElm);
-      this._filterActionsElm.classList.add("filter-actions");
-      this._fileListElm = new Panel(fileUploaderDropzone);
-      this._fileListElm.classList.add("filelist");
-      this._paginationElm = new Panel(fileUploaderDropzone);
-      this._paginationElm.classList.add("pagination");
-      this._uploadBtnElm = new Button(fileUploaderDropzone, {
-        caption: "Upload files to IPFS",
-        class: "upload-btn",
-        visible: false
-      });
-      this._uploadBoxElm.onClick = () => this.onUpload();
-      this._notePnlElm = new Panel(this._uploadBoxElm);
-      const note1Elm = new Panel(this._notePnlElm, { class: "note" });
-      const head1Elm = new Label(note1Elm, {
-        caption: "Public Data",
-        class: "head"
-      });
-      const desc1Elm = new Label(note1Elm, {
-        caption: "All data uploaded to IPFS Explorer is available to anyone who requests it using the correct CID. Do not store any private or sensitive information in an unencrypted form using IPFS Explorer.",
-        class: "desc"
-      });
-      const note2Elm = new Panel(this._notePnlElm, { class: "note" });
-      const head2Elm = new Label(note2Elm, {
-        caption: "Permanent Data",
-        class: "head"
-      });
-      const des2cElm = new Label(note2Elm, {
-        caption: "Deleting files from the IPFS Explorer site\u2019s Files page will remove them from the file listing for your account, but that doesn\u2019t prevent nodes on the decentralized storage network from retaining copies of the data indefinitely. Do not use IPFS Explorer for data that may need to be permanently deleted in the future.",
-        class: "desc"
-      });
-      this._uploadModalElm.item = this._uploadBoxElm;
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-UploadModal = __decorateClass([
-  customElements2("i-upload-modal")
-], UploadModal);
-
-// packages/tab/src/style/tab.css.ts
-var Theme14 = theme_exports.ThemeVars;
-cssRule("i-tabs", {
-  display: "block",
-  $nest: {
-    ".tabs-nav-wrap": {
-      display: "flex",
-      flex: "none",
-      overflow: "hidden"
-    },
-    "&:not(.vertical) .tabs-nav-wrap": {
-      $nest: {
-        "&:hover": {
-          overflowX: "auto",
-          overflowY: "hidden"
-        },
-        "&::-webkit-scrollbar-thumb": {
-          background: "#4b4b4b",
-          borderRadius: "5px"
-        },
-        "&::-webkit-scrollbar": {
-          height: "3px"
-        }
-      }
-    },
-    ".tabs-nav": {
-      position: "relative",
-      display: "flex",
-      flex: "none",
-      overflow: "hidden",
-      whiteSpace: "nowrap",
-      borderBottom: `1px solid #252525`,
-      margin: 0
-    },
-    "&.vertical": {
-      display: "flex",
-      $nest: {
-        ".tabs-nav": {
-          display: "flex",
-          flexDirection: "column"
-        },
-        ".tabs-nav:hover": {
-          overflowY: "auto"
-        },
-        ".tabs-nav::-webkit-scrollbar-thumb": {
-          background: "#4b4b4b",
-          borderRadius: "5px"
-        },
-        ".tabs-nav::-webkit-scrollbar": {
-          width: "3px"
-        }
-      }
-    },
-    "i-tab": {
-      position: "relative",
-      display: "inline-flex",
-      overflow: "hidden",
-      color: "rgba(255, 255, 255, 0.55)",
-      background: "#2e2e2e",
-      marginBottom: "-1px",
-      border: `1px solid #252525`,
-      alignItems: "center",
-      font: "inherit",
-      textAlign: "center",
-      minHeight: "36px",
-      $nest: {
-        "&:not(.disabled):hover": {
-          cursor: "pointer",
-          color: "#fff"
-        },
-        "&:not(.disabled).active.border": {
-          borderColor: `${Theme14.divider} ${Theme14.divider} #fff`,
-          borderBottomWidth: "1.5px"
-        },
-        ".tab-item": {
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          padding: "0.5rem 1rem",
-          gap: "5px",
-          $nest: {
-            "i-image": {
-              display: "flex"
-            }
-          }
-        }
-      }
-    },
-    "i-tab:not(.disabled).active": {
-      backgroundColor: "#1d1d1d",
-      borderBottomColor: "transparent",
-      color: "#fff"
-    },
-    ".tabs-content": {
-      position: "relative",
-      overflow: "hidden",
-      display: "flex",
-      width: "100%",
-      height: "100%",
-      minHeight: "200px",
-      $nest: {
-        "&::after": {
-          clear: "both"
-        },
-        "i-label .f1yauex0": {
-          whiteSpace: "normal"
-        },
-        ".content-pane": {
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          flex: "none"
-        }
-      }
-    },
-    "span.close": {
-      width: "18px",
-      height: "18px",
-      marginLeft: "5px",
-      marginRight: "-5px",
-      borderRadius: "5px",
-      lineHeight: "18px",
-      fontSize: "18px",
-      visibility: "hidden",
-      opacity: 0,
-      $nest: {
-        "&:hover": {
-          background: "rgba(78, 78, 78, 0.48)"
-        }
-      }
-    },
-    ".tabs-nav:not(.is-closable) span.close": {
-      display: "none"
-    },
-    ".tabs-nav.is-closable i-tab:not(.disabled):hover span.close, .tabs-nav.is-closable i-tab:not(.disabled).active span.close": {
-      visibility: "visible",
-      opacity: 1
-    }
-  }
-});
-var getTabMediaQueriesStyleClass = (mediaQueries) => {
-  let styleObj = getControlMediaQueriesStyle(mediaQueries);
-  for (let mediaQuery of mediaQueries) {
-    let mediaQueryRule;
-    if (mediaQuery.minWidth && mediaQuery.maxWidth) {
-      mediaQueryRule = `@media (min-width: ${mediaQuery.minWidth}) and (max-width: ${mediaQuery.maxWidth})`;
-    } else if (mediaQuery.minWidth) {
-      mediaQueryRule = `@media (min-width: ${mediaQuery.minWidth})`;
-    } else if (mediaQuery.maxWidth) {
-      mediaQueryRule = `@media (max-width: ${mediaQuery.maxWidth})`;
-    }
-    if (mediaQueryRule) {
-      const nestObj = styleObj["$nest"][mediaQueryRule]["$nest"] || {};
-      const ruleObj = styleObj["$nest"][mediaQueryRule];
-      styleObj["$nest"][mediaQueryRule] = {
-        ...ruleObj,
-        $nest: {
-          ...nestObj,
-          ".tabs-nav": {}
-        }
-      };
-      if (mediaQuery.properties.mode) {
-        const mode = mediaQuery.properties.mode;
-        styleObj["$nest"][mediaQueryRule]["display"] = mode === "vertical" ? "flex !important" : "block !important";
-        if (mode === "horizontal") {
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["flexDirection"] = "row !important";
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["width"] = "100%";
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["justifyContent"] = "center";
-        } else {
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["flexDirection"] = "column !important";
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["width"] = "auto";
-          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["justifyContent"] = "start";
-        }
-      }
-      if (typeof mediaQuery.properties.visible === "boolean") {
-        const visible = mediaQuery.properties.visible;
-        styleObj["$nest"][mediaQueryRule]["display"] = visible ? "block !important" : "none !important";
-      }
-    }
-  }
-  return style(styleObj);
-};
-
-// packages/tab/src/tab.ts
-var Tabs = class extends Container {
-  constructor(parent, options) {
-    super(parent, options);
-    this.accumTabIndex = 0;
-    this.dragStartHandler = this.dragStartHandler.bind(this);
-    this.dragOverHandler = this.dragOverHandler.bind(this);
-    this.dropHandler = this.dropHandler.bind(this);
-  }
-  get activeTab() {
-    return this._tabs[this.activeTabIndex];
-  }
-  get activeTabIndex() {
-    return this._activeTabIndex;
-  }
-  set activeTabIndex(index) {
-    var _a;
-    if (index < 0 || this._activeTabIndex === index)
-      return;
-    const prevTab = this._tabs[this._activeTabIndex];
-    if (prevTab) {
-      prevTab.classList.remove("active");
-      this.contentPanes[this._activeTabIndex].style.display = "none";
-    }
-    this._activeTabIndex = index;
-    (_a = this.activeTab) == null ? void 0 : _a.classList.add("active");
-    if (this.contentPanes[index])
-      this.contentPanes[index].style.display = "";
-  }
-  get items() {
-    return this._tabs;
-  }
-  get closable() {
-    return this._closable;
-  }
-  set closable(value) {
-    this._closable = value;
-    if (value) {
-      this.tabsNavElm.classList.add("is-closable");
-    } else {
-      this.tabsNavElm.classList.remove("is-closable");
-    }
-  }
-  get draggable() {
-    return this._draggable;
-  }
-  set draggable(value) {
-    if (this._draggable === value)
-      return;
-    this._draggable = value;
-    if (this.draggable) {
-      this.tabsNavElm.ondragover = this.dragOverHandler;
-      this.tabsNavElm.ondrop = this.dropHandler;
-    } else {
-      this.tabsNavElm.ondragover = null;
-      this.tabsNavElm.ondrop = null;
-    }
-    this.handleTagDrag(this._tabs);
-  }
-  get mode() {
-    const isVertical = this.classList.contains("vertical");
-    return isVertical ? "vertical" : "horizontal";
-  }
-  set mode(type) {
-    if (type === "vertical") {
-      this.classList.add("vertical");
-    } else {
-      this.classList.remove("vertical");
-    }
-  }
-  get mediaQueries() {
-    return this._mediaQueries;
-  }
-  set mediaQueries(value) {
-    this._mediaQueries = value;
-    let style2 = getTabMediaQueriesStyleClass(this._mediaQueries);
-    this._mediaStyle && this.classList.remove(this._mediaStyle);
-    this._mediaStyle = style2;
-    this.classList.add(style2);
-  }
-  add(options) {
-    const tab = new Tab(this, options);
-    if (options == null ? void 0 : options.children) {
-      tab.append(options == null ? void 0 : options.children);
-    }
-    if (this.draggable) {
-      this.handleTagDrag([tab]);
-    }
-    this.appendTab(tab);
-    this.activeTabIndex = tab.index;
-    return tab;
-  }
-  delete(tab) {
-    const index = this._tabs.findIndex((t) => t.id === tab.id);
-    const activeIndex = this.activeTabIndex;
-    if (index >= 0) {
-      this._tabs.splice(index, 1);
-      const pane = this.contentPanes[index];
-      this.contentPanes.splice(index, 1);
-      pane.remove();
-      if (activeIndex >= index) {
-        let newActiveIndex = activeIndex > index ? activeIndex - 1 : this._tabs[activeIndex] ? activeIndex : this._tabs.length - 1;
-        this._activeTabIndex = newActiveIndex;
-        if (this.activeTab) {
-          this.activeTab.classList.add("active");
-          this.contentPanes[newActiveIndex].style.display = "";
-        }
-      }
-    }
-    tab.remove();
-  }
-  appendTab(tab) {
-    tab._container = this.tabsContentElm;
-    tab.parent = this;
-    this._tabs.push(tab);
-    if (!tab.id)
-      tab.id = `tab-${this.accumTabIndex++}`;
-    this.tabsNavElm.appendChild(tab);
-    const contentPane = this.createElement("div", this.tabsContentElm);
-    tab._contentElm = contentPane;
-    contentPane.classList.add("content-pane");
-    contentPane.style.display = "none";
-    this.contentPanes.push(contentPane);
-    const children = tab.children;
-    for (let i = 0; i < children.length; i++) {
-      if (children[i].classList.contains("tab-item"))
-        continue;
-      if (children[i] instanceof Control) {
-        children[i].parent = tab;
-      }
-    }
-    ;
-  }
-  handleTagDrag(tabs) {
-    tabs.forEach((tab) => {
-      if (this.draggable) {
-        tab.setAttribute("draggable", "true");
-        tab.ondragstart = this.dragStartHandler;
-      } else {
-        tab.removeAttribute("draggable");
-        tab.ondragstart = null;
-      }
-    });
-  }
-  _handleClick(event) {
-    return super._handleClick(event, true);
-  }
-  dragStartHandler(event) {
-    if (!(event.target instanceof Tab))
-      return;
-    this.curDragTab = event.target;
-  }
-  dragOverHandler(event) {
-    event.preventDefault();
-  }
-  dropHandler(event) {
-    event.preventDefault();
-    if (!this.curDragTab)
-      return;
-    const target = event.target;
-    const dropTab = target instanceof Tab ? target : target.closest("i-tab");
-    if (dropTab && !this.curDragTab.isSameNode(dropTab)) {
-      const curActiveTab = this.activeTab;
-      const dragIndex = this.curDragTab.index;
-      const dropIndex = dropTab.index;
-      const [dragTab] = this._tabs.splice(dragIndex, 1);
-      this._tabs.splice(dropIndex, 0, dragTab);
-      const [dragContent] = this.contentPanes.splice(dragIndex, 1);
-      this.contentPanes.splice(dropIndex, 0, dragContent);
-      if (dragIndex > dropIndex) {
-        this.tabsNavElm.insertBefore(this.curDragTab, dropTab);
-      } else {
-        dropTab.after(this.curDragTab);
-      }
-      this.activeTabIndex = curActiveTab.index;
-      if (this.onChanged)
-        this.onChanged(this, this.activeTab);
-    }
-    this.curDragTab = null;
-  }
-  refresh() {
-    if (this.dock) {
-      super.refresh(true);
-      const height = this.mode === "horizontal" ? this.clientHeight - this.tabsNavElm.clientHeight : this.clientHeight;
-      this.tabsContentElm.style.height = height + "px";
-      this.refreshControls();
-    }
-  }
-  init() {
-    super.init();
-    if (!this.tabsNavElm) {
-      this.contentPanes = [];
-      this._tabs = [];
-      const _tabs = [];
-      this.childNodes.forEach((node) => {
-        if (node instanceof Tab) {
-          _tabs.push(node);
-        } else {
-          node.remove();
-        }
-      });
-      const tabsNavWrapElm = this.createElement("div", this);
-      tabsNavWrapElm.classList.add("tabs-nav-wrap");
-      tabsNavWrapElm.addEventListener("wheel", (event) => {
-        if (this.mode !== "horizontal")
-          return;
-        event.preventDefault();
-        tabsNavWrapElm.scrollLeft += event.deltaY;
-      });
-      this.tabsNavElm = this.createElement("div", tabsNavWrapElm);
-      this.tabsNavElm.classList.add("tabs-nav");
-      this.tabsContentElm = this.createElement("div", this);
-      this.tabsContentElm.classList.add("tabs-content");
-      this.closable = this.getAttribute("closable", true) || false;
-      this.mode = this.getAttribute("mode", true) || "horizontal";
-      for (const tab of _tabs) {
-        this.appendTab(tab);
-      }
-      this.draggable = this.getAttribute("draggable", true) || false;
-      const activeTabIndex = this.getAttribute("activeTabIndex", true);
-      if (this._tabs.length)
-        this.activeTabIndex = activeTabIndex || 0;
-      this.mediaQueries = this.getAttribute("mediaQueries", true, []);
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Tabs = __decorateClass([
-  customElements2("i-tabs")
-], Tabs);
-var Tab = class extends Container {
-  active() {
-    this._parent.activeTabIndex = this.index;
-  }
-  addChildControl(control) {
-    if (this._contentElm)
-      this._contentElm.appendChild(control);
-  }
-  removeChildControl(control) {
-    if (this._contentElm && this._contentElm.contains(control))
-      this._contentElm.removeChild(control);
-  }
-  get caption() {
-    return this.captionElm.innerHTML;
-  }
-  set caption(value) {
-    this.captionElm.innerHTML = value;
-  }
-  close() {
-    this.handleCloseTab();
-  }
-  get index() {
-    return this._parent.items.findIndex((t) => t.id === this.id);
-  }
-  get icon() {
-    if (!this._icon) {
-      this._icon = Icon.create({
-        width: 16,
-        height: 16
-      }, this);
-    }
-    ;
-    return this._icon;
-  }
-  set icon(elm) {
-    if (this._icon)
-      this.tabContainer.removeChild(this._icon);
-    this._icon = elm;
-    if (this._icon)
-      this.tabContainer.prepend(this._icon);
-  }
-  get innerHTML() {
-    return this._contentElm.innerHTML;
-  }
-  set innerHTML(value) {
-    this._contentElm.innerHTML = value;
-  }
-  get font() {
-    return {
-      color: this.captionElm.style.color,
-      name: this.captionElm.style.fontFamily,
-      size: this.captionElm.style.fontSize,
-      bold: this.captionElm.style.fontStyle.indexOf("bold") >= 0,
-      style: this.captionElm.style.fontStyle,
-      transform: this.captionElm.style.textTransform,
-      weight: this.captionElm.style.fontWeight
-    };
-  }
-  set font(value) {
-    if (this.captionElm) {
-      this.captionElm.style.color = value.color || "";
-      this.captionElm.style.fontSize = value.size || "";
-      this.captionElm.style.fontFamily = value.name || "";
-      this.captionElm.style.fontStyle = value.style || "";
-      this.captionElm.style.textTransform = value.transform || "none";
-      this.captionElm.style.fontWeight = value.bold ? "bold" : `${value.weight}` || "";
-    }
-  }
-  _handleClick(event) {
-    if (!this._parent || !this.enabled || this._parent.activeTab.isSameNode(this))
-      return false;
-    if (this._parent) {
-      if (this._parent.activeTab != this)
-        this._parent.activeTabIndex = this.index;
-      if (this._parent.onChanged)
-        this._parent.onChanged(this._parent, this._parent.activeTab);
-    }
-    return super._handleClick(event);
-  }
-  handleCloseTab(event) {
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-    if (!this._parent || !this.enabled || event && !this._parent.closable)
-      return;
-    const isActiveChange = this._parent.activeTab.isSameNode(this);
-    if (this._parent.onCloseTab)
-      this._parent.onCloseTab(this._parent, this);
-    this._parent.delete(this);
-    if (isActiveChange && this._parent.onChanged)
-      this._parent.onChanged(this._parent, this._parent.activeTab);
-  }
-  init() {
-    if (!this.captionElm) {
-      super.init();
-      this.tabContainer = this.createElement("div", this);
-      this.tabContainer.classList.add("tab-item");
-      this.captionElm = this.createElement("div", this.tabContainer);
-      this.caption = this.getAttribute("caption", true) || "";
-      const font = this.getAttribute("font", true);
-      if (font)
-        this.font = font;
-      const icon = this.getAttribute("icon", true);
-      if (icon) {
-        icon.height = icon.height || "16px";
-        icon.width = icon.width || "16px";
-        this.icon = new Icon(void 0, icon);
-      }
-      ;
-      const closeButton = this.createElement("span", this.tabContainer);
-      closeButton.classList.add("close");
-      closeButton.innerHTML = "&times;";
-      closeButton.onclick = this.handleCloseTab.bind(this);
-    }
-  }
-  static async create(options, parent) {
-    let self = new this(parent, options);
-    await self.ready();
-    return self;
-  }
-};
-Tab = __decorateClass([
-  customElements2("i-tab")
-], Tab);
-
 // packages/combo-box/src/style/combo-box.css.ts
-var Theme15 = theme_exports.ThemeVars;
+var Theme6 = theme_exports.ThemeVars;
 var ItemListStyle = style({
   display: "none",
   position: "absolute",
@@ -21431,22 +18953,22 @@ var ItemListStyle = style({
       borderRadius: "inherit"
     },
     "> ul > li .highlight": {
-      backgroundColor: Theme15.colors.warning.light
+      backgroundColor: Theme6.colors.warning.light
     },
     "> ul > li.matched": {
-      backgroundColor: Theme15.colors.primary.light
+      backgroundColor: Theme6.colors.primary.light
     },
     "> ul > li:hover": {
-      backgroundColor: Theme15.colors.primary.light
+      backgroundColor: Theme6.colors.primary.light
     }
   }
 });
 cssRule("i-combo-box", {
   position: "relative",
   display: "flex",
-  fontFamily: Theme15.typography.fontFamily,
-  fontSize: Theme15.typography.fontSize,
-  color: Theme15.text.primary,
+  fontFamily: Theme6.typography.fontFamily,
+  fontSize: Theme6.typography.fontSize,
+  color: Theme6.text.primary,
   alignItems: "center",
   $nest: {
     "&.i-combo-box-multi": {
@@ -21465,11 +18987,11 @@ cssRule("i-combo-box", {
       alignItems: "center",
       position: "absolute",
       right: 0,
-      border: `1px solid ${Theme15.divider}`,
+      border: `1px solid ${Theme6.divider}`,
       borderLeft: "none"
     },
     "> .icon-btn:hover": {
-      backgroundColor: Theme15.action.hover
+      backgroundColor: Theme6.action.hover
     },
     "> .icon-btn i-icon": {
       display: "inline-block",
@@ -21483,7 +19005,7 @@ cssRule("i-combo-box", {
       maxWidth: "calc(100% - 32px)",
       height: "100%",
       border: "inherit",
-      background: Theme15.combobox.background,
+      background: Theme6.combobox.background,
       borderRadius: "inherit",
       padding: "2px 4px",
       transition: "all .3s cubic-bezier(.645,.045,.355,1)",
@@ -21491,7 +19013,7 @@ cssRule("i-combo-box", {
       flexGrow: 1,
       $nest: {
         ".selection-item": {
-          border: `1px solid ${Theme15.divider}`,
+          border: `1px solid ${Theme6.divider}`,
           backgroundColor: "rgba(0, 0, 0, 0.12)",
           color: "#000",
           borderRadius: 3,
@@ -21525,8 +19047,8 @@ cssRule("i-combo-box", {
           width: "auto !important",
           maxWidth: "100%",
           flex: 1,
-          background: Theme15.combobox.background,
-          color: Theme15.combobox.fontColor,
+          background: Theme6.combobox.background,
+          color: Theme6.combobox.fontColor,
           fontSize: "inherit"
         }
       }
@@ -21914,11 +19436,11 @@ ComboBox = __decorateClass([
 ], ComboBox);
 
 // packages/datepicker/src/style/datepicker.css.ts
-var Theme16 = theme_exports.ThemeVars;
+var Theme7 = theme_exports.ThemeVars;
 cssRule("i-datepicker", {
   display: "inline-block",
-  fontFamily: Theme16.typography.fontFamily,
-  fontSize: Theme16.typography.fontSize,
+  fontFamily: Theme7.typography.fontFamily,
+  fontSize: Theme7.typography.fontSize,
   "$nest": {
     "*": {
       boxSizing: "border-box"
@@ -21928,7 +19450,7 @@ cssRule("i-datepicker", {
     },
     "> span > label": {
       boxSizing: "border-box",
-      color: Theme16.text.primary,
+      color: Theme7.text.primary,
       display: "inline-block",
       overflow: "hidden",
       whiteSpace: "nowrap",
@@ -21939,15 +19461,15 @@ cssRule("i-datepicker", {
     },
     "> input": {
       padding: "1px 0.5rem",
-      border: `0.5px solid ${Theme16.divider}`,
+      border: `0.5px solid ${Theme7.divider}`,
       boxSizing: "border-box",
       outline: "none"
     },
     "> input[type=text]:focus": {
-      borderColor: Theme16.colors.info.main
+      borderColor: Theme7.colors.info.main
     },
     "i-icon": {
-      fill: Theme16.colors.primary.contrastText
+      fill: Theme7.colors.primary.contrastText
     },
     ".datepicker-toggle": {
       display: "inline-block",
@@ -22228,12 +19750,12 @@ Datepicker = __decorateClass([
 ], Datepicker);
 
 // packages/range/src/style/range.css.ts
-var Theme17 = theme_exports.ThemeVars;
+var Theme8 = theme_exports.ThemeVars;
 cssRule("i-range", {
   position: "relative",
   display: "inline-block",
-  fontFamily: Theme17.typography.fontFamily,
-  fontSize: Theme17.typography.fontSize,
+  fontFamily: Theme8.typography.fontFamily,
+  fontSize: Theme8.typography.fontSize,
   "$nest": {
     "*": {
       boxSizing: "border-box"
@@ -22243,7 +19765,7 @@ cssRule("i-range", {
     },
     "> span > label": {
       boxSizing: "border-box",
-      color: Theme17.text.primary,
+      color: Theme8.text.primary,
       display: "inline-block",
       overflow: "hidden",
       whiteSpace: "nowrap",
@@ -22260,7 +19782,7 @@ cssRule("i-range", {
       "-webkit-appearance": "none",
       appearance: "none",
       background: "#d3d3d3",
-      backgroundImage: `linear-gradient(${Theme17.colors.info.main}, ${Theme17.colors.info.main})`,
+      backgroundImage: `linear-gradient(${Theme8.colors.info.main}, ${Theme8.colors.info.main})`,
       backgroundSize: "0% 100%",
       backgroundRepeat: "no-repeat !important",
       borderRadius: "0.5rem",
@@ -22295,7 +19817,7 @@ cssRule("i-range", {
       "-webkit-appearance": "none",
       appearance: "none",
       marginTop: "-5px",
-      backgroundColor: Theme17.colors.info.main,
+      backgroundColor: Theme8.colors.info.main,
       borderRadius: "0.5rem",
       height: "1rem",
       width: "1rem"
@@ -22537,13 +20059,13 @@ Range = __decorateClass([
 ], Range);
 
 // packages/radio/src/radio.css.ts
-var Theme18 = theme_exports.ThemeVars;
-var captionStyle2 = style({
-  fontFamily: Theme18.typography.fontFamily,
-  fontSize: Theme18.typography.fontSize,
+var Theme9 = theme_exports.ThemeVars;
+var captionStyle = style({
+  fontFamily: Theme9.typography.fontFamily,
+  fontSize: Theme9.typography.fontSize,
   "$nest": {
     "span": {
-      color: Theme18.text.primary
+      color: Theme9.text.primary
     }
   }
 });
@@ -22594,7 +20116,7 @@ var Radio = class extends Control {
   init() {
     if (!this.initialized) {
       super.init();
-      this.classList.add(captionStyle2);
+      this.classList.add(captionStyle);
       this.labelElm = this.createElement("label", this);
       this.labelElm.classList.add("i-radio");
       this.inputElm = this.createElement("input", this.labelElm);
@@ -22720,18 +20242,18 @@ RadioGroup = __decorateClass([
 ], RadioGroup);
 
 // packages/input/src/style/input.css.ts
-var Theme19 = theme_exports.ThemeVars;
+var Theme10 = theme_exports.ThemeVars;
 cssRule("i-input", {
   display: "inline-block",
-  fontFamily: Theme19.typography.fontFamily,
-  fontSize: Theme19.typography.fontSize,
+  fontFamily: Theme10.typography.fontFamily,
+  fontSize: Theme10.typography.fontSize,
   "$nest": {
     "> span": {
       overflow: "hidden"
     },
     "> span > label": {
       boxSizing: "border-box",
-      color: Theme19.text.primary,
+      color: Theme10.text.primary,
       display: "inline-block",
       overflow: "hidden",
       whiteSpace: "nowrap",
@@ -22741,11 +20263,11 @@ cssRule("i-input", {
       height: "100%"
     },
     "> input": {
-      border: `0.5px solid ${Theme19.divider}`,
+      border: `0.5px solid ${Theme10.divider}`,
       boxSizing: "border-box",
       outline: "none",
-      color: Theme19.input.fontColor,
-      background: Theme19.input.background,
+      color: Theme10.input.fontColor,
+      background: Theme10.input.background,
       borderRadius: "inherit",
       fontSize: "inherit",
       maxHeight: "100%"
@@ -22754,7 +20276,7 @@ cssRule("i-input", {
       display: "none",
       verticalAlign: "middle",
       padding: "6px",
-      backgroundColor: Theme19.action.focus,
+      backgroundColor: Theme10.action.focus,
       $nest: {
         "&.active": {
           display: "inline-flex",
@@ -22767,8 +20289,8 @@ cssRule("i-input", {
     "textarea": {
       width: "100%",
       lineHeight: 1.5,
-      color: Theme19.input.fontColor,
-      background: Theme19.input.background
+      color: Theme10.input.fontColor,
+      background: Theme10.input.background
     }
   }
 });
@@ -22851,10 +20373,17 @@ var Input = class extends Control {
   }
   set width(value) {
     this._width = value;
-    const clearBtnWidth = this._showClearButton ? this._clearBtnWidth : 0;
-    const captionWidth = typeof this._captionWidth === "string" ? this._captionWidth : `${this._captionWidth}px`;
-    this.setPosition("width", value);
-    this.inputElm.style.width = `calc(100% - ${captionWidth} - ${clearBtnWidth}px)`;
+    const _value = Number(value);
+    if (Number.isNaN(_value)) {
+      this.setPosition("width", value);
+      this.inputElm.style.width = value == null ? void 0 : value.toString();
+    } else {
+      this.style.width = value + "px";
+      const clearBtnWidth = this._showClearButton ? this._clearBtnWidth : 0;
+      const captionWidth = typeof this._captionWidth === "string" ? this._captionWidth : `${this._captionWidth}px`;
+      const width = typeof this._width === "string" ? this._width : `${this._width}px`;
+      this.inputElm.style.width = `calc(${width} - ${captionWidth} - ${clearBtnWidth}px)`;
+    }
   }
   get readOnly() {
     return this._readOnly;
@@ -23149,54 +20678,198 @@ Input = __decorateClass([
   customElements2("i-input")
 ], Input);
 
-// packages/application/src/styles/jsonUI.css.ts
-var Theme20 = theme_exports.ThemeVars;
-var jsonUICheckboxStyle = style({
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  $nest: {
-    "i-checkbox": {
-      display: "flex",
-      height: "auto !important"
-    }
-  }
-});
-var jsonUIComboboxStyle = style({
-  $nest: {
-    ".selection": {
-      border: `1px solid ${Theme20.divider}`
-    },
-    ".selection input": {
-      paddingInline: 0
-    }
-  }
-});
-var jsonUITabStyle = style({
+// packages/link/src/style/link.css.ts
+var Theme11 = theme_exports.ThemeVars;
+cssRule("i-link", {
   display: "block",
+  cursor: "pointer",
+  textTransform: "inherit",
   $nest: {
-    ".tabs-nav": {
-      borderBottom: `none`,
-      borderRight: `1px solid #606770`
+    "&:hover *": {
+      color: Theme11.colors.primary.dark
     },
-    "i-tab": {
-      color: "#606770",
-      background: "none",
-      margin: "4px",
-      border: `none`,
-      borderRadius: `5px`,
-      $nest: {
-        "&:not(.disabled):hover": {
-          color: "#606770"
+    "> a": {
+      display: "inline",
+      transition: "all .3s",
+      textDecoration: "underline",
+      color: "inherit",
+      fontSize: "inherit",
+      fontWeight: "inherit",
+      fontFamily: "inherit",
+      textTransform: "inherit"
+    }
+  }
+});
+
+// packages/link/src/link.ts
+var Link = class extends Control {
+  constructor(parent, options) {
+    super(parent, options, {
+      target: "_blank"
+    });
+  }
+  get href() {
+    return this._href;
+  }
+  set href(value) {
+    this._href = typeof value === "string" ? value : "";
+    if (this._linkElm)
+      this._linkElm.href = this._href;
+  }
+  get target() {
+    return this._target;
+  }
+  set target(value) {
+    this._target = value;
+    if (this._linkElm)
+      this._linkElm.target = value;
+  }
+  append(children) {
+    if (!this._linkElm) {
+      this._linkElm = this.createElement("a", this);
+    }
+    this._linkElm.appendChild(children);
+  }
+  _handleClick(event, stopPropagation) {
+    event.preventDefault();
+    window.open(this._linkElm.href, this._linkElm.target);
+    return super._handleClick(event);
+  }
+  addChildControl(control) {
+    if (this._linkElm)
+      this._linkElm.appendChild(control);
+  }
+  removeChildControl(control) {
+    if (this._linkElm && this._linkElm.contains(control))
+      this._linkElm.removeChild(control);
+  }
+  init() {
+    if (!this.initialized) {
+      super.init();
+      if (!this._linkElm)
+        this._linkElm = this.createElement("a", this);
+      this.classList.add("i-link");
+      const hrefAttr = this.getAttribute("href", true);
+      hrefAttr && (this.href = hrefAttr);
+      const targetAttr = this.getAttribute("target", true);
+      targetAttr && (this._linkElm.target = targetAttr);
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Link = __decorateClass([
+  customElements2("i-link")
+], Link);
+
+// packages/label/src/style/label.css.ts
+var Theme12 = theme_exports.ThemeVars;
+var captionStyle2 = style({
+  display: "inline-block",
+  color: Theme12.text.primary,
+  fontFamily: Theme12.typography.fontFamily,
+  fontSize: Theme12.typography.fontSize
+});
+
+// packages/label/src/label.ts
+var Label = class extends Control {
+  constructor(parent, options) {
+    super(parent, options);
+  }
+  get caption() {
+    return this.captionSpan.innerHTML;
+  }
+  set caption(value) {
+    this.captionSpan.innerHTML = value || "";
+  }
+  get link() {
+    if (!this._link) {
+      this._link = new Link(this, {
+        href: "#",
+        target: "_blank",
+        font: this.font
+      });
+      this._link.append(this.captionSpan);
+      this.appendChild(this._link);
+    }
+    return this._link;
+  }
+  set link(value) {
+    if (this._link) {
+      this._link.prepend(this.captionSpan);
+      this._link.remove();
+    }
+    this._link = value;
+    if (this._link) {
+      this._link.append(this.captionSpan);
+      this.appendChild(this._link);
+    }
+  }
+  set height(value) {
+    this.setPosition("height", value);
+    if (this.captionSpan)
+      this.captionSpan.style.height = value + "px";
+  }
+  set width(value) {
+    this.setPosition("width", value);
+    if (this.captionSpan)
+      this.captionSpan.style.width = value + "px";
+  }
+  get wordBreak() {
+    return this.style.wordBreak;
+  }
+  set wordBreak(value) {
+    this.style.wordBreak = value;
+  }
+  get overflowWrap() {
+    return this.style.overflowWrap;
+  }
+  set overflowWrap(value) {
+    this.style.overflowWrap = value;
+  }
+  init() {
+    if (!this.captionSpan) {
+      let childNodes = [];
+      for (let i = 0; i < this.childNodes.length; i++) {
+        childNodes.push(this.childNodes[i]);
+      }
+      this.captionSpan = this.createElement("span", this);
+      this.classList.add(captionStyle2);
+      this.caption = this.getAttribute("caption", true) || "";
+      if (childNodes && childNodes.length) {
+        for (let i = 0; i < childNodes.length; i++) {
+          this.captionSpan.appendChild(childNodes[i]);
         }
       }
-    },
-    "i-tab:not(.disabled).active": {
-      backgroundColor: "#c2c2c2",
-      color: "#000000"
+      const linkAttr = this.getAttribute("link", true);
+      if (linkAttr) {
+        const link = new Link(this, {
+          ...linkAttr,
+          font: this.font
+        });
+        this.link = link;
+      }
+      const wordBreak = this.getAttribute("wordBreak", true);
+      if (wordBreak)
+        this.wordBreak = wordBreak;
+      const overflowWrap = this.getAttribute("overflowWrap", true);
+      if (overflowWrap)
+        this.overflowWrap = overflowWrap;
+      super.init();
     }
   }
-});
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Label = __decorateClass([
+  customElements2("i-label")
+], Label);
 
 // packages/application/src/jsonUI.ts
 var import_moment = __toModule(require_moment());
@@ -23211,59 +20884,40 @@ var validate = (instance, schema, options) => {
     return schema2.type;
   }
   var errors = [];
-  function checkProp(value, schema2, path, scope, i) {
-    const parsedPath = path.split(".");
-    let parsedScope = scope.split("/");
-    let parentProp = "";
-    if (parsedScope.length > 1) {
-      parsedScope = parsedScope.splice(0, parsedScope.length - 2);
-      parentProp = parsedScope[parsedScope.length - 1].split("_")[0];
-    }
-    let idxOfArray = -1;
-    parsedPath.forEach((value2) => {
-      if (value2.includes(parentProp)) {
-        let matches = value2.match(/\[(.*?)\]/);
-        if (matches)
-          idxOfArray = parseInt(matches[1]) + 1;
-      }
-    });
-    if (idxOfArray > 0 && getType(schema2) != "object") {
-      scope = scope + "_" + idxOfArray;
-    }
+  function checkProp(value, schema2, path, i) {
     var l;
     path += path ? typeof i == "number" ? "[" + i + "]" : typeof i == "undefined" ? "" : "." + i : i;
-    function addError(message, scope2, overwritePath) {
-      errors.push({ property: overwritePath || path, scope: scope2, message });
+    function addError(message, overwritePath) {
+      errors.push({ property: overwritePath || path, message });
     }
     if ((typeof schema2 != "object" || schema2 instanceof Array) && (path || typeof schema2 != "function") && !(schema2 && getType(schema2))) {
       if (typeof schema2 == "function") {
         if (!(value instanceof schema2)) {
-          addError("is not an instance of the class/constructor " + schema2.name, scope);
+          addError("is not an instance of the class/constructor " + schema2.name);
         }
       } else if (schema2) {
-        addError("Invalid schema/property definition " + schema2, scope);
+        addError("Invalid schema/property definition " + schema2);
       }
       return null;
     }
     if (_changing && schema2.readOnly) {
-      addError("is a readonly field, it can not be changed", scope);
+      addError("is a readonly field, it can not be changed");
     }
     if (schema2["extends"]) {
-      checkProp(value, schema2["extends"], path, scope, i);
+      checkProp(value, schema2["extends"], path, i);
     }
-    function checkType(type, value2, scope2) {
+    function checkType(type, value2) {
       if (type) {
         if (typeof type == "string" && type != "any" && (type == "null" ? value2 !== null : typeof value2 != type) && !(value2 instanceof Array && type == "array") && !(type == "integer" && value2 % 1 === 0)) {
           return [{
             property: path,
-            scope: scope2,
             message: value2 + " - " + typeof value2 + " value found, but a " + type + " is required"
           }];
         }
         if (type instanceof Array) {
           let unionErrors = [];
           for (var j2 = 0; j2 < type.length; j2++) {
-            if (!(unionErrors = checkType(type[j2], value2, scope2)).length) {
+            if (!(unionErrors = checkType(type[j2], value2)).length) {
               break;
             }
           }
@@ -23273,7 +20927,7 @@ var validate = (instance, schema, options) => {
         } else if (typeof type == "object") {
           var priorErrors = errors;
           errors = [];
-          checkProp(value2, type, path, scope2);
+          checkProp(value2, type, path);
           var theseErrors = errors;
           errors = priorErrors;
           return theseErrors;
@@ -23281,21 +20935,20 @@ var validate = (instance, schema, options) => {
       }
       return [];
     }
-    if (value === void 0 || value === "" || value instanceof Array && !value.length) {
-      if (schema2.required && typeof schema2.required === "boolean") {
-        addError("is missing and it is required", scope);
+    if (value === void 0) {
+      if (schema2.required) {
+        addError("is missing and it is required");
       }
     } else {
       if (getType(schema2) === "object" && schema2.required instanceof Array) {
         for (let requiredField of schema2.required) {
-          if (value[requiredField] === void 0 || value[requiredField] === "" || value[requiredField] instanceof Array && !value[requiredField].length) {
-            addError(`is missing and it is required`, scope + "/properties/" + requiredField, requiredField);
-          }
+          if (value[requiredField] === void 0)
+            addError(`is missing and it is required`, requiredField);
         }
       }
-      errors = errors.concat(checkType(getType(schema2), value, scope));
-      if (schema2.disallow && !checkType(schema2.disallow, value, scope).length) {
-        addError(" disallowed value was matched", scope);
+      errors = errors.concat(checkType(getType(schema2), value));
+      if (schema2.disallow && !checkType(schema2.disallow, value).length) {
+        addError(" disallowed value was matched");
       }
       if (value !== null) {
         if (value instanceof Array) {
@@ -23307,34 +20960,34 @@ var validate = (instance, schema, options) => {
                 propDef = schema2.items[i];
               if (options.coerce)
                 value[i] = options.coerce(value[i], propDef);
-              var errors2 = checkProp(value[i], propDef, path, scope, i);
+              var errors2 = checkProp(value[i], propDef, path, i);
               if (errors2)
                 errors.concat(errors2);
             }
           }
           if (schema2.minItems && value.length < schema2.minItems) {
-            addError("There must be a minimum of " + schema2.minItems + " in the array", scope);
+            addError("There must be a minimum of " + schema2.minItems + " in the array");
           }
           if (schema2.maxItems && value.length > schema2.maxItems) {
-            addError("There must be a maximum of " + schema2.maxItems + " in the array", scope);
+            addError("There must be a maximum of " + schema2.maxItems + " in the array");
           }
         } else if (schema2.properties || schema2.additionalProperties) {
-          errors.concat(checkObj(value, schema2.properties, path, schema2.additionalProperties, scope));
+          errors.concat(checkObj(value, schema2.properties, path, schema2.additionalProperties));
         }
         if (schema2.pattern && typeof value == "string" && !value.match(schema2.pattern)) {
-          addError("does not match the regex pattern " + schema2.pattern, scope);
+          addError("does not match the regex pattern " + schema2.pattern);
         }
         if (schema2.maxLength && typeof value == "string" && value.length > schema2.maxLength) {
-          addError("may only be " + schema2.maxLength + " characters long", scope);
+          addError("may only be " + schema2.maxLength + " characters long");
         }
         if (schema2.minLength && typeof value == "string" && value.length < schema2.minLength) {
-          addError("must be at least " + schema2.minLength + " characters long", scope);
+          addError("must be at least " + schema2.minLength + " characters long");
         }
         if (typeof schema2.minimum !== "undefined" && typeof value == typeof schema2.minimum && schema2.minimum > value) {
-          addError("must have a minimum value of " + schema2.minimum, scope);
+          addError("must have a minimum value of " + schema2.minimum);
         }
         if (typeof schema2.maximum !== "undefined" && typeof value == typeof schema2.maximum && schema2.maximum < value) {
-          addError("must have a maximum value of " + schema2.maximum, scope);
+          addError("must have a maximum value of " + schema2.maximum);
         }
         if (schema2["enum"]) {
           var enumer = schema2["enum"];
@@ -23347,43 +21000,43 @@ var validate = (instance, schema, options) => {
             }
           }
           if (!found) {
-            addError("does not have a value in the enumeration " + enumer.join(", "), scope);
+            addError("does not have a value in the enumeration " + enumer.join(", "));
           }
         }
         if (typeof schema2.maxDecimal == "number" && value.toString().match(new RegExp("\\.[0-9]{" + (schema2.maxDecimal + 1) + ",}"))) {
-          addError("may only have " + schema2.maxDecimal + " digits of decimal places", scope);
+          addError("may only have " + schema2.maxDecimal + " digits of decimal places");
         }
         if (value !== "") {
           if (schema2.format === "wallet-address") {
             const regex = new RegExp("^((0x[a-fA-F0-9]{40})|([13][a-km-zA-HJ-NP-Z1-9]{25,34})|(X[1-9A-HJ-NP-Za-km-z]{33})|(4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}))$");
             if (!regex.test(value))
-              addError("is not a valid wallet address", scope);
+              addError("is not a valid wallet address");
           } else if (schema2.format === "cid") {
             const regex = new RegExp("^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,})$");
             if (!regex.test(value))
-              addError("is not a valid cid", scope);
+              addError("is not a valid cid");
           } else if (schema2.format === "cid-v0") {
             const regex = new RegExp("^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$");
             if (!regex.test(value))
-              addError("is not a valid version 0 cid", scope);
+              addError("is not a valid version 0 cid");
           } else if (schema2.format === "cid-v1") {
             const regex = new RegExp("^(b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,})$");
             if (!regex.test(value))
-              addError("is not a valid version 1 cid", scope);
+              addError("is not a valid version 1 cid");
           } else if (schema2.format === "uuid") {
             const regex = new RegExp("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$");
             if (!regex.test(value))
-              addError("is not a valid uuid", scope);
+              addError("is not a valid uuid");
           }
         }
       }
     }
     return null;
   }
-  function checkObj(instance2, objTypeDef, path, additionalProp, scope) {
+  function checkObj(instance2, objTypeDef, path, additionalProp) {
     if (typeof objTypeDef == "object") {
       if (typeof instance2 != "object" || instance2 instanceof Array) {
-        errors.push({ property: path, scope, message: "an object is required" });
+        errors.push({ property: path, message: "an object is required" });
       }
       for (var i in objTypeDef) {
         if (objTypeDef.hasOwnProperty(i) && i != "__proto__" && i != "constructor") {
@@ -23397,7 +21050,7 @@ var validate = (instance, schema, options) => {
           if (options.coerce && i in instance2) {
             value = instance2[i] = options.coerce(value, propDef);
           }
-          checkProp(value, propDef, path, scope + "/properties/" + i, i);
+          checkProp(value, propDef, path, i);
         }
       }
     }
@@ -23409,8 +21062,7 @@ var validate = (instance, schema, options) => {
         } else {
           errors.push({
             property: path,
-            message: "The property " + i + " is not defined in the schema and the schema does not allow additional properties",
-            scope
+            message: "The property " + i + " is not defined in the schema and the schema does not allow additional properties"
           });
         }
       }
@@ -23418,7 +21070,6 @@ var validate = (instance, schema, options) => {
       if (requires && !(requires in instance2)) {
         errors.push({
           property: path,
-          scope,
           message: "the presence of the property " + i + " requires that " + requires + " also be present"
         });
       }
@@ -23427,22 +21078,21 @@ var validate = (instance, schema, options) => {
         if (options.coerce) {
           value = instance2[i] = options.coerce(value, additionalProp);
         }
-        checkProp(value, additionalProp, path, scope + "/properties/" + i, i);
+        checkProp(value, additionalProp, path, i);
       }
       if (!_changing && value && value.$schema) {
-        const errors2 = checkProp(value, value.$schema, path, scope + "/properties/" + i, i);
+        const errors2 = checkProp(value, value.$schema, path, i);
         if (errors2)
           errors = errors.concat(errors2);
       }
     }
     return errors;
   }
-  const root = "#";
   if (schema) {
-    checkProp(instance, schema, "", root, _changing || "");
+    checkProp(instance, schema, "", _changing || "");
   }
   if (!_changing && instance && instance.$schema) {
-    checkProp(instance, instance.$schema, "", root, "");
+    checkProp(instance, instance.$schema, "", "");
   }
   return { valid: !errors.length, errors };
 };
@@ -23458,345 +21108,115 @@ var DataSchemaValidator = {
   mustBeValid,
   validate
 };
-function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
-  const defaultDateFormat = "DD/MM/YYYY";
-  const defaultTimeFormat = "HH:mm:ss";
-  const defaultDateTimeFormat = "DD/MM/YYYY HH:mm:ss";
-  const inputStyle = {
-    border: {
-      top: "0",
-      left: "0",
-      right: "0"
-    }
-  };
+function renderUI(target, jsonSchema, callback, data, options) {
   const controls = {};
-  const descriptions = {};
-  const errorMsgs = {};
-  const flatRules = [];
-  const showErrorMsg = async (idxScope) => {
-    const data2 = await getData(jsonSchema);
-    const validationResult = validate(data2, jsonSchema, { changing: false });
-    let showErrMsg = false;
-    let errMsg = "";
-    if ((validationResult == null ? void 0 : validationResult.valid) == false) {
-      for (let idx = 0; idx < validationResult.errors.length; idx++) {
-        if (validationResult.errors[idx].scope == idxScope) {
-          showErrMsg = true;
-          errMsg = validationResult.errors[idx].message;
-        }
-      }
-    }
-    if (showErrMsg == true) {
-      if (descriptions.hasOwnProperty(idxScope))
-        descriptions[idxScope].visible = false;
-      errorMsgs[idxScope].caption = errMsg;
-      errorMsgs[idxScope].visible = true;
-    } else {
-      if (descriptions.hasOwnProperty(idxScope))
-        descriptions[idxScope].visible = true;
-      errorMsgs[idxScope].caption = "";
-      errorMsgs[idxScope].visible = false;
-    }
-  };
-  const renderForm = (schema, scope = "#", isArray = false, idx, schemaOptions) => {
+  const renderForm = (schema, scope = "#") => {
     if (!schema)
       return void 0;
     const currentField = scope.substr(scope.lastIndexOf("/") + 1);
     const labelName = schema.title || (scope != "#/" ? convertFieldNameToLabel(currentField) : "");
+    let groupPnl = new Panel();
+    let lbl;
+    let controlPnl;
     const columnWidth = options && options.columnWidth ? options.columnWidth : "100px";
-    const idxScope = idx !== void 0 ? `${scope}_${idx}` : scope;
-    let isRequired = false;
-    let arrRequired = [];
-    if (typeof schema.required === "boolean") {
-      isRequired = schema.required;
-    } else if (typeof schema.required === "object") {
-      arrRequired = schema.required;
-    }
     if (schema.enum && schema.enum.length > 0) {
       const items = [];
       for (const item of schema.enum) {
         items.push({ label: item, value: item });
       }
-      const groupPnl = new Panel();
-      const hStack = new HStack(groupPnl, { gap: 2 });
-      if (!isArray) {
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
-      }
-      const controlPnl = new Panel(groupPnl);
-      let combobox = new ComboBox(controlPnl, {
+      groupPnl = new Panel();
+      lbl = new Label(groupPnl, { caption: labelName });
+      controlPnl = new Panel(groupPnl);
+      controls[scope] = new ComboBox(controlPnl, {
         width: "100%",
         items,
         icon: { name: "caret-down" }
       });
-      combobox.id = idxScope;
-      combobox.classList.add(jsonUIComboboxStyle);
-      combobox.onChanged = () => showErrorMsg(idxScope);
-      controls[idxScope] = combobox;
-      if (isArray) {
-        controls[idxScope].setAttribute("role", "column");
-        controls[idxScope].setAttribute("field", currentField);
-      }
-      if (schema.description)
-        descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-      errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
       return groupPnl;
     } else if (schema.oneOf && schema.oneOf.length > 0) {
       const items = [];
       for (const item of schema.oneOf) {
         items.push({ label: item.title, value: item.const });
       }
-      const groupPnl = new Panel();
-      const hStack = new HStack(groupPnl, { gap: 2 });
-      if (!isArray) {
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
-      }
-      const controlPnl = new Panel(groupPnl);
-      let combobox = new ComboBox(controlPnl, {
+      groupPnl = new Panel();
+      lbl = new Label(groupPnl, { caption: labelName });
+      controlPnl = new Panel(groupPnl);
+      controls[scope] = new ComboBox(controlPnl, {
         width: columnWidth,
         items,
         icon: { name: "caret-down" }
       });
-      combobox.id = idxScope;
-      combobox.classList.add(jsonUIComboboxStyle);
-      combobox.onChanged = () => showErrorMsg(idxScope);
-      controls[idxScope] = combobox;
-      if (isArray) {
-        controls[idxScope].setAttribute("role", "column");
-        controls[idxScope].setAttribute("field", currentField);
-      }
-      if (schema.description)
-        descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-      errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
       return groupPnl;
     } else if (schema.type === "string") {
       if (schema.format === "date") {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
-        const datePicker = new Datepicker(controlPnl, {
-          width: columnWidth,
-          type: "date"
+        groupPnl = new Panel();
+        lbl = new Label(groupPnl, { caption: labelName });
+        controlPnl = new Panel(groupPnl);
+        controls[scope] = new Datepicker(controlPnl, {
+          width: columnWidth
         });
-        datePicker.id = idxScope;
-        datePicker.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = datePicker;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-          controls[idxScope].setAttribute("format", schema.format);
-        }
-        if (schema.description)
-          descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-        errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
         return groupPnl;
       } else if (schema.format === "time") {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
+        groupPnl = new Panel();
+        lbl = new Label(groupPnl, { caption: labelName });
+        controlPnl = new Panel(groupPnl);
         const timePicker = new Datepicker(controlPnl, {
-          width: columnWidth,
-          type: "time"
+          width: columnWidth
         });
-        timePicker.id = idxScope;
-        timePicker.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = timePicker;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-          controls[idxScope].setAttribute("format", schema.format);
-        }
-        if (schema.description)
-          descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-        errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
+        timePicker.dateTimeFormat = "HH:mm:ss";
+        controls[scope] = timePicker;
         return groupPnl;
       } else if (schema.format === "date-time") {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
+        groupPnl = new Panel();
+        lbl = new Label(groupPnl, { caption: labelName });
+        controlPnl = new Panel(groupPnl);
         const dateTimePicker = new Datepicker(controlPnl, {
-          width: columnWidth,
-          type: "dateTime"
+          width: columnWidth
         });
-        dateTimePicker.id = idxScope;
-        dateTimePicker.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = dateTimePicker;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-          controls[idxScope].setAttribute("format", schema.format);
-        }
-        if (schema.description)
-          descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-        errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
+        dateTimePicker.dateTimeFormat = "YYYY-MM-DD HH:mm:ss";
+        controls[scope] = dateTimePicker;
         return groupPnl;
       } else if (schema.format === "color") {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
-        let input = new Input(controlPnl, {
+        groupPnl = new Panel();
+        lbl = new Label(groupPnl, { caption: labelName });
+        controlPnl = new Panel(groupPnl);
+        controls[scope] = new Input(controlPnl, {
           inputType: "color"
         });
-        input.id = idxScope;
-        input.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = input;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-          controls[idxScope].setAttribute("format", schema.format);
-        }
-        if (schema.description)
-          descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-        errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
-        return groupPnl;
-      } else if (schema.format === "data-url") {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
-        let upload = new Upload(controlPnl);
-        upload.id = idxScope;
-        upload.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = upload;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-          controls[idxScope].setAttribute("format", schema.format);
-        }
         return groupPnl;
       } else {
-        const groupPnl = new Panel();
-        const hStack = new HStack(groupPnl, { gap: 2 });
-        if (!isArray) {
-          new Label(hStack, { caption: labelName });
-          if (isRequired) {
-            new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-          }
-        }
-        const controlPnl = new Panel(groupPnl);
-        let input = new Input(controlPnl, {
+        groupPnl = new Panel();
+        lbl = new Label(groupPnl, { caption: labelName });
+        controlPnl = new Panel(groupPnl);
+        controls[scope] = new Input(controlPnl, {
           width: columnWidth,
-          inputType: schema.format === "multi" ? "textarea" : "text",
-          height: schema.format === "multi" ? 100 : 25,
-          ...inputStyle
+          inputType: "text"
         });
-        input.id = idxScope;
-        input.onChanged = () => showErrorMsg(idxScope);
-        controls[idxScope] = input;
-        if (isArray) {
-          controls[idxScope].setAttribute("role", "column");
-          controls[idxScope].setAttribute("field", currentField);
-        }
-        if (schema.description)
-          descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-        errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
         return groupPnl;
       }
     } else if (schema.type === "number") {
-      const groupPnl = new Panel();
-      const hStack = new HStack(groupPnl, { gap: 2 });
-      if (!isArray) {
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
-      }
-      const controlPnl = new Panel(groupPnl);
-      let input = new Input(controlPnl, {
+      groupPnl = new Panel();
+      lbl = new Label(groupPnl, { caption: labelName });
+      controlPnl = new Panel(groupPnl);
+      controls[scope] = new Input(controlPnl, {
         width: columnWidth,
         inputType: "number"
       });
-      input.id = idxScope;
-      input.onChanged = () => showErrorMsg(idxScope);
-      controls[idxScope] = input;
-      if (isArray) {
-        controls[idxScope].setAttribute("role", "column");
-        controls[idxScope].setAttribute("field", currentField);
-        controls[idxScope].setAttribute("format", "number");
-      }
-      if (schema.description)
-        descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-      errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
       return groupPnl;
     } else if (schema.type === "integer") {
-      const groupPnl = new Panel();
-      const hStack = new HStack(groupPnl, { gap: 2 });
-      if (!isArray) {
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
-      }
-      const controlPnl = new Panel(groupPnl);
-      let input = new Input(controlPnl, {
+      groupPnl = new Panel();
+      lbl = new Label(groupPnl, { caption: labelName });
+      controlPnl = new Panel(groupPnl);
+      controls[scope] = new Input(controlPnl, {
         width: columnWidth,
         inputType: "number"
       });
-      input.id = idxScope;
-      input.onChanged = () => showErrorMsg(idxScope);
-      controls[idxScope] = input;
-      if (isArray) {
-        controls[idxScope].setAttribute("role", "column");
-        controls[idxScope].setAttribute("field", currentField);
-        controls[idxScope].setAttribute("format", "integer");
-      }
-      if (schema.description)
-        descriptions[idxScope] = new Label(groupPnl, { caption: schema.description });
-      errorMsgs[idxScope] = new Label(groupPnl, { visible: false, font: { color: "#ff0000" } });
       return groupPnl;
     } else if (schema.type === "boolean") {
-      const groupPnl = new Panel();
-      groupPnl.classList.add(jsonUICheckboxStyle);
-      const hStack = new HStack(groupPnl, { gap: 2 });
-      if (!isArray) {
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
-      }
-      const controlPnl = new Panel(groupPnl);
-      let checkbox = new Checkbox(controlPnl);
-      checkbox.id = idxScope;
-      checkbox.onChanged = () => showErrorMsg(idxScope);
-      controls[idxScope] = checkbox;
-      if (isArray) {
-        controls[idxScope].setAttribute("role", "column");
-        controls[idxScope].setAttribute("field", currentField);
-      }
+      groupPnl = new Panel();
+      lbl = new Label(groupPnl, { caption: labelName });
+      controlPnl = new Panel(groupPnl);
+      controls[scope] = new Checkbox(controlPnl);
       return groupPnl;
     } else if (schema.type === "object") {
       const properties = schema.properties;
@@ -23815,7 +21235,7 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
       if (options && options.columnsPerRow)
         for (let i = 0; i < options.columnsPerRow; i++)
           templateColumns.push("1fr");
-      let form = new GridLayout(void 0, {
+      let form2 = new GridLayout(void 0, {
         templateColumns,
         gap: {
           row: 10,
@@ -23845,281 +21265,18 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
             }
           }
         });
-        const hStack = new HStack(pnl, { gap: 2 });
-        new Label(hStack, { caption: labelName });
-        if (isRequired) {
-          new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-        }
+        const label = new Label(pnl, { caption: labelName });
       }
       for (const propertyName in properties) {
-        let currentSchema = properties[propertyName];
-        if (!(currentSchema == null ? void 0 : currentSchema.required) && arrRequired.includes(propertyName)) {
-          currentSchema.required = true;
-        }
-        const control = renderForm(currentSchema, `${idxScope}/properties/${propertyName}`, false, idx);
-        form.append(control);
+        const currentSchema = properties[propertyName];
+        const control = renderForm(currentSchema, `${scope}/properties/${propertyName}`);
+        form2.append(control);
       }
-      box.append(form);
-      controls[idxScope] = box;
+      box.append(form2);
+      controls[scope] = box;
       return box;
     } else if (schema.type === "array") {
-      if (!schema.items)
-        return void 0;
-      let isVertical = false;
-      if (typeof (schemaOptions == null ? void 0 : schemaOptions.detail) === "object") {
-        isVertical = schemaOptions.detail.type === "VerticalLayout";
-      }
-      const groupPnl = new Panel(void 0, {
-        border: {
-          width: 1,
-          style: "solid",
-          color: "#EEE",
-          radius: "0.4rem"
-        },
-        padding: {
-          top: 16,
-          bottom: 16,
-          left: 8,
-          right: 8
-        }
-      });
-      groupPnl.setAttribute("role", "array");
-      const arrayField = scope.split("/");
-      groupPnl.setAttribute("array-field", arrayField[arrayField.length - 1]);
-      groupPnl.setAttribute("array-field-idx", `${idx === void 0 ? "" : idx}`);
-      const pnlTitle = new HStack(groupPnl, {
-        padding: {
-          top: 5,
-          bottom: 5,
-          left: 10,
-          right: 10
-        },
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "transparent"
-      });
-      const hStack = new HStack(pnlTitle, { gap: 2 });
-      new Label(hStack, { caption: labelName, font: { size: "1rem" } });
-      if (isRequired) {
-        new Label(hStack, { caption: "*", font: { color: "#ff0000" } });
-      }
-      const btnAdd = new Icon(new Panel(pnlTitle), {
-        name: "plus",
-        fill: theme_exports.ThemeVars.colors.primary.main,
-        width: "1em",
-        height: "1em"
-      });
-      btnAdd.classList.add("pointer");
-      btnAdd.setAttribute("role", "add");
-      const pnlItems = new Panel(groupPnl, {
-        padding: {
-          top: 5,
-          bottom: 5,
-          left: 5,
-          right: 5
-        }
-      });
-      let _idx = 0;
-      const _items = schema.items;
-      const itemsRequired = typeof (_items == null ? void 0 : _items.required) === "object" ? _items.required : [];
-      if (isVertical) {
-        const addCard = (index) => {
-          const gridLayout = new GridLayout(pnlItems, {
-            templateColumns: ["1fr", "3fr"],
-            border: {
-              top: {
-                width: 1,
-                style: "solid",
-                color: "#DADDE1"
-              },
-              bottom: {
-                width: 1,
-                style: "solid",
-                color: "#DADDE1"
-              }
-            },
-            padding: {
-              top: 32,
-              bottom: 32,
-              left: 8,
-              right: 8
-            },
-            gap: {
-              row: 10,
-              column: 10
-            }
-          });
-          gridLayout.position = "relative";
-          gridLayout.setAttribute("role", "row");
-          if (typeof _items === "object" && _items.type === "object" && _items.properties) {
-            for (const propertyName in _items.properties) {
-              let property = schema.items.properties[propertyName];
-              if (!(property == null ? void 0 : property.required) && (arrRequired.includes(propertyName) || itemsRequired.includes(propertyName))) {
-                property.required = true;
-              }
-              const control = renderForm(property, `${idxScope}/properties/${propertyName}`, true, index);
-              if (control && (property == null ? void 0 : property.type) === "object") {
-                control.setAttribute("object-field", propertyName);
-                control.setAttribute("object-field-idx", `${index}`);
-                const lb = control.querySelector(":scope > i-panel");
-                if (lb) {
-                  lb.style.display = "none";
-                }
-              }
-              ;
-              const hStack2 = new HStack(void 0, { gap: 2 });
-              const _property = property;
-              new Label(hStack2, { caption: _property.title || convertFieldNameToLabel(propertyName) });
-              if (_property.required) {
-                new Label(hStack2, { caption: "*", font: { color: "#ff0000" } });
-              }
-              gridLayout.append(hStack2);
-              gridLayout.append(control);
-            }
-            const btnDelete = new Icon(gridLayout, {
-              name: "times",
-              fill: "#ff0000",
-              width: "1rem",
-              height: "1rem",
-              top: 5,
-              right: 5
-            });
-            btnDelete.position = "absolute";
-            btnDelete.classList.add("pointer");
-            btnDelete.onClick = () => {
-              gridLayout.remove();
-            };
-          }
-        };
-        btnAdd.onClick = () => {
-          addCard(++_idx);
-        };
-        addCard(_idx);
-      } else {
-        let colCount = 0;
-        if (schema.items instanceof Array)
-          colCount = schema.items.length;
-        else if (typeof schema.items === "object" && schema.items.type === "object" && schema.items.properties)
-          colCount = Object.keys(schema.items.properties).length;
-        const templateColumns = [];
-        for (let i = 0; i < colCount; i++)
-          templateColumns.push("1fr");
-        templateColumns.push("1em");
-        const headerColumn = new GridLayout(pnlItems, {
-          templateColumns,
-          border: {
-            top: {
-              width: 1,
-              style: "solid",
-              color: "#DADDE1"
-            },
-            bottom: {
-              width: 1,
-              style: "solid",
-              color: "#DADDE1"
-            }
-          },
-          padding: {
-            top: 16,
-            bottom: 16,
-            left: 16,
-            right: 16
-          },
-          gap: {
-            row: 10,
-            column: 10
-          }
-        });
-        if (schema.items instanceof Array) {
-          for (const item of schema.items) {
-            const _item = item;
-            if (_item.title) {
-              const hStack2 = new HStack(headerColumn, { gap: 2 });
-              new Label(hStack2, { caption: _item.title });
-              if (_item.required) {
-                new Label(hStack2, { caption: "*", font: { color: "#ff0000" } });
-              }
-            }
-          }
-        } else if (typeof schema.items === "object") {
-          if (schema.items.type === "object" && schema.items.properties) {
-            for (const propertyName in schema.items.properties) {
-              let property = schema.items.properties[propertyName];
-              if (!(property == null ? void 0 : property.required) && (arrRequired.includes(propertyName) || itemsRequired.includes(propertyName))) {
-                property.required = true;
-              }
-              const hStack2 = new HStack(headerColumn, { gap: 2 });
-              const _property = property;
-              new Label(hStack2, { caption: _property.title || convertFieldNameToLabel(propertyName) });
-              if (_property.required) {
-                new Label(hStack2, { caption: "*", font: { color: "#ff0000" } });
-              }
-            }
-          }
-        }
-        const addRow = (index) => {
-          const bodyColumn = new GridLayout(pnlItems, {
-            templateColumns,
-            gap: {
-              row: 10,
-              column: 10
-            },
-            padding: {
-              top: 16,
-              bottom: 16,
-              left: 16,
-              right: 16
-            },
-            border: {
-              bottom: {
-                width: 1,
-                style: "solid",
-                color: "#DADDE1"
-              }
-            }
-          });
-          bodyColumn.setAttribute("role", "row");
-          if (typeof schema.items === "object" && _items.type === "object" && _items.properties) {
-            for (const propertyName in _items.properties) {
-              const property = schema.items.properties[propertyName];
-              if (!(property == null ? void 0 : property.required) && (arrRequired.includes(propertyName) || itemsRequired.includes(propertyName))) {
-                property.required = true;
-              }
-              const control = renderForm(property, `${idxScope}/properties/${propertyName}`, true, index);
-              if (control && (property == null ? void 0 : property.type) === "object") {
-                control.setAttribute("object-field", propertyName);
-                control.setAttribute("object-field-idx", `${index}`);
-                const lb = control.querySelector(":scope > i-panel");
-                if (lb) {
-                  lb.style.display = "none";
-                }
-              }
-              ;
-              bodyColumn.append(control);
-            }
-            const btnDelete = new Icon(bodyColumn, {
-              name: "times",
-              fill: "#ff0000",
-              width: "1em",
-              height: "1em",
-              margin: {
-                top: "auto",
-                bottom: "auto"
-              }
-            });
-            btnDelete.classList.add("pointer");
-            btnDelete.onClick = () => {
-              bodyColumn.remove();
-            };
-          }
-        };
-        addRow(_idx);
-        btnAdd.onClick = () => {
-          addRow(++_idx);
-        };
-      }
-      controls[idxScope] = groupPnl;
-      return groupPnl;
+      return void 0;
     } else if (schema.type === "null") {
       return void 0;
     } else if (schema.type === "any") {
@@ -24127,289 +21284,17 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
     } else
       return void 0;
   };
-  const renderFormBySchema = (dataSchema, uiSchema, scope = "#") => {
-    if (!dataSchema || !uiSchema)
-      return;
-    clearUI();
-    let uiWrapper = new Panel(target, {
-      padding: {
-        left: 10,
-        right: 10,
-        top: 0,
-        bottom: 10
-      }
-    });
-    uiWrapper.id = "uiWrapper";
-    let formTabs = new Tabs(uiWrapper, {
-      mode: "vertical"
-    });
-    formTabs.id = "formTabs";
-    formTabs.classList.add(jsonUITabStyle);
-    formTabs.visible = ["Categorization", "Category"].includes(uiSchema.type);
-    let ui = createUI(uiSchema);
-    if (ui)
-      uiWrapper.append(ui);
-    setupRules();
-  };
-  const setupRules = () => {
-    for (const item of flatRules) {
-      const { rule, elm } = item;
-      if (rule && rule.condition && rule.condition.scope && rule.condition.schema) {
-        const control = document.getElementById(rule.condition.scope);
-        if (control) {
-          const toggleValidate = () => {
-            if (rule.effect === "HIDE" || rule.effect === "SHOW") {
-              if (control.checked === rule.condition.schema.const) {
-                elm.visible = rule.effect === "SHOW";
-              } else {
-                elm.visible = !(rule.effect === "SHOW");
-              }
-            } else if (rule.effect == "ENABLE" || rule.effect == "DISABLE") {
-              if (control.checked === rule.condition.schema.const) {
-                elm.enabled = rule.effect === "ENABLE";
-              } else {
-                elm.enabled = !(rule.effect === "ENABLE");
-              }
-            }
-          };
-          if (control.tagName === "I-CHECKBOX" || control.tagName === "I-SWITCH") {
-            control.onChanged = (target2, event) => {
-              toggleValidate();
-            };
-            toggleValidate();
-          }
-        }
-      }
-    }
-  };
-  const clearUI = () => {
-    let uiWrapper = document.getElementById("uiWrapper");
-    if (uiWrapper)
-      uiWrapper.innerHTML = "";
-  };
-  const generateTemplateColumnsByNumber = (count) => {
-    let columns = [];
-    for (let i = 0; i < count; i++)
-      columns.push("1fr");
-    return columns;
-  };
-  const getDataSchemaByScope = (scope) => {
-    const segments = scope.split("/");
-    let obj = {};
-    for (const segment of segments) {
-      if (segment === "#")
-        obj = jsonSchema;
-      else
-        obj = obj[segment];
-    }
-    if (obj == void 0)
-      console.log("No corresponding scope:", scope);
-    return [segments[segments.length - 1], obj];
-  };
-  const createUI = (uiSchema, carryData) => {
-    if (!uiSchema)
-      return null;
-    const { elements, type, scope, label, options: options2, rule } = uiSchema;
-    if (type === "VerticalLayout") {
-      const elm = new VStack(void 0, {
-        justifyContent: "center",
-        alignItems: "center"
-      });
-      if (elements)
-        elements.map((v) => {
-          let ui = createUI(v);
-          if (ui)
-            elm.append(ui);
-        });
-      if (rule)
-        flatRules.push({ elm, rule });
-      return elm;
-    } else if (type === "HorizontalLayout") {
-      const elm = new GridLayout(void 0, {
-        width: "100%",
-        gap: { column: 16 },
-        templateColumns: elements ? generateTemplateColumnsByNumber(elements.length) : ""
-      });
-      if (elements)
-        elements.map((v) => {
-          let ui = createUI(v);
-          if (ui)
-            elm.append(ui);
-        });
-      if (rule)
-        flatRules.push({ elm, rule });
-      return elm;
-    } else if (type === "Group") {
-      const elm = new Panel(void 0, {
-        width: "100%"
-      });
-      elm.classList.add("box");
-      if (label !== false && !!label) {
-        let boxHeader = new Panel(elm);
-        let boxHeaderLabel = new Label(boxHeader, {
-          caption: label
-        });
-        boxHeaderLabel.classList.add("box-header");
-      }
-      const boxContent = new Panel(elm);
-      boxContent.classList.add("box-content");
-      if (elements)
-        elements.map((v) => {
-          let ui = createUI(v);
-          if (ui)
-            boxContent.append(ui);
-        });
-      if (rule)
-        flatRules.push({ elm, rule });
-      return elm;
-    } else if (type === "Categorization") {
-      let elm = new Tabs();
-      elm.classList.add(jsonUITabStyle);
-      let formTabs = document.getElementById("formTabs");
-      if (formTabs)
-        formTabs.visible = true;
-      if (elements) {
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i];
-          createUI(element, { tabs: formTabs, index: i });
-        }
-      }
-      elm = formTabs;
-      if (rule)
-        flatRules.push({ elm, rule });
-      return formTabs;
-    } else if (type === "Category") {
-      let caption;
-      if (label !== false) {
-        caption = label;
-      }
-      if (carryData && carryData.tabs && carryData.index != void 0) {
-        const children = new Panel(void 0, {
-          padding: {
-            left: 10,
-            right: 10,
-            top: 10,
-            bottom: 10
-          }
-        });
-        if (elements) {
-          for (const element of elements) {
-            let ui = createUI(element);
-            if (ui)
-              children.append(ui);
-          }
-        }
-        let tabCaption = typeof caption == "boolean" ? "" : caption;
-        const formTabs = document.getElementById("formTabs");
-        let tab = formTabs.add({ caption: tabCaption, children });
-        formTabs.activeTabIndex = 0;
-        if (rule)
-          flatRules.push({ elm: tab, rule });
-      }
-    } else if (type === "Control" && scope) {
-      const [key2, dataSchema] = getDataSchemaByScope(scope);
-      const stub = new Panel(void 0, {
-        padding: {
-          left: 5,
-          right: 5,
-          top: 5,
-          bottom: 5
-        }
-      });
-      stub.classList.add("form-group");
-      let caption, labelElm, descriptionElm;
-      let formControlElm = new Panel();
-      formControlElm.classList.add("form-control");
-      let hideLabel = false;
-      if (label !== false) {
-        caption = label;
-        if (!caption)
-          caption = convertFieldNameToLabel(key2);
-      }
-      const control = renderForm(dataSchema, scope, false, void 0, options2);
-      formControlElm.append(control);
-      if (formControlElm)
-        stub.append(formControlElm);
-      if (descriptionElm)
-        stub.append(descriptionElm);
-      if (rule) {
-        flatRules.push({ elm: stub, rule });
-      }
-      ;
-      return stub;
-    } else
-      return null;
-  };
-  const setData = (schema, data2, scope = "#", idx) => {
-    var _a;
+  const setData = (schema, data2, scope = "#") => {
     if (!schema || !data2)
       return;
-    const idxScope = idx !== void 0 ? `${scope}_${idx}` : scope;
     if (schema.type === "object") {
       if (!schema.properties)
         return;
       for (const propertyName in schema.properties) {
-        setData(schema.properties[propertyName], data2[propertyName], `${idxScope}/properties/${propertyName}`, idx);
-      }
-    } else if (schema.type === "array") {
-      if (typeof schema.items === "object" && schema.items.properties) {
-        const grid = controls[idxScope];
-        const btnAdd = grid.querySelector("[role='add']");
-        let rows = grid.querySelectorAll("[role='row']");
-        if (rows)
-          for (const row of rows)
-            row.remove();
-        if (data2 instanceof Array) {
-          for (const columnData of data2) {
-            if (btnAdd)
-              btnAdd.onClick(btnAdd);
-            if (typeof columnData === "object") {
-              for (const propertyName in columnData) {
-                const fieldData = columnData[propertyName];
-                rows = grid.querySelectorAll(":scope > i-panel > [role='row']");
-                if (rows) {
-                  const row = rows[rows.length - 1];
-                  const column = row.querySelector(`[role='column'][field='${propertyName}']`);
-                  if (column) {
-                    if (column.tagName === "I-CHECKBOX") {
-                      column.checked = fieldData;
-                    } else if (column.tagName === "I-COMBO-BOX") {
-                      column.selectedItem = column.items.find((v) => v.value === fieldData) || void 0;
-                    } else if (column.tagName === "I-DATEPICKER") {
-                      const format = column.getAttribute("format");
-                      let dateFormat;
-                      if (format === "date")
-                        dateFormat = defaultDateFormat;
-                      else if (format === "time")
-                        dateFormat = defaultTimeFormat;
-                      else
-                        dateFormat = defaultDateTimeFormat;
-                      column.value = (0, import_moment.default)(fieldData, dateFormat);
-                    } else {
-                      column.value = fieldData;
-                    }
-                    continue;
-                  }
-                  const properties = ((_a = schema.items) == null ? void 0 : _a.properties) || {};
-                  const objectField = row.querySelector(`:scope > [object-field='${propertyName}']`);
-                  if (objectField) {
-                    const idxObj = objectField.getAttribute("object-field-idx");
-                    setData(properties[propertyName], fieldData, `${idxScope}/properties/${propertyName}`, Number(idxObj));
-                    continue;
-                  }
-                  const arrayField = row.querySelector(`:scope > [array-field='${propertyName}']`);
-                  if (arrayField) {
-                    const idxObj = arrayField.getAttribute("array-field-idx");
-                    setData(properties[propertyName], fieldData, `${idxScope}/properties/${propertyName}`, Number(idxObj));
-                  }
-                }
-              }
-            }
-          }
-        }
+        setData(schema.properties[propertyName], data2[propertyName], `${scope}/properties/${propertyName}`);
       }
     } else {
-      const control = controls[idxScope];
+      const control = controls[scope];
       if (control.tagName === "I-CHECKBOX")
         control.checked = data2;
       else if (control.tagName === "I-DATEPICKER")
@@ -24420,114 +21305,37 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
         control.value = data2;
     }
   };
-  const getData = async (schema, scope = "#", idx) => {
-    var _a, _b, _c, _d;
+  const getData = (schema, scope = "#") => {
+    var _a;
     if (!schema)
       return null;
-    const idxScope = idx !== void 0 ? `${scope}_${idx}` : scope;
     if (schema.type === "object") {
       const properties = schema.properties;
       if (!properties)
         return void 0;
       const data2 = {};
       for (const propertyName in properties) {
-        data2[propertyName] = await getData(properties[propertyName], `${idxScope}/properties/${propertyName}`, idx);
+        data2[propertyName] = getData(properties[propertyName], `${scope}/properties/${propertyName}`);
       }
       return data2;
-    } else if (schema.type === "array") {
-      const grid = controls[idxScope];
-      if (!grid)
-        return void 0;
-      const rows = grid.querySelectorAll("[role='row']");
-      if (!rows)
-        return void 0;
-      const listData = [];
-      for (const row of rows) {
-        const parentRow = row.closest("[role='array']");
-        if (parentRow !== grid)
-          continue;
-        const columns = row.querySelectorAll("[role='column']");
-        const objects = row.querySelectorAll(":scope > [object-field]");
-        const arrayField = row.querySelectorAll(":scope > [array-field]");
-        if (!columns && !objects && !arrayField)
-          continue;
-        const columnData = {};
-        for (const column of columns) {
-          const parentCol = column.closest("[role='row']");
-          if (parentCol !== row)
-            continue;
-          const fieldName = column.getAttribute("field");
-          if (!fieldName)
-            continue;
-          if (column.tagName === "I-CHECKBOX") {
-            columnData[fieldName] = column.checked;
-          } else if (column.tagName === "I-COMBO-BOX") {
-            columnData[fieldName] = (_a = column.value) == null ? void 0 : _a.value;
-          } else if (column.tagName === "I-DATEPICKER") {
-            const format = column.getAttribute("format");
-            let dateFormat;
-            if (format === "date")
-              dateFormat = defaultDateFormat;
-            else if (format === "time")
-              dateFormat = defaultTimeFormat;
-            else
-              dateFormat = defaultDateTimeFormat;
-            columnData[fieldName] = ((_b = column.value) == null ? void 0 : _b.format(dateFormat)) || "";
-          } else if (column.tagName === "I-UPLOAD") {
-            if (!column.fileList || column.fileList && column.fileList.length === 0)
-              return void 0;
-            columnData[fieldName] = await column.toBase64(column.fileList[0]);
-          } else if (column.tagName === "I-INPUT") {
-            const format = column.getAttribute("format");
-            if (format === "number")
-              columnData[fieldName] = parseFloat(column.value);
-            else if (format === "integer")
-              columnData[fieldName] = parseInt(column.value);
-            else
-              columnData[fieldName] = column.value;
-          }
-        }
-        const properties = ((_c = schema.items) == null ? void 0 : _c.properties) || {};
-        for (const obj of objects) {
-          const field = obj.getAttribute("object-field");
-          const idxObj = obj.getAttribute("object-field-idx");
-          if (field && properties[field]) {
-            columnData[field] = await getData(properties[field], `${idxScope}/properties/${field}`, Number(idxObj));
-          }
-        }
-        for (const card of arrayField) {
-          const field = card.getAttribute("array-field");
-          const idxObj = card.getAttribute("array-field-idx");
-          if (field && properties[field]) {
-            columnData[field] = await getData(properties[field], `${idxScope}/properties/${field}`, Number(idxObj));
-          }
-        }
-        listData.push(columnData);
-      }
-      return listData;
     } else {
-      const control = controls[idxScope];
+      const control = controls[scope];
       if (!control)
         return void 0;
       if (control.tagName === "I-CHECKBOX")
         return control.checked;
       else if (control.tagName === "I-COMBO-BOX") {
-        return (_d = control.value) == null ? void 0 : _d.value;
+        return (_a = control.value) == null ? void 0 : _a.value;
       } else if (control.tagName === "I-DATEPICKER") {
         const value = control.value;
         if (value === void 0)
-          return "";
-        if (schema.format === "date")
-          return (value == null ? void 0 : value.format(defaultDateFormat)) || "";
-        else if (schema.format === "time")
-          return (value == null ? void 0 : value.format(defaultTimeFormat)) || "";
-        else if (schema.format === "date-time")
-          return (value == null ? void 0 : value.format(defaultDateTimeFormat)) || "";
-      } else if (control.tagName === "I-UPLOAD") {
-        if (!control.fileList || control.fileList && control.fileList.length === 0)
           return void 0;
-        const dataUrl = await control.toBase64(control.fileList[0]);
-        return dataUrl;
+        if (schema.format === "date")
+          return value.format("YYYY-MM-DD");
+        else if (schema.format === "time")
+          return value.format("HH:mm:ss");
+        else if (schema.format === "date-time")
+          return value.format("YYYY-MM-DD HH:mm:ss");
       } else if (control.tagName === "I-INPUT") {
         if (schema.type === "string")
           return control.value;
@@ -24540,16 +21348,14 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
         } else
           return control.value;
       }
+      if (!control)
+        return void 0;
       return control.value;
     }
   };
   const panel = new Panel();
-  if (jsonUISchema) {
-    renderFormBySchema(jsonSchema, jsonUISchema);
-  } else {
-    const form = renderForm(jsonSchema);
-    panel.append(form);
-  }
+  const form = renderForm(jsonSchema);
+  panel.append(form);
   const pnlButton = new HStack();
   const confirmButtonCaption = options && options.confirmButtonCaption ? options.confirmButtonCaption : "Confirm";
   const buttonStack = new HStack(void 0, {
@@ -24610,10 +21416,10 @@ function renderUI(target, jsonSchema, callback, jsonUISchema, data, options) {
       color: options && options.confirmButtonBackgroundColor ? options.confirmButtonBackgroundColor : "#3F51B5"
     }
   });
-  btnConfirm.onClick = async () => {
+  btnConfirm.onClick = () => {
     if (!callback)
       return;
-    const data2 = await getData(jsonSchema);
+    const data2 = getData(jsonSchema);
     const validationResult = validate(data2, jsonSchema, { changing: false });
     if (validationResult == null ? void 0 : validationResult.valid)
       callback(true, data2);
@@ -24650,7 +21456,6 @@ function convertFieldNameToLabel(name) {
 }
 
 // packages/application/src/index.ts
-var API_IPFS_BASEURL = "/api/ipfs/v0";
 var IpfsDataType;
 (function(IpfsDataType2) {
   IpfsDataType2[IpfsDataType2["Raw"] = 0] = "Raw";
@@ -24691,114 +21496,11 @@ var Application = class {
     }
     ;
   }
-  async postData(endpoint, data) {
-    data = data || {};
-    const response = await fetch(endpoint, {
-      method: "POST",
-      mode: "cors",
-      cache: "no-cache",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      referrerPolicy: "no-referrer",
-      body: JSON.stringify(data)
-    });
-    return response.json();
-  }
-  async showUploadModal() {
-    if (!this._uploadModal)
-      this._uploadModal = new UploadModal();
-    this._uploadModal.show();
-  }
-  async getUploadUrl(item) {
-    let { data } = await this.postData(`${API_IPFS_BASEURL}/upload`, { data: item });
-    return data || {};
-  }
-  async uploadData(fileName, content, endpoint) {
-    let cid = await hashContent(content);
-    let item = {
-      cid: cid.cid,
-      name: fileName,
-      size: cid.size,
-      type: "file"
-    };
-    let dir = await hashItems([item]);
-    let data = await this.getUploadUrl(dir);
-    if ((data == null ? void 0 : data[dir.cid]) && (data == null ? void 0 : data[cid.cid])) {
-      let dirStatus = await this.upload(data[dir.cid], JSON.stringify(dir));
-      let fileStatus = await this.upload(data[cid.cid], content);
-      if (dirStatus == 200 && fileStatus == 200)
-        return { success: true, data: dir };
-      else
-        return { success: false, error: `Failed to upload file. Status code: ${fileStatus}` };
-    } else
-      return { success: false };
-  }
-  async uploadFile(extensions) {
-    return new Promise(async (resolve, reject) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      if (extensions) {
-        const accept = Array.isArray(extensions) ? extensions.map((ext) => `.${ext}`).join(",") : `.${extensions}`;
-        input.accept = accept;
-      }
-      ;
-      input.addEventListener("change", async () => {
-        var _a;
-        const file = (_a = input.files) == null ? void 0 : _a[0];
-        if (file) {
-          file.path = `/${file.name}`;
-          file.cid = await hashFile(file);
-          let dir = await hashFiles([file]);
-          let { data } = await this.postData(`${API_IPFS_BASEURL}/upload`, { data: dir });
-          if (data == null ? void 0 : data[file.cid.cid]) {
-            let result = await this.upload(data[file.cid.cid], file);
-          }
-          ;
-          if (data == null ? void 0 : data[dir.cid]) {
-            let result = await this.upload(data[dir.cid], JSON.stringify(dir));
-          }
-          ;
-          resolve({
-            success: true,
-            data
-          });
-        } else {
-          reject({ success: false, error: "No file selected" });
-        }
-      });
-      input.click();
-    });
-  }
-  async upload(url, data) {
-    return new Promise(async (resolve) => {
-      if (typeof data == "string") {
-        let result = await fetch(url, {
-          method: "PUT",
-          body: data
-        });
-        resolve(result.status);
-      } else {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          let result = await fetch(url, {
-            method: "PUT",
-            body: reader.result
-          });
-          resolve(result.status);
-        };
-        reader.onerror = () => {
-          resolve(0);
-        };
-        reader.readAsArrayBuffer(data);
-      }
-      ;
-    });
-  }
   async verifyScript(modulePath, script) {
+    console.dir("verifyScript: " + modulePath);
     try {
-      let cid = await hashContent(script);
+      let cid = hashContent(script);
+      console.dir(cid);
     } catch (err) {
       console.dir(err);
     }
@@ -24844,18 +21546,18 @@ var Application = class {
     return "";
   }
   async fetchDirectoryInfoByCID(ipfsCid) {
+    let directoryInfo = [];
     try {
       const IPFS_API = `https://ipfs.scom.dev/ipfs/${ipfsCid}`;
       let result = await fetch(IPFS_API);
       let jsonContent = await result.json();
-      if (jsonContent.links)
-        return jsonContent.links;
-      return [];
+      if (jsonContent.links) {
+        directoryInfo = jsonContent.links;
+      }
     } catch (err) {
       console.log(err);
     }
-    ;
-    return [];
+    return directoryInfo;
   }
   async getModule(modulePath, options) {
     if (this.modules[modulePath])
@@ -25489,7 +22191,7 @@ CodeDiffEditor = __decorateClass([
 ], CodeDiffEditor);
 
 // packages/data-grid/src/style/dataGrid.css.ts
-var Theme21 = theme_exports.ThemeVars;
+var Theme13 = theme_exports.ThemeVars;
 cssRule("i-data-grid", {
   border: "0.5px solid #dadada",
   $nest: {
@@ -28382,12 +25084,12 @@ DataGrid = __decorateClass([
 ], DataGrid);
 
 // packages/markdown/src/style/markdown.css.ts
-var Theme22 = theme_exports.ThemeVars;
+var Theme14 = theme_exports.ThemeVars;
 cssRule("i-markdown", {
   display: "inline-block",
-  color: Theme22.text.primary,
-  fontFamily: Theme22.typography.fontFamily,
-  fontSize: Theme22.typography.fontSize,
+  color: Theme14.text.primary,
+  fontFamily: Theme14.typography.fontFamily,
+  fontSize: Theme14.typography.fontSize,
   $nest: {
     h1: {
       fontSize: "48px",
@@ -28904,8 +25606,429 @@ MarkdownEditor = __decorateClass([
   customElements2("i-markdown-editor")
 ], MarkdownEditor);
 
+// packages/modal/src/style/modal.css.ts
+var Theme15 = theme_exports.ThemeVars;
+var wrapperStyle = style({
+  position: "fixed",
+  left: 0,
+  top: 0,
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgba(12, 18, 52, 0.7)",
+  opacity: 0,
+  visibility: "hidden",
+  transform: "scale(1.1)",
+  transition: "visibility 0s linear .25s,opacity .25s 0s,transform .25s",
+  zIndex: 1e3,
+  overflow: "auto"
+});
+var noBackdropStyle = style({
+  position: "inherit",
+  top: 0,
+  left: 0,
+  opacity: 0,
+  visibility: "hidden",
+  transform: "scale(1.1)",
+  transition: "visibility 0s linear .25s,opacity .25s 0s,transform .25s",
+  zIndex: 1e3,
+  overflow: "auto",
+  width: "100%",
+  maxWidth: "inherit",
+  $nest: {
+    ".modal": {
+      margin: "0"
+    }
+  }
+});
+var visibleStyle = style({
+  opacity: "1",
+  visibility: "visible",
+  transform: "scale(1)",
+  transition: "visibility 0s linear 0s,opacity .25s 0s,transform .25s"
+});
+var modalStyle = style({
+  fontFamily: "Helvetica",
+  fontSize: "14px",
+  padding: "10px 10px 5px 10px",
+  backgroundColor: Theme15.background.modal,
+  position: "relative",
+  borderRadius: "2px",
+  minWidth: "300px",
+  width: "inherit",
+  maxWidth: "100%"
+});
+var titleStyle = style({
+  fontSize: "18px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  $nest: {
+    "span": {
+      color: Theme15.colors.primary.main
+    },
+    "i-icon": {
+      display: "inline-block",
+      cursor: "pointer"
+    }
+  }
+});
+
+// packages/modal/src/modal.ts
+var Theme16 = theme_exports.ThemeVars;
+var showEvent = new Event("show");
+var Modal = class extends Container {
+  constructor(parent, options) {
+    super(parent, options, {
+      showClose: true,
+      showBackdrop: true,
+      closeOnBackdropClick: true,
+      popupPlacement: "center"
+    });
+  }
+  get visible() {
+    var _a;
+    return ((_a = this.wrapperDiv) == null ? void 0 : _a.classList.contains(visibleStyle)) || false;
+  }
+  set visible(value) {
+    var _a, _b;
+    if (value) {
+      this.wrapperDiv.classList.add(visibleStyle);
+      this.dispatchEvent(showEvent);
+      if (this.showBackdrop) {
+        document.body.style.overflow = "hidden";
+        const parentModal = (_a = this.parentElement) == null ? void 0 : _a.closest("i-modal");
+        if (parentModal) {
+          parentModal.wrapperDiv.style.overflow = "hidden";
+          parentModal.wrapperDiv.scrollTop = 0;
+        }
+        this.wrapperDiv.style.overflow = "hidden auto";
+      }
+    } else {
+      this.wrapperDiv.classList.remove(visibleStyle);
+      if (this.showBackdrop) {
+        const parentModal = (_b = this.parentElement) == null ? void 0 : _b.closest("i-modal");
+        if (parentModal) {
+          parentModal.wrapperDiv.style.overflow = "hidden auto";
+          document.body.style.overflow = "hidden";
+        } else {
+          document.body.style.overflow = "hidden auto";
+        }
+      }
+      this.onClose && this.onClose(this);
+    }
+  }
+  get onOpen() {
+    return this._onOpen;
+  }
+  set onOpen(callback) {
+    this._onOpen = callback;
+  }
+  get title() {
+    const titleElm = this.titleSpan.querySelector("span");
+    return (titleElm == null ? void 0 : titleElm.innerHTML) || "";
+  }
+  set title(value) {
+    const titleElm = this.titleSpan.querySelector("span");
+    titleElm && (titleElm.innerHTML = value || "");
+  }
+  get popupPlacement() {
+    return this._placement;
+  }
+  set popupPlacement(value) {
+    this._placement = value;
+  }
+  get closeIcon() {
+    return this._closeIcon;
+  }
+  set closeIcon(elm) {
+    if (this._closeIcon && this.titleSpan.contains(this._closeIcon))
+      this.titleSpan.removeChild(this._closeIcon);
+    this._closeIcon = elm;
+    if (this._closeIcon) {
+      this._closeIcon.classList.add("i-modal-close");
+      this._closeIcon.onClick = () => this.visible = false;
+      this.titleSpan.appendChild(this._closeIcon);
+    }
+  }
+  get closeOnBackdropClick() {
+    return this._closeOnBackdropClick;
+  }
+  set closeOnBackdropClick(value) {
+    this._closeOnBackdropClick = typeof value === "boolean" ? value : true;
+  }
+  get showBackdrop() {
+    return this._showBackdrop;
+  }
+  set showBackdrop(value) {
+    this._showBackdrop = typeof value === "boolean" ? value : true;
+    if (this._showBackdrop) {
+      this.wrapperDiv.classList.add(wrapperStyle);
+      this.style.position = "unset";
+    } else {
+      this.style.position = "absolute";
+      this.style.left = "0px";
+      this.style.top = "0px";
+      this.wrapperDiv.classList.add(noBackdropStyle);
+    }
+  }
+  get item() {
+    return this.modalDiv.children[0];
+  }
+  set item(value) {
+    if (value instanceof Control) {
+      this.modalDiv.innerHTML = "";
+      value && this.modalDiv.appendChild(value);
+    }
+  }
+  get position() {
+    return this._wrapperPositionAt;
+  }
+  set position(value) {
+    this._wrapperPositionAt = value;
+  }
+  positionAt(placement) {
+    if (this.showBackdrop) {
+      this.positionAtFix(placement);
+    } else {
+      this.positionAtAbsolute(placement);
+    }
+  }
+  positionAtFix(placement) {
+    let parent = document.body;
+    let coords = this.getWrapperFixCoords(parent, placement);
+    this.wrapperDiv.style.width = "100%";
+    this.wrapperDiv.style.height = "100%";
+    this.wrapperDiv.style.paddingLeft = coords.left + "px";
+    this.wrapperDiv.style.paddingTop = coords.top + "px";
+    const innerModal = this.querySelector("i-modal");
+    if (innerModal) {
+      innerModal.wrapperDiv.style.width = "0px";
+      innerModal.wrapperDiv.style.height = "0px";
+    }
+  }
+  positionAtAbsolute(placement) {
+    let parent = this._parent || this.linkTo || this.parentElement || document.body;
+    let coords;
+    if (this.position === "fixed") {
+      coords = this.getWrapperFixCoords(parent, placement);
+    } else {
+      coords = this.getWrapperAbsoluteCoords(parent, placement);
+    }
+    this.wrapperDiv.style.height = "inherit";
+    this.wrapperDiv.style.width = "inherit";
+    this.wrapperDiv.style.left = coords.left + "px";
+    this.wrapperDiv.style.top = coords.top + "px";
+  }
+  getWrapperFixCoords(parent, placement) {
+    const parentCoords = parent.getBoundingClientRect();
+    let left = 0;
+    let top = 0;
+    const parentHeight = this.showBackdrop ? (parentCoords.height || window.innerHeight) - 1 : parentCoords.height;
+    switch (placement) {
+      case "center":
+        top = parentHeight / 2 - this.modalDiv.offsetHeight / 2;
+        left = parentCoords.width / 2 - this.modalDiv.offsetWidth / 2 - 1;
+        break;
+      case "top":
+        top = this.showBackdrop ? 0 : parentCoords.top;
+        left = parentCoords.left + (parent.offsetWidth - this.modalDiv.offsetWidth) / 2 - 1;
+        break;
+      case "topLeft":
+        top = this.showBackdrop ? 0 : parentCoords.top;
+        left = parentCoords.left;
+        break;
+      case "topRight":
+        top = this.showBackdrop ? 0 : parentCoords.top;
+        left = parentCoords.left + parent.offsetWidth - this.modalDiv.offsetWidth - 1;
+        break;
+      case "bottom":
+        top = parentCoords.top + parentHeight;
+        if (this.showBackdrop)
+          top = top - this.modalDiv.offsetHeight - 1;
+        left = parentCoords.left + (parent.offsetWidth - this.modalDiv.offsetWidth) / 2 - 1;
+        break;
+      case "bottomLeft":
+        top = parentCoords.top + parentHeight;
+        if (this.showBackdrop)
+          top = top - this.modalDiv.offsetHeight;
+        left = parentCoords.left;
+        break;
+      case "bottomRight":
+        top = parentCoords.top + parentHeight;
+        if (this.showBackdrop)
+          top = top - this.modalDiv.offsetHeight;
+        left = parentCoords.left + parent.offsetWidth - this.modalDiv.offsetWidth - 1;
+        break;
+      case "rightTop":
+        top = parentCoords.top;
+        left = parentCoords.right;
+        if (parentCoords.right + this.modalDiv.offsetWidth > document.documentElement.clientWidth) {
+          left = document.documentElement.clientWidth - this.modalDiv.offsetWidth;
+        }
+        break;
+    }
+    left = left < 0 ? parentCoords.left : left;
+    top = top < 0 ? parentCoords.top : top;
+    return { top, left };
+  }
+  getWrapperAbsoluteCoords(parent, placement) {
+    const parentCoords = parent.getBoundingClientRect();
+    let left = 0;
+    let top = 0;
+    switch (placement) {
+      case "center":
+        left = (parentCoords.width - this.modalDiv.offsetWidth) / 2;
+        top = (parentCoords.height - this.modalDiv.offsetHeight) / 2;
+        break;
+      case "top":
+      case "topLeft":
+        top = this.getParentOccupiedTop();
+        left = this.getParentOccupiedLeft();
+        break;
+      case "topRight":
+        top = this.getParentOccupiedTop();
+        left = parentCoords.width - this.getParentOccupiedRight() - this.modalDiv.offsetWidth;
+        break;
+      case "bottom":
+      case "bottomLeft":
+        left = 0;
+        top = parentCoords.height;
+        break;
+      case "bottomRight":
+        top = parentCoords.height;
+        left = parentCoords.width - this.modalDiv.offsetWidth;
+        break;
+      case "rightTop":
+        top = 0;
+        left = parentCoords.width;
+        break;
+    }
+    if (placement !== "bottomRight")
+      left = left < 0 ? parentCoords.left : left;
+    top = top < 0 ? parentCoords.top : top;
+    return { top, left };
+  }
+  _handleOnShow(event) {
+    if (this.popupPlacement && this.enabled)
+      this.positionAt(this.popupPlacement);
+    if (this.enabled && this._onOpen) {
+      event.preventDefault();
+      this._onOpen(this);
+    }
+  }
+  _handleClick(event) {
+    const target = event.target;
+    if (this.closeOnBackdropClick) {
+      if (!this.modalDiv.contains(target) && this.visible)
+        this.visible = false;
+    }
+    return true;
+  }
+  updateModal(name, value) {
+    if (!isNaN(Number(value)))
+      this.modalDiv.style[name] = value + "px";
+    else
+      this.modalDiv.style[name] = value;
+  }
+  refresh() {
+    super.refresh(true);
+    if (this.visible && this.popupPlacement) {
+      this.positionAt(this.popupPlacement);
+    }
+  }
+  get background() {
+    return this._background;
+  }
+  set background(value) {
+    if (!this._background) {
+      this._background = new Background(this.modalDiv, value);
+    } else {
+      this._background.setBackgroundStyle(value);
+    }
+  }
+  get width() {
+    return !isNaN(this._width) ? this._width : this.offsetWidth;
+  }
+  set width(value) {
+    this._width = value;
+    this.updateModal("width", value);
+  }
+  get border() {
+    return this._border;
+  }
+  set border(value) {
+    this._border = new Border(this.modalDiv, value);
+  }
+  init() {
+    var _a;
+    if (!this.wrapperDiv) {
+      if ((_a = this.options) == null ? void 0 : _a.onClose)
+        this.onClose = this.options.onClose;
+      this.popupPlacement = this.getAttribute("popupPlacement", true);
+      this.closeOnBackdropClick = this.getAttribute("closeOnBackdropClick", true);
+      this.wrapperDiv = this.createElement("div", this);
+      this.showBackdrop = this.getAttribute("showBackdrop", true);
+      this.modalDiv = this.createElement("div", this.wrapperDiv);
+      this.titleSpan = this.createElement("div", this.modalDiv);
+      this.titleSpan.classList.add(titleStyle, "i-modal_header");
+      this.createElement("span", this.titleSpan);
+      this.title = this.getAttribute("title", true);
+      const closeIconAttr = this.getAttribute("closeIcon", true);
+      if (closeIconAttr) {
+        closeIconAttr.height = closeIconAttr.height || "16px";
+        closeIconAttr.width = closeIconAttr.width || "16px";
+        closeIconAttr.fill = closeIconAttr.fill || Theme16.colors.primary.main;
+        this.closeIcon = new Icon(void 0, closeIconAttr);
+      }
+      while (this.childNodes.length > 1) {
+        this.modalDiv.appendChild(this.childNodes[0]);
+      }
+      this.modalDiv.classList.add(modalStyle);
+      this.modalDiv.classList.add("modal");
+      this.addEventListener("show", this._handleOnShow.bind(this));
+      window.addEventListener("keydown", (event) => {
+        if (!this.visible)
+          return;
+        if (event.key === "Escape") {
+          this.visible = false;
+        }
+      });
+      document.body.addEventListener("click", (event) => {
+        if (!this.visible || this.showBackdrop || !this.closeOnBackdropClick)
+          return;
+        const target = event.target;
+        let parent = this._parent || this.linkTo || this.parentElement;
+        if (!this.modalDiv.contains(target) && !(parent == null ? void 0 : parent.contains(target))) {
+          this.visible = false;
+        }
+      });
+      const itemAttr = this.getAttribute("item", true);
+      if (itemAttr)
+        this.item = itemAttr;
+      super.init();
+      this.maxWidth && this.updateModal("maxWidth", this.maxWidth);
+      this.minWidth && this.updateModal("minWidth", this.minWidth);
+      this.minHeight && this.updateModal("minHeight", this.minHeight);
+      this.maxHeight && this.updateModal("maxHeight", this.maxHeight);
+      let border = this.getAttribute("border", true);
+      if (border) {
+        this._border = new Border(this.modalDiv, border);
+        this.style.border = "none";
+      }
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Modal = __decorateClass([
+  customElements2("i-modal")
+], Modal);
+
 // packages/menu/src/style/menu.css.ts
-var Theme23 = theme_exports.ThemeVars;
+var Theme17 = theme_exports.ThemeVars;
 var fadeInRight = keyframes({
   "0%": {
     opacity: 0,
@@ -28917,8 +26040,8 @@ var fadeInRight = keyframes({
   }
 });
 var menuStyle = style({
-  fontFamily: Theme23.typography.fontFamily,
-  fontSize: Theme23.typography.fontSize,
+  fontFamily: Theme17.typography.fontFamily,
+  fontSize: Theme17.typography.fontSize,
   position: "relative",
   display: "block",
   overflow: "hidden",
@@ -28949,7 +26072,7 @@ var menuStyle = style({
         ".menu-item-arrow-active": {
           transform: "rotate(180deg)",
           transition: "transform 0.25s",
-          fill: `${Theme23.text.primary} !important`
+          fill: `${Theme17.text.primary} !important`
         },
         "li": {
           position: "relative",
@@ -28957,7 +26080,7 @@ var menuStyle = style({
             "&:hover": {
               $nest: {
                 ".menu-item": {
-                  color: Theme23.colors.primary.main
+                  color: Theme17.colors.primary.main
                 },
                 ".menu-item-arrow-active": {
                   fill: "currentColor !important"
@@ -28973,7 +26096,7 @@ var menuStyle = style({
 var meunItemStyle = style({
   position: "relative",
   display: "block",
-  color: Theme23.text.secondary,
+  color: Theme17.text.secondary,
   $nest: {
     ".menu-item": {
       position: "relative",
@@ -28993,8 +26116,8 @@ var meunItemStyle = style({
       paddingRight: "2.25rem"
     },
     ".menu-item.menu-active, .menu-item.menu-selected, .menu-item:hover": {
-      background: Theme23.action.hover,
-      color: Theme23.text.primary
+      background: Theme17.action.hover,
+      color: Theme17.text.primary
     },
     ".menu-item.menu-active > .menu-item-arrow": {
       transform: "rotate(180deg)",
@@ -29671,13 +26794,13 @@ Module = __decorateClass([
 ], Module);
 
 // packages/tree-view/src/style/treeView.css.ts
-var Theme24 = theme_exports.ThemeVars;
+var Theme18 = theme_exports.ThemeVars;
 cssRule("i-tree-view", {
   display: "block",
   overflowY: "auto",
   overflowX: "hidden",
-  fontFamily: Theme24.typography.fontFamily,
-  fontSize: Theme24.typography.fontSize,
+  fontFamily: Theme18.typography.fontFamily,
+  fontSize: Theme18.typography.fontSize,
   $nest: {
     ".i-tree-node_content": {
       display: "flex",
@@ -29711,7 +26834,7 @@ cssRule("i-tree-view", {
     ".i-tree-node_label": {
       position: "relative",
       display: "inline-block",
-      color: Theme24.text.primary,
+      color: Theme18.text.primary,
       cursor: "pointer",
       fontSize: 14
     },
@@ -29745,7 +26868,7 @@ cssRule("i-tree-view", {
       position: "relative",
       $nest: {
         ".is-checked:before": {
-          borderLeft: `1px solid ${Theme24.divider}`,
+          borderLeft: `1px solid ${Theme18.divider}`,
           height: "calc(100% - 1em)",
           top: "1em"
         },
@@ -29754,12 +26877,12 @@ cssRule("i-tree-view", {
           top: 25
         },
         "i-tree-node.active > .i-tree-node_content": {
-          backgroundColor: Theme24.action.selected,
-          border: `1px solid ${Theme24.colors.info.dark}`,
-          color: Theme24.text.primary
+          backgroundColor: Theme18.action.selected,
+          border: `1px solid ${Theme18.colors.info.dark}`,
+          color: Theme18.text.primary
         },
         ".i-tree-node_content:hover": {
-          backgroundColor: Theme24.action.hover,
+          backgroundColor: Theme18.action.hover,
           $nest: {
             "> .is-right .button-group *": {
               display: "inline-flex"
@@ -29787,8 +26910,8 @@ cssRule("i-tree-view", {
           marginLeft: "1em"
         },
         "input ~ .i-tree-node_label:before": {
-          background: Theme24.colors.primary.main,
-          color: Theme24.colors.primary.contrastText,
+          background: Theme18.colors.primary.main,
+          color: Theme18.colors.primary.contrastText,
           position: "relative",
           zIndex: "1",
           float: "left",
@@ -29829,7 +26952,7 @@ cssRule("i-tree-view", {
           left: "-.1em",
           display: "block",
           width: "1px",
-          borderLeft: `1px solid ${Theme24.divider}`,
+          borderLeft: `1px solid ${Theme18.divider}`,
           content: "''"
         },
         ".i-tree-node_icon:not(.custom-icon)": {
@@ -29845,15 +26968,15 @@ cssRule("i-tree-view", {
           display: "block",
           height: "0.5em",
           width: "1em",
-          borderBottom: `1px solid ${Theme24.divider}`,
-          borderLeft: `1px solid ${Theme24.divider}`,
+          borderBottom: `1px solid ${Theme18.divider}`,
+          borderLeft: `1px solid ${Theme18.divider}`,
           borderRadius: " 0 0 0 0",
           content: "''"
         },
         "i-tree-node input:checked ~ .i-tree-node_label:after": {
           borderRadius: "0 .1em 0 0",
-          borderTop: `1px solid ${Theme24.divider}`,
-          borderRight: `0.5px solid ${Theme24.divider}`,
+          borderTop: `1px solid ${Theme18.divider}`,
+          borderRight: `0.5px solid ${Theme18.divider}`,
           borderBottom: "0",
           borderLeft: "0",
           bottom: "0",
@@ -29872,7 +26995,7 @@ cssRule("i-tree-view", {
       width: "100%",
       $nest: {
         "&:focus": {
-          borderBottom: `2px solid ${Theme24.colors.primary.main}`
+          borderBottom: `2px solid ${Theme18.colors.primary.main}`
         }
       }
     },
@@ -29899,11 +27022,11 @@ cssRule("i-tree-view", {
 });
 
 // packages/tree-view/src/treeView.ts
-var Theme25 = theme_exports.ThemeVars;
+var Theme19 = theme_exports.ThemeVars;
 var beforeExpandEvent = new Event("beforeExpand");
 var defaultIcon3 = {
   name: "caret-right",
-  fill: Theme25.text.secondary,
+  fill: Theme19.text.secondary,
   width: 12,
   height: 12
 };
@@ -30367,11 +27490,11 @@ TreeNode = __decorateClass([
 ], TreeNode);
 
 // packages/switch/src/style/switch.css.ts
-var Theme26 = theme_exports.ThemeVars;
+var Theme20 = theme_exports.ThemeVars;
 cssRule("i-switch", {
   display: "block",
-  fontFamily: Theme26.typography.fontFamily,
-  fontSize: Theme26.typography.fontSize,
+  fontFamily: Theme20.typography.fontFamily,
+  fontSize: Theme20.typography.fontSize,
   $nest: {
     ".wrapper": {
       width: "48px",
@@ -30791,6 +27914,1083 @@ ScatterLineChart = __decorateClass([
   customElements2("i-scatter-line-chart")
 ], ScatterLineChart);
 
+// packages/upload/src/style/upload.css.ts
+var Theme21 = theme_exports.ThemeVars;
+cssRule("i-upload", {
+  margin: "1rem 0",
+  listStyle: "none",
+  minHeight: 200,
+  minWidth: 200,
+  height: "100%",
+  width: "100%",
+  display: "flex",
+  flexWrap: "wrap",
+  $nest: {
+    ".i-upload-wrapper": {
+      position: "relative",
+      border: `2px dashed ${Theme21.divider}`,
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: "1rem"
+    },
+    "i-upload-drag": {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    },
+    ".i-upload-drag_area": {
+      marginTop: "4rem"
+    },
+    ".i-upload-dragger_active": {
+      border: `2px dashed ${Theme21.colors.primary.main}`,
+      backgroundColor: Theme21.colors.info.light,
+      opacity: "0.8"
+    },
+    'input[type="file"]': {
+      display: "none"
+    },
+    ".i-upload_preview": {
+      display: "none",
+      minHeight: 200,
+      position: "relative",
+      overflow: "hidden",
+      width: "100%",
+      height: "100%"
+    },
+    ".i-upload_preview img": {
+      maxHeight: "inherit",
+      maxWidth: "100%"
+    },
+    ".i-upload_preview-img": {
+      maxHeight: "inherit",
+      maxWidth: "100%",
+      display: "table"
+    },
+    ".i-upload_preview-crop": {
+      position: "absolute",
+      border: `1px dashed ${Theme21.background.paper}`,
+      width: 150,
+      height: 150,
+      left: "50%",
+      top: "50%",
+      transform: "translate(-50%, -50%)",
+      boxSizing: "border-box",
+      boxShadow: "0 0 0 9999em",
+      color: "rgba(0, 0, 0, 0.5)",
+      overflow: "hidden",
+      cursor: "crosshair"
+    },
+    ".i-upload_preview-remove": {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      visibility: "hidden",
+      opacity: 0,
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(0, 0, 0, 0.58)",
+      cursor: "pointer",
+      $nest: {
+        "> span": {
+          padding: "1rem",
+          border: "2px solid #fff",
+          borderRadius: "5px",
+          color: "#fff",
+          fontWeight: "bold"
+        }
+      }
+    },
+    ".i-upload_preview:hover .i-upload_preview-remove.active": {
+      visibility: "visible",
+      opacity: 1
+    },
+    ".i-upload_list": {
+      margin: "1rem 0 2rem",
+      display: "flex",
+      gap: 7,
+      width: "100%"
+    },
+    ".i-upload_list.i-upload_list-picture": {
+      flexDirection: "row"
+    },
+    ".i-upload_list.i-upload_list-text": {
+      flexDirection: "column",
+      alignContent: "center"
+    },
+    ".i-upload_list.i-upload_list-text i-icon": {
+      position: "unset"
+    },
+    ".i-upload_list-item": {
+      display: "inline-flex",
+      position: "relative",
+      justifyContent: "space-between"
+    },
+    ".i-upload_list-item:hover i-icon": {
+      display: "block"
+    },
+    ".i-upload_list.i-upload_list-text .i-upload_list-item:hover": {
+      backgroundColor: ThemeVars.background.default
+    },
+    ".i-upload_list.i-upload_list-text .i-upload_list-item": {
+      width: "100%",
+      padding: ".25rem"
+    },
+    ".i-upload_list-item .i-upload_list-img": {
+      width: 100,
+      height: 50,
+      objectFit: "cover"
+    },
+    ".i-upload_list-item i-icon": {
+      cursor: "pointer",
+      position: "absolute",
+      right: -5,
+      top: -5,
+      display: "none"
+    }
+  }
+});
+
+// packages/upload/src/upload.ts
+var Theme22 = theme_exports.ThemeVars;
+var fileId = 1;
+var genFileId = () => Date.now() + fileId++;
+var UploadDrag = class extends Control {
+  constructor(parent, options) {
+    super(parent, options);
+    this.counter = 0;
+  }
+  get caption() {
+    return this._caption;
+  }
+  set caption(value) {
+    this._caption = value;
+    this._labelElm.textContent = this._caption || "";
+    if (!value)
+      this._labelElm.style.display = "none";
+    else
+      this._labelElm.style.display = "";
+  }
+  get disabled() {
+    return this._disabled;
+  }
+  set disabled(value) {
+    this._disabled = value;
+  }
+  handleOnDragEnter(source, event) {
+    var _a;
+    source.preventDefault();
+    if (this.disabled)
+      return;
+    this.counter++;
+    (_a = this.parentElement) == null ? void 0 : _a.classList.add("i-upload-dragger_active");
+  }
+  handleOnDragOver(source, event) {
+    source.preventDefault();
+  }
+  handleOnDragLeave(source, event) {
+    var _a;
+    if (this.disabled)
+      return;
+    this.counter--;
+    if (this.counter === 0) {
+      (_a = this.parentElement) == null ? void 0 : _a.classList.remove("i-upload-dragger_active");
+    }
+  }
+  handleOnDrop(source, event) {
+    var _a, _b;
+    source.preventDefault();
+    if (this.disabled)
+      return;
+    this.counter = 0;
+    (_a = this.parentElement) == null ? void 0 : _a.classList.remove("i-upload-dragger_active");
+    const accept = (_b = this.parentElement) == null ? void 0 : _b.getAttribute("accept");
+    if (!accept) {
+      if (this.onDrop)
+        this.onDrop(this, source.dataTransfer.files);
+      return;
+    }
+    const valids = [].slice.call(source.dataTransfer.files).filter((file) => {
+      const { type, name } = file;
+      const extension = name.indexOf(".") > -1 ? `.${name.split(".").pop()}` : "";
+      const baseType = type.replace(/\/.*$/, "");
+      return accept.split(",").map((type2) => type2.trim()).filter((type2) => type2).some((acceptedType) => {
+        if (/\..+$/.test(acceptedType)) {
+          return extension === acceptedType;
+        }
+        if (/\/\*$/.test(acceptedType)) {
+          return baseType === acceptedType.replace(/\/\*$/, "");
+        }
+        if (/^[^\/]+\/[^\/]+$/.test(acceptedType)) {
+          return type === acceptedType;
+        }
+        return false;
+      });
+    });
+    if (this.onDrop)
+      this.onDrop(this, valids);
+  }
+  init() {
+    if (!this._wrapperElm) {
+      super.init();
+      this.onDrop = this.getAttribute("onDrop", true) || this.onDrop;
+      this._wrapperElm = this.createElement("div", this);
+      this._wrapperElm.classList.add("i-upload-drag_area");
+      this._labelElm = this.createElement("span", this._wrapperElm);
+      this._labelElm.style.color = Theme22.text.primary;
+      this.caption = this.getAttribute("caption", true);
+      this.disabled = this.getAttribute("disabled", true);
+      this.addEventListener("dragenter", this.handleOnDragEnter.bind(this));
+      this.addEventListener("dragover", this.handleOnDragOver.bind(this));
+      this.addEventListener("dragleave", this.handleOnDragLeave.bind(this));
+      this.addEventListener("drop", this.handleOnDrop.bind(this));
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+UploadDrag = __decorateClass([
+  customElements2("i-upload-drag")
+], UploadDrag);
+var Upload = class extends Control {
+  constructor(parent, options) {
+    super(parent, options, {
+      multiple: false
+    });
+    this._dt = new DataTransfer();
+    this._fileList = [];
+    this.handleRemoveImagePreview = (event) => {
+      if (!this.isPreviewing || !this.enabled)
+        return;
+      event.stopPropagation();
+      const file = this._dt.files.length ? this._dt.files[0] : void 0;
+      this.clear();
+      if (this.onRemoved)
+        this.onRemoved(this, file);
+    };
+    this.toBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+  get caption() {
+    return this._caption;
+  }
+  set caption(value) {
+    this._caption = value;
+  }
+  get accept() {
+    return this._accept;
+  }
+  set accept(value) {
+    this._accept = value;
+    this._fileElm && value && this._fileElm.setAttribute("accept", `${value}`);
+  }
+  get draggable() {
+    return this._draggable;
+  }
+  set draggable(value) {
+    this._draggable = value;
+    if (value)
+      this.classList.add("el-upload-dragger");
+    else
+      this.classList.remove("el-upload-dragger");
+  }
+  get multiple() {
+    return this._multiple;
+  }
+  set multiple(value) {
+    this._multiple = value;
+    if (this._fileElm && value)
+      this._fileElm.setAttribute("multiple", `${value}`);
+  }
+  get fileList() {
+    return this._fileList;
+  }
+  set fileList(value) {
+    this._fileList = value;
+    if (value && value.length) {
+      value.forEach((f) => {
+        this._dt.items.add(f);
+      });
+      if (this._fileElm) {
+        this._fileElm.files = this._dt.files;
+        this.updateFileListUI(this._fileElm.files);
+      }
+    }
+  }
+  get enabled() {
+    return super.enabled;
+  }
+  set enabled(value) {
+    super.enabled = value;
+    if (this._uploadDragElm)
+      this._uploadDragElm.disabled = !value || !this.draggable;
+    if (!this._previewRemoveElm)
+      return;
+    if (value)
+      this._previewRemoveElm.classList.add("active");
+    else
+      this._previewRemoveElm.classList.remove("active");
+  }
+  addFile(file) {
+    this._dt.items.add(file);
+    this._fileList.push(file);
+    if (this.onAdded)
+      this.onAdded(this, file);
+  }
+  previewFile(files) {
+    if (!files || !files.length)
+      return;
+    const imgUrl = URL.createObjectURL(files[files.length - 1]);
+    this.preview(imgUrl);
+  }
+  handleUpload(source, event) {
+    const files = source.target.files;
+    this.proccessFiles(files);
+  }
+  async proccessFiles(files) {
+    if (!files || !files.length)
+      return;
+    if (!this.fileList)
+      this._dt = new DataTransfer();
+    for (let file of files) {
+      const rawFile = file;
+      rawFile.uid = genFileId();
+      if (!!this.onUploading)
+        await this.checkBeforeUpload(rawFile);
+      else
+        this.addFile(rawFile);
+    }
+    this.updateFileListUI(this._dt.files);
+    this.previewFile(this._dt.files);
+    if (this.onChanged)
+      this.onChanged(this, this.fileList);
+  }
+  async checkBeforeUpload(file) {
+    const before = this.onUploading(this, file);
+    if (before && before.then) {
+      before.then((value) => {
+        if (value)
+          this.addFile(file);
+      }, () => {
+        if (this.onRemoved)
+          this.onRemoved(this, file);
+      });
+    } else {
+      if (this.onRemoved)
+        this.onRemoved(this, file);
+    }
+  }
+  updateFileListUI(files) {
+    if (this._fileListElm) {
+      this._fileListElm.innerHTML = "";
+      for (let file of files) {
+        const itemElm = this.createElement("div", this._fileListElm);
+        itemElm.classList.add("i-upload_list-item");
+        if (file.type.includes("image/")) {
+          this._fileListElm.classList.add("i-upload_list-picture");
+          const imgElm = new Image();
+          imgElm.src = URL.createObjectURL(file);
+          imgElm.classList.add("i-upload_list-img");
+          imgElm.onload = function() {
+            URL.revokeObjectURL(imgElm.src);
+          };
+          itemElm.appendChild(imgElm);
+        } else {
+          this._fileListElm.classList.add("i-upload_list-text");
+          const spanElm = this.createElement("span", itemElm);
+          spanElm.textContent = file.name;
+        }
+        const removeIcon = new Icon(void 0, {
+          width: 12,
+          height: 12,
+          fill: Theme22.action.active,
+          name: "trash"
+        });
+        itemElm.appendChild(removeIcon);
+        removeIcon.addEventListener("click", () => this.handleRemove(file));
+      }
+      this._fileListElm.style.display = files.length ? "flex" : "none";
+    }
+  }
+  renderPreview() {
+    this._previewElm = this.createElement("div", this._wrapperElm);
+    this._previewElm.classList.add("i-upload_preview");
+    this._wrapImgElm = this.createElement("div", this._previewElm);
+    this._wrapImgElm.classList.add("i-upload_preview-img");
+    this._previewRemoveElm = this.createElement("div", this._previewElm);
+    if (this.enabled) {
+      this._previewRemoveElm.classList.add("active");
+    } else {
+      this._previewRemoveElm.classList.remove("active");
+    }
+    this._previewRemoveElm.classList.add("i-upload_preview-remove");
+    this._previewRemoveElm.onclick = this.handleRemoveImagePreview;
+    const span = this.createElement("span", this._previewRemoveElm);
+    span.style.fontFamily = Theme22.typography.fontFamily;
+    span.innerHTML = "Click to remove";
+  }
+  handleRemove(file) {
+    const rawFile = file;
+    for (let i = 0; i < this._dt.items.length; i++) {
+      if (rawFile.uid === this._dt.files[i].uid) {
+        this._dt.items.remove(i);
+        this.fileList = this._fileList.filter((f) => f.uid !== rawFile.uid);
+        if (this.onRemoved)
+          this.onRemoved(this, file);
+        break;
+      }
+    }
+    this._fileElm.files = this._dt.files;
+    this.updateFileListUI(this._dt.files);
+    if (!this._dt.items.length)
+      this.clear();
+  }
+  preview(uri) {
+    if (!uri)
+      return;
+    this.isPreviewing = true;
+    this._wrapImgElm.innerHTML = "";
+    this._previewImgElm = new Image2();
+    this._wrapImgElm.appendChild(this._previewImgElm);
+    this._previewImgElm.url = uri;
+    this._previewElm.style.display = "block";
+    this._wrapperFileElm.style.display = "none";
+    if (this._uploadDragElm)
+      this._uploadDragElm.style.display = "none";
+  }
+  clear() {
+    this._fileElm.value = "";
+    this._wrapperFileElm.style.display = "block";
+    if (this._uploadDragElm)
+      this._uploadDragElm.style.display = this.draggable ? "flex" : "none";
+    if (this._previewElm)
+      this._previewElm.style.display = "none";
+    this._wrapImgElm && (this._wrapImgElm.innerHTML = "");
+    if (this._fileListElm)
+      this._fileListElm.style.display = "none";
+    this._dt = new DataTransfer();
+    this.isPreviewing = false;
+    this._fileList = [];
+  }
+  addFiles() {
+  }
+  addFolder() {
+  }
+  init() {
+    if (!this.initialized) {
+      super.init();
+      this._wrapperElm = this.createElement("div", this);
+      this._wrapperElm.classList.add("i-upload-wrapper");
+      this._wrapperFileElm = this.createElement("div", this._wrapperElm);
+      this.caption = this.getAttribute("caption", true);
+      this.draggable = this.getAttribute("draggable", true, false);
+      this._uploadDragElm = new UploadDrag(this, {
+        caption: this.caption,
+        disabled: !this.enabled || !this.draggable,
+        onDrop: (source, value) => {
+          value && this.proccessFiles(value);
+        }
+      });
+      this._wrapperElm.appendChild(this._uploadDragElm);
+      this._fileElm = this.createElement("input", this._wrapperFileElm);
+      this._fileElm.type = "file";
+      this.multiple = this.getAttribute("multiple", true);
+      this.accept = this.getAttribute("accept");
+      if (!this.enabled)
+        this._fileElm.setAttribute("disabled", "");
+      const btn = new Button(this, {
+        caption: "Choose an image"
+      });
+      btn.className = `i-upload_btn ${!this.enabled && "disabled"}`;
+      this._wrapperFileElm.appendChild(btn);
+      const fileListAttr = this.getAttribute("showFileList", true);
+      if (fileListAttr && !this._fileListElm) {
+        this._fileListElm = this.createElement("div", this);
+        this._fileListElm.classList.add("i-upload_list");
+        this._fileListElm.style.display = "none";
+      }
+      this.renderPreview();
+      const fileList = this.getAttribute("fileList", true);
+      fileList && (this.fileList = fileList);
+      this._wrapperElm.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (!this.enabled)
+          return;
+        if (!this.isPreviewing)
+          this._fileElm.click();
+      });
+      this._fileElm.addEventListener("change", this.handleUpload.bind(this));
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Upload = __decorateClass([
+  customElements2("i-upload")
+], Upload);
+
+// packages/tab/src/style/tab.css.ts
+var Theme23 = theme_exports.ThemeVars;
+cssRule("i-tabs", {
+  display: "block",
+  $nest: {
+    ".tabs-nav-wrap": {
+      display: "flex",
+      flex: "none",
+      overflow: "hidden"
+    },
+    "&:not(.vertical) .tabs-nav-wrap": {
+      $nest: {
+        "&:hover": {
+          overflowX: "auto",
+          overflowY: "hidden"
+        },
+        "&::-webkit-scrollbar-thumb": {
+          background: "#4b4b4b",
+          borderRadius: "5px"
+        },
+        "&::-webkit-scrollbar": {
+          height: "3px"
+        }
+      }
+    },
+    ".tabs-nav": {
+      position: "relative",
+      display: "flex",
+      flex: "none",
+      overflow: "hidden",
+      whiteSpace: "nowrap",
+      borderBottom: `1px solid #252525`,
+      margin: 0
+    },
+    "&.vertical": {
+      display: "flex",
+      $nest: {
+        ".tabs-nav": {
+          display: "flex",
+          flexDirection: "column"
+        },
+        ".tabs-nav:hover": {
+          overflowY: "auto"
+        },
+        ".tabs-nav::-webkit-scrollbar-thumb": {
+          background: "#4b4b4b",
+          borderRadius: "5px"
+        },
+        ".tabs-nav::-webkit-scrollbar": {
+          width: "3px"
+        }
+      }
+    },
+    "i-tab": {
+      position: "relative",
+      display: "inline-flex",
+      overflow: "hidden",
+      color: "rgba(255, 255, 255, 0.55)",
+      background: "#2e2e2e",
+      marginBottom: "-1px",
+      border: `1px solid #252525`,
+      alignItems: "center",
+      font: "inherit",
+      textAlign: "center",
+      minHeight: "36px",
+      $nest: {
+        "&:not(.disabled):hover": {
+          cursor: "pointer",
+          color: "#fff"
+        },
+        "&:not(.disabled).active.border": {
+          borderColor: `${Theme23.divider} ${Theme23.divider} #fff`,
+          borderBottomWidth: "1.5px"
+        },
+        ".tab-item": {
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          cursor: "pointer",
+          padding: "0.5rem 1rem",
+          gap: "5px",
+          $nest: {
+            "i-image": {
+              display: "flex"
+            }
+          }
+        }
+      }
+    },
+    "i-tab:not(.disabled).active": {
+      backgroundColor: "#1d1d1d",
+      borderBottomColor: "transparent",
+      color: "#fff"
+    },
+    ".tabs-content": {
+      position: "relative",
+      overflow: "hidden",
+      display: "flex",
+      width: "100%",
+      height: "100%",
+      minHeight: "200px",
+      $nest: {
+        "&::after": {
+          clear: "both"
+        },
+        "i-label .f1yauex0": {
+          whiteSpace: "normal"
+        },
+        ".content-pane": {
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          flex: "none"
+        }
+      }
+    },
+    "span.close": {
+      width: "18px",
+      height: "18px",
+      marginLeft: "5px",
+      marginRight: "-5px",
+      borderRadius: "5px",
+      lineHeight: "18px",
+      fontSize: "18px",
+      visibility: "hidden",
+      opacity: 0,
+      $nest: {
+        "&:hover": {
+          background: "rgba(78, 78, 78, 0.48)"
+        }
+      }
+    },
+    ".tabs-nav:not(.is-closable) span.close": {
+      display: "none"
+    },
+    ".tabs-nav.is-closable i-tab:not(.disabled):hover span.close, .tabs-nav.is-closable i-tab:not(.disabled).active span.close": {
+      visibility: "visible",
+      opacity: 1
+    }
+  }
+});
+var getTabMediaQueriesStyleClass = (mediaQueries) => {
+  let styleObj = getControlMediaQueriesStyle(mediaQueries);
+  for (let mediaQuery of mediaQueries) {
+    let mediaQueryRule;
+    if (mediaQuery.minWidth && mediaQuery.maxWidth) {
+      mediaQueryRule = `@media (min-width: ${mediaQuery.minWidth}) and (max-width: ${mediaQuery.maxWidth})`;
+    } else if (mediaQuery.minWidth) {
+      mediaQueryRule = `@media (min-width: ${mediaQuery.minWidth})`;
+    } else if (mediaQuery.maxWidth) {
+      mediaQueryRule = `@media (max-width: ${mediaQuery.maxWidth})`;
+    }
+    if (mediaQueryRule) {
+      const nestObj = styleObj["$nest"][mediaQueryRule]["$nest"] || {};
+      const ruleObj = styleObj["$nest"][mediaQueryRule];
+      styleObj["$nest"][mediaQueryRule] = {
+        ...ruleObj,
+        $nest: {
+          ...nestObj,
+          ".tabs-nav": {}
+        }
+      };
+      if (mediaQuery.properties.mode) {
+        const mode = mediaQuery.properties.mode;
+        styleObj["$nest"][mediaQueryRule]["display"] = mode === "vertical" ? "flex !important" : "block !important";
+        if (mode === "horizontal") {
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["flexDirection"] = "row !important";
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["width"] = "100%";
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["justifyContent"] = "center";
+        } else {
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["flexDirection"] = "column !important";
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["width"] = "auto";
+          styleObj["$nest"][mediaQueryRule]["$nest"][".tabs-nav"]["justifyContent"] = "start";
+        }
+      }
+      if (typeof mediaQuery.properties.visible === "boolean") {
+        const visible = mediaQuery.properties.visible;
+        styleObj["$nest"][mediaQueryRule]["display"] = visible ? "block !important" : "none !important";
+      }
+    }
+  }
+  return style(styleObj);
+};
+
+// packages/tab/src/tab.ts
+var Tabs = class extends Container {
+  constructor(parent, options) {
+    super(parent, options);
+    this.accumTabIndex = 0;
+    this.dragStartHandler = this.dragStartHandler.bind(this);
+    this.dragOverHandler = this.dragOverHandler.bind(this);
+    this.dropHandler = this.dropHandler.bind(this);
+  }
+  get activeTab() {
+    return this._tabs[this.activeTabIndex];
+  }
+  get activeTabIndex() {
+    return this._activeTabIndex;
+  }
+  set activeTabIndex(index) {
+    var _a;
+    if (index < 0 || this._activeTabIndex === index)
+      return;
+    const prevTab = this._tabs[this._activeTabIndex];
+    if (prevTab) {
+      prevTab.classList.remove("active");
+      this.contentPanes[this._activeTabIndex].style.display = "none";
+    }
+    this._activeTabIndex = index;
+    (_a = this.activeTab) == null ? void 0 : _a.classList.add("active");
+    if (this.contentPanes[index])
+      this.contentPanes[index].style.display = "";
+  }
+  get items() {
+    return this._tabs;
+  }
+  get closable() {
+    return this._closable;
+  }
+  set closable(value) {
+    this._closable = value;
+    if (value) {
+      this.tabsNavElm.classList.add("is-closable");
+    } else {
+      this.tabsNavElm.classList.remove("is-closable");
+    }
+  }
+  get draggable() {
+    return this._draggable;
+  }
+  set draggable(value) {
+    if (this._draggable === value)
+      return;
+    this._draggable = value;
+    if (this.draggable) {
+      this.tabsNavElm.ondragover = this.dragOverHandler;
+      this.tabsNavElm.ondrop = this.dropHandler;
+    } else {
+      this.tabsNavElm.ondragover = null;
+      this.tabsNavElm.ondrop = null;
+    }
+    this.handleTagDrag(this._tabs);
+  }
+  get mode() {
+    const isVertical = this.classList.contains("vertical");
+    return isVertical ? "vertical" : "horizontal";
+  }
+  set mode(type) {
+    if (type === "vertical") {
+      this.classList.add("vertical");
+    } else {
+      this.classList.remove("vertical");
+    }
+  }
+  get mediaQueries() {
+    return this._mediaQueries;
+  }
+  set mediaQueries(value) {
+    this._mediaQueries = value;
+    let style2 = getTabMediaQueriesStyleClass(this._mediaQueries);
+    this._mediaStyle && this.classList.remove(this._mediaStyle);
+    this._mediaStyle = style2;
+    this.classList.add(style2);
+  }
+  add(options) {
+    const tab = new Tab(this, options);
+    if (options == null ? void 0 : options.children) {
+      tab.append(options == null ? void 0 : options.children);
+    }
+    if (this.draggable) {
+      this.handleTagDrag([tab]);
+    }
+    this.appendTab(tab);
+    this.activeTabIndex = tab.index;
+    return tab;
+  }
+  delete(tab) {
+    const index = this._tabs.findIndex((t) => t.id === tab.id);
+    const activeIndex = this.activeTabIndex;
+    if (index >= 0) {
+      this._tabs.splice(index, 1);
+      const pane = this.contentPanes[index];
+      this.contentPanes.splice(index, 1);
+      pane.remove();
+      if (activeIndex >= index) {
+        let newActiveIndex = activeIndex > index ? activeIndex - 1 : this._tabs[activeIndex] ? activeIndex : this._tabs.length - 1;
+        this._activeTabIndex = newActiveIndex;
+        if (this.activeTab) {
+          this.activeTab.classList.add("active");
+          this.contentPanes[newActiveIndex].style.display = "";
+        }
+      }
+    }
+    tab.remove();
+  }
+  appendTab(tab) {
+    tab._container = this.tabsContentElm;
+    tab.parent = this;
+    this._tabs.push(tab);
+    if (!tab.id)
+      tab.id = `tab-${this.accumTabIndex++}`;
+    this.tabsNavElm.appendChild(tab);
+    const contentPane = this.createElement("div", this.tabsContentElm);
+    tab._contentElm = contentPane;
+    contentPane.classList.add("content-pane");
+    contentPane.style.display = "none";
+    this.contentPanes.push(contentPane);
+    const children = tab.children;
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].classList.contains("tab-item"))
+        continue;
+      if (children[i] instanceof Control) {
+        children[i].parent = tab;
+      }
+    }
+    ;
+  }
+  handleTagDrag(tabs) {
+    tabs.forEach((tab) => {
+      if (this.draggable) {
+        tab.setAttribute("draggable", "true");
+        tab.ondragstart = this.dragStartHandler;
+      } else {
+        tab.removeAttribute("draggable");
+        tab.ondragstart = null;
+      }
+    });
+  }
+  _handleClick(event) {
+    return super._handleClick(event, true);
+  }
+  dragStartHandler(event) {
+    if (!(event.target instanceof Tab))
+      return;
+    this.curDragTab = event.target;
+  }
+  dragOverHandler(event) {
+    event.preventDefault();
+  }
+  dropHandler(event) {
+    event.preventDefault();
+    if (!this.curDragTab)
+      return;
+    const target = event.target;
+    const dropTab = target instanceof Tab ? target : target.closest("i-tab");
+    if (dropTab && !this.curDragTab.isSameNode(dropTab)) {
+      const curActiveTab = this.activeTab;
+      const dragIndex = this.curDragTab.index;
+      const dropIndex = dropTab.index;
+      const [dragTab] = this._tabs.splice(dragIndex, 1);
+      this._tabs.splice(dropIndex, 0, dragTab);
+      const [dragContent] = this.contentPanes.splice(dragIndex, 1);
+      this.contentPanes.splice(dropIndex, 0, dragContent);
+      if (dragIndex > dropIndex) {
+        this.tabsNavElm.insertBefore(this.curDragTab, dropTab);
+      } else {
+        dropTab.after(this.curDragTab);
+      }
+      this.activeTabIndex = curActiveTab.index;
+      if (this.onChanged)
+        this.onChanged(this, this.activeTab);
+    }
+    this.curDragTab = null;
+  }
+  refresh() {
+    if (this.dock) {
+      super.refresh(true);
+      const height = this.mode === "horizontal" ? this.clientHeight - this.tabsNavElm.clientHeight : this.clientHeight;
+      this.tabsContentElm.style.height = height + "px";
+      this.refreshControls();
+    }
+  }
+  init() {
+    super.init();
+    if (!this.tabsNavElm) {
+      this.contentPanes = [];
+      this._tabs = [];
+      const _tabs = [];
+      this.childNodes.forEach((node) => {
+        if (node instanceof Tab) {
+          _tabs.push(node);
+        } else {
+          node.remove();
+        }
+      });
+      const tabsNavWrapElm = this.createElement("div", this);
+      tabsNavWrapElm.classList.add("tabs-nav-wrap");
+      tabsNavWrapElm.addEventListener("wheel", (event) => {
+        if (this.mode !== "horizontal")
+          return;
+        event.preventDefault();
+        tabsNavWrapElm.scrollLeft += event.deltaY;
+      });
+      this.tabsNavElm = this.createElement("div", tabsNavWrapElm);
+      this.tabsNavElm.classList.add("tabs-nav");
+      this.tabsContentElm = this.createElement("div", this);
+      this.tabsContentElm.classList.add("tabs-content");
+      this.closable = this.getAttribute("closable", true) || false;
+      this.mode = this.getAttribute("mode", true) || "horizontal";
+      for (const tab of _tabs) {
+        this.appendTab(tab);
+      }
+      this.draggable = this.getAttribute("draggable", true) || false;
+      const activeTabIndex = this.getAttribute("activeTabIndex", true);
+      if (this._tabs.length)
+        this.activeTabIndex = activeTabIndex || 0;
+      this.mediaQueries = this.getAttribute("mediaQueries", true, []);
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Tabs = __decorateClass([
+  customElements2("i-tabs")
+], Tabs);
+var Tab = class extends Container {
+  active() {
+    this._parent.activeTabIndex = this.index;
+  }
+  addChildControl(control) {
+    if (this._contentElm)
+      this._contentElm.appendChild(control);
+  }
+  removeChildControl(control) {
+    if (this._contentElm && this._contentElm.contains(control))
+      this._contentElm.removeChild(control);
+  }
+  get caption() {
+    return this.captionElm.innerHTML;
+  }
+  set caption(value) {
+    this.captionElm.innerHTML = value;
+  }
+  close() {
+    this.handleCloseTab();
+  }
+  get index() {
+    return this._parent.items.findIndex((t) => t.id === this.id);
+  }
+  get icon() {
+    if (!this._icon) {
+      this._icon = Icon.create({
+        width: 16,
+        height: 16
+      }, this);
+    }
+    ;
+    return this._icon;
+  }
+  set icon(elm) {
+    if (this._icon)
+      this.tabContainer.removeChild(this._icon);
+    this._icon = elm;
+    if (this._icon)
+      this.tabContainer.prepend(this._icon);
+  }
+  get innerHTML() {
+    return this._contentElm.innerHTML;
+  }
+  set innerHTML(value) {
+    this._contentElm.innerHTML = value;
+  }
+  get font() {
+    return {
+      color: this.captionElm.style.color,
+      name: this.captionElm.style.fontFamily,
+      size: this.captionElm.style.fontSize,
+      bold: this.captionElm.style.fontStyle.indexOf("bold") >= 0,
+      style: this.captionElm.style.fontStyle,
+      transform: this.captionElm.style.textTransform,
+      weight: this.captionElm.style.fontWeight
+    };
+  }
+  set font(value) {
+    if (this.captionElm) {
+      this.captionElm.style.color = value.color || "";
+      this.captionElm.style.fontSize = value.size || "";
+      this.captionElm.style.fontFamily = value.name || "";
+      this.captionElm.style.fontStyle = value.style || "";
+      this.captionElm.style.textTransform = value.transform || "none";
+      this.captionElm.style.fontWeight = value.bold ? "bold" : `${value.weight}` || "";
+    }
+  }
+  _handleClick(event) {
+    if (!this._parent || !this.enabled || this._parent.activeTab.isSameNode(this))
+      return false;
+    if (this._parent) {
+      if (this._parent.activeTab != this)
+        this._parent.activeTabIndex = this.index;
+      if (this._parent.onChanged)
+        this._parent.onChanged(this._parent, this._parent.activeTab);
+    }
+    return super._handleClick(event);
+  }
+  handleCloseTab(event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!this._parent || !this.enabled || event && !this._parent.closable)
+      return;
+    const isActiveChange = this._parent.activeTab.isSameNode(this);
+    if (this._parent.onCloseTab)
+      this._parent.onCloseTab(this._parent, this);
+    this._parent.delete(this);
+    if (isActiveChange && this._parent.onChanged)
+      this._parent.onChanged(this._parent, this._parent.activeTab);
+  }
+  init() {
+    if (!this.captionElm) {
+      super.init();
+      this.tabContainer = this.createElement("div", this);
+      this.tabContainer.classList.add("tab-item");
+      this.captionElm = this.createElement("div", this.tabContainer);
+      this.caption = this.getAttribute("caption", true) || "";
+      const font = this.getAttribute("font", true);
+      if (font)
+        this.font = font;
+      const icon = this.getAttribute("icon", true);
+      if (icon) {
+        icon.height = icon.height || "16px";
+        icon.width = icon.width || "16px";
+        this.icon = new Icon(void 0, icon);
+      }
+      ;
+      const closeButton = this.createElement("span", this.tabContainer);
+      closeButton.classList.add("close");
+      closeButton.innerHTML = "&times;";
+      closeButton.onclick = this.handleCloseTab.bind(this);
+    }
+  }
+  static async create(options, parent) {
+    let self = new this(parent, options);
+    await self.ready();
+    return self;
+  }
+};
+Tab = __decorateClass([
+  customElements2("i-tab")
+], Tab);
+
 // packages/iframe/src/iframe.ts
 var Iframe = class extends Control {
   constructor(parent, options) {
@@ -30847,16 +29047,16 @@ Iframe = __decorateClass([
 ], Iframe);
 
 // packages/pagination/src/style/pagination.css.ts
-var Theme27 = theme_exports.ThemeVars;
+var Theme24 = theme_exports.ThemeVars;
 cssRule("i-pagination", {
   display: "block",
   width: "100%",
   maxWidth: "100%",
   verticalAlign: "baseline",
-  fontFamily: Theme27.typography.fontFamily,
-  fontSize: Theme27.typography.fontSize,
+  fontFamily: Theme24.typography.fontFamily,
+  fontSize: Theme24.typography.fontSize,
   lineHeight: "25px",
-  color: Theme27.text.primary,
+  color: Theme24.text.primary,
   "$nest": {
     ".pagination": {
       display: "inline-flex",
@@ -30864,7 +29064,7 @@ cssRule("i-pagination", {
       justifyContent: "center"
     },
     ".pagination a": {
-      color: Theme27.text.primary,
+      color: Theme24.text.primary,
       float: "left",
       padding: "4px 8px",
       textAlign: "center",
@@ -30880,7 +29080,7 @@ cssRule("i-pagination", {
       cursor: "default"
     },
     ".pagination a.disabled": {
-      color: Theme27.text.disabled,
+      color: Theme24.text.disabled,
       pointerEvents: "none"
     }
   }
@@ -31120,7 +29320,7 @@ Pagination = __decorateClass([
 ], Pagination);
 
 // packages/progress/src/style/progress.css.ts
-var Theme28 = theme_exports.ThemeVars;
+var Theme25 = theme_exports.ThemeVars;
 var loading = keyframes({
   "0%": {
     left: "-100%"
@@ -31133,9 +29333,9 @@ cssRule("i-progress", {
   display: "block",
   maxWidth: "100%",
   verticalAlign: "baseline",
-  fontFamily: Theme28.typography.fontFamily,
-  fontSize: Theme28.typography.fontSize,
-  color: Theme28.text.primary,
+  fontFamily: Theme25.typography.fontFamily,
+  fontSize: Theme25.typography.fontSize,
+  color: Theme25.text.primary,
   position: "relative",
   $nest: {
     "&.is-loading .i-progress_overlay": {
@@ -31158,13 +29358,13 @@ cssRule("i-progress", {
     ".i-progress--exception": {
       $nest: {
         "> .i-progress_wrapbar > .i-progress_overlay": {
-          backgroundColor: Theme28.colors.error.light
+          backgroundColor: Theme25.colors.error.light
         },
         "> .i-progress_wrapbar > .i-progress_bar .i-progress_bar-item": {
-          backgroundColor: Theme28.colors.error.light
+          backgroundColor: Theme25.colors.error.light
         },
         ".i-progress_item.i-progress_item-start": {
-          borderColor: Theme28.colors.error.light
+          borderColor: Theme25.colors.error.light
         },
         ".i-progress_item.i-progress_item-end": {}
       }
@@ -31172,13 +29372,13 @@ cssRule("i-progress", {
     ".i-progress--success": {
       $nest: {
         "> .i-progress_wrapbar > .i-progress_overlay": {
-          backgroundColor: Theme28.colors.success.light
+          backgroundColor: Theme25.colors.success.light
         },
         "> .i-progress_wrapbar > .i-progress_bar .i-progress_bar-item": {
-          backgroundColor: Theme28.colors.success.light
+          backgroundColor: Theme25.colors.success.light
         },
         ".i-progress_item.i-progress_item-start": {
-          borderColor: Theme28.colors.success.light
+          borderColor: Theme25.colors.success.light
         },
         ".i-progress_item.i-progress_item-end": {}
       }
@@ -31186,13 +29386,13 @@ cssRule("i-progress", {
     ".i-progress--warning": {
       $nest: {
         "> .i-progress_wrapbar > .i-progress_overlay": {
-          backgroundColor: Theme28.colors.warning.light
+          backgroundColor: Theme25.colors.warning.light
         },
         "> .i-progress_wrapbar > .i-progress_bar .i-progress_bar-item": {
-          backgroundColor: Theme28.colors.warning.light
+          backgroundColor: Theme25.colors.warning.light
         },
         ".i-progress_item.i-progress_item-start": {
-          borderColor: Theme28.colors.warning.light
+          borderColor: Theme25.colors.warning.light
         },
         ".i-progress_item.i-progress_item-end": {}
       }
@@ -31200,14 +29400,14 @@ cssRule("i-progress", {
     ".i-progress--active": {
       $nest: {
         "> .i-progress_wrapbar > .i-progress_overlay": {
-          backgroundColor: Theme28.colors.primary.light
+          backgroundColor: Theme25.colors.primary.light
         },
         "> .i-progress_wrapbar > .i-progress_bar .i-progress_bar-item": {
-          backgroundColor: Theme28.colors.primary.light
+          backgroundColor: Theme25.colors.primary.light
         },
         ".i-progress_item.i-progress_item-start": {
           backgroundColor: "transparent",
-          borderColor: Theme28.colors.primary.light
+          borderColor: Theme25.colors.primary.light
         }
       }
     },
@@ -31229,11 +29429,11 @@ cssRule("i-progress", {
           gap: "1px",
           $nest: {
             "&.has-bg": {
-              backgroundColor: Theme28.divider
+              backgroundColor: Theme25.divider
             },
             ".i-progress_bar-item": {
               flex: "auto",
-              backgroundColor: Theme28.divider
+              backgroundColor: Theme25.divider
             }
           }
         },
@@ -31258,7 +29458,7 @@ cssRule("i-progress", {
           borderStyle: "solid",
           borderImage: "initial",
           borderRadius: 14,
-          borderColor: Theme28.divider,
+          borderColor: Theme25.divider,
           padding: "4px 12px",
           order: 1
         },
@@ -31314,7 +29514,7 @@ cssRule("i-progress", {
 });
 
 // packages/progress/src/progress.ts
-var Theme29 = theme_exports.ThemeVars;
+var Theme26 = theme_exports.ThemeVars;
 var defaultVals = {
   percent: 0,
   height: 20,
@@ -31358,7 +29558,7 @@ var Progress = class extends Control {
     }
   }
   get strokeColor() {
-    return this._strokeColor || Theme29.colors.primary.main;
+    return this._strokeColor || Theme26.colors.primary.main;
   }
   set strokeColor(value) {
     this._strokeColor = value;
@@ -31493,11 +29693,11 @@ var Progress = class extends Control {
   get stroke() {
     let ret = this.strokeColor;
     if (this.percent === 100)
-      ret = Theme29.colors.success.main;
+      ret = Theme26.colors.success.main;
     return ret;
   }
   get trackColor() {
-    return Theme29.divider;
+    return Theme26.divider;
   }
   get progressTextSize() {
     return this.type === "line" ? 12 + this.strokeWidth * 0.4 : +this.width * 0.111111 + 2;
@@ -31585,11 +29785,11 @@ Progress = __decorateClass([
 ], Progress);
 
 // packages/table/src/style/table.css.ts
-var Theme30 = theme_exports.ThemeVars;
+var Theme27 = theme_exports.ThemeVars;
 var tableStyle = style({
-  fontFamily: Theme30.typography.fontFamily,
-  fontSize: Theme30.typography.fontSize,
-  color: Theme30.text.primary,
+  fontFamily: Theme27.typography.fontFamily,
+  fontSize: Theme27.typography.fontSize,
+  color: Theme27.text.primary,
   display: "block",
   $nest: {
     "> .i-table-container": {
@@ -31611,26 +29811,26 @@ var tableStyle = style({
     ".i-table-header>tr>th": {
       fontWeight: 600,
       transition: "background .3s ease",
-      borderBottom: `1px solid ${Theme30.divider}`
+      borderBottom: `1px solid ${Theme27.divider}`
     },
     ".i-table-body>tr>td": {
-      borderBottom: `1px solid ${Theme30.divider}`,
+      borderBottom: `1px solid ${Theme27.divider}`,
       transition: "background .3s ease"
     },
     "tr:hover td": {
-      background: Theme30.background.paper,
-      color: Theme30.text.secondary
+      background: Theme27.background.paper,
+      color: Theme27.text.secondary
     },
     "&.i-table--bordered": {
       $nest: {
         "> .i-table-container > table": {
-          borderTop: `1px solid ${Theme30.divider}`,
-          borderLeft: `1px solid ${Theme30.divider}`,
+          borderTop: `1px solid ${Theme27.divider}`,
+          borderLeft: `1px solid ${Theme27.divider}`,
           borderRadius: "2px"
         },
         "> .i-table-container > table .i-table-cell": {
-          borderRight: `1px solid ${Theme30.divider} !important`,
-          borderBottom: `1px solid ${Theme30.divider}`
+          borderRight: `1px solid ${Theme27.divider} !important`,
+          borderBottom: `1px solid ${Theme27.divider}`
         }
       }
     },
@@ -31651,7 +29851,7 @@ var tableStyle = style({
           cursor: "pointer"
         },
         ".sort-icon.sort-icon--active > svg": {
-          fill: Theme30.colors.primary.main
+          fill: Theme27.colors.primary.main
         },
         ".sort-icon.sort-icon--desc": {
           marginTop: -5
@@ -31680,12 +29880,12 @@ var tableStyle = style({
           display: "inline-block"
         },
         "i-icon svg": {
-          fill: Theme30.text.primary
+          fill: Theme27.text.primary
         }
       }
     },
     ".i-table-row--child > td": {
-      borderRight: `1px solid ${Theme30.divider}`
+      borderRight: `1px solid ${Theme27.divider}`
     },
     "@media (max-width: 767px)": {
       $nest: {
@@ -31756,7 +29956,7 @@ var getTableMediaQueriesStyleClass = (columns, mediaQueries) => {
 };
 
 // packages/table/src/tableColumn.ts
-var Theme31 = theme_exports.ThemeVars;
+var Theme28 = theme_exports.ThemeVars;
 var TableColumn = class extends Control {
   constructor(parent, options) {
     super(parent, options);
@@ -31811,7 +30011,7 @@ var TableColumn = class extends Control {
         name: "caret-up",
         width: 14,
         height: 14,
-        fill: Theme31.text.primary
+        fill: Theme28.text.primary
       });
       this.ascElm.classList.add("sort-icon", "sort-icon--asc");
       this.ascElm.onClick = () => this.sortOrder = this.sortOrder === "asc" ? "none" : "asc";
@@ -31819,7 +30019,7 @@ var TableColumn = class extends Control {
         name: "caret-down",
         width: 14,
         height: 14,
-        fill: Theme31.text.primary
+        fill: Theme28.text.primary
       });
       this.descElm.classList.add("sort-icon", "sort-icon--desc");
       this.descElm.onClick = () => this.sortOrder = this.sortOrder === "desc" ? "none" : "desc";
@@ -32102,7 +30302,7 @@ var Table = class extends Control {
       const rowData = colElm ? colElm.rowData : null;
       const rowIndex = (rowElm == null ? void 0 : rowElm.getAttribute("data-index")) || -1;
       const colIndex = (tdElm == null ? void 0 : tdElm.getAttribute("data-index")) || -1;
-      if (this.onCellClick && rowIndex !== -1)
+      if (this.onCellClick)
         this.onCellClick(this, +rowIndex, +colIndex, rowData);
       if (this.expandable && rowElm) {
         const expandTd = rowElm.querySelector(".i-table-cell--expand");
@@ -32272,7 +30472,7 @@ Table = __decorateClass([
 ], Table);
 
 // packages/carousel/src/style/carousel.css.ts
-var Theme32 = theme_exports.ThemeVars;
+var Theme29 = theme_exports.ThemeVars;
 cssRule("i-carousel-slider", {
   display: "block",
   position: "relative",
@@ -32293,7 +30493,7 @@ cssRule("i-carousel-slider", {
     ".slider-arrow": {
       width: 28,
       height: 28,
-      fill: Theme32.colors.primary.main,
+      fill: Theme29.colors.primary.main,
       cursor: "pointer"
     },
     ".slider-arrow-hidden": {
@@ -32326,7 +30526,7 @@ cssRule("i-carousel-slider", {
           minWidth: "0.8rem",
           minHeight: "0.8rem",
           backgroundColor: "transparent",
-          border: `2px solid ${Theme32.colors.primary.main}`,
+          border: `2px solid ${Theme29.colors.primary.main}`,
           borderRadius: "50%",
           transition: "background-color 0.35s ease-in-out",
           textAlign: "center",
@@ -32337,7 +30537,7 @@ cssRule("i-carousel-slider", {
           textOverflow: "ellipsis"
         },
         ".--active > span": {
-          backgroundColor: Theme32.colors.primary.main
+          backgroundColor: Theme29.colors.primary.main
         }
       }
     }
