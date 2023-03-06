@@ -60,8 +60,8 @@ export default class Main extends Module implements PageBlock {
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
   private tokenAmountIn: string;
-  private oldTag: any;
-  tag: any;
+  private oldTag: any = {};
+  tag: any = {};
   defaultEdit: boolean = true;
   readonly onConfirm: () => Promise<void>;
   readonly onDiscard: () => Promise<void>;
@@ -124,7 +124,7 @@ export default class Main extends Module implements PageBlock {
         command: (builder: any, userInputData: any) => {
           return {
             execute: async () => {
-              this._oldData = this._data;
+              this._oldData = {...this._data};
               if (userInputData.name != undefined) this._data.name = userInputData.name;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.productId != undefined) this._data.productId = userInputData.productId;
@@ -150,12 +150,14 @@ export default class Main extends Module implements PageBlock {
                   this.mdAlert.showModal();
                 }
               }, this.updateSpotsRemaining);
+              if (builder?.setData) builder.setData(this._data);
             },
             undo: () => {
-              this._data = this._oldData;
+              this._data = {...this._oldData};
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
+              if (builder?.setData) builder.setData(this._data);
             },
             redo: () => {}
           }
@@ -213,17 +215,16 @@ export default class Main extends Module implements PageBlock {
         command: (builder: any, userInputData: any) => {
           return {
             execute: async () => {
-              if (userInputData) {
-                this.oldTag = this.tag;
-                this.setTag(userInputData);
-                if (builder) builder.setTag(userInputData);
-              }
+              if (!userInputData) return;
+              this.oldTag = {...this.tag};
+              if (builder) builder.setTag(userInputData);
+              // this.setTag(userInputData);
             },
             undo: () => {
-              if (userInputData) {
-                this.setTag(this.oldTag);
-                if (builder) builder.setTag(this.oldTag);
-              }
+              if (!userInputData) return;
+              this.tag = {...this.oldTag};
+              if (builder) builder.setTag(this.tag);
+              // this.setTag(this.oldTag);
             },
             redo: () => {}
           }
@@ -281,19 +282,26 @@ export default class Main extends Module implements PageBlock {
   }
 
   async setTag(value: any) {
-    this.tag = value;
+    const newValue = value || {};
+    for (let prop in newValue) {
+      if (newValue.hasOwnProperty(prop))
+        this.tag[prop] = newValue[prop];
+    }
     this.updateTheme();
   }
 
+  private updateStyle(name: string, value: any) {
+    value ?
+      this.style.setProperty(name, value) :
+      this.style.removeProperty(name);
+  }
+
   private updateTheme() {
-    if (this.tag?.fontColor)
-      this.style.setProperty('--text-primary', this.tag.fontColor);
-    if (this.tag?.backgroundColor)
-      this.style.setProperty('--background-main', this.tag.backgroundColor);
-    if (this.tag?.inputFontColor)
-      this.style.setProperty('--input-font_color', this.tag.inputFontColor);
-    if (this.tag?.inputBackgroundColor)
-      this.style.setProperty('--input-background', this.tag.inputBackgroundColor);
+    this.updateStyle('--text-primary', this.tag?.fontColor);
+    this.updateStyle('--background-main', this.tag?.backgroundColor);
+    this.updateStyle('--input-font_color', this.tag?.inputFontColor);
+    this.updateStyle('--input-background', this.tag?.inputBackgroundColor);
+    this.updateStyle('--colors-primary-main', this.tag?.buttonBackgroundColor);
   }
 
   async edit() {
@@ -431,9 +439,6 @@ export default class Main extends Module implements PageBlock {
   }
 
   async init() {
-    super.init();
-    await this.initWalletData();
-    await this.onSetupPage(isWalletConnected());
     const defaultTag = {
       inputFontColor: '#ffffff',
       inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
@@ -441,18 +446,20 @@ export default class Main extends Module implements PageBlock {
       backgroundColor: '#DBDBDB'
     }
     const toolbar = this.parentElement.closest('ide-toolbar') as any;
-    if (toolbar) toolbar.setTag(defaultTag);
+    if (toolbar) {
+      this.setTag(defaultTag);
+      toolbar.setTag(defaultTag);
+    }
     const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
     if (element) {
-      if (defaultTag?.fontColor)
-        element.style.setProperty('--text-primary', defaultTag.fontColor);
-      if (defaultTag?.backgroundColor)
-        element.style.setProperty('--background-main', defaultTag.backgroundColor);
-      if (defaultTag?.inputFontColor)
-        element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-      if (defaultTag?.inputBackgroundColor)
-        element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+      element.style.setProperty('--text-primary', defaultTag.fontColor);
+      element.style.setProperty('--background-main', defaultTag.backgroundColor);
+      element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+      element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
     }
+    super.init();
+    await this.initWalletData();
+    await this.onSetupPage(isWalletConnected());
   }
 
   private async initWalletData() {
