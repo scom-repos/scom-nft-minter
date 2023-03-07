@@ -60,7 +60,6 @@ export default class Main extends Module implements PageBlock {
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
   private tokenAmountIn: string;
-  private isUpdatedTag: boolean = false;
   private oldTag: any = {};
   tag: any = {};
   defaultEdit: boolean = true;
@@ -285,10 +284,8 @@ export default class Main extends Module implements PageBlock {
   async setTag(value: any) {
     const newValue = value || {};
     for (let prop in newValue) {
-      if (newValue.hasOwnProperty(prop)) {
+      if (newValue.hasOwnProperty(prop))
         this.tag[prop] = newValue[prop];
-        this.isUpdatedTag = true;
-      }
     }
     this.updateTheme();
   }
@@ -446,7 +443,7 @@ export default class Main extends Module implements PageBlock {
     await this.initWalletData();
     await this.onSetupPage(isWalletConnected());
 
-    if (!this.isUpdatedTag) {
+    if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
       const defaultTag = {
         inputFontColor: '#ffffff',
         inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',

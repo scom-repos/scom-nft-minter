@@ -305,7 +305,6 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             this._oldData = {};
             this._data = {};
             this.isApproving = false;
-            this.isUpdatedTag = false;
             this.oldTag = {};
             this.tag = {};
             this.defaultEdit = true;
@@ -575,10 +574,8 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
         async setTag(value) {
             const newValue = value || {};
             for (let prop in newValue) {
-                if (newValue.hasOwnProperty(prop)) {
+                if (newValue.hasOwnProperty(prop))
                     this.tag[prop] = newValue[prop];
-                    this.isUpdatedTag = true;
-                }
             }
             this.updateTheme();
         }
@@ -701,7 +698,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             super.init();
             await this.initWalletData();
             await this.onSetupPage(wallet_1.isWalletConnected());
-            if (!this.isUpdatedTag) {
+            if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
                 const defaultTag = {
                     inputFontColor: '#ffffff',
                     inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
