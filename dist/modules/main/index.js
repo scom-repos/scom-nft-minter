@@ -695,27 +695,28 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
         }
         async init() {
-            const defaultTag = {
-                inputFontColor: '#ffffff',
-                inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
-                fontColor: '#323232',
-                backgroundColor: '#DBDBDB'
-            };
-            const toolbar = this.parentElement.closest('ide-toolbar');
-            if (toolbar) {
-                this.setTag(defaultTag);
-                toolbar.setTag(defaultTag);
-            }
-            const element = this.parentElement.closest('sc-page-viewer-page-element');
-            if (element) {
-                element.style.setProperty('--text-primary', defaultTag.fontColor);
-                element.style.setProperty('--background-main', defaultTag.backgroundColor);
-                element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-                element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
-            }
             super.init();
             await this.initWalletData();
             await this.onSetupPage(wallet_1.isWalletConnected());
+            if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
+                const defaultTag = {
+                    inputFontColor: '#ffffff',
+                    inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
+                    fontColor: '#323232',
+                    backgroundColor: '#DBDBDB'
+                };
+                this.setTag(defaultTag);
+                const toolbar = this.parentElement.closest('ide-toolbar');
+                if (toolbar)
+                    toolbar.setTag(defaultTag);
+                const element = this.parentElement.closest('sc-page-viewer-page-element');
+                if (element) {
+                    element.style.setProperty('--text-primary', defaultTag.fontColor);
+                    element.style.setProperty('--background-main', defaultTag.backgroundColor);
+                    element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+                    element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+                }
+            }
         }
         async initWalletData() {
             const selectedProvider = localStorage.getItem('walletProvider');
