@@ -33,11 +33,16 @@ declare global {
 
 const ComboProductTypeItems = [
   {
-    value: 'nft-minter',
-    label: 'NFT Minter'
-  }, {
-    value: 'donation',
-    label: 'Donation'
+    value: ProductType.Buy,
+    label: 'Buy'
+  }, 
+  {
+    value: ProductType.DonateToOwner,
+    label: 'Donate To Owner'
+  }, 
+  {
+    value: ProductType.DonateToEveryone,
+    label: 'Donate To Everyone'
   }
 ];
 
@@ -171,7 +176,7 @@ export default class Config extends Module {
   
   onComboProductTypeChanged() {
     const selectedItem = this.comboProductType.selectedItem as IComboItem;
-    if (selectedItem.value == 'nft-minter') {
+    if (selectedItem.value == ProductType.Buy) {
       this.edtMaxOrderQty.enabled = true;
       this.edtPrice.enabled = true;
       this.edtMaxPrice.enabled = false;
@@ -179,7 +184,7 @@ export default class Config extends Module {
       this.edtMaxOrderQty.value = '';
       this.edtPrice.value = '';
     }
-    else if (selectedItem.value == 'donation') {
+    else {
       this.edtMaxOrderQty.enabled = false;
       this.edtPrice.enabled = false;
       this.edtMaxPrice.enabled = true;

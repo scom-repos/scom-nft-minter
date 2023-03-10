@@ -17,17 +17,22 @@ define("@pageblock-nft-minter/config/index.css.ts", ["require", "exports", "@ijs
         }
     });
 });
-define("@pageblock-nft-minter/config", ["require", "exports", "@ijstech/components", "@pageblock-nft-minter/config/index.css.ts", "@ijstech/eth-wallet", "@pageblock-nft-minter/utils"], function (require, exports, components_2, index_css_1, eth_wallet_1, utils_1) {
+define("@pageblock-nft-minter/config", ["require", "exports", "@ijstech/components", "@pageblock-nft-minter/interface", "@pageblock-nft-minter/config/index.css.ts", "@ijstech/eth-wallet", "@pageblock-nft-minter/utils"], function (require, exports, components_2, interface_1, index_css_1, eth_wallet_1, utils_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_2.Styles.Theme.ThemeVars;
     const ComboProductTypeItems = [
         {
-            value: 'nft-minter',
-            label: 'NFT Minter'
-        }, {
-            value: 'donation',
-            label: 'Donation'
+            value: interface_1.ProductType.Buy,
+            label: 'Buy'
+        },
+        {
+            value: interface_1.ProductType.DonateToOwner,
+            label: 'Donate To Owner'
+        },
+        {
+            value: interface_1.ProductType.DonateToEveryone,
+            label: 'Donate To Everyone'
         }
     ];
     let Config = class Config extends components_2.Module {
@@ -136,7 +141,7 @@ define("@pageblock-nft-minter/config", ["require", "exports", "@ijstech/componen
         }
         onComboProductTypeChanged() {
             const selectedItem = this.comboProductType.selectedItem;
-            if (selectedItem.value == 'nft-minter') {
+            if (selectedItem.value == interface_1.ProductType.Buy) {
                 this.edtMaxOrderQty.enabled = true;
                 this.edtPrice.enabled = true;
                 this.edtMaxPrice.enabled = false;
@@ -144,7 +149,7 @@ define("@pageblock-nft-minter/config", ["require", "exports", "@ijstech/componen
                 this.edtMaxOrderQty.value = '';
                 this.edtPrice.value = '';
             }
-            else if (selectedItem.value == 'donation') {
+            else {
                 this.edtMaxOrderQty.enabled = false;
                 this.edtPrice.enabled = false;
                 this.edtMaxPrice.enabled = true;

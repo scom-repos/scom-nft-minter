@@ -471,10 +471,12 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                             //   type: 'number'
                             // },
                             "logo": {
-                                type: 'string'
+                                type: 'string',
+                                format: 'data-url'
                             },
                             "description": {
-                                type: 'string'
+                                type: 'string',
+                                format: 'multi'
                             },
                             "link": {
                                 type: 'string'

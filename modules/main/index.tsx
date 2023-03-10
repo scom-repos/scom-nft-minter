@@ -180,10 +180,12 @@ export default class Main extends Module implements PageBlock {
             //   type: 'number'
             // },
             "logo": {
-              type: 'string'
+              type: 'string',
+              format: 'data-url'
             },
             "description": {
-              type: 'string'
+              type: 'string',
+              format: 'multi'
             },
             "link": {
               type: 'string'
