@@ -225,12 +225,14 @@ export default class Main extends Module implements PageBlock {
               if (!userInputData) return;
               this.oldTag = {...this.tag};
               if (builder) builder.setTag(userInputData);
+              else this.setTag(userInputData);
               // this.setTag(userInputData);
             },
             undo: () => {
               if (!userInputData) return;
               this.tag = {...this.oldTag};
               if (builder) builder.setTag(this.tag);
+              else this.setTag(this.oldTag);
               // this.setTag(this.oldTag);
             },
             redo: () => {}
@@ -766,10 +768,6 @@ export default class Main extends Module implements PageBlock {
               height='100%'
               margin={{bottom: '0.563rem'}}
             ></i-markdown>
-            <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem'>
-              <i-label caption='Details here: ' font={{size: '1rem'}}></i-label>
-              <i-label id='lblLink' font={{size: '1rem'}}></i-label>
-            </i-hstack>
           </i-vstack>
           <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
             <i-vstack class="text-center" margin={{bottom: '0.25rem'}}>
@@ -866,6 +864,10 @@ export default class Main extends Module implements PageBlock {
               ></i-label>
             </i-vstack>
           </i-vstack>
+          <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem' padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
+            <i-label caption='Details here: ' font={{size: '1rem'}}></i-label>
+            <i-label id='lblLink' font={{size: '1rem'}}></i-label>
+          </i-hstack>          
         </i-grid-layout>
         <nft-minter-config id='configDApp' visible={false}></nft-minter-config>
         <nft-minter-alert id='mdAlert'></nft-minter-alert>

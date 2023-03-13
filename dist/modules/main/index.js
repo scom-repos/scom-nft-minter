@@ -516,6 +516,8 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                 this.oldTag = Object.assign({}, this.tag);
                                 if (builder)
                                     builder.setTag(userInputData);
+                                else
+                                    this.setTag(userInputData);
                                 // this.setTag(userInputData);
                             },
                             undo: () => {
@@ -524,6 +526,8 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                 this.tag = Object.assign({}, this.oldTag);
                                 if (builder)
                                     builder.setTag(this.tag);
+                                else
+                                    this.setTag(this.oldTag);
                                 // this.setTag(this.oldTag);
                             },
                             redo: () => { }
@@ -969,10 +973,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     this.$render("i-vstack", { id: "pnlDescription", padding: { top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' } },
                         this.$render("i-hstack", { margin: { bottom: '1.25rem' } },
                             this.$render("i-image", { id: 'imgLogo', class: index_css_1.imageStyle, height: 100 })),
-                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } }),
-                        this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem' },
-                            this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
-                            this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))),
+                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                     this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
                         this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' } },
                             this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
@@ -1002,7 +1003,10 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                             this.$render("i-vstack", { gap: '0.25rem', margin: { top: '1rem' } },
                                 this.$render("i-label", { id: 'lblRef', font: { size: '0.875rem' }, opacity: 0.5 }),
                                 this.$render("i-label", { id: 'lblAddress', font: { size: '0.875rem' }, overflowWrap: 'anywhere' })),
-                            this.$render("i-label", { caption: 'Terms & Condition', font: { size: '0.875rem' }, link: { href: 'https://docs.scom.dev/' }, opacity: 0.6, margin: { top: '1rem' } })))),
+                            this.$render("i-label", { caption: 'Terms & Condition', font: { size: '0.875rem' }, link: { href: 'https://docs.scom.dev/' }, opacity: 0.6, margin: { top: '1rem' } }))),
+                    this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem', padding: { top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' } },
+                        this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
+                        this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))),
                 this.$render("nft-minter-config", { id: 'configDApp', visible: false }),
                 this.$render("nft-minter-alert", { id: 'mdAlert' })));
         }
