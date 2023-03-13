@@ -393,6 +393,56 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             }
         }
         getActions() {
+            const userInputDataSchema = {
+                type: 'object',
+                properties: {
+                    // "name": {
+                    //   type: 'string'
+                    // },
+                    // "productType": {
+                    //   type: 'string'
+                    // },
+                    "donateTo": {
+                        type: 'string',
+                        default: eth_wallet_2.Wallet.getClientInstance().address,
+                        format: "wallet-address"
+                    },
+                    // "productId": {
+                    //   type: 'number'
+                    // },
+                    "link": {
+                        type: 'string'
+                    },
+                    // "chainId": {
+                    //   type: 'number'
+                    // },
+                    // "token": {
+                    //   type: 'object'
+                    // },
+                    // "price": {
+                    //   type: 'string'
+                    // },
+                    // "maxPrice": {
+                    //   type: 'string'
+                    // },
+                    // "maxOrderQty": {
+                    //   type: 'number'
+                    // },
+                    // "qty": {
+                    //   type: 'number'
+                    // }
+                }
+            };
+            if (!this._data.hideDescription) {
+                userInputDataSchema.properties['description'] = {
+                    type: 'string',
+                    format: 'multi'
+                };
+                userInputDataSchema.properties['logo'] = {
+                    type: 'string',
+                    format: 'data-url'
+                };
+            }
             const actions = [
                 {
                     name: 'Settings',
@@ -453,54 +503,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                             redo: () => { }
                         };
                     },
-                    userInputDataSchema: {
-                        type: 'object',
-                        properties: {
-                            // "name": {
-                            //   type: 'string'
-                            // },
-                            // "productType": {
-                            //   type: 'string'
-                            // },
-                            "donateTo": {
-                                type: 'string',
-                                default: eth_wallet_2.Wallet.getClientInstance().address,
-                                format: "wallet-address"
-                            },
-                            // "productId": {
-                            //   type: 'number'
-                            // },
-                            "logo": {
-                                type: 'string',
-                                format: 'data-url'
-                            },
-                            "description": {
-                                type: 'string',
-                                format: 'multi'
-                            },
-                            "link": {
-                                type: 'string'
-                            },
-                            // "chainId": {
-                            //   type: 'number'
-                            // },
-                            // "token": {
-                            //   type: 'object'
-                            // },
-                            // "price": {
-                            //   type: 'string'
-                            // },
-                            // "maxPrice": {
-                            //   type: 'string'
-                            // },
-                            // "maxOrderQty": {
-                            //   type: 'number'
-                            // },
-                            // "qty": {
-                            //   type: 'number'
-                            // }
-                        }
-                    }
+                    userInputDataSchema: userInputDataSchema
                 },
                 {
                     name: 'Theme Settings',
@@ -654,6 +657,14 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
         async refreshDApp() {
             var _a, _b, _c;
             this._type = this._data.productType;
+            if (this._data.hideDescription) {
+                this.pnlDescription.visible = false;
+                this.gridDApp.templateColumns = ['1fr'];
+            }
+            else {
+                this.pnlDescription.visible = true;
+                this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
+            }
             if ((_a = this._data.logo) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = store_2.getIPFSGatewayUrl();
                 this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
@@ -708,15 +719,17 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     backgroundColor: '#DBDBDB'
                 };
                 this.setTag(defaultTag);
-                const toolbar = this.parentElement.closest('ide-toolbar');
-                if (toolbar)
-                    toolbar.setTag(defaultTag);
-                const element = this.parentElement.closest('sc-page-viewer-page-element');
-                if (element) {
-                    element.style.setProperty('--text-primary', defaultTag.fontColor);
-                    element.style.setProperty('--background-main', defaultTag.backgroundColor);
-                    element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-                    element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+                if (this.parentElement) {
+                    const toolbar = this.parentElement.closest('ide-toolbar');
+                    if (toolbar)
+                        toolbar.setTag(defaultTag);
+                    const element = this.parentElement.closest('sc-page-viewer-page-element');
+                    if (element) {
+                        element.style.setProperty('--text-primary', defaultTag.fontColor);
+                        element.style.setProperty('--background-main', defaultTag.backgroundColor);
+                        element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+                        element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+                    }
                 }
             }
         }
@@ -953,14 +966,14 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
         render() {
             return (this.$render("i-panel", { background: { color: Theme.background.main } },
                 this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['repeat(2, 1fr)'], padding: { bottom: '1.563rem' } },
-                    this.$render("i-vstack", { padding: { top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' } },
+                    this.$render("i-vstack", { id: "pnlDescription", padding: { top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' } },
                         this.$render("i-hstack", { margin: { bottom: '1.25rem' } },
                             this.$render("i-image", { id: 'imgLogo', class: index_css_1.imageStyle, height: 100 })),
                         this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } }),
                         this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem' },
                             this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
                             this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))),
-                    this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '5.25rem' }, verticalAlignment: 'space-between' },
+                    this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
                         this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' } },
                             this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
                             this.$render("i-label", { caption: "I don't have a digital wallet", link: { href: 'https://metamask.io/' }, opacity: 0.6, font: { size: '1rem' } })),

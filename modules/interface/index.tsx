@@ -40,6 +40,7 @@ export interface IConfig {
   productId?: number;
   logo?: string;
   description?: string;
+  hideDescription?: boolean;
   link?: string;
   chainId?: number;
   token?: ITokenObject;

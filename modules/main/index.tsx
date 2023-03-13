@@ -12,6 +12,7 @@ import {
   Container,
   IEventBus,
   application,
+  VStack,
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, ProductType } from '@pageblock-nft-minter/interface';
@@ -51,6 +52,7 @@ export default class Main extends Module implements PageBlock {
   private edtAmount: Input;
   private configDApp: Config;
   private mdAlert: Alert;
+  private pnlDescription: VStack;
 
   private _type: ProductType | undefined;
   private _productId: number | undefined;
@@ -117,6 +119,56 @@ export default class Main extends Module implements PageBlock {
   }
 
   getActions() {
+    const userInputDataSchema = {
+      type: 'object',
+      properties: {
+        // "name": {
+        //   type: 'string'
+        // },
+        // "productType": {
+        //   type: 'string'
+        // },
+        "donateTo": {
+          type: 'string',
+          default: Wallet.getClientInstance().address,
+          format: "wallet-address"
+        },           
+        // "productId": {
+        //   type: 'number'
+        // },
+        "link": {
+          type: 'string'
+        },
+        // "chainId": {
+        //   type: 'number'
+        // },
+        // "token": {
+        //   type: 'object'
+        // },
+        // "price": {
+        //   type: 'string'
+        // },
+        // "maxPrice": {
+        //   type: 'string'
+        // },
+        // "maxOrderQty": {
+        //   type: 'number'
+        // },
+        // "qty": {
+        //   type: 'number'
+        // }
+      }
+    };
+    if (!this._data.hideDescription) {
+      userInputDataSchema.properties['description'] = {
+        type: 'string',
+        format: 'multi'
+      };
+      userInputDataSchema.properties['logo'] = {
+        type: 'string',
+        format: 'data-url'
+      };      
+    }
     const actions = [
       {
         name: 'Settings',
@@ -162,54 +214,7 @@ export default class Main extends Module implements PageBlock {
             redo: () => {}
           }
         },
-        userInputDataSchema: {
-          type: 'object',
-          properties: {
-            // "name": {
-            //   type: 'string'
-            // },
-            // "productType": {
-            //   type: 'string'
-            // },
-            "donateTo": {
-              type: 'string',
-              default: Wallet.getClientInstance().address,
-              format: "wallet-address"
-            },           
-            // "productId": {
-            //   type: 'number'
-            // },
-            "logo": {
-              type: 'string',
-              format: 'data-url'
-            },
-            "description": {
-              type: 'string',
-              format: 'multi'
-            },
-            "link": {
-              type: 'string'
-            },
-            // "chainId": {
-            //   type: 'number'
-            // },
-            // "token": {
-            //   type: 'object'
-            // },
-            // "price": {
-            //   type: 'string'
-            // },
-            // "maxPrice": {
-            //   type: 'string'
-            // },
-            // "maxOrderQty": {
-            //   type: 'number'
-            // },
-            // "qty": {
-            //   type: 'number'
-            // }
-          }
-        }
+        userInputDataSchema: userInputDataSchema
       },
       {
         name: 'Theme Settings',
@@ -390,6 +395,14 @@ export default class Main extends Module implements PageBlock {
 
   private async refreshDApp() {
     this._type = this._data.productType;
+    if (this._data.hideDescription) {
+      this.pnlDescription.visible = false;
+      this.gridDApp.templateColumns = ['1fr'];
+    }
+    else {
+      this.pnlDescription.visible = true;
+      this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
+    }
     if (this._data.logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
       this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
@@ -453,14 +466,16 @@ export default class Main extends Module implements PageBlock {
         backgroundColor: '#DBDBDB'
       }
       this.setTag(defaultTag);
-      const toolbar = this.parentElement.closest('ide-toolbar') as any;
-      if (toolbar) toolbar.setTag(defaultTag);
-      const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
-      if (element) {
-        element.style.setProperty('--text-primary', defaultTag.fontColor);
-        element.style.setProperty('--background-main', defaultTag.backgroundColor);
-        element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-        element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+      if (this.parentElement) {
+        const toolbar = this.parentElement.closest('ide-toolbar') as any;
+        if (toolbar) toolbar.setTag(defaultTag);
+        const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
+        if (element) {
+          element.style.setProperty('--text-primary', defaultTag.fontColor);
+          element.style.setProperty('--background-main', defaultTag.backgroundColor);
+          element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
+          element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
+        }
       }
     }
   }
@@ -740,7 +755,7 @@ export default class Main extends Module implements PageBlock {
           templateColumns={['repeat(2, 1fr)']}
           padding={{bottom: '1.563rem'}}
         >
-          <i-vstack padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' }}>
+          <i-vstack id="pnlDescription" padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' }}>
             <i-hstack margin={{bottom: '1.25rem'}}>
               <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
             </i-hstack>
@@ -756,7 +771,7 @@ export default class Main extends Module implements PageBlock {
               <i-label id='lblLink' font={{size: '1rem'}}></i-label>
             </i-hstack>
           </i-vstack>
-          <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '5.25rem' }} verticalAlignment='space-between'>
+          <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
             <i-vstack class="text-center" margin={{bottom: '0.25rem'}}>
               <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
               <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
