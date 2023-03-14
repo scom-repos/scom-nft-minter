@@ -738,6 +738,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     }
                 }
             }
+            this.$eventBus.dispatch('embedInitialized', this);
         }
         async initWalletData() {
             const selectedProvider = localStorage.getItem('walletProvider');

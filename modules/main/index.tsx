@@ -483,6 +483,7 @@ export default class Main extends Module implements PageBlock {
         }
       }
     }
+    this.$eventBus.dispatch('embedInitialized', this);
   }
 
   private async initWalletData() {
