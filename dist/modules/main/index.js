@@ -664,17 +664,19 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             if (this._data.hideDescription) {
                 this.pnlDescription.visible = false;
                 this.gridDApp.templateColumns = ['1fr'];
+                this.imgLogo2.visible = true;
             }
             else {
                 this.pnlDescription.visible = true;
                 this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
+                this.imgLogo2.visible = false;
             }
             if ((_a = this._data.logo) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = store_2.getIPFSGatewayUrl();
-                this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = this.imgLogo2.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
             }
             else {
-                this.imgLogo.url = this._data.logo;
+                this.imgLogo.url = this.imgLogo2.url = this._data.logo;
             }
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
@@ -976,6 +978,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                         this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                     this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
                         this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' } },
+                            this.$render("i-image", { id: 'imgLogo2', class: index_css_1.imageStyle, height: 100 }),
                             this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
                             this.$render("i-label", { caption: "I don't have a digital wallet", link: { href: 'https://metamask.io/' }, opacity: 0.6, font: { size: '1rem' } })),
                         this.$render("i-hstack", { id: 'pnlSpotsRemaining', visible: false, gap: '0.25rem' },

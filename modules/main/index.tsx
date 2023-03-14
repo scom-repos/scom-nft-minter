@@ -32,6 +32,7 @@ const Theme = Styles.Theme.ThemeVars;
 export default class Main extends Module implements PageBlock {
   private gridDApp: GridLayout;
   private imgLogo: Image;
+  private imgLogo2: Image;
   private markdownViewer: Markdown;
   private pnlLink: HStack;
   private lblLink: Label;
@@ -400,17 +401,19 @@ export default class Main extends Module implements PageBlock {
     if (this._data.hideDescription) {
       this.pnlDescription.visible = false;
       this.gridDApp.templateColumns = ['1fr'];
+      this.imgLogo2.visible = true;
     }
     else {
       this.pnlDescription.visible = true;
       this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
+      this.imgLogo2.visible = false;
     }
     if (this._data.logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = this.imgLogo2.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = this._data.logo;
+      this.imgLogo.url = this.imgLogo2.url = this._data.logo;
     }
     this.markdownViewer.load(this._data.description || '');
     this.pnlLink.visible = !!this._data.link;
@@ -771,6 +774,7 @@ export default class Main extends Module implements PageBlock {
           </i-vstack>
           <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
             <i-vstack class="text-center" margin={{bottom: '0.25rem'}}>
+              <i-image id='imgLogo2' class={imageStyle} height={100}></i-image>
               <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
               <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
             </i-vstack>
