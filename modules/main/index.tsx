@@ -13,11 +13,12 @@ import {
   IEventBus,
   application,
   VStack,
+  IDataSchema,
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, ProductType } from '@pageblock-nft-minter/interface';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from '@pageblock-nft-minter/utils';
-import { EventId, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@pageblock-nft-minter/store';
+import { EventId, getCommissionFee, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from '@pageblock-nft-minter/store';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from '@pageblock-nft-minter/wallet';
 import Config from '@pageblock-nft-minter/config';
 import { TokenSelection } from '@pageblock-nft-minter/token-selection';
@@ -119,8 +120,62 @@ export default class Main extends Module implements PageBlock {
     }
   }
 
+  getEmbedderActions() {
+    const propertiesSchema: IDataSchema = {
+      type: 'object',
+      properties: {
+        "chainId": {
+          title: 'Chain ID',
+          type: 'number',
+          readOnly: true
+        },                  
+        "feeTo": {
+          type: 'string',
+          default: Wallet.getClientInstance().address,
+          format: "wallet-address"
+        },  
+        "link": {
+          type: 'string'
+        }
+      }
+    };
+    if (!this._data.hideDescription) {
+      propertiesSchema.properties['description'] = {
+        type: 'string',
+        format: 'multi'
+      };
+      propertiesSchema.properties['logo'] = {
+        type: 'string',
+        format: 'data-url'
+      };      
+    }
+    const themeSchema: IDataSchema = {
+      type: 'object',
+      properties: {
+        backgroundColor: {
+          type: 'string',
+          format: 'color'
+        },
+        fontColor: {
+          type: 'string',
+          format: 'color'
+        },
+        inputBackgroundColor: {
+          type: 'string',
+          format: 'color'
+        },
+        inputFontColor: {
+          type: 'string',
+          format: 'color'
+        }
+      }      
+    }
+
+    return this._getActions(propertiesSchema, themeSchema);
+  }
+
   getActions() {
-    const userInputDataSchema = {
+    const propertiesSchema: IDataSchema = {
       type: 'object',
       properties: {
         // "name": {
@@ -129,23 +184,24 @@ export default class Main extends Module implements PageBlock {
         // "productType": {
         //   type: 'string'
         // },
+        // "chainId": {
+        //   title: 'Chain ID',
+        //   type: 'number'
+        // },    
+        // "token": {
+        //   type: 'object'
+        // },            
         "donateTo": {
           type: 'string',
           default: Wallet.getClientInstance().address,
           format: "wallet-address"
-        },           
+        },      
         // "productId": {
         //   type: 'number'
         // },
         "link": {
           type: 'string'
         },
-        // "chainId": {
-        //   type: 'number'
-        // },
-        // "token": {
-        //   type: 'object'
-        // },
         // "price": {
         //   type: 'string'
         // },
@@ -161,15 +217,41 @@ export default class Main extends Module implements PageBlock {
       }
     };
     if (!this._data.hideDescription) {
-      userInputDataSchema.properties['description'] = {
+      propertiesSchema.properties['description'] = {
         type: 'string',
         format: 'multi'
       };
-      userInputDataSchema.properties['logo'] = {
+      propertiesSchema.properties['logo'] = {
         type: 'string',
         format: 'data-url'
       };      
     }
+    const themeSchema: IDataSchema = {
+      type: 'object',
+      properties: {
+        backgroundColor: {
+          type: 'string',
+          format: 'color'
+        },
+        fontColor: {
+          type: 'string',
+          format: 'color'
+        },
+        inputBackgroundColor: {
+          type: 'string',
+          format: 'color'
+        },
+        inputFontColor: {
+          type: 'string',
+          format: 'color'
+        }
+      }      
+    }
+
+    return this._getActions(propertiesSchema, themeSchema);
+  }
+
+  _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema) {
     const actions = [
       {
         name: 'Settings',
@@ -191,6 +273,13 @@ export default class Main extends Module implements PageBlock {
               if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
               if (userInputData.qty != undefined) this._data.qty = userInputData.qty;
               if (userInputData.token != undefined) this._data.token = userInputData.token;
+              const commissionFee = getCommissionFee();
+              if (new BigNumber(commissionFee).gt(0) && userInputData.feeTo != undefined) {
+                this._data.commissions = [{
+                  walletAddress: userInputData.feeTo,
+                  share: commissionFee
+                }]
+              }
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
@@ -215,7 +304,7 @@ export default class Main extends Module implements PageBlock {
             redo: () => {}
           }
         },
-        userInputDataSchema: userInputDataSchema
+        userInputDataSchema: propertiesSchema
       },
       {
         name: 'Theme Settings',
@@ -239,27 +328,7 @@ export default class Main extends Module implements PageBlock {
             redo: () => {}
           }
         },
-        userInputDataSchema: {
-          type: 'object',
-          properties: {
-            backgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            fontColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputBackgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputFontColor: {
-              type: 'string',
-              format: 'color'
-            }
-          }
-        }
+        userInputDataSchema: themeSchema
       }
     ]
     return actions

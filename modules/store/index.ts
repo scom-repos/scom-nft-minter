@@ -51,7 +51,8 @@ export type ContractInfoByChainType = { [key: number]: IContractInfo };
 
 export const state = {
   contractInfoByChain: {} as ContractInfoByChainType,
-  ipfsGatewayUrl: ""
+  ipfsGatewayUrl: "",
+  commissionFee: "0"
 }
 
 export const setDataFromSCConfig = (options: any) => {
@@ -60,6 +61,9 @@ export const setDataFromSCConfig = (options: any) => {
   }
   if (options.ipfsGatewayUrl) {
     setIPFSGatewayUrl(options.ipfsGatewayUrl);
+  }
+  if (options.commissionFee) {
+    setCommissionFee(options.commissionFee);
   }
 }
 
@@ -77,6 +81,14 @@ export const setIPFSGatewayUrl = (url: string) => {
 
 export const getIPFSGatewayUrl = () => {
   return state.ipfsGatewayUrl;
+}
+
+const setCommissionFee = (fee: string) => {
+  state.commissionFee = fee;
+}
+
+export const getCommissionFee = () => {
+  return state.commissionFee;
 }
 
 export const getContractAddress = (type: ContractType) => {

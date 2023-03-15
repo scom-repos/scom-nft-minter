@@ -2486,7 +2486,7 @@ define("@pageblock-nft-minter/store/tokens/index.ts", ["require", "exports", "@p
 define("@pageblock-nft-minter/store", ["require", "exports", "@ijstech/eth-wallet", "@pageblock-nft-minter/store/tokens/index.ts", "@pageblock-nft-minter/store/tokens/index.ts"], function (require, exports, eth_wallet_1, index_3, index_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getContractAddress = exports.getIPFSGatewayUrl = exports.setIPFSGatewayUrl = exports.setDataFromSCConfig = exports.state = exports.getNetworkName = exports.getTokenList = void 0;
+    exports.getContractAddress = exports.getCommissionFee = exports.getIPFSGatewayUrl = exports.setIPFSGatewayUrl = exports.setDataFromSCConfig = exports.state = exports.getNetworkName = exports.getTokenList = void 0;
     const getTokenList = (chainId) => {
         const tokenList = [...index_3.DefaultTokens[chainId]];
         return tokenList;
@@ -2514,7 +2514,8 @@ define("@pageblock-nft-minter/store", ["require", "exports", "@ijstech/eth-walle
     exports.getNetworkName = getNetworkName;
     exports.state = {
         contractInfoByChain: {},
-        ipfsGatewayUrl: ""
+        ipfsGatewayUrl: "",
+        commissionFee: "0"
     };
     const setDataFromSCConfig = (options) => {
         if (options.contractInfo) {
@@ -2522,6 +2523,9 @@ define("@pageblock-nft-minter/store", ["require", "exports", "@ijstech/eth-walle
         }
         if (options.ipfsGatewayUrl) {
             exports.setIPFSGatewayUrl(options.ipfsGatewayUrl);
+        }
+        if (options.commissionFee) {
+            setCommissionFee(options.commissionFee);
         }
     };
     exports.setDataFromSCConfig = setDataFromSCConfig;
@@ -2539,6 +2543,13 @@ define("@pageblock-nft-minter/store", ["require", "exports", "@ijstech/eth-walle
         return exports.state.ipfsGatewayUrl;
     };
     exports.getIPFSGatewayUrl = getIPFSGatewayUrl;
+    const setCommissionFee = (fee) => {
+        exports.state.commissionFee = fee;
+    };
+    const getCommissionFee = () => {
+        return exports.state.commissionFee;
+    };
+    exports.getCommissionFee = getCommissionFee;
     const getContractAddress = (type) => {
         var _a;
         const chainId = eth_wallet_1.Wallet.getInstance().chainId;

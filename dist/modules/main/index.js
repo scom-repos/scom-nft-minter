@@ -392,8 +392,60 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                 await this.initApprovalAction();
             }
         }
+        getEmbedderActions() {
+            const propertiesSchema = {
+                type: 'object',
+                properties: {
+                    "chainId": {
+                        title: 'Chain ID',
+                        type: 'number',
+                        readOnly: true
+                    },
+                    "feeTo": {
+                        type: 'string',
+                        default: eth_wallet_2.Wallet.getClientInstance().address,
+                        format: "wallet-address"
+                    },
+                    "link": {
+                        type: 'string'
+                    }
+                }
+            };
+            if (!this._data.hideDescription) {
+                propertiesSchema.properties['description'] = {
+                    type: 'string',
+                    format: 'multi'
+                };
+                propertiesSchema.properties['logo'] = {
+                    type: 'string',
+                    format: 'data-url'
+                };
+            }
+            const themeSchema = {
+                type: 'object',
+                properties: {
+                    backgroundColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    fontColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    inputBackgroundColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    inputFontColor: {
+                        type: 'string',
+                        format: 'color'
+                    }
+                }
+            };
+            return this._getActions(propertiesSchema, themeSchema);
+        }
         getActions() {
-            const userInputDataSchema = {
+            const propertiesSchema = {
                 type: 'object',
                 properties: {
                     // "name": {
@@ -402,6 +454,13 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     // "productType": {
                     //   type: 'string'
                     // },
+                    // "chainId": {
+                    //   title: 'Chain ID',
+                    //   type: 'number'
+                    // },    
+                    // "token": {
+                    //   type: 'object'
+                    // },            
                     "donateTo": {
                         type: 'string',
                         default: eth_wallet_2.Wallet.getClientInstance().address,
@@ -413,12 +472,6 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                     "link": {
                         type: 'string'
                     },
-                    // "chainId": {
-                    //   type: 'number'
-                    // },
-                    // "token": {
-                    //   type: 'object'
-                    // },
                     // "price": {
                     //   type: 'string'
                     // },
@@ -434,15 +487,39 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                 }
             };
             if (!this._data.hideDescription) {
-                userInputDataSchema.properties['description'] = {
+                propertiesSchema.properties['description'] = {
                     type: 'string',
                     format: 'multi'
                 };
-                userInputDataSchema.properties['logo'] = {
+                propertiesSchema.properties['logo'] = {
                     type: 'string',
                     format: 'data-url'
                 };
             }
+            const themeSchema = {
+                type: 'object',
+                properties: {
+                    backgroundColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    fontColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    inputBackgroundColor: {
+                        type: 'string',
+                        format: 'color'
+                    },
+                    inputFontColor: {
+                        type: 'string',
+                        format: 'color'
+                    }
+                }
+            };
+            return this._getActions(propertiesSchema, themeSchema);
+        }
+        _getActions(propertiesSchema, themeSchema) {
             const actions = [
                 {
                     name: 'Settings',
@@ -477,6 +554,13 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                     this._data.qty = userInputData.qty;
                                 if (userInputData.token != undefined)
                                     this._data.token = userInputData.token;
+                                const commissionFee = store_2.getCommissionFee();
+                                if (new eth_wallet_2.BigNumber(commissionFee).gt(0) && userInputData.feeTo != undefined) {
+                                    this._data.commissions = [{
+                                            walletAddress: userInputData.feeTo,
+                                            share: commissionFee
+                                        }];
+                                }
                                 this._productId = this._data.productId;
                                 this.configDApp.data = this._data;
                                 this.refreshDApp();
@@ -503,7 +587,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                             redo: () => { }
                         };
                     },
-                    userInputDataSchema: userInputDataSchema
+                    userInputDataSchema: propertiesSchema
                 },
                 {
                     name: 'Theme Settings',
@@ -533,27 +617,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                             redo: () => { }
                         };
                     },
-                    userInputDataSchema: {
-                        type: 'object',
-                        properties: {
-                            backgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            fontColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputBackgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputFontColor: {
-                                type: 'string',
-                                format: 'color'
-                            }
-                        }
-                    }
+                    userInputDataSchema: themeSchema
                 }
             ];
             return actions;

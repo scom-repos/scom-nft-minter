@@ -99,5 +99,6 @@
                 "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
             }
         }
-    }
+    },
+    "commissionFee": "0.01"
 }
