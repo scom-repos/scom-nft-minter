@@ -121,7 +121,7 @@ async function buyProduct(
                 transactionHash: callback,
                 confirmation: confirmationCallback
             });
-            if (commissionsAmount.isZero) {
+            if (commissionsAmount.isZero()) {
                 receipt = await productInfo.buy({
                     productId: productId,
                     quantity: quantity,
@@ -154,7 +154,7 @@ async function buyProduct(
                 transactionHash: callback,
                 confirmation: confirmationCallback
             });
-            if (commissionsAmount.isZero) {
+            if (commissionsAmount.isZero()) {
                 receipt = await productInfo.buyEth({
                     productId: productId,
                     quantity,
@@ -211,7 +211,7 @@ async function donate(
                 transactionHash: callback,
                 confirmation: confirmationCallback
             });           
-            if (commissionsAmount.isZero) {
+            if (commissionsAmount.isZero()) {
                 receipt = await productInfo.donate({
                     donor: wallet.address,
                     donee: donateTo,
@@ -244,7 +244,7 @@ async function donate(
                 transactionHash: callback,
                 confirmation: confirmationCallback
             });            
-            if (commissionsAmount.isZero) {
+            if (commissionsAmount.isZero()) {
                 receipt = await productInfo.donateEth({
                     donor: wallet.address,
                     donee: donateTo,

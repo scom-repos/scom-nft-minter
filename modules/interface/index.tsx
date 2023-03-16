@@ -48,6 +48,7 @@ export interface IConfig {
   maxPrice?: string;
   maxOrderQty?: number;
   qty?: number;
+  feeTo?: string;
   commissions?: ICommissionInfo[];
 }
 

@@ -67,6 +67,8 @@ export default class Main extends Module implements PageBlock {
   private oldTag: any = {};
   tag: any = {};
   defaultEdit: boolean = true;
+  private contractAddress: string;
+
   readonly onConfirm: () => Promise<void>;
   readonly onDiscard: () => Promise<void>;
   readonly onEdit: () => Promise<void>;
@@ -154,19 +156,23 @@ export default class Main extends Module implements PageBlock {
       properties: {
         backgroundColor: {
           type: 'string',
-          format: 'color'
+          format: 'color',
+          readOnly: true
         },
         fontColor: {
           type: 'string',
-          format: 'color'
+          format: 'color',
+          readOnly: true
         },
         inputBackgroundColor: {
           type: 'string',
-          format: 'color'
+          format: 'color',
+          readOnly: true
         },
         inputFontColor: {
           type: 'string',
-          format: 'color'
+          format: 'color',
+          readOnly: true
         }
       }      
     }
@@ -342,15 +348,21 @@ export default class Main extends Module implements PageBlock {
     this._data = data;
     this._productId = data.productId;
     this.configDApp.data = data;
+    const commissionFee = getCommissionFee();
+    if (new BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
+      this._data.commissions = [{
+        walletAddress: this._data.feeTo,
+        share: commissionFee
+      }]
+    }
     if (this.approvalModelAction) {
-      let contractAddress;
       if (!this._data.commissions || this._data.commissions.length == 0) {
-        contractAddress = getContractAddress('ProductInfo');
+        this.contractAddress = getContractAddress('ProductInfo');
       }
       else {
-        contractAddress = getContractAddress('Proxy');
+        this.contractAddress = getContractAddress('Proxy');
       }
-      this.approvalModelAction.setSpenderAddress(contractAddress);
+      this.approvalModelAction.setSpenderAddress(this.contractAddress);
     }
 
     this.refreshDApp();
@@ -510,7 +522,7 @@ export default class Main extends Module implements PageBlock {
     this.pnlSpotsRemaining.visible = new BigNumber(this._data.price).gt(0);
     this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
     this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
-    this.lblAddress.caption = getContractAddress('ProductInfo');
+    this.lblAddress.caption = this.contractAddress;
     // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
     this.tokenSelection.chainId = this._data.chainId;
     this.tokenSelection.token = this._data.token;
@@ -565,8 +577,8 @@ export default class Main extends Module implements PageBlock {
 
   private async initApprovalAction() {
     if (!this.approvalModelAction) {
-      const proxyAddress = getContractAddress('Proxy');
-      this.approvalModelAction = getERC20ApprovalModelAction(proxyAddress, {
+      this.contractAddress = getContractAddress('Proxy');
+      this.approvalModelAction = getERC20ApprovalModelAction(this.contractAddress, {
         sender: this,
         payAction: async () => {
           await this.doSubmitAction();

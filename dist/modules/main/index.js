@@ -152,7 +152,7 @@ define("@pageblock-nft-minter/main/API.ts", ["require", "exports", "@ijstech/eth
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
-                if (commissionsAmount.isZero) {
+                if (commissionsAmount.isZero()) {
                     receipt = await productInfo.buy({
                         productId: productId,
                         quantity: quantity,
@@ -185,7 +185,7 @@ define("@pageblock-nft-minter/main/API.ts", ["require", "exports", "@ijstech/eth
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
-                if (commissionsAmount.isZero) {
+                if (commissionsAmount.isZero()) {
                     receipt = await productInfo.buyEth({
                         productId: productId,
                         quantity,
@@ -234,7 +234,7 @@ define("@pageblock-nft-minter/main/API.ts", ["require", "exports", "@ijstech/eth
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
-                if (commissionsAmount.isZero) {
+                if (commissionsAmount.isZero()) {
                     receipt = await productInfo.donate({
                         donor: wallet.address,
                         donee: donateTo,
@@ -267,7 +267,7 @@ define("@pageblock-nft-minter/main/API.ts", ["require", "exports", "@ijstech/eth
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
-                if (commissionsAmount.isZero) {
+                if (commissionsAmount.isZero()) {
                     receipt = await productInfo.donateEth({
                         donor: wallet.address,
                         donee: donateTo,
@@ -426,19 +426,23 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                 properties: {
                     backgroundColor: {
                         type: 'string',
-                        format: 'color'
+                        format: 'color',
+                        readOnly: true
                     },
                     fontColor: {
                         type: 'string',
-                        format: 'color'
+                        format: 'color',
+                        readOnly: true
                     },
                     inputBackgroundColor: {
                         type: 'string',
-                        format: 'color'
+                        format: 'color',
+                        readOnly: true
                     },
                     inputFontColor: {
                         type: 'string',
-                        format: 'color'
+                        format: 'color',
+                        readOnly: true
                     }
                 }
             };
@@ -629,15 +633,21 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             this._data = data;
             this._productId = data.productId;
             this.configDApp.data = data;
+            const commissionFee = store_2.getCommissionFee();
+            if (new eth_wallet_2.BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
+                this._data.commissions = [{
+                        walletAddress: this._data.feeTo,
+                        share: commissionFee
+                    }];
+            }
             if (this.approvalModelAction) {
-                let contractAddress;
                 if (!this._data.commissions || this._data.commissions.length == 0) {
-                    contractAddress = store_2.getContractAddress('ProductInfo');
+                    this.contractAddress = store_2.getContractAddress('ProductInfo');
                 }
                 else {
-                    contractAddress = store_2.getContractAddress('Proxy');
+                    this.contractAddress = store_2.getContractAddress('Proxy');
                 }
-                this.approvalModelAction.setSpenderAddress(contractAddress);
+                this.approvalModelAction.setSpenderAddress(this.contractAddress);
             }
             this.refreshDApp();
         }
@@ -770,7 +780,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             this.pnlSpotsRemaining.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0);
             this.pnlBlockchain.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0);
             this.pnlQty.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
-            this.lblAddress.caption = store_2.getContractAddress('ProductInfo');
+            this.lblAddress.caption = this.contractAddress;
             // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
             this.tokenSelection.chainId = this._data.chainId;
             this.tokenSelection.token = this._data.token;
@@ -813,8 +823,8 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
         }
         async initApprovalAction() {
             if (!this.approvalModelAction) {
-                const proxyAddress = store_2.getContractAddress('Proxy');
-                this.approvalModelAction = utils_2.getERC20ApprovalModelAction(proxyAddress, {
+                this.contractAddress = store_2.getContractAddress('Proxy');
+                this.approvalModelAction = utils_2.getERC20ApprovalModelAction(this.contractAddress, {
                     sender: this,
                     payAction: async () => {
                         await this.doSubmitAction();
