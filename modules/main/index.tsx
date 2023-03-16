@@ -55,6 +55,8 @@ export default class Main extends Module implements PageBlock {
   private configDApp: Config;
   private mdAlert: Alert;
   private pnlDescription: VStack;
+  private lbOrderTotal: Label;
+  private lbOrderTotalTitle: Label;
 
   private _type: ProductType | undefined;
   private _productId: number | undefined;
@@ -81,7 +83,7 @@ export default class Main extends Module implements PageBlock {
     this.$eventBus = application.EventBus;
     this.registerEvent();
   }
-  
+
   private registerEvent() {
     this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect(true));
     this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect(false));
@@ -104,7 +106,7 @@ export default class Main extends Module implements PageBlock {
     this.onSetupPage(true);
     await this.updateTokenBalance();
   }
-  
+
   private updateTokenBalance = async () => {
     if (!this._data.token) return;
     try {
@@ -113,7 +115,7 @@ export default class Main extends Module implements PageBlock {
       const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
       const symbol = token?.symbol || '';
       this.lblBalance.caption = token ? `${(await getTokenBalance(token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
-    } catch {}
+    } catch { }
   }
 
   private async onSetupPage(isWalletConnected: boolean) {
@@ -130,14 +132,11 @@ export default class Main extends Module implements PageBlock {
           title: 'Chain ID',
           type: 'number',
           readOnly: true
-        },                  
+        },
         "feeTo": {
           type: 'string',
           default: Wallet.getClientInstance().address,
           format: "wallet-address"
-        },  
-        "link": {
-          type: 'string'
         }
       }
     };
@@ -149,7 +148,7 @@ export default class Main extends Module implements PageBlock {
       propertiesSchema.properties['logo'] = {
         type: 'string',
         format: 'data-url'
-      };      
+      };
     }
     const themeSchema: IDataSchema = {
       type: 'object',
@@ -174,7 +173,7 @@ export default class Main extends Module implements PageBlock {
           format: 'color',
           readOnly: true
         }
-      }      
+      }
     }
 
     return this._getActions(propertiesSchema, themeSchema);
@@ -201,7 +200,7 @@ export default class Main extends Module implements PageBlock {
           type: 'string',
           default: Wallet.getClientInstance().address,
           format: "wallet-address"
-        },      
+        },
         // "productId": {
         //   type: 'number'
         // },
@@ -230,7 +229,7 @@ export default class Main extends Module implements PageBlock {
       propertiesSchema.properties['logo'] = {
         type: 'string',
         format: 'data-url'
-      };      
+      };
     }
     const themeSchema: IDataSchema = {
       type: 'object',
@@ -251,7 +250,7 @@ export default class Main extends Module implements PageBlock {
           type: 'string',
           format: 'color'
         }
-      }      
+      }
     }
 
     return this._getActions(propertiesSchema, themeSchema);
@@ -265,7 +264,7 @@ export default class Main extends Module implements PageBlock {
         command: (builder: any, userInputData: any) => {
           return {
             execute: async () => {
-              this._oldData = {...this._data};
+              this._oldData = { ...this._data };
               if (userInputData.name != undefined) this._data.name = userInputData.name;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.productId != undefined) this._data.productId = userInputData.productId;
@@ -301,13 +300,13 @@ export default class Main extends Module implements PageBlock {
               if (builder?.setData) builder.setData(this._data);
             },
             undo: () => {
-              this._data = {...this._oldData};
+              this._data = { ...this._oldData };
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
               if (builder?.setData) builder.setData(this._data);
             },
-            redo: () => {}
+            redo: () => { }
           }
         },
         userInputDataSchema: propertiesSchema
@@ -319,19 +318,19 @@ export default class Main extends Module implements PageBlock {
           return {
             execute: async () => {
               if (!userInputData) return;
-              this.oldTag = {...this.tag};
+              this.oldTag = { ...this.tag };
               if (builder) builder.setTag(userInputData);
               else this.setTag(userInputData);
               // this.setTag(userInputData);
             },
             undo: () => {
               if (!userInputData) return;
-              this.tag = {...this.oldTag};
+              this.tag = { ...this.oldTag };
               if (builder) builder.setTag(this.tag);
               else this.setTag(this.oldTag);
               // this.setTag(this.oldTag);
             },
-            redo: () => {}
+            redo: () => { }
           }
         },
         userInputDataSchema: themeSchema
@@ -349,6 +348,7 @@ export default class Main extends Module implements PageBlock {
     this._productId = data.productId;
     this.configDApp.data = data;
     const commissionFee = getCommissionFee();
+    this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
     if (new BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
       this._data.commissions = [{
         walletAddress: this._data.feeTo,
@@ -429,19 +429,19 @@ export default class Main extends Module implements PageBlock {
       resolve();
     })
   }
-  
+
   private newProduct = async (callback?: any, confirmationCallback?: any) => {
     if (
       this._data.productId >= 0
-    ) return;  
+    ) return;
     const result = await newProduct(
       this._data.productType,
-      this._data.qty, 
-      this._data.maxOrderQty, 
-      this._data.price, 
-      this._data.maxPrice, 
-      this._data.token, 
-      callback, 
+      this._data.qty,
+      this._data.maxOrderQty,
+      this._data.price,
+      this._data.maxPrice,
+      this._data.token,
+      callback,
       confirmationCallback
     );
     this._productId = this._data.productId = result.productId;
@@ -457,8 +457,8 @@ export default class Main extends Module implements PageBlock {
   validate() {
     const data = this.configDApp.data;
     if (
-      !data || 
-      !data.token || 
+      !data ||
+      !data.token ||
       !data.name ||
       data.maxOrderQty === undefined ||
       data.maxOrderQty === null ||
@@ -501,7 +501,7 @@ export default class Main extends Module implements PageBlock {
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
     if (this._type === ProductType.Buy) {
-      this.lblTitle.caption = `Mint Fee: ${this._data.price??""} ${this._data.token?.symbol || ""}`;
+      this.lblTitle.caption = `Mint Fee: ${this._data.price ?? ""} ${this._data.token?.symbol || ""}`;
       this.btnSubmit.caption = 'Mint';
       this.lblRef.caption = 'smart contract:';
       if (this._data.chainId !== null && this._data.chainId !== undefined) {
@@ -515,10 +515,11 @@ export default class Main extends Module implements PageBlock {
       this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
       this.btnSubmit.caption = 'Submit';
       this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
-      this.gridTokenInput.visible = true;      
+      this.gridTokenInput.visible = true;
     }
     this.edtQty.value = "";
     this.edtAmount.value = "";
+    this.lbOrderTotal.caption = "0";
     this.pnlSpotsRemaining.visible = new BigNumber(this._data.price).gt(0);
     this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
     this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
@@ -533,9 +534,9 @@ export default class Main extends Module implements PageBlock {
   private updateSpotsRemaining = async () => {
     if (this._data.productId >= 0) {
       const product = await getProductInfo(this._data.productId);
-      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.qty??0}`;
+      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.qty ?? 0}`;
     } else {
-      this.lblSpotsRemaining.caption = `${this._data.qty??0}/${this._data.qty??0}`;
+      this.lblSpotsRemaining.caption = `${this._data.qty ?? 0}/${this._data.qty ?? 0}`;
     }
   }
 
@@ -627,7 +628,7 @@ export default class Main extends Module implements PageBlock {
           this.mdAlert.showModal();
           this.btnApprove.caption = 'Approve';
           this.btnApprove.rightIcon.visible = false;
-        },      
+        },
         onPaying: async (receipt?: string) => {
           if (receipt) {
             this.mdAlert.message = {
@@ -671,7 +672,7 @@ export default class Main extends Module implements PageBlock {
     this.mdAlert.showModal();
     this.approvalModelAction.doApproveAction(this._data.token, this.tokenAmountIn);
   }
-  
+
   private async onQtyChanged() {
     const qty = Number(this.edtQty.value);
     if (qty === 0) {
@@ -691,6 +692,9 @@ export default class Main extends Module implements PageBlock {
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
     }
+    const commissionFee = getCommissionFee();
+    const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
+    this.lbOrderTotal.caption = `${total} ${this._data.token.symbol}`;
     this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
   }
 
@@ -749,7 +753,7 @@ export default class Main extends Module implements PageBlock {
           return;
         }
       }
-      const maxOrderQty = new BigNumber(this._data.maxOrderQty??0);
+      const maxOrderQty = new BigNumber(this._data.maxOrderQty ?? 0);
       if (maxOrderQty.minus(requireQty).lt(0)) {
         this.mdAlert.message = {
           status: 'error',
@@ -834,16 +838,16 @@ export default class Main extends Module implements PageBlock {
 
   render() {
     return (
-      <i-panel background={{color: Theme.background.main}}>
+      <i-panel background={{ color: Theme.background.main }}>
         <i-grid-layout
           id='gridDApp'
           width='100%'
           height='100%'
           templateColumns={['repeat(2, 1fr)']}
-          padding={{bottom: '1.563rem'}}
+          padding={{ bottom: '1.563rem' }}
         >
           <i-vstack id="pnlDescription" padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' }}>
-            <i-hstack margin={{bottom: '1.25rem'}}>
+            <i-hstack margin={{ bottom: '1.25rem' }}>
               <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
             </i-hstack>
             <i-markdown
@@ -851,11 +855,11 @@ export default class Main extends Module implements PageBlock {
               class={markdownStyle}
               width='100%'
               height='100%'
-              margin={{bottom: '0.563rem'}}
+              margin={{ bottom: '0.563rem' }}
             ></i-markdown>
           </i-vstack>
           <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
-            <i-vstack class="text-center" margin={{bottom: '0.25rem'}}>
+            <i-vstack class="text-center" margin={{ bottom: '0.25rem' }}>
               <i-image id='imgLogo2' class={imageStyle} height={100}></i-image>
               <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
               <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
@@ -875,7 +879,7 @@ export default class Main extends Module implements PageBlock {
                   <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
                 </i-hstack>
                 <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
-                  <i-label caption="Your donation" font={{weight: 500, size: '1rem'}}></i-label>
+                  <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
                   <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
                     <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
                     <i-label id='lblBalance' font={{ size: '1rem' }}></i-label>
@@ -885,8 +889,8 @@ export default class Main extends Module implements PageBlock {
                   id='gridTokenInput'
                   templateColumns={['60%', 'auto']}
                   overflow="hidden"
-                  background={{color: Theme.input.background}}
-                  font={{color: Theme.input.fontColor}}
+                  background={{ color: Theme.input.background }}
+                  font={{ color: Theme.input.fontColor }}
                   height={56}
                   verticalAlignment="center"
                   class={inputGroupStyle}
@@ -911,7 +915,7 @@ export default class Main extends Module implements PageBlock {
                     onChanged={this.onAmountChanged.bind(this)}
                   ></i-input>
                 </i-grid-layout>
-                <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{top: '0.75rem'}}>
+                <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
                   <i-button
                     id="btnApprove"
                     width='100%'
@@ -919,10 +923,10 @@ export default class Main extends Module implements PageBlock {
                     padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
                     font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                    border={{radius: 12}}
+                    border={{ radius: 12 }}
                     visible={false}
                     onClick={this.onApprove.bind(this)}
-                  ></i-button>                
+                  ></i-button>
                   <i-button
                     id='btnSubmit'
                     width='100%'
@@ -930,14 +934,21 @@ export default class Main extends Module implements PageBlock {
                     padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
                     font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                     rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                    background={{color: Theme.background.gradient}}
-                    border={{radius: 12}}
+                    background={{ color: Theme.background.gradient }}
+                    border={{ radius: 12 }}
                     onClick={this.onSubmit.bind(this)}
                     enabled={false}
                   ></i-button>
                 </i-vstack>
               </i-vstack>
-              <i-vstack gap='0.25rem' margin={{top: '1rem'}}>
+              <i-hstack
+                horizontalAlignment="space-between"
+                verticalAlignment='center'
+              >
+                <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
+                <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
+              </i-hstack>
+              <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>
                 <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
                 <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
               </i-vstack>
@@ -946,14 +957,14 @@ export default class Main extends Module implements PageBlock {
                 font={{ size: '0.875rem' }}
                 link={{ href: 'https://docs.scom.dev/' }}
                 opacity={0.6}
-                margin={{top: '1rem'}}
+                margin={{ top: '1rem' }}
               ></i-label>
             </i-vstack>
           </i-vstack>
           <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem' padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
-            <i-label caption='Details here: ' font={{size: '1rem'}}></i-label>
-            <i-label id='lblLink' font={{size: '1rem'}}></i-label>
-          </i-hstack>          
+            <i-label caption='Details here: ' font={{ size: '1rem' }}></i-label>
+            <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
+          </i-hstack>
         </i-grid-layout>
         <nft-minter-config id='configDApp' visible={false}></nft-minter-config>
         <nft-minter-alert id='mdAlert'></nft-minter-alert>

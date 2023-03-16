@@ -405,9 +405,6 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                         type: 'string',
                         default: eth_wallet_2.Wallet.getClientInstance().address,
                         format: "wallet-address"
-                    },
-                    "link": {
-                        type: 'string'
                     }
                 }
             };
@@ -634,6 +631,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             this._productId = data.productId;
             this.configDApp.data = data;
             const commissionFee = store_2.getCommissionFee();
+            this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_2.BigNumber(commissionFee).times(100)}% Commission Fee)`;
             if (new eth_wallet_2.BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
                 this._data.commissions = [{
                         walletAddress: this._data.feeTo,
@@ -777,6 +775,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             }
             this.edtQty.value = "";
             this.edtAmount.value = "";
+            this.lbOrderTotal.caption = "0";
             this.pnlSpotsRemaining.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0);
             this.pnlBlockchain.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0);
             this.pnlQty.visible = new eth_wallet_2.BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
@@ -932,6 +931,9 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
             else {
                 this.tokenAmountIn = API_1.getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
             }
+            const commissionFee = store_2.getCommissionFee();
+            const total = new eth_wallet_2.BigNumber(amount).plus(new eth_wallet_2.BigNumber(amount).times(commissionFee));
+            this.lbOrderTotal.caption = `${total} ${this._data.token.symbol}`;
             this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
         }
         async doSubmitAction() {
@@ -1078,6 +1080,9 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                 this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", margin: { top: '0.75rem' } },
                                     this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
                                     this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),
+                            this.$render("i-hstack", { horizontalAlignment: "space-between", verticalAlignment: 'center' },
+                                this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { size: '1rem' } }),
+                                this.$render("i-label", { id: 'lbOrderTotal', font: { size: '1rem' }, caption: "0" })),
                             this.$render("i-vstack", { gap: '0.25rem', margin: { top: '1rem' } },
                                 this.$render("i-label", { id: 'lblRef', font: { size: '0.875rem' }, opacity: 0.5 }),
                                 this.$render("i-label", { id: 'lblAddress', font: { size: '0.875rem' }, overflowWrap: 'anywhere' })),

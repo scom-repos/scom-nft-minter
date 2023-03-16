@@ -41,10 +41,9 @@ export interface IContractDetailInfo {
 export type ContractType = 'ProductInfo' | 'Proxy';
 
 export interface IContractInfo {
-  TriplayERC20Vault: IContractDetailInfo;
-  TriplayERC721Vault: IContractDetailInfo;
-  TriplayERC1155Vault: IContractDetailInfo;
-  TriplayPolicy: IContractDetailInfo;
+  ProductNFT: IContractDetailInfo;
+  ProductInfo: IContractDetailInfo;
+  Proxy: IContractDetailInfo;
 }
 
 export type ContractInfoByChainType = { [key: number]: IContractInfo };
