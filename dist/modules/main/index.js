@@ -557,6 +557,7 @@ define("@pageblock-nft-minter/main", ["require", "exports", "@ijstech/components
                                     this._data.token = userInputData.token;
                                 const commissionFee = store_2.getCommissionFee();
                                 if (new eth_wallet_2.BigNumber(commissionFee).gt(0) && userInputData.feeTo != undefined) {
+                                    this._data.feeTo = userInputData.feeTo;
                                     this._data.commissions = [{
                                             walletAddress: userInputData.feeTo,
                                             share: commissionFee

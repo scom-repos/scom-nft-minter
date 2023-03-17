@@ -280,6 +280,7 @@ export default class Main extends Module implements PageBlock {
               if (userInputData.token != undefined) this._data.token = userInputData.token;
               const commissionFee = getCommissionFee();
               if (new BigNumber(commissionFee).gt(0) && userInputData.feeTo != undefined) {
+                this._data.feeTo = userInputData.feeTo;
                 this._data.commissions = [{
                   walletAddress: userInputData.feeTo,
                   share: commissionFee
