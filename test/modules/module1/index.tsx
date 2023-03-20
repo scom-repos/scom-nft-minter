@@ -13,6 +13,7 @@ export default class Module1 extends Module {
         super.init();
         this.nftMinter1 = await ScomNftMinter.create({
             name: "Donation Dapp",
+            logo: "ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte",
             chainId: 43113,
             productType: "DonateToEveryone",
             description: "#### If you'd like to support my work and help me create more exciting content, you can now make a donation using OSWAP. Your donation will help me continue creating high-quality videos and projects, and it's much appreciated. Thank you for your support, and please feel free to contact me if you have any questions or feedback.",
@@ -34,10 +35,12 @@ export default class Module1 extends Module {
             <i-hstack id="mainStack" margin={{top: '1rem', left: '1rem'}} gap="2rem">
                 <i-scom-nft-minter
                     chainId={43113}
+                    logo="ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte"
+                    productType="DonateToEveryone"
                     hideDescription={true}
                     maxOrderQty={1}
                     maxPrice="0"
-                    price="0"
+                    price="0"   
                     qty={999999999}
                     productId={1}
                     tokenAddress="0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C"

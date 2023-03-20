@@ -6150,6 +6150,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async init() {
             var _a;
+            this.isReadyCallbackQueued = true;
             super.init();
             await this.initWalletData();
             await this.onSetupPage(index_17.isWalletConnected());
@@ -6210,7 +6211,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 this.approvalModelAction.setSpenderAddress(this.contractAddress);
             }
-            this.refreshDApp();
+            await this.refreshDApp();
+            this.isReadyCallbackQueued = false;
+            this.executeReadyCallback();
         }
         static async create(options, parent) {
             let self = new this(parent, options);

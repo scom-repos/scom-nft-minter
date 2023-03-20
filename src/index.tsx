@@ -112,6 +112,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   async init() {
+    this.isReadyCallbackQueued = true;
     super.init();
     await this.initWalletData();
     await this.onSetupPage(isWalletConnected());
@@ -176,7 +177,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.approvalModelAction.setSpenderAddress(this.contractAddress);
     }
 
-    this.refreshDApp();
+    await this.refreshDApp();
+    this.isReadyCallbackQueued = false;
+    this.executeReadyCallback();
   }
 
   static async create(options?: ScomNftMinterElement, parent?: Container){
