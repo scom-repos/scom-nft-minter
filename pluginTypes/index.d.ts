@@ -476,6 +476,19 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         IsWalletDisconnected = "IsWalletDisconnected",
         chainChanged = "chainChanged"
     }
+    export interface INetwork {
+        chainId: number;
+        name: string;
+        img?: string;
+        rpc?: string;
+        symbol?: string;
+        env?: string;
+        explorerName?: string;
+        explorerTxUrl?: string;
+        explorerAddressUrl?: string;
+        isDisabled?: boolean;
+    }
+    export const SupportedNetworks: INetwork[];
     export const getNetworkName: (chainId: number) => string;
     export interface IContractDetailInfo {
         address: string;
@@ -560,20 +573,10 @@ declare module "@scom/scom-nft-minter/network-picker/index.css.ts" {
 /// <amd-module name="@scom/scom-nft-minter/network-picker/index.tsx" />
 declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    interface INetwork {
-        chainId: number;
-        name: string;
-        img?: string;
-        rpc?: string;
-        symbol?: string;
-        env?: string;
-        explorerName?: string;
-        explorerTxUrl?: string;
-        explorerAddressUrl?: string;
-        isDisabled?: boolean;
-    }
+    import { INetwork } from "@scom/scom-nft-minter/store/index.ts";
     interface PickerElement extends ControlElement {
         networks?: INetwork[] | '*';
+        onCustomNetworkSelected?: (network: INetwork) => void;
     }
     global {
         namespace JSX {
@@ -590,9 +593,14 @@ declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
         private networkMapper;
         private _networkList;
         private _selectedNetwork;
+        private networkPlaceholder;
+        private _onCustomNetworkSelected;
         constructor(parent?: Container, options?: any);
         get selectedNetwork(): INetwork;
-        private onSelectNetwork;
+        setNetworkByChainId(chainId: number): void;
+        clearNetwork(): void;
+        private onNetworkSelected;
+        private setNetwork;
         private renderNetworks;
         private renderModalItem;
         private renderUI;
@@ -605,6 +613,7 @@ declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
 declare module "@scom/scom-nft-minter/config/index.tsx" {
     import { Module, ControlElement } from '@ijstech/components';
     import { IConfig } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { INetwork } from "@scom/scom-nft-minter/store/index.ts";
     global {
         namespace JSX {
             interface IntrinsicElements {
@@ -620,11 +629,17 @@ declare module "@scom/scom-nft-minter/config/index.tsx" {
         private lbCommissionShare;
         private commissionInfoList;
         private commissionsTableColumns;
+        private btnConfirm;
+        private lbErrMsg;
         init(): Promise<void>;
         get data(): IConfig;
         set data(config: IConfig);
+        onModalAddCommissionClosed(): void;
         onAddCommissionClicked(): void;
         onConfirmCommissionClicked(): void;
+        validateModalFields(): boolean;
+        onNetworkSelected(network: INetwork): void;
+        onInputWalletAddressChanged(): void;
         render(): any;
     }
 }

@@ -2714,30 +2714,28 @@ define("@scom/scom-nft-minter/store/tokens/index.ts", ["require", "exports", "@s
 define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/store/tokens/index.ts", "@scom/scom-nft-minter/store/tokens/index.ts"], function (require, exports, eth_wallet_4, index_3, index_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getContractAddress = exports.getEmbedderCommissionFee = exports.getIPFSGatewayUrl = exports.setIPFSGatewayUrl = exports.setDataFromSCConfig = exports.state = exports.getNetworkName = exports.getTokenList = void 0;
+    exports.getContractAddress = exports.getEmbedderCommissionFee = exports.getIPFSGatewayUrl = exports.setIPFSGatewayUrl = exports.setDataFromSCConfig = exports.state = exports.getNetworkName = exports.SupportedNetworks = exports.getTokenList = void 0;
     const getTokenList = (chainId) => {
         const tokenList = [...index_3.DefaultTokens[chainId]];
         return tokenList;
     };
     exports.getTokenList = getTokenList;
-    const Networks = {
-        1: 'Ethereuem',
-        25: 'Cronos Mainnet',
-        42: 'Kovan Test Network',
-        56: 'Binance Smart Chain',
-        97: 'BSC Testnet',
-        137: 'Polygon',
-        338: 'Cronos Testnet',
-        31337: 'Amino Testnet',
-        80001: 'Mumbai',
-        43113: 'Avalanche FUJI C-Chain',
-        43114: 'Avalanche Mainnet C-Chain',
-        250: 'Fantom Opera',
-        4002: 'Fantom Testnet',
-        13370: 'AminoX Testnet'
-    };
+    ;
+    exports.SupportedNetworks = [
+        {
+            name: "BSC Testnet",
+            chainId: 97,
+            img: "bsc"
+        },
+        {
+            name: "Avalanche FUJI C-Chain",
+            chainId: 43113,
+            img: "avax"
+        }
+    ];
     const getNetworkName = (chainId) => {
-        return Networks[chainId] || "";
+        var _a;
+        return ((_a = exports.SupportedNetworks.find(v => v.chainId === chainId)) === null || _a === void 0 ? void 0 : _a.name) || "";
     };
     exports.getNetworkName = getNetworkName;
     exports.state = {
@@ -3030,19 +3028,36 @@ define("@scom/scom-nft-minter/network-picker/index.css.ts", ["require", "exports
 define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-nft-minter/assets.ts", "@scom/scom-nft-minter/network-picker/index.css.ts"], function (require, exports, components_5, assets_1, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    ;
     const Theme = components_5.Styles.Theme.ThemeVars;
     let ScomNetworkPicker = class ScomNetworkPicker extends components_5.Module {
         constructor(parent, options) {
             super(parent, options);
             this._networkList = [];
+            this.networkPlaceholder = 'Select Network';
         }
         get selectedNetwork() {
             return this._selectedNetwork;
         }
-        onSelectNetwork(network) {
-            var _a, _b, _c;
+        setNetworkByChainId(chainId) {
+            const network = this._networkList.find((network) => network.chainId === chainId);
+            if (network) {
+                this.setNetwork(network);
+            }
+        }
+        clearNetwork() {
+            this._selectedNetwork = undefined;
+            this.btnNetwork.caption = this.networkPlaceholder;
+            this.networkMapper.forEach((value, key) => {
+                value.classList.remove('is-active');
+            });
+        }
+        onNetworkSelected(network) {
             this.mdNetwork.visible = false;
+            this.setNetwork(network);
+            this._onCustomNetworkSelected && this._onCustomNetworkSelected(network);
+        }
+        setNetwork(network) {
+            var _a, _b, _c;
             this._selectedNetwork = network;
             const img = ((_a = this._selectedNetwork) === null || _a === void 0 ? void 0 : _a.img)
                 ? assets_1.default.img.network[this._selectedNetwork.img] ||
@@ -3071,7 +3086,7 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this.gridNetworkGroup.append(...this._networkList.map((network) => {
                 const img = network.img ? (this.$render("i-image", { url: assets_1.default.img.network[network.img] || components_5.application.assets(network.img), width: 16, height: 16 })) : ([]);
                 const isActive = this._selectedNetwork ? this._selectedNetwork.chainId === network.chainId : false;
-                const hsNetwork = (this.$render("i-hstack", { onClick: () => this.onSelectNetwork(network), background: { color: 'transparent' }, position: 'relative', class: isActive ? 'is-active list-item' : 'list-item', verticalAlignment: "center", overflow: "hidden", padding: { top: '5px', bottom: '5px', left: '0.75rem', right: '0.75rem' } },
+                const hsNetwork = (this.$render("i-hstack", { onClick: this.onNetworkSelected.bind(this, network), background: { color: 'transparent' }, position: 'relative', class: isActive ? 'is-active list-item' : 'list-item', verticalAlignment: "center", overflow: "hidden", padding: { top: '5px', bottom: '5px', left: '0.75rem', right: '0.75rem' } },
                     this.$render("i-hstack", { verticalAlignment: 'center', gap: '1.125rem', lineHeight: 1.375 },
                         this.$render("i-panel", null, img),
                         this.$render("i-label", { caption: network.name, wordBreak: 'break-word', font: {
@@ -3117,7 +3132,7 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
                 font: { color: Theme.text.primary },
                 rightIcon: { name: 'angle-down', width: 20, height: 20, fill: 'rgba(0,0,0,.45)' },
                 background: { color: 'transparent' },
-                caption: 'Select a network',
+                caption: this.networkPlaceholder,
                 onClick: () => {
                     this.mdNetwork.visible = !this.mdNetwork.visible;
                     this.btnNetwork.classList.add('btn-focus');
@@ -3136,6 +3151,7 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this.classList.add(index_css_1.default);
             super.init();
             this._networkList = this.getAttribute('networks', true);
+            this._onCustomNetworkSelected = this.getAttribute('onCustomNetworkSelected', true);
             document.addEventListener('click', (event) => {
                 const target = event.target;
                 const btnNetwork = target.closest('.btn-network');
@@ -3186,8 +3202,28 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                     textAlign: 'center',
                     onRenderCell: async (source, data, rowData) => {
                         const icon = new components_6.Icon(undefined, {
+                            name: "edit",
+                            fill: "#03a9f4",
+                            height: 18,
+                            width: 18
+                        });
+                        icon.onClick = async (source) => {
+                            this.networkPicker.setNetworkByChainId(rowData.chainId);
+                            this.inputWalletAddress.value = rowData.walletAddress;
+                            this.modalAddCommission.visible = true;
+                        };
+                        return icon;
+                    }
+                },
+                {
+                    title: '',
+                    fieldName: '',
+                    key: '',
+                    textAlign: 'center',
+                    onRenderCell: async (source, data, rowData) => {
+                        const icon = new components_6.Icon(undefined, {
                             name: "times",
-                            fill: "#f7d063",
+                            fill: "#ed5748",
                             height: 18,
                             width: 18
                         });
@@ -3217,6 +3253,10 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
         set data(config) {
             this.tableCommissions.data = config.commissions || [];
         }
+        onModalAddCommissionClosed() {
+            this.networkPicker.clearNetwork();
+            this.inputWalletAddress.value = '';
+        }
         onAddCommissionClicked() {
             this.modalAddCommission.visible = true;
         }
@@ -3224,7 +3264,6 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
             var _a;
             if (!this.inputWalletAddress.value)
                 return;
-            this.modalAddCommission.visible = false;
             const embedderFee = index_6.getEmbedderCommissionFee();
             this.commissionInfoList.push({
                 chainId: (_a = this.networkPicker.selectedNetwork) === null || _a === void 0 ? void 0 : _a.chainId,
@@ -3232,7 +3271,39 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                 share: embedderFee
             });
             this.tableCommissions.data = this.commissionInfoList;
-            this.inputWalletAddress.value = '';
+            this.modalAddCommission.visible = false;
+        }
+        validateModalFields() {
+            if (!this.networkPicker.selectedNetwork) {
+                this.lbErrMsg.caption = 'Please select network';
+            }
+            else if (this.commissionInfoList.find(v => v.chainId == this.networkPicker.selectedNetwork.chainId)) {
+                this.lbErrMsg.caption = 'This network already exists';
+            }
+            else if (!this.inputWalletAddress.value) {
+                this.lbErrMsg.caption = 'Please enter wallet address';
+            }
+            else if (this.commissionInfoList.find(v => v.chainId == this.networkPicker.selectedNetwork.chainId && v.walletAddress == this.inputWalletAddress.value)) {
+                this.btnConfirm.enabled = false;
+                this.lbErrMsg.caption = 'This wallet address already exists';
+            }
+            else {
+                this.lbErrMsg.caption = '';
+            }
+            if (this.lbErrMsg.caption) {
+                this.btnConfirm.enabled = false;
+                return false;
+            }
+            else {
+                this.btnConfirm.enabled = true;
+                return true;
+            }
+        }
+        onNetworkSelected(network) {
+            this.validateModalFields();
+        }
+        onInputWalletAddressChanged() {
+            this.validateModalFields();
         }
         render() {
             return (this.$render("i-vstack", { gap: '0.5rem', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' } },
@@ -3242,32 +3313,23 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                         this.$render("i-label", { id: "lbCommissionShare", font: { bold: true } })),
                     this.$render("i-button", { caption: "Add", background: { color: '#03a9f4' }, font: { color: '#fff' }, padding: { top: '0.4rem', bottom: '0.4rem', left: '2rem', right: '2rem' }, onClick: this.onAddCommissionClicked.bind(this) })),
                 this.$render("i-table", { id: 'tableCommissions', data: this.commissionInfoList, columns: this.commissionsTableColumns }),
-                this.$render("i-modal", { id: 'modalAddCommission', maxWidth: '500px', closeIcon: { name: 'times-circle' } },
-                    this.$render("i-grid-layout", { width: '100%', verticalAlignment: 'center', gap: { row: 5 }, padding: { top: '1rem', bottom: '1rem', left: '2rem', right: '2rem' }, templateColumns: ['2fr', '3fr'], templateRows: ['auto', 'auto', 'auto', 'auto'], templateAreas: [
+                this.$render("i-modal", { id: 'modalAddCommission', maxWidth: '600px', closeIcon: { name: 'times-circle' }, onClose: this.onModalAddCommissionClosed },
+                    this.$render("i-grid-layout", { width: '100%', verticalAlignment: 'center', gap: { row: '1rem' }, padding: { top: '1rem', bottom: '1rem', left: '2rem', right: '2rem' }, templateColumns: ['1fr', '3fr'], templateRows: ['auto', 'auto', 'auto', 'auto'], templateAreas: [
                             ['title', 'title'],
                             ['lbNetwork', 'network'],
                             ["lbWalletAddress", "walletAddress"],
+                            ["lbErrMsg", "errMsg"],
                             ['btnConfirm', 'btnConfirm']
                         ] },
-                        this.$render("i-hstack", { width: '100%', horizontalAlignment: 'center', grid: { area: 'title' }, padding: { bottom: '1rem' } },
+                        this.$render("i-hstack", { width: '100%', horizontalAlignment: 'center', grid: { area: 'title' } },
                             this.$render("i-label", { caption: "Add Commission" })),
                         this.$render("i-label", { caption: "Network", grid: { area: 'lbNetwork' } }),
-                        this.$render("i-scom-nft-minter-network-picker", { id: 'networkPicker', grid: { area: 'network' }, networks: [
-                                {
-                                    "name": "Avalanche FUJI C-Chain",
-                                    "chainId": 43113,
-                                    "img": "avax"
-                                },
-                                {
-                                    "name": "BSC Testnet",
-                                    "chainId": 97,
-                                    "img": "bsc"
-                                }
-                            ] }),
+                        this.$render("i-scom-nft-minter-network-picker", { id: 'networkPicker', grid: { area: 'network' }, networks: index_6.SupportedNetworks, onCustomNetworkSelected: this.onNetworkSelected }),
                         this.$render("i-label", { caption: "Wallet Address", grid: { area: 'lbWalletAddress' } }),
-                        this.$render("i-input", { id: 'inputWalletAddress', grid: { area: 'walletAddress' }, width: '100%' }),
-                        this.$render("i-hstack", { width: '100%', horizontalAlignment: 'center', grid: { area: 'btnConfirm' }, padding: { top: '1rem' } },
-                            this.$render("i-button", { caption: "Confirm", background: { color: '#03a9f4' }, font: { color: '#fff' }, padding: { top: '0.4rem', bottom: '0.4rem', left: '2rem', right: '2rem' }, onClick: this.onConfirmCommissionClicked.bind(this) }))))));
+                        this.$render("i-input", { id: 'inputWalletAddress', grid: { area: 'walletAddress' }, width: '100%', onChanged: this.onInputWalletAddressChanged }),
+                        this.$render("i-label", { id: 'lbErrMsg', font: { color: '#ed5748' }, grid: { area: 'errMsg' } }),
+                        this.$render("i-hstack", { width: '100%', horizontalAlignment: 'center', grid: { area: 'btnConfirm' } },
+                            this.$render("i-button", { id: "btnConfirm", enabled: false, caption: "Confirm", background: { color: '#03a9f4' }, font: { color: '#fff' }, padding: { top: '0.4rem', bottom: '0.4rem', left: '2rem', right: '2rem' }, onClick: this.onConfirmCommissionClicked.bind(this) }))))));
         }
     };
     Config = __decorate([

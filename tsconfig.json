@@ -11,7 +11,7 @@
         "declaration": false,        
         "baseUrl": ".",
         "paths": {
-            "@pageblock-nft-minter/*":["src/*"]
+            "@scom-nft-minter/*":["src/*"]
         }
     },
     "include": ["src/**/*.ts","src/**/*.tsx"],

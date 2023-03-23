@@ -14,24 +14,13 @@ import {
   Control
 } from '@ijstech/components'
 import { } from '@ijstech/eth-contract'
+import { INetwork } from '../store/index'
 import Assets from '../assets'
 import customStyles from './index.css'
 
-interface INetwork {
-  chainId: number;
-  name: string;
-  img?: string;
-  rpc?: string;
-	symbol?: string;
-	env?: string;
-  explorerName?: string;
-  explorerTxUrl?: string;
-  explorerAddressUrl?: string;
-  isDisabled?: boolean;
-};
-
 interface PickerElement extends ControlElement {
-  networks?: INetwork[] | '*'
+  networks?: INetwork[] | '*';
+  onCustomNetworkSelected?: (network: INetwork) => void;
 }
 const Theme = Styles.Theme.ThemeVars
 
@@ -54,6 +43,8 @@ export default class ScomNetworkPicker extends Module {
   private networkMapper: Map<number, HStack>
   private _networkList: INetwork[] = []
   private _selectedNetwork: INetwork | undefined
+  private networkPlaceholder = 'Select Network';
+  private _onCustomNetworkSelected: (network: INetwork) => void;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options)
@@ -63,9 +54,29 @@ export default class ScomNetworkPicker extends Module {
     return this._selectedNetwork
   }
 
-  private onSelectNetwork(network: INetwork) {
+  public setNetworkByChainId(chainId: number) {
+    const network = this._networkList.find((network) => network.chainId === chainId);
+    if (network) {
+      this.setNetwork(network);
+    }
+  }
+
+  public clearNetwork(){
+    this._selectedNetwork = undefined
+    this.btnNetwork.caption = this.networkPlaceholder
+    this.networkMapper.forEach((value, key) => {
+      value.classList.remove('is-active')
+    });
+  }
+
+  private onNetworkSelected(network: INetwork) {
     this.mdNetwork.visible = false;
-    this._selectedNetwork = network
+    this.setNetwork(network);
+    this._onCustomNetworkSelected && this._onCustomNetworkSelected(network);
+  }
+
+  private setNetwork(network: INetwork) {
+    this._selectedNetwork = network;
     const img = this._selectedNetwork?.img
       ? Assets.img.network[this._selectedNetwork.img] ||
       application.assets(this._selectedNetwork.img)
@@ -105,7 +116,7 @@ export default class ScomNetworkPicker extends Module {
         const isActive = this._selectedNetwork ? this._selectedNetwork.chainId === network.chainId : false
         const hsNetwork = (
           <i-hstack
-            onClick={() => this.onSelectNetwork(network)}
+            onClick={this.onNetworkSelected.bind(this, network)}
             background={{ color: 'transparent' }}
             position='relative'
             class={isActive ? 'is-active list-item' : 'list-item'}
@@ -192,7 +203,7 @@ export default class ScomNetworkPicker extends Module {
       font: { color: Theme.text.primary },
       rightIcon: { name: 'angle-down', width: 20, height: 20, fill: 'rgba(0,0,0,.45)' },
       background: { color: 'transparent' },
-      caption: 'Select a network',
+      caption: this.networkPlaceholder,
       onClick: () => {
         this.mdNetwork.visible = !this.mdNetwork.visible
         this.btnNetwork.classList.add('btn-focus')
@@ -212,6 +223,7 @@ export default class ScomNetworkPicker extends Module {
     this.classList.add(customStyles)
     super.init()
     this._networkList = this.getAttribute('networks', true)
+    this._onCustomNetworkSelected = this.getAttribute('onCustomNetworkSelected', true);
     document.addEventListener('click', (event) => {
       const target = event.target as Control
       const btnNetwork = target.closest('.btn-network')

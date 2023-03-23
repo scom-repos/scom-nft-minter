@@ -13,25 +13,34 @@ export const enum EventId {
   chainChanged = 'chainChanged'
 }
 
-const Networks: { [chainId: number]: string } = {
-  1: 'Ethereuem',
-  25: 'Cronos Mainnet',
-  42: 'Kovan Test Network',
-  56: 'Binance Smart Chain',
-  97: 'BSC Testnet',
-  137: 'Polygon',
-  338: 'Cronos Testnet',
-  31337: 'Amino Testnet',
-  80001: 'Mumbai',
-  43113: 'Avalanche FUJI C-Chain',
-  43114: 'Avalanche Mainnet C-Chain',
-  250: 'Fantom Opera',
-  4002: 'Fantom Testnet',
-  13370: 'AminoX Testnet'
-}
+export interface INetwork {
+  chainId: number;
+  name: string;
+  img?: string;
+  rpc?: string;
+	symbol?: string;
+	env?: string;
+  explorerName?: string;
+  explorerTxUrl?: string;
+  explorerAddressUrl?: string;
+  isDisabled?: boolean;
+};
+
+export const SupportedNetworks: INetwork[] = [
+  {
+    name: "BSC Testnet",
+    chainId: 97,
+    img: "bsc"
+  },
+  {
+    name: "Avalanche FUJI C-Chain",
+    chainId: 43113,
+    img: "avax"
+  }
+];
 
 export const getNetworkName = (chainId: number) => {
-  return Networks[chainId] || ""
+  return SupportedNetworks.find(v => v.chainId === chainId)?.name || ""
 }
 
 export interface IContractDetailInfo {

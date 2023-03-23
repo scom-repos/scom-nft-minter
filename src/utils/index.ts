@@ -35,6 +35,10 @@ export const formatNumberWithSeparators = (value: number, precision?: number) =>
   }
 }
 
+export function isWalletAddress(address: string) {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
 export {
   getERC20Amount,
   getTokenBalance,
