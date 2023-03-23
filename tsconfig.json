@@ -11,9 +11,9 @@
         "declaration": false,        
         "baseUrl": ".",
         "paths": {
-            "@pageblock-nft-minter/*":["modules/*"]
+            "@pageblock-nft-minter/*":["src/*"]
         }
     },
-    "include": ["modules/**/*.ts","modules/**/*.tsx"],
+    "include": ["src/**/*.ts","src/**/*.tsx"],
     "exclude": ["node_modules"]
 }
