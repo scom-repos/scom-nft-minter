@@ -1,35 +1,36 @@
 export default {
     "env": "testnet",
     "logo": "logo",
-    "main": "@pageblock-nft-minter/main",
-    "assets": "@pageblock-nft-minter/assets",
+    "configurator": "@scom-nft-minter/config",
+    "main": "@scom-nft-minter/main",
+    "assets": "@scom-nft-minter/assets",
     "moduleDir": "modules",
     "modules": {
-        "@pageblock-nft-minter/assets": {
+        "@scom-nft-minter/assets": {
             "path": "assets"
         },
-        "@pageblock-nft-minter/interface": {
+        "@scom-nft-minter/interface": {
             "path": "interface"
         },
-        "@pageblock-nft-minter/utils": {
+        "@scom-nft-minter/utils": {
             "path": "utils"
         },
-        "@pageblock-nft-minter/store": {
+        "@scom-nft-minter/store": {
             "path": "store"
         },
-        "@pageblock-nft-minter/wallet": {
+        "@scom-nft-minter/wallet": {
             "path": "wallet"
         },
-        "@pageblock-nft-minter/token-selection": {
+        "@scom-nft-minter/token-selection": {
             "path": "token-selection"
         },
-        "@pageblock-nft-minter/alert": {
+        "@scom-nft-minter/alert": {
             "path": "alert"
         },
-        "@pageblock-nft-minter/config": {
+        "@scom-nft-minter/config": {
             "path": "config"
         },
-        "@pageblock-nft-minter/main": {
+        "@scom-nft-minter/main": {
             "path": "main"
         }
     },
@@ -52,5 +53,5 @@ export default {
             }
         }
     },
-    "commissionFee": "0.01"
+    "embedderCommissionFee": "0.01"
 }

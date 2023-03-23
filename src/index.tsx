@@ -20,7 +20,7 @@ import {
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
 import { IConfig, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { DefaultTokens, EventId, getCommissionFee, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from './store/index';
+import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from './store/index';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from './wallet/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
@@ -44,7 +44,6 @@ interface ScomNftMinterElement extends ControlElement {
   tokenAddress?: string;
   productId?: number;
   link?: string;
-  feeTo?: string;
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -141,7 +140,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.chainId = this.getAttribute('chainId', true);
     this._data.donateTo = this.getAttribute('donateTo', true);
     this._data.link = this.getAttribute('link', true);
-    this._data.feeTo = this.getAttribute('feeTo', true);
     this._data.maxOrderQty = this.getAttribute('maxOrderQty', true);
     this._data.maxPrice = this.getAttribute('maxPrice', true);
     this._data.price = this.getAttribute('price', true);
@@ -157,14 +155,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.hideDescription = this.getAttribute('hideDescription', true);
     this._data.logo = this.getAttribute('logo', true);
 
-    const commissionFee = getCommissionFee();
+    const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
-    if (new BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
-      this._data.commissions = [{
-        walletAddress: this._data.feeTo,
-        share: commissionFee
-      }]
-    }
     this._productId = this._data.productId;
 
     if (this.approvalModelAction) {
@@ -210,14 +202,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set link(value: string) {
     this._data.link = value;
-  }
-
-  get feeTo() {
-    return this._data.feeTo ?? '';
-  }
-
-  set feeTo(value: string) {
-    this._data.feeTo = value;
   }
 
   get maxOrderQty() {
@@ -364,11 +348,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
           title: 'Chain ID',
           type: 'number',
           readOnly: true
-        },
-        "feeTo": {
-          type: 'string',
-          default: Wallet.getClientInstance().address,
-          format: "wallet-address"
         }
       }
     };
@@ -510,14 +489,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
               if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
               if (userInputData.qty != undefined) this._data.qty = userInputData.qty;
               if (userInputData.token != undefined) this._data.token = userInputData.token;
-              const commissionFee = getCommissionFee();
-              if (new BigNumber(commissionFee).gt(0) && userInputData.feeTo != undefined) {
-                this._data.feeTo = userInputData.feeTo;
-                this._data.commissions = [{
-                  walletAddress: userInputData.feeTo,
-                  share: commissionFee
-                }]
-              }
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
@@ -580,14 +551,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data = data;
     this._productId = data.productId;
     this.configDApp.data = data;
-    const commissionFee = getCommissionFee();
+    const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
-    if (new BigNumber(commissionFee).gt(0) && this._data.feeTo != undefined) {
-      this._data.commissions = [{
-        walletAddress: this._data.feeTo,
-        share: commissionFee
-      }]
-    }
     if (this.approvalModelAction) {
       if (!this._data.commissions || this._data.commissions.length == 0) {
         this.contractAddress = getContractAddress('ProductInfo');
@@ -897,7 +862,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
     }
-    const commissionFee = getCommissionFee();
+    const commissionFee = getEmbedderCommissionFee();
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
     this.lbOrderTotal.caption = `${total} ${this._data.token.symbol}`;
     this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
@@ -1100,14 +1065,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
                   verticalAlignment="center"
                   class={inputGroupStyle}
                 >
-                  <nft-minter-token-selection
+                  <i-scom-nft-minter-token-selection
                     id='tokenSelection'
                     class={tokenSelectionStyle}
                     background={{ color: 'transparent' }}
                     width="100%"
                     readonly={true}
                     onSelectToken={this.selectToken.bind(this)}
-                  ></nft-minter-token-selection>
+                  ></i-scom-nft-minter-token-selection>
                   <i-input
                     id="edtAmount"
                     width='100%'
@@ -1171,8 +1136,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
             <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
           </i-hstack>
         </i-grid-layout>
-        <nft-minter-config id='configDApp' visible={false}></nft-minter-config>
-        <nft-minter-alert id='mdAlert'></nft-minter-alert>
+        <i-scom-nft-minter-config id='configDApp' visible={false}></i-scom-nft-minter-config>
+        <i-scom-nft-minter-alert id='mdAlert'></i-scom-nft-minter-alert>
       </i-panel>
     )
   }

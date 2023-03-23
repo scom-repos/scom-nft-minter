@@ -30,12 +30,12 @@ interface TokenSelectionElement extends ControlElement {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      ['nft-minter-token-selection']: TokenSelectionElement;
+      ['i-scom-nft-minter-token-selection']: TokenSelectionElement;
     }
   }
 };
 
-@customElements('nft-minter-token-selection')
+@customElements('i-scom-nft-minter-token-selection')
 export class TokenSelection extends Module {
   private btnTokens: Button;
   private mdTokenSelection: Modal;

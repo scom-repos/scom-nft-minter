@@ -12,7 +12,7 @@ const Theme = Styles.Theme.ThemeVars;
 declare global {
 	namespace JSX {
 		interface IntrinsicElements {
-			['nft-minter-alert']: ControlElement;
+			['i-scom-nft-minter-alert']: ControlElement;
 		}
 	}
 };
@@ -24,7 +24,7 @@ export interface IAlertMessage {
   onClose?: any;
 }
 
-@customElements('nft-minter-alert')
+@customElements('i-scom-nft-minter-alert')
 export class Alert extends Module {
   private mdAlert: Modal;
   private pnlMain: Panel;

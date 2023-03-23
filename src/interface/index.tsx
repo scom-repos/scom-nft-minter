@@ -23,6 +23,7 @@ export interface PageBlock {
 }
 
 export interface ICommissionInfo {
+  chainId: number;
   walletAddress: string;
   share: string;
 }
@@ -48,7 +49,6 @@ export interface IConfig {
   maxPrice?: string;
   maxOrderQty?: number;
   qty?: number;
-  feeTo?: string;
   commissions?: ICommissionInfo[];
 }
 
