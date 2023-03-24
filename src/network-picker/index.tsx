@@ -87,13 +87,15 @@ export default class ScomNetworkPicker extends Module {
       ? Assets.img.network[this._selectedNetwork.img] ||
       application.assets(this._selectedNetwork.img)
       : undefined
-    this.btnNetwork.caption = `<i-hstack verticalAlignment="center" gap="1.125rem">
-      <i-panel>
-        <i-image width=${17} height=${17} url="${img}"></i-image>
-      </i-panel>
-      <i-label caption="${this._selectedNetwork?.name ?? ''}"></i-label>
-    </i-hstack>`
-    this.networkMapper.forEach((value, key) => {
+    if (this.btnNetwork) {
+      this.btnNetwork.caption = `<i-hstack verticalAlignment="center" gap="1.125rem">
+        <i-panel>
+          <i-image width=${17} height=${17} url="${img}"></i-image>
+        </i-panel>
+        <i-label caption="${this._selectedNetwork?.name ?? ''}"></i-label>
+      </i-hstack>`
+    }
+    this.networkMapper?.forEach((value, key) => {
       const chainId = this._selectedNetwork?.chainId
       if (key === chainId) {
         value.classList.add('is-active')

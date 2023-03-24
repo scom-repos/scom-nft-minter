@@ -61,6 +61,9 @@ export default Styles.style({
               }
             }
           }
+        },
+        '&> div': {
+          transform: 'scale(1)'
         }
       }
     },
