@@ -1,25 +1,17 @@
+import { BigNumber } from "@ijstech/eth-wallet";
+
 export interface PageBlock {
   // Properties
   getData: () => any;
   setData: (data: any) => Promise<void>;
   getTag: () => any;
   setTag: (tag: any) => Promise<void>
-  validate?: () => boolean;
   defaultEdit?: boolean;
   tag?: any;
 
   // Page Events
   readonly onEdit: () => Promise<void>;
   readonly onConfirm: () => Promise<void>;
-  readonly onDiscard: () => Promise<void>;
-  // onClear: () => void;
-
-  // Page Block Events
-  edit: () => Promise<void>;
-  preview: () => Promise<void>;
-  confirm: () => Promise<void>;
-  discard: () => Promise<void>;
-  config: () => Promise<void>;
 }
 
 export interface ICommissionInfo {
@@ -27,11 +19,22 @@ export interface ICommissionInfo {
   walletAddress: string;
   share: string;
 }
-
 export enum ProductType {
   Buy = "Buy",
   DonateToOwner = "DonateToOwner",
   DonateToEveryone = "DonateToEveryone"
+}
+
+export interface IProductInfo {
+  productType: BigNumber;
+  productId: BigNumber;
+  uri: string;
+  quantity: BigNumber;
+  price: BigNumber;
+  maxQuantity: BigNumber;
+  maxPrice: BigNumber;
+  token: ITokenObject;
+  status: BigNumber;
 }
 
 export interface IEmbedData {

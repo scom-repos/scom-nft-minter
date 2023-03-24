@@ -14,12 +14,14 @@ import {
   Control
 } from '@ijstech/components'
 import { } from '@ijstech/eth-contract'
-import { INetwork } from '../store/index'
+import { INetwork, switchNetwork } from '../store/index'
 import Assets from '../assets'
 import customStyles from './index.css'
 
 interface PickerElement extends ControlElement {
   networks?: INetwork[] | '*';
+  selectedChainId?: number;
+  switchNetworkOnSelect?: boolean;
   onCustomNetworkSelected?: (network: INetwork) => void;
 }
 const Theme = Styles.Theme.ThemeVars
@@ -43,6 +45,7 @@ export default class ScomNetworkPicker extends Module {
   private networkMapper: Map<number, HStack>
   private _networkList: INetwork[] = []
   private _selectedNetwork: INetwork | undefined
+  private _switchNetworkOnSelect: boolean
   private networkPlaceholder = 'Select Network';
   private _onCustomNetworkSelected: (network: INetwork) => void;
 
@@ -69,8 +72,11 @@ export default class ScomNetworkPicker extends Module {
     });
   }
 
-  private onNetworkSelected(network: INetwork) {
+  private async onNetworkSelected(network: INetwork) {
     this.mdNetwork.visible = false;
+    if (this._switchNetworkOnSelect) {
+      await switchNetwork(network?.chainId);
+    }
     this.setNetwork(network);
     this._onCustomNetworkSelected && this._onCustomNetworkSelected(network);
   }
@@ -222,7 +228,12 @@ export default class ScomNetworkPicker extends Module {
   init() {
     this.classList.add(customStyles)
     super.init()
-    this._networkList = this.getAttribute('networks', true)
+    this._networkList = this.getAttribute('networks', true);
+    const selectedChainId = this.getAttribute('selectedChainId', true);
+    if (selectedChainId) {
+      this.setNetworkByChainId(selectedChainId);
+    }
+    this._switchNetworkOnSelect = this.getAttribute('switchNetworkOnSelect', true) || false;
     this._onCustomNetworkSelected = this.getAttribute('onCustomNetworkSelected', true);
     document.addEventListener('click', (event) => {
       const target = event.target as Control

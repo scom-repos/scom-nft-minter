@@ -1,4 +1,6 @@
-import { Wallet } from "@ijstech/eth-wallet";
+import { application } from "@ijstech/components";
+import { Wallet, WalletPlugin } from "@ijstech/eth-wallet";
+import { isWalletConnected } from "../wallet/index";
 import { DefaultTokens } from "./tokens/index";
 
 export const getTokenList = (chainId: number) => {
@@ -103,6 +105,17 @@ export const getContractAddress = (type: ContractType) => {
   const chainId = Wallet.getInstance().chainId;
   const contracts = getContractInfo(chainId) || {};
   return contracts[type]?.address;
+}
+
+export async function switchNetwork(chainId: number) {
+  if (!isWalletConnected()) {
+    application.EventBus.dispatch(EventId.chainChanged, chainId);
+    return;
+  }
+  const wallet = Wallet.getClientInstance();
+  if (wallet?.clientSideProvider?.walletPlugin === WalletPlugin.MetaMask) {
+    await wallet.switchNetwork(chainId);
+  }
 }
 
 export * from './tokens/index';

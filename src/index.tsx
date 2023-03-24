@@ -18,9 +18,9 @@ import {
   ControlElement,
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IEmbedData, ITokenObject, PageBlock, ProductType } from './interface/index';
+import { IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from './store/index';
+import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, getTokenList, setDataFromSCConfig, SupportedNetworks, INetwork } from './store/index';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from './wallet/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
@@ -28,6 +28,7 @@ import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupS
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import scconfig from './scconfig.json';
+import ScomNetworkPicker from './network-picker/index';
 
 interface ScomNftMinterElement extends ControlElement {
   name?: string;
@@ -85,7 +86,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private pnlDescription: VStack;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
+  private networkPicker: ScomNetworkPicker;
+  private pnlInputFields: VStack;
+  private pnlUnsupportedNetwork: VStack;
 
+  private productInfo: IProductInfo;
   private _type: ProductType | undefined;
   private _productId: number | undefined;
   private _oldData: IEmbedData = {};
@@ -100,7 +105,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private contractAddress: string;
 
   readonly onConfirm: () => Promise<void>;
-  readonly onDiscard: () => Promise<void>;
   readonly onEdit: () => Promise<void>;
 
   constructor(parent?: Container, options?: any) {
@@ -143,11 +147,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.maxPrice = this.getAttribute('maxPrice', true);
     this._data.price = this.getAttribute('price', true);
     this._data.qty = this.getAttribute('qty', true);
-    const tokenAddress = this.getAttribute('tokenAddress', true);
-    if (tokenAddress) {
-      const chainId = await getChainId();
-      this._data.token = DefaultTokens[chainId]?.find(t => t.address?.toLowerCase() == tokenAddress.toLowerCase());
-    }
     this._data.productId = this.getAttribute('productId', true);
     this._data.productType = this.getAttribute('productType', true);
     this._data.name = this.getAttribute('name', true);
@@ -159,26 +158,17 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
     this._productId = this._data.productId;
 
-    if (this.approvalModelAction) {
-      if (!this._data.commissions || this._data.commissions.length == 0) {
-        this.contractAddress = getContractAddress('ProductInfo');
-      }
-      else {
-        this.contractAddress = getContractAddress('Proxy');
-      }
-      this.approvalModelAction.setSpenderAddress(this.contractAddress);
-    }
-
+    this.updateContractAddress();
     await this.refreshDApp();
     this.isReadyCallbackQueued = false;
     this.executeReadyCallback();
   }
 
-  static async create(options?: ScomNftMinterElement, parent?: Container){
+  static async create(options?: ScomNftMinterElement, parent?: Container) {
     let self = new this(parent, options);
     await self.ready();
     return self;
-  }   
+  }
 
   get donateTo() {
     return this._data.donateTo ?? '';
@@ -226,15 +216,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set qty(value: number) {
     this._data.qty = value;
-  }
-
-  get tokenAddress() {
-    return this._data.token?.address ?? '';
-  }
-
-  set tokenAddress(value: string) {
-    const chainId = getChainId();
-    this._data.token = DefaultTokens[chainId]?.find(t => t.address?.toLowerCase() == value.toLowerCase());
   }
 
   get productId() {
@@ -313,15 +294,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   onChainChanged = async () => {
     this.onSetupPage(true);
-    await this.updateTokenBalance();
+    this.updateContractAddress();
+    this.refreshDApp();
   }
 
   private updateTokenBalance = async () => {
-    if (!this._data.token) return;
+    const token = this.productInfo?.token;
+    if (!token) return;
     try {
-      let chainId = getChainId();
-      const _tokenList = getTokenList(chainId);
-      const token = _tokenList.find(t => (t.address && t.address == this._data.token?.address) || (t.symbol == this._data.token?.symbol))
       const symbol = token?.symbol || '';
       this.lblBalance.caption = token ? `${(await getTokenBalance(token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
     } catch { }
@@ -329,6 +309,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private async onSetupPage(isWalletConnected: boolean) {
     if (isWalletConnected) {
+      this.networkPicker.setNetworkByChainId(getChainId());
       await this.initApprovalAction();
     }
   }
@@ -475,19 +456,18 @@ export default class ScomNftMinter extends Module implements PageBlock {
               if (userInputData.maxPrice != undefined) this._data.maxPrice = userInputData.maxPrice;
               if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
               if (userInputData.qty != undefined) this._data.qty = userInputData.qty;
-              if (userInputData.token != undefined) this._data.token = userInputData.token;
               this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
-              await this.newProduct((error: Error, receipt?: string) => {
-                if (error) {
-                  this.mdAlert.message = {
-                    status: 'error',
-                    content: error.message
-                  };
-                  this.mdAlert.showModal();
-                }
-              }, this.updateSpotsRemaining);
+              // await this.newProduct((error: Error, receipt?: string) => {
+              //   if (error) {
+              //     this.mdAlert.message = {
+              //       status: 'error',
+              //       content: error.message
+              //     };
+              //     this.mdAlert.showModal();
+              //   }
+              // }, this.updateSpotsRemaining);
               if (builder?.setData) builder.setData(this._data);
             },
             undo: () => {
@@ -567,16 +547,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
-    if (this.approvalModelAction) {
-      if (!this._data.commissions || this._data.commissions.length == 0) {
-        this.contractAddress = getContractAddress('ProductInfo');
-      }
-      else {
-        this.contractAddress = getContractAddress('Proxy');
-      }
-      this.approvalModelAction.setSpenderAddress(this.contractAddress);
-    }
-
+    this.updateContractAddress();
     this.refreshDApp();
   }
 
@@ -607,88 +578,27 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.updateStyle('--colors-primary-main', this.tag?.buttonBackgroundColor);
   }
 
-  async edit() {
-    this.gridDApp.visible = false;
-    this.configDApp.visible = true;
-  }
-
-  async preview() {
-    this.gridDApp.visible = true;
-    this.configDApp.visible = false;
-    this._data = this.configDApp.data;
-    this._data.productId = this._productId;
-    this._data.maxPrice = this._data.maxPrice || '0';
-    this.refreshDApp();
-  }
-
-  async confirm() {
-    return new Promise<void>(async (resolve, reject) => {
-      await this.preview();
-      await this.newProduct((error: Error, receipt?: string) => {
-        if (error) {
-          this.mdAlert.message = {
-            status: 'error',
-            content: error.message
-          };
-          this.mdAlert.showModal();
-          reject(error);
-        }
-      }, this.updateSpotsRemaining);
-      if (!this._productId) {
-        reject(new Error('productId missing'));
-      }
-      resolve();
-    })
-  }
-
-  private newProduct = async (callback?: any, confirmationCallback?: any) => {
-    if (
-      this._data.productId >= 0
-    ) return;
-    const result = await newProduct(
-      this._data.productType,
-      this._data.qty,
-      this._data.maxOrderQty,
-      this._data.price,
-      this._data.maxPrice,
-      this._data.token,
-      callback,
-      confirmationCallback
-    );
-    this._productId = this._data.productId = result.productId;
-  }
-
-  async discard() {
-    this.gridDApp.visible = true;
-    this.configDApp.visible = false;
-  }
-
-  async config() { }
-
-  validate() {
-    const data = this.configDApp.data;
-    if (
-      !data ||
-      !data.token ||
-      !data.name ||
-      data.maxOrderQty === undefined ||
-      data.maxOrderQty === null ||
-      data.price === undefined ||
-      data.price === null ||
-      data.qty === undefined ||
-      data.qty === null
-    ) {
-      this.mdAlert.message = {
-        status: 'error',
-        content: 'Required field is missing.'
-      };
-      this.mdAlert.showModal();
-      return false;
-    }
-    return true;
-  }
+  // private newProduct = async (callback?: any, confirmationCallback?: any) => {
+  //   if (
+  //     this._data.productId >= 0
+  //   ) return;
+  //   const result = await newProduct(
+  //     this._data.productType,
+  //     this._data.qty,
+  //     this._data.maxOrderQty,
+  //     this._data.price,
+  //     this._data.maxPrice,
+  //     this._data.token,
+  //     callback,
+  //     confirmationCallback
+  //   );
+  //   this._productId = this._data.productId = result.productId;
+  // }
 
   private async refreshDApp() {
+    if (!this._data.productId || this._data.productId === 0) {
+      return;
+    }
     this._type = this._data.productType;
     if (this._data.hideDescription) {
       this.pnlDescription.visible = false;
@@ -700,6 +610,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
       this.imgLogo2.visible = false;
     }
+    this.markdownViewer.load(this._data.description || '');
+    this.pnlLink.visible = !!this._data.link;
+    this.lblLink.caption = this._data.link || '';
+    this.lblLink.link.href = this._data.link;
     if (this._data.logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
       this.imgLogo.url = this.imgLogo2.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
@@ -707,40 +621,47 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.imgLogo.url = this.imgLogo2.url = this._data.logo;
     }
-    this.markdownViewer.load(this._data.description || '');
-    this.pnlLink.visible = !!this._data.link;
-    this.lblLink.caption = this._data.link || '';
-    this.lblLink.link.href = this._data.link;
-    if (this._type === ProductType.Buy) {
-      this.lblTitle.caption = `Mint Fee: ${this._data.price ?? ""} ${this._data.token?.symbol || ""}`;
-      this.btnSubmit.caption = 'Mint';
-      this.lblRef.caption = 'smart contract:';
-      await this.updateSpotsRemaining();
-      this.gridTokenInput.visible = false;
-    } else {
-      this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
-      this.btnSubmit.caption = 'Submit';
-      this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
-      this.gridTokenInput.visible = true;
+
+    this.productInfo = await getProductInfo(this._data.productId);
+    if (this.productInfo) {
+      const token = this.productInfo.token;
+      this.pnlInputFields.visible = true;
+      this.pnlUnsupportedNetwork.visible = false;
+
+      if (this._type === ProductType.Buy) {
+        this.lblTitle.caption = `Mint Fee: ${this._data.price ?? ""} ${token?.symbol || ""}`;
+        this.btnSubmit.caption = 'Mint';
+        this.lblRef.caption = 'smart contract:';
+        this.updateSpotsRemaining();
+        this.gridTokenInput.visible = false;
+      } else {
+        this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
+        this.btnSubmit.caption = 'Submit';
+        this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
+        this.gridTokenInput.visible = true;
+      }
+      this.edtQty.value = "";
+      this.edtAmount.value = "";
+      this.lbOrderTotal.caption = "0";
+      this.pnlSpotsRemaining.visible = new BigNumber(this._data.price).gt(0);
+      this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
+      this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
+      this.lblAddress.caption = this.contractAddress;
+      // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
+      this.tokenSelection.chainId = getChainId();
+      this.tokenSelection.token = token;
+      this.updateTokenBalance();
+      // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
     }
-    this.edtQty.value = "";
-    this.edtAmount.value = "";
-    this.lbOrderTotal.caption = "0";
-    this.pnlSpotsRemaining.visible = new BigNumber(this._data.price).gt(0);
-    this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
-    this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
-    this.lblAddress.caption = this.contractAddress;
-    // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
-    this.tokenSelection.chainId = getChainId();
-    this.tokenSelection.token = this._data.token;
-    this.updateTokenBalance();
-    // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+    else {
+      this.pnlInputFields.visible = false;
+      this.pnlUnsupportedNetwork.visible = true;
+    }
   }
 
-  private updateSpotsRemaining = async () => {
+  private updateSpotsRemaining() {
     if (this._data.productId >= 0) {
-      const product = await getProductInfo(this._data.productId);
-      this.lblSpotsRemaining.caption = `${product.quantity.toFixed()}/${this._data.qty ?? 0}`;
+      this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}/${this._data.qty ?? 0}`;
     } else {
       this.lblSpotsRemaining.caption = `${this._data.qty ?? 0}/${this._data.qty ?? 0}`;
     }
@@ -832,6 +753,18 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
+  updateContractAddress() {
+    if (this.approvalModelAction) {
+      if (!this._data.commissions || this._data.commissions.length == 0) {
+        this.contractAddress = getContractAddress('ProductInfo');
+      }
+      else {
+        this.contractAddress = getContractAddress('Proxy');
+      }
+      this.approvalModelAction.setSpenderAddress(this.contractAddress);
+    }
+  }
+
   private async selectToken(token: ITokenObject) {
     const symbol = token?.symbol || '';
     this.lblBalance.caption = `${(await getTokenBalance(token)).toFixed(2)} ${symbol}`;
@@ -848,7 +781,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
       content: 'Approving'
     };
     this.mdAlert.showModal();
-    this.approvalModelAction.doApproveAction(this._data.token, this.tokenAmountIn);
+    this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
   }
 
   private async onQtyChanged() {
@@ -859,7 +792,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, qty, this._data.commissions);
     }
-    this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
+    this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
   }
 
   private async onAmountChanged() {
@@ -872,8 +805,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
     const commissionFee = getEmbedderCommissionFee();
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
-    this.lbOrderTotal.caption = `${total} ${this._data.token.symbol}`;
-    this.approvalModelAction.checkAllowance(this._data.token, this.tokenAmountIn);
+    const token = this.productInfo.token
+    this.lbOrderTotal.caption = `${total} ${token.symbol}`;
+    this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
   }
 
   private async doSubmitAction() {
@@ -898,7 +832,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     //   this.updateSubmitButton(false);
     //   return;
     // }
-    const balance = await getTokenBalance(this._type === ProductType.Buy ? this._data.token : this.tokenSelection.token);
+    const token = this.productInfo.token
+    const balance = await getTokenBalance(token);
     if (this._type === ProductType.Buy) {
       if (this.edtQty.value && Number(this.edtQty.value) > this._data.maxOrderQty) {
         this.mdAlert.message = {
@@ -986,7 +921,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.approvalModelAction.doPayAction();
   }
 
-  buyToken = async (quantity: number) => {
+  private async buyToken(quantity: number) {
     if (this._data.productId === undefined || this._data.productId === null) return;
     const callback = (error: Error, receipt?: string) => {
       if (error) {
@@ -997,21 +932,26 @@ export default class ScomNftMinter extends Module implements PageBlock {
         this.mdAlert.showModal();
       }
     };
+    const token = this.productInfo.token;
     if (this._data.productType == ProductType.DonateToOwner || this._data.productType == ProductType.DonateToEveryone) {
-      await donate(this._data.productId, this._data.donateTo, this.edtAmount.value, this._data.commissions, this._data.token, callback,
+      await donate(this._data.productId, this._data.donateTo, this.edtAmount.value, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
         }
       );
     }
     else if (this._data.productType == ProductType.Buy) {
-      await buyProduct(this._data.productId, quantity, this._data.commissions, this._data.token, callback,
+      await buyProduct(this._data.productId, quantity, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
-          await this.updateSpotsRemaining();
+          this.updateSpotsRemaining();
         }
       );
     }
+  }
+
+  private onNetworkSelected(network: INetwork) {
+    console.log('network selected', network);
   }
 
   render() {
@@ -1051,84 +991,112 @@ export default class ScomNftMinter extends Module implements PageBlock {
               <i-label id='lblBlockchain' font={{ size: '0.875rem' }}></i-label>
             </i-hstack>
             <i-vstack gap='0.5rem'>
-              <i-vstack gap='0.25rem'>
-                <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
-                  <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
-                  <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
-                </i-hstack>
-                <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
-                  <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
-                  <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
-                    <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
-                    <i-label id='lblBalance' font={{ size: '1rem' }}></i-label>
+              <i-grid-layout
+                width='100%'
+                verticalAlignment='center'
+                padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                templateColumns={['1fr', '2fr']}
+                templateRows={['auto']}
+                templateAreas={
+                  [
+                    ['lbNetwork', 'network']
+                  ]
+                }>
+                <i-label caption="Network" grid={{ area: 'lbNetwork' }} font={{ size: '0.875rem' }} />
+                <i-scom-nft-minter-network-picker
+                  id='networkPicker'
+                  grid={{ area: 'network' }}
+                  networks={SupportedNetworks}
+                  switchNetworkOnSelect={true}
+                  selectedChainId={getChainId()}
+                  onCustomNetworkSelected={this.onNetworkSelected}
+                />
+              </i-grid-layout>
+              <i-vstack gap='0.5rem' id='pnlInputFields'>
+                <i-vstack gap='0.25rem'>
+                  <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
+                    <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
+                    <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
                   </i-hstack>
-                </i-hstack>
-                <i-grid-layout
-                  id='gridTokenInput'
-                  templateColumns={['60%', 'auto']}
-                  overflow="hidden"
-                  background={{ color: Theme.input.background }}
-                  font={{ color: Theme.input.fontColor }}
-                  height={56}
-                  verticalAlignment="center"
-                  class={inputGroupStyle}
+                  <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
+                    <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
+                    <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
+                      <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
+                      <i-label id='lblBalance' font={{ size: '1rem' }}></i-label>
+                    </i-hstack>
+                  </i-hstack>
+                  <i-grid-layout
+                    id='gridTokenInput'
+                    templateColumns={['60%', 'auto']}
+                    overflow="hidden"
+                    background={{ color: Theme.input.background }}
+                    font={{ color: Theme.input.fontColor }}
+                    height={56}
+                    verticalAlignment="center"
+                    class={inputGroupStyle}
+                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}
+                  >
+                    <i-scom-nft-minter-token-selection
+                      id='tokenSelection'
+                      class={tokenSelectionStyle}
+                      background={{ color: 'transparent' }}
+                      width="100%"
+                      readonly={true}
+                      onSelectToken={this.selectToken.bind(this)}
+                    ></i-scom-nft-minter-token-selection>
+                    <i-input
+                      id="edtAmount"
+                      width='100%'
+                      height='100%'
+                      minHeight={40}
+                      class={inputStyle}
+                      inputType='number'
+                      font={{ size: '1.25rem' }}
+                      border={{ radius: 4, color: '#e3e3e38a', width: 1, style: 'solid' }}
+                      placeholder='0.00'
+                      onChanged={this.onAmountChanged.bind(this)}
+                    ></i-input>
+                  </i-grid-layout>
+                  <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
+                    <i-button
+                      id="btnApprove"
+                      width='100%'
+                      caption="Approve"
+                      padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                      font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
+                      rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                      border={{ radius: 12 }}
+                      visible={false}
+                      onClick={this.onApprove.bind(this)}
+                    ></i-button>
+                    <i-button
+                      id='btnSubmit'
+                      width='100%'
+                      caption='Submit'
+                      padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                      font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
+                      rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                      background={{ color: Theme.background.gradient }}
+                      border={{ radius: 12 }}
+                      onClick={this.onSubmit.bind(this)}
+                      enabled={false}
+                    ></i-button>
+                  </i-vstack>
+                </i-vstack>
+                <i-hstack
+                  horizontalAlignment="space-between"
+                  verticalAlignment='center'
                 >
-                  <i-scom-nft-minter-token-selection
-                    id='tokenSelection'
-                    class={tokenSelectionStyle}
-                    background={{ color: 'transparent' }}
-                    width="100%"
-                    readonly={true}
-                    onSelectToken={this.selectToken.bind(this)}
-                  ></i-scom-nft-minter-token-selection>
-                  <i-input
-                    id="edtAmount"
-                    width='100%'
-                    height='100%'
-                    minHeight={40}
-                    class={inputStyle}
-                    inputType='number'
-                    font={{ size: '1.25rem' }}
-                    opacity={0.3}
-                    onChanged={this.onAmountChanged.bind(this)}
-                  ></i-input>
-                </i-grid-layout>
-                <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
-                  <i-button
-                    id="btnApprove"
-                    width='100%'
-                    caption="Approve"
-                    padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
-                    font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
-                    rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                    border={{ radius: 12 }}
-                    visible={false}
-                    onClick={this.onApprove.bind(this)}
-                  ></i-button>
-                  <i-button
-                    id='btnSubmit'
-                    width='100%'
-                    caption='Submit'
-                    padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
-                    font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
-                    rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                    background={{ color: Theme.background.gradient }}
-                    border={{ radius: 12 }}
-                    onClick={this.onSubmit.bind(this)}
-                    enabled={false}
-                  ></i-button>
+                  <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
+                  <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
+                </i-hstack>
+                <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>
+                  <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
+                  <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
                 </i-vstack>
               </i-vstack>
-              <i-hstack
-                horizontalAlignment="space-between"
-                verticalAlignment='center'
-              >
-                <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
-                <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
-              </i-hstack>
-              <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>
-                <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
-                <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
+              <i-vstack id='pnlUnsupportedNetwork' visible={false} horizontalAlignment='center'>
+                <i-label caption='This network is not supported.' font={{ size: '1.5rem'}}></i-label>
               </i-vstack>
               <i-label
                 caption='Terms & Condition'

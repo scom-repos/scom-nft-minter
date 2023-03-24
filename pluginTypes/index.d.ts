@@ -1,22 +1,16 @@
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
+    import { BigNumber } from "@ijstech/eth-wallet";
     export interface PageBlock {
         getData: () => any;
         setData: (data: any) => Promise<void>;
         getTag: () => any;
         setTag: (tag: any) => Promise<void>;
-        validate?: () => boolean;
         defaultEdit?: boolean;
         tag?: any;
         readonly onEdit: () => Promise<void>;
         readonly onConfirm: () => Promise<void>;
-        readonly onDiscard: () => Promise<void>;
-        edit: () => Promise<void>;
-        preview: () => Promise<void>;
-        confirm: () => Promise<void>;
-        discard: () => Promise<void>;
-        config: () => Promise<void>;
     }
     export interface ICommissionInfo {
         chainId: number;
@@ -27,6 +21,17 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         Buy = "Buy",
         DonateToOwner = "DonateToOwner",
         DonateToEveryone = "DonateToEveryone"
+    }
+    export interface IProductInfo {
+        productType: BigNumber;
+        productId: BigNumber;
+        uri: string;
+        quantity: BigNumber;
+        price: BigNumber;
+        maxQuantity: BigNumber;
+        maxPrice: BigNumber;
+        token: ITokenObject;
+        status: BigNumber;
     }
     export interface IEmbedData {
         name?: string;
@@ -107,6 +112,31 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     export function isWalletAddress(address: string): boolean;
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
     export { ApprovalStatus, getERC20Allowance, getERC20ApprovalModelAction, IERC20ApprovalOptions, IERC20ApprovalAction } from "@scom/scom-nft-minter/utils/approvalModel.ts";
+}
+/// <amd-module name="@scom/scom-nft-minter/wallet/walletList.ts" />
+declare module "@scom/scom-nft-minter/wallet/walletList.ts" {
+    import { WalletPlugin } from '@ijstech/eth-wallet';
+    export const walletList: ({
+        name: WalletPlugin;
+        displayName: string;
+        img: string;
+        iconFile?: undefined;
+    } | {
+        name: WalletPlugin;
+        displayName: string;
+        iconFile: string;
+        img?: undefined;
+    })[];
+}
+/// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
+declare module "@scom/scom-nft-minter/wallet/index.ts" {
+    import { IWallet, WalletPlugin } from "@ijstech/eth-wallet";
+    export function isWalletConnected(): boolean;
+    export function connectWallet(walletPlugin: WalletPlugin, eventHandlers?: {
+        [key: string]: Function;
+    }): Promise<IWallet>;
+    export const hasWallet: () => boolean;
+    export const getChainId: () => number;
 }
 /// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
 declare module "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" {
@@ -513,32 +543,8 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export const getIPFSGatewayUrl: () => string;
     export const getEmbedderCommissionFee: () => string;
     export const getContractAddress: (type: ContractType) => any;
+    export function switchNetwork(chainId: number): Promise<void>;
     export * from "@scom/scom-nft-minter/store/tokens/index.ts";
-}
-/// <amd-module name="@scom/scom-nft-minter/wallet/walletList.ts" />
-declare module "@scom/scom-nft-minter/wallet/walletList.ts" {
-    import { WalletPlugin } from '@ijstech/eth-wallet';
-    export const walletList: ({
-        name: WalletPlugin;
-        displayName: string;
-        img: string;
-        iconFile?: undefined;
-    } | {
-        name: WalletPlugin;
-        displayName: string;
-        iconFile: string;
-        img?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
-declare module "@scom/scom-nft-minter/wallet/index.ts" {
-    import { IWallet, WalletPlugin } from "@ijstech/eth-wallet";
-    export function isWalletConnected(): boolean;
-    export function connectWallet(walletPlugin: WalletPlugin, eventHandlers?: {
-        [key: string]: Function;
-    }): Promise<IWallet>;
-    export const hasWallet: () => boolean;
-    export const getChainId: () => number;
 }
 /// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
 declare module "@scom/scom-nft-minter/config/index.css.ts" {
@@ -577,6 +583,8 @@ declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
     import { INetwork } from "@scom/scom-nft-minter/store/index.ts";
     interface PickerElement extends ControlElement {
         networks?: INetwork[] | '*';
+        selectedChainId?: number;
+        switchNetworkOnSelect?: boolean;
         onCustomNetworkSelected?: (network: INetwork) => void;
     }
     global {
@@ -594,6 +602,7 @@ declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
         private networkMapper;
         private _networkList;
         private _selectedNetwork;
+        private _switchNetworkOnSelect;
         private networkPlaceholder;
         private _onCustomNetworkSelected;
         constructor(parent?: Container, options?: any);
@@ -2463,6 +2472,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
     import { ProductType, ICommissionInfo, ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
     function getProductInfo(productId: number): Promise<{
+        token: ITokenObject;
         productType: BigNumber;
         productId: BigNumber;
         uri: string;
@@ -2470,7 +2480,6 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         maxQuantity: BigNumber;
         maxPrice: BigNumber;
-        token: string;
         status: BigNumber;
     }>;
     function getNFTBalance(productId: number): Promise<BigNumber>;
@@ -2599,6 +2608,10 @@ declare module "@scom/scom-nft-minter" {
         private pnlDescription;
         private lbOrderTotal;
         private lbOrderTotalTitle;
+        private networkPicker;
+        private pnlInputFields;
+        private pnlUnsupportedNetwork;
+        private productInfo;
         private _type;
         private _productId;
         private _oldData;
@@ -2612,7 +2625,6 @@ declare module "@scom/scom-nft-minter" {
         defaultEdit: boolean;
         private contractAddress;
         readonly onConfirm: () => Promise<void>;
-        readonly onDiscard: () => Promise<void>;
         readonly onEdit: () => Promise<void>;
         constructor(parent?: Container, options?: any);
         init(): Promise<void>;
@@ -2629,8 +2641,6 @@ declare module "@scom/scom-nft-minter" {
         set price(value: string);
         get qty(): number;
         set qty(value: number);
-        get tokenAddress(): string;
-        set tokenAddress(value: string);
         get productId(): number;
         set productId(value: number);
         get productType(): ProductType;
@@ -2695,17 +2705,11 @@ declare module "@scom/scom-nft-minter" {
         setTag(value: any): Promise<void>;
         private updateStyle;
         private updateTheme;
-        edit(): Promise<void>;
-        preview(): Promise<void>;
-        confirm(): Promise<void>;
-        private newProduct;
-        discard(): Promise<void>;
-        config(): Promise<void>;
-        validate(): boolean;
         private refreshDApp;
         private updateSpotsRemaining;
         private initWalletData;
         private initApprovalAction;
+        updateContractAddress(): void;
         private selectToken;
         private updateSubmitButton;
         private onApprove;
@@ -2713,7 +2717,8 @@ declare module "@scom/scom-nft-minter" {
         private onAmountChanged;
         private doSubmitAction;
         private onSubmit;
-        buyToken: (quantity: number) => Promise<void>;
+        private buyToken;
+        private onNetworkSelected;
         render(): any;
     }
 }
