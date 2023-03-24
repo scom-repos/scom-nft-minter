@@ -16,7 +16,7 @@ import {
   Label,
   Button
 } from '@ijstech/components';
-import { ICommissionInfo, IConfig } from '../interface/index';
+import { ICommissionInfo, IEmbedData } from '../interface/index';
 import { textareaStyle } from './index.css';
 import { BigNumber } from '@ijstech/eth-wallet';
 import { formatNumber, isWalletAddress } from '../utils/index';
@@ -89,10 +89,15 @@ export default class Config extends Module {
           width: 18
         })
         icon.onClick = async (source: Control) => {
-          const index = this.commissionInfoList.findIndex(v => v.walletAddress == rowData.walletAddress);
+          const index = this.commissionInfoList.findIndex(v => v.walletAddress == rowData.walletAddress && v.chainId == rowData.chainId);
           if (index >= 0) {
             this.commissionInfoList.splice(index, 1);
             this.tableCommissions.data = this.commissionInfoList;
+            if (this._onCustomCommissionsChanged) {
+              await this._onCustomCommissionsChanged({
+                commissions: this.commissionInfoList
+              });
+            }
           }
         }
         return icon;
@@ -101,6 +106,7 @@ export default class Config extends Module {
   ]
   private btnConfirm: Button;
   private lbErrMsg: Label;
+  private _onCustomCommissionsChanged: (data: any) => Promise<void>;
 
   async init() {
     super.init();
@@ -109,28 +115,36 @@ export default class Config extends Module {
     this.lbCommissionShare.caption = `${formatNumber(new BigNumber(embedderFee).times(100).toFixed(), 4)} %`;
   }
 
-  get data(): IConfig {
-    const config: IConfig = {
+  get data(): IEmbedData {
+    const config: IEmbedData = {
     };
     config.commissions = this.tableCommissions.data || [];
     return config;
   }
 
-  set data(config: IConfig) {
+  set data(config: IEmbedData) {
     this.tableCommissions.data = config.commissions || [];
+  }
+
+  get onCustomCommissionsChanged(): (data: any) => Promise<void> {
+    return this._onCustomCommissionsChanged;
+  }
+
+  set onCustomCommissionsChanged(value: (data: any) => Promise<void>) {
+    this._onCustomCommissionsChanged = value;
   }
 
   onModalAddCommissionClosed() {
     this.networkPicker.clearNetwork();
     this.inputWalletAddress.value = '';
+    this.lbErrMsg.caption = '';
   }
 
   onAddCommissionClicked() {
     this.modalAddCommission.visible = true;
   }
 
-  onConfirmCommissionClicked() {
-    if (!this.inputWalletAddress.value) return;
+  async onConfirmCommissionClicked() {
     const embedderFee = getEmbedderCommissionFee();
     this.commissionInfoList.push({
       chainId: this.networkPicker.selectedNetwork?.chainId,
@@ -139,6 +153,12 @@ export default class Config extends Module {
     })
     this.tableCommissions.data = this.commissionInfoList;
     this.modalAddCommission.visible = false;
+
+    if (this._onCustomCommissionsChanged) {
+      await this._onCustomCommissionsChanged({
+        commissions: this.commissionInfoList
+      });
+    }
   }
 
   validateModalFields() {
@@ -151,7 +171,7 @@ export default class Config extends Module {
     else if (!this.inputWalletAddress.value) {
       this.lbErrMsg.caption = 'Please enter wallet address';
     }
-    else if (isWalletAddress(this.inputWalletAddress.value)) {
+    else if (!isWalletAddress(this.inputWalletAddress.value)) {
       this.lbErrMsg.caption = 'Please enter valid wallet address';
     }
     else {

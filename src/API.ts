@@ -4,6 +4,7 @@ import { Contracts as ProductContracts } from './contracts/scom-product-contract
 import { Contracts as ProxyContracts } from './contracts/scom-commission-proxy-contract/index';
 import { getContractAddress } from './store/index';
 import { registerSendTxEvents } from './utils/index';
+import { getChainId } from './wallet/index';
 
 async function getProductInfo(productId: number) {
     let productInfoAddress = getContractAddress('ProductInfo');
@@ -94,7 +95,6 @@ function getProxyTokenAmountIn(productPrice: string, quantity: number, commissio
 async function buyProduct(
     productId: number,
     quantity: number,
-    amountIn: string,
     commissions: ICommissionInfo[],
     token: ITokenObject,
     callback?: any,
@@ -107,7 +107,7 @@ async function buyProduct(
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const amount = product.price.times(quantity);
-    const _commissions = (commissions || []).map(v => {
+    const _commissions = (commissions || []).filter(v => v.chainId === getChainId()).map(v => {
         return {
             to: v.walletAddress,
             amount: amount.times(v.share)

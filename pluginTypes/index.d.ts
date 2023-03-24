@@ -28,7 +28,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         DonateToOwner = "DonateToOwner",
         DonateToEveryone = "DonateToEveryone"
     }
-    export interface IConfig {
+    export interface IEmbedData {
         name?: string;
         productType?: ProductType;
         donateTo?: string;
@@ -104,6 +104,7 @@ declare module "@scom/scom-nft-minter/utils/approvalModel.ts" {
 declare module "@scom/scom-nft-minter/utils/index.ts" {
     export const formatNumber: (value: any, decimals?: number) => string;
     export const formatNumberWithSeparators: (value: number, precision?: number) => string;
+    export function isWalletAddress(address: string): boolean;
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
     export { ApprovalStatus, getERC20Allowance, getERC20ApprovalModelAction, IERC20ApprovalOptions, IERC20ApprovalAction } from "@scom/scom-nft-minter/utils/approvalModel.ts";
 }
@@ -612,7 +613,7 @@ declare module "@scom/scom-nft-minter/network-picker/index.tsx" {
 /// <amd-module name="@scom/scom-nft-minter/config/index.tsx" />
 declare module "@scom/scom-nft-minter/config/index.tsx" {
     import { Module, ControlElement } from '@ijstech/components';
-    import { IConfig } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IEmbedData } from "@scom/scom-nft-minter/interface/index.tsx";
     import { INetwork } from "@scom/scom-nft-minter/store/index.ts";
     global {
         namespace JSX {
@@ -631,12 +632,15 @@ declare module "@scom/scom-nft-minter/config/index.tsx" {
         private commissionsTableColumns;
         private btnConfirm;
         private lbErrMsg;
+        private _onCustomCommissionsChanged;
         init(): Promise<void>;
-        get data(): IConfig;
-        set data(config: IConfig);
+        get data(): IEmbedData;
+        set data(config: IEmbedData);
+        get onCustomCommissionsChanged(): (data: any) => Promise<void>;
+        set onCustomCommissionsChanged(value: (data: any) => Promise<void>);
         onModalAddCommissionClosed(): void;
         onAddCommissionClicked(): void;
-        onConfirmCommissionClicked(): void;
+        onConfirmCommissionClicked(): Promise<void>;
         validateModalFields(): boolean;
         onNetworkSelected(network: INetwork): void;
         onInputWalletAddressChanged(): void;
@@ -2475,7 +2479,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         productId: any;
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
-    function buyProduct(productId: number, quantity: number, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    function buyProduct(productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate };
 }
@@ -2543,7 +2547,8 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, IDataSchema, ControlElement } from '@ijstech/components';
-    import { IConfig, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IEmbedData, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import Config from "@scom/scom-nft-minter/config/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
         chainId?: number;
@@ -2612,8 +2617,6 @@ declare module "@scom/scom-nft-minter" {
         constructor(parent?: Container, options?: any);
         init(): Promise<void>;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
-        get chainId(): number;
-        set chainId(value: number);
         get donateTo(): string;
         set donateTo(value: string);
         get link(): string;
@@ -2677,8 +2680,17 @@ declare module "@scom/scom-nft-minter" {
             };
             userInputDataSchema: IDataSchema;
         }[];
-        getData(): IConfig;
-        setData(data: IConfig): Promise<void>;
+        getConfigurators(): {
+            name: string;
+            target: string;
+            elementName: string;
+            getLinkParams: () => {
+                params: string;
+            };
+            bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
+        }[];
+        getData(): IEmbedData;
+        setData(data: IEmbedData): Promise<void>;
         getTag(): any;
         setTag(value: any): Promise<void>;
         private updateStyle;

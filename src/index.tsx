@@ -18,7 +18,7 @@ import {
   ControlElement,
 } from '@ijstech/components';
 import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IConfig, ITokenObject, PageBlock, ProductType } from './interface/index';
+import { IEmbedData, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, getNetworkName, getTokenList, setDataFromSCConfig } from './store/index';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from './wallet/index';
@@ -88,8 +88,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private _type: ProductType | undefined;
   private _productId: number | undefined;
-  private _oldData: IConfig = {};
-  private _data: IConfig = {};
+  private _oldData: IEmbedData = {};
+  private _data: IEmbedData = {};
   private $eventBus: IEventBus;
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
@@ -137,7 +137,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     //   }
     // }
 
-    this._data.chainId = this.getAttribute('chainId', true);
     this._data.donateTo = this.getAttribute('donateTo', true);
     this._data.link = this.getAttribute('link', true);
     this._data.maxOrderQty = this.getAttribute('maxOrderQty', true);
@@ -146,7 +145,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.qty = this.getAttribute('qty', true);
     const tokenAddress = this.getAttribute('tokenAddress', true);
     if (tokenAddress) {
-      this._data.token = DefaultTokens[this.chainId]?.find(t => t.address?.toLowerCase() == tokenAddress.toLowerCase());
+      const chainId = await getChainId();
+      this._data.token = DefaultTokens[chainId]?.find(t => t.address?.toLowerCase() == tokenAddress.toLowerCase());
     }
     this._data.productId = this.getAttribute('productId', true);
     this._data.productType = this.getAttribute('productType', true);
@@ -179,14 +179,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     await self.ready();
     return self;
   }   
-
-  get chainId() {
-    return this._data.chainId ?? 0;
-  }
-
-  set chainId(value: number) {
-    this._data.chainId = value;
-  }
 
   get donateTo() {
     return this._data.donateTo ?? '';
@@ -241,7 +233,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   set tokenAddress(value: string) {
-    this._data.token = DefaultTokens[this.chainId]?.find(t => t.address?.toLowerCase() == value.toLowerCase());
+    const chainId = getChainId();
+    this._data.token = DefaultTokens[chainId]?.find(t => t.address?.toLowerCase() == value.toLowerCase());
   }
 
   get productId() {
@@ -344,11 +337,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     const propertiesSchema: IDataSchema = {
       type: 'object',
       properties: {
-        "chainId": {
-          title: 'Chain ID',
-          type: 'number',
-          readOnly: true
-        }
       }
     };
     if (!this._data.hideDescription) {
@@ -483,7 +471,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
               if (userInputData.description != undefined) this._data.description = userInputData.description;
               if (userInputData.link != undefined) this._data.link = userInputData.link;
-              if (userInputData.chainId != undefined) this._data.chainId = userInputData.chainId;
               if (userInputData.price != undefined) this._data.price = userInputData.price;
               if (userInputData.maxPrice != undefined) this._data.maxPrice = userInputData.maxPrice;
               if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
@@ -543,11 +530,38 @@ export default class ScomNftMinter extends Module implements PageBlock {
     return actions
   }
 
+  getConfigurators() {
+    let self = this;
+    return [
+      {
+        name: 'Commissions',
+        target: 'Embedders',
+        elementName: 'i-scom-nft-minter-config',
+        getLinkParams: () => {
+          const commissions = this._data.commissions || [];
+          return {
+            params: window.btoa(JSON.stringify(commissions))
+          }
+        },
+        bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => {
+          element.onCustomCommissionsChanged = async (data: any) => {
+            let resultingData = {
+              ...self._data,
+              ...data
+            };
+            await this.setData(resultingData);
+            await callback(data);
+          }
+        }
+      }
+    ]
+  }
+
   getData() {
     return this._data;
   }
 
-  async setData(data: IConfig) {
+  async setData(data: IEmbedData) {
     this._data = data;
     this._productId = data.productId;
     this.configDApp.data = data;
@@ -602,7 +616,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.gridDApp.visible = true;
     this.configDApp.visible = false;
     this._data = this.configDApp.data;
-    this._data.chainId = this._data.token ? getChainId() : undefined;
     this._data.productId = this._productId;
     this._data.maxPrice = this._data.maxPrice || '0';
     this.refreshDApp();
@@ -702,11 +715,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.lblTitle.caption = `Mint Fee: ${this._data.price ?? ""} ${this._data.token?.symbol || ""}`;
       this.btnSubmit.caption = 'Mint';
       this.lblRef.caption = 'smart contract:';
-      if (this._data.chainId !== null && this._data.chainId !== undefined) {
-        this.lblBlockchain.caption = getNetworkName(this._data.chainId) || this._data.chainId.toString();
-      } else {
-        this.lblBlockchain.caption = "";
-      }
       await this.updateSpotsRemaining();
       this.gridTokenInput.visible = false;
     } else {
@@ -723,7 +731,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
     this.lblAddress.caption = this.contractAddress;
     // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
-    this.tokenSelection.chainId = this._data.chainId;
+    this.tokenSelection.chainId = getChainId();
     this.tokenSelection.token = this._data.token;
     this.updateTokenBalance();
     // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
@@ -871,7 +879,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private async doSubmitAction() {
     if (!this._data || !this._productId) return;
     this.updateSubmitButton(true);
-    const chainId = getChainId();
+    // const chainId = getChainId();
     if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenSelection.token) {
       this.mdAlert.message = {
         status: 'error',
@@ -881,15 +889,15 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.updateSubmitButton(false);
       return;
     }
-    if (this._type === ProductType.Buy && chainId !== this._data.chainId) {
-      this.mdAlert.message = {
-        status: 'error',
-        content: 'Unsupported Network'
-      };
-      this.mdAlert.showModal();
-      this.updateSubmitButton(false);
-      return;
-    }
+    // if (this._type === ProductType.Buy && chainId !== this._data.chainId) {
+    //   this.mdAlert.message = {
+    //     status: 'error',
+    //     content: 'Unsupported Network'
+    //   };
+    //   this.mdAlert.showModal();
+    //   this.updateSubmitButton(false);
+    //   return;
+    // }
     const balance = await getTokenBalance(this._type === ProductType.Buy ? this._data.token : this.tokenSelection.token);
     if (this._type === ProductType.Buy) {
       if (this.edtQty.value && Number(this.edtQty.value) > this._data.maxOrderQty) {
@@ -997,7 +1005,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
       );
     }
     else if (this._data.productType == ProductType.Buy) {
-      await buyProduct(this._data.productId, quantity, '0', this._data.commissions, this._data.token, callback,
+      await buyProduct(this._data.productId, quantity, this._data.commissions, this._data.token, callback,
         async () => {
           await this.updateTokenBalance();
           await this.updateSpotsRemaining();

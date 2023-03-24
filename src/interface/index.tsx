@@ -34,7 +34,7 @@ export enum ProductType {
   DonateToEveryone = "DonateToEveryone"
 }
 
-export interface IConfig {
+export interface IEmbedData {
   name?: string;
   productType?: ProductType;
   donateTo?: string;
