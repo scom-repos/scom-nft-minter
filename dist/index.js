@@ -3014,6 +3014,9 @@ define("@scom/scom-nft-minter/network-picker/index.css.ts", ["require", "exports
                                 }
                             }
                         }
+                    },
+                    '&> div': {
+                        transform: 'scale(1)'
                     }
                 }
             },
@@ -3076,19 +3079,21 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this._onCustomNetworkSelected && this._onCustomNetworkSelected(network);
         }
         setNetwork(network) {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             this._selectedNetwork = network;
             const img = ((_a = this._selectedNetwork) === null || _a === void 0 ? void 0 : _a.img)
                 ? assets_1.default.img.network[this._selectedNetwork.img] ||
                     components_6.application.assets(this._selectedNetwork.img)
                 : undefined;
-            this.btnNetwork.caption = `<i-hstack verticalAlignment="center" gap="1.125rem">
-      <i-panel>
-        <i-image width=${17} height=${17} url="${img}"></i-image>
-      </i-panel>
-      <i-label caption="${(_c = (_b = this._selectedNetwork) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : ''}"></i-label>
-    </i-hstack>`;
-            this.networkMapper.forEach((value, key) => {
+            if (this.btnNetwork) {
+                this.btnNetwork.caption = `<i-hstack verticalAlignment="center" gap="1.125rem">
+        <i-panel>
+          <i-image width=${17} height=${17} url="${img}"></i-image>
+        </i-panel>
+        <i-label caption="${(_c = (_b = this._selectedNetwork) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : ''}"></i-label>
+      </i-hstack>`;
+            }
+            (_d = this.networkMapper) === null || _d === void 0 ? void 0 : _d.forEach((value, key) => {
                 var _a;
                 const chainId = (_a = this._selectedNetwork) === null || _a === void 0 ? void 0 : _a.chainId;
                 if (key === chainId) {
