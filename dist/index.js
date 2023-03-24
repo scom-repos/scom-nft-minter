@@ -6547,14 +6547,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     // },
                     // "productType": {
                     //   type: 'string'
-                    // },
-                    // "chainId": {
-                    //   title: 'Chain ID',
-                    //   type: 'number'
-                    // },    
-                    // "token": {
-                    //   type: 'object'
-                    // },            
+                    // },           
                     "donateTo": {
                         type: 'string',
                         default: eth_wallet_10.Wallet.getClientInstance().address,
@@ -6715,8 +6708,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     getLinkParams: () => {
                         const commissions = this._data.commissions || [];
                         return {
-                            params: window.btoa(JSON.stringify(commissions))
+                            data: window.btoa(JSON.stringify(commissions))
                         };
+                    },
+                    setLinkParams: async (params) => {
+                        if (params.data) {
+                            const decodedString = window.atob(params.data);
+                            const commissions = JSON.parse(decodedString);
+                            let resultingData = Object.assign(Object.assign({}, self._data), { commissions });
+                            await this.setData(resultingData);
+                        }
                     },
                     bindOnChanged: (element, callback) => {
                         element.onCustomCommissionsChanged = async (data) => {

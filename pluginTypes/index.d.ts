@@ -2560,7 +2560,6 @@ declare module "@scom/scom-nft-minter" {
     import Config from "@scom/scom-nft-minter/config/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
-        chainId?: number;
         productType?: string;
         description?: string;
         hideDescription?: boolean;
@@ -2570,7 +2569,6 @@ declare module "@scom/scom-nft-minter" {
         maxPrice?: string;
         price?: string;
         qty?: number;
-        tokenAddress?: string;
         productId?: number;
         link?: string;
     }
@@ -2695,8 +2693,9 @@ declare module "@scom/scom-nft-minter" {
             target: string;
             elementName: string;
             getLinkParams: () => {
-                params: string;
+                data: string;
             };
+            setLinkParams: (params: any) => Promise<void>;
             bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
         }[];
         getData(): IEmbedData;

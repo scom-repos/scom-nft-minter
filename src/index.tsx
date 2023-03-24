@@ -32,7 +32,6 @@ import ScomNetworkPicker from './network-picker/index';
 
 interface ScomNftMinterElement extends ControlElement {
   name?: string;
-  chainId?: number;
   productType?: string;
   description?: string;
   hideDescription?: boolean;
@@ -42,7 +41,6 @@ interface ScomNftMinterElement extends ControlElement {
   maxPrice?: string;
   price?: string;
   qty?: number;
-  tokenAddress?: string;
   productId?: number;
   link?: string;
 }
@@ -368,14 +366,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
         // },
         // "productType": {
         //   type: 'string'
-        // },
-        // "chainId": {
-        //   title: 'Chain ID',
-        //   type: 'number'
-        // },    
-        // "token": {
-        //   type: 'object'
-        // },            
+        // },           
         "donateTo": {
           type: 'string',
           default: Wallet.getClientInstance().address,
@@ -520,9 +511,20 @@ export default class ScomNftMinter extends Module implements PageBlock {
         getLinkParams: () => {
           const commissions = this._data.commissions || [];
           return {
-            params: window.btoa(JSON.stringify(commissions))
+            data: window.btoa(JSON.stringify(commissions))
           }
         },
+        setLinkParams: async (params: any) => {
+          if (params.data) {
+            const decodedString = window.atob(params.data);
+            const commissions = JSON.parse(decodedString);
+            let resultingData = {
+              ...self._data,
+              commissions
+            };
+            await this.setData(resultingData);
+          }
+        },        
         bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => {
           element.onCustomCommissionsChanged = async (data: any) => {
             let resultingData = {
