@@ -37,22 +37,20 @@ export interface IProductInfo {
   status: BigNumber;
 }
 
+export interface IChainSpecificProperties {
+  productId: number;
+  donateTo: string;
+}
+
 export interface IEmbedData {
   name?: string;
   productType?: ProductType;
-  donateTo?: string;
-  productId?: number;
   logo?: string;
   description?: string;
   hideDescription?: boolean;
   link?: string;
-  chainId?: number;
-  token?: ITokenObject;
-  price?: string;
-  maxPrice?: string;
-  maxOrderQty?: number;
-  qty?: number;
   commissions?: ICommissionInfo[];
+  chainSpecificProperties?: Record<number, IChainSpecificProperties>;
 }
 
 export interface ITokenObject {

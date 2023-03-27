@@ -33,22 +33,19 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         token: ITokenObject;
         status: BigNumber;
     }
+    export interface IChainSpecificProperties {
+        productId: number;
+        donateTo: string;
+    }
     export interface IEmbedData {
         name?: string;
         productType?: ProductType;
-        donateTo?: string;
-        productId?: number;
         logo?: string;
         description?: string;
         hideDescription?: boolean;
         link?: string;
-        chainId?: number;
-        token?: ITokenObject;
-        price?: string;
-        maxPrice?: string;
-        maxOrderQty?: number;
-        qty?: number;
         commissions?: ICommissionInfo[];
+        chainSpecificProperties?: Record<number, IChainSpecificProperties>;
     }
     export interface ITokenObject {
         address?: string;
@@ -545,10 +542,6 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export const getContractAddress: (type: ContractType) => any;
     export function switchNetwork(chainId: number): Promise<void>;
     export * from "@scom/scom-nft-minter/store/tokens/index.ts";
-}
-/// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
-declare module "@scom/scom-nft-minter/config/index.css.ts" {
-    export const textareaStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/assets.ts" />
 declare module "@scom/scom-nft-minter/assets.ts" {
@@ -2548,6 +2541,17 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
                     address: string;
                 };
             };
+            "97": {
+                ProductNFT: {
+                    address: string;
+                };
+                ProductInfo: {
+                    address: string;
+                };
+                Proxy: {
+                    address: string;
+                };
+            };
         };
         embedderCommissionFee: string;
     };
@@ -2556,7 +2560,7 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, IDataSchema, ControlElement } from '@ijstech/components';
-    import { IEmbedData, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import Config from "@scom/scom-nft-minter/config/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
@@ -2564,13 +2568,8 @@ declare module "@scom/scom-nft-minter" {
         description?: string;
         hideDescription?: boolean;
         logo?: string;
-        donateTo?: string;
-        maxOrderQty?: number;
-        maxPrice?: string;
-        price?: string;
-        qty?: number;
-        productId?: number;
         link?: string;
+        chainSpecificProperties?: Record<number, IChainSpecificProperties>;
     }
     global {
         namespace JSX {
@@ -2611,7 +2610,6 @@ declare module "@scom/scom-nft-minter" {
         private pnlUnsupportedNetwork;
         private productInfo;
         private _type;
-        private _productId;
         private _oldData;
         private _data;
         private $eventBus;
@@ -2628,19 +2626,9 @@ declare module "@scom/scom-nft-minter" {
         init(): Promise<void>;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
         get donateTo(): string;
-        set donateTo(value: string);
         get link(): string;
         set link(value: string);
-        get maxOrderQty(): number;
-        set maxOrderQty(value: number);
-        get maxPrice(): string;
-        set maxPrice(value: string);
-        get price(): string;
-        set price(value: string);
-        get qty(): number;
-        set qty(value: number);
         get productId(): number;
-        set productId(value: number);
         get productType(): ProductType;
         set productType(value: ProductType);
         get name(): string;
@@ -2653,6 +2641,8 @@ declare module "@scom/scom-nft-minter" {
         set logo(value: string);
         get commissions(): any;
         set commissions(value: any);
+        get chainSpecificProperties(): any;
+        set chainSpecificProperties(value: any);
         private registerEvent;
         onWalletConnect: (connected: boolean) => Promise<void>;
         onChainChanged: () => Promise<void>;

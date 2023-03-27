@@ -2885,23 +2885,10 @@ define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/
     exports.switchNetwork = switchNetwork;
     __exportStar(index_5, exports);
 });
-define("@scom/scom-nft-minter/config/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
+define("@scom/scom-nft-minter/assets.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.textareaStyle = void 0;
-    exports.textareaStyle = components_3.Styles.style({
-        $nest: {
-            'textarea': {
-                border: 'none',
-                outline: 'none'
-            }
-        }
-    });
-});
-define("@scom/scom-nft-minter/assets.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    const moduleDir = components_4.application.currentModuleDir;
+    const moduleDir = components_3.application.currentModuleDir;
     function fullPath(path) {
         return `${moduleDir}/${path}`;
     }
@@ -2950,11 +2937,11 @@ define("@scom/scom-nft-minter/assets.ts", ["require", "exports", "@ijstech/compo
         tokenPath
     };
 });
-define("@scom/scom-nft-minter/network-picker/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_5) {
+define("@scom/scom-nft-minter/network-picker/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const Theme = components_5.Styles.Theme.ThemeVars;
-    exports.default = components_5.Styles.style({
+    const Theme = components_4.Styles.Theme.ThemeVars;
+    exports.default = components_4.Styles.style({
         $nest: {
             '::-webkit-scrollbar-track': {
                 borderRadius: '12px',
@@ -3044,11 +3031,11 @@ define("@scom/scom-nft-minter/network-picker/index.css.ts", ["require", "exports
         }
     });
 });
-define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/assets.ts", "@scom/scom-nft-minter/network-picker/index.css.ts"], function (require, exports, components_6, index_6, assets_1, index_css_1) {
+define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/assets.ts", "@scom/scom-nft-minter/network-picker/index.css.ts"], function (require, exports, components_5, index_6, assets_1, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const Theme = components_6.Styles.Theme.ThemeVars;
-    let ScomNetworkPicker = class ScomNetworkPicker extends components_6.Module {
+    const Theme = components_5.Styles.Theme.ThemeVars;
+    let ScomNetworkPicker = class ScomNetworkPicker extends components_5.Module {
         constructor(parent, options) {
             super(parent, options);
             this._networkList = [];
@@ -3083,7 +3070,7 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this._selectedNetwork = network;
             const img = ((_a = this._selectedNetwork) === null || _a === void 0 ? void 0 : _a.img)
                 ? assets_1.default.img.network[this._selectedNetwork.img] ||
-                    components_6.application.assets(this._selectedNetwork.img)
+                    components_5.application.assets(this._selectedNetwork.img)
                 : undefined;
             if (this.btnNetwork) {
                 this.btnNetwork.caption = `<i-hstack verticalAlignment="center" gap="1.125rem">
@@ -3108,7 +3095,7 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this.gridNetworkGroup.clearInnerHTML();
             this.networkMapper = new Map();
             this.gridNetworkGroup.append(...this._networkList.map((network) => {
-                const img = network.img ? (this.$render("i-image", { url: assets_1.default.img.network[network.img] || components_6.application.assets(network.img), width: 16, height: 16 })) : ([]);
+                const img = network.img ? (this.$render("i-image", { url: assets_1.default.img.network[network.img] || components_5.application.assets(network.img), width: 16, height: 16 })) : ([]);
                 const isActive = this._selectedNetwork ? this._selectedNetwork.chainId === network.chainId : false;
                 const hsNetwork = (this.$render("i-hstack", { onClick: this.onNetworkSelected.bind(this, network), background: { color: 'transparent' }, position: 'relative', class: isActive ? 'is-active list-item' : 'list-item', verticalAlignment: "center", overflow: "hidden", padding: { top: '5px', bottom: '5px', left: '0.75rem', right: '0.75rem' } },
                     this.$render("i-hstack", { verticalAlignment: 'center', gap: '1.125rem', lineHeight: 1.375 },
@@ -3137,13 +3124,13 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
             this.renderNetworks();
         }
         async renderCombobox() {
-            this.mdNetwork = await components_6.Modal.create({
+            this.mdNetwork = await components_5.Modal.create({
                 showBackdrop: false,
                 minWidth: 200,
                 popupPlacement: 'bottom'
             });
             this.mdNetwork.classList.add('full-width');
-            this.btnNetwork = await components_6.Button.create({
+            this.btnNetwork = await components_5.Button.create({
                 lineHeight: 1.875,
                 width: '100%',
                 padding: {
@@ -3198,16 +3185,16 @@ define("@scom/scom-nft-minter/network-picker/index.tsx", ["require", "exports", 
         }
     };
     ScomNetworkPicker = __decorate([
-        components_6.customModule,
-        components_6.customElements('i-scom-nft-minter-network-picker')
+        components_5.customModule,
+        components_5.customElements('i-scom-nft-minter-network-picker')
     ], ScomNetworkPicker);
     exports.default = ScomNetworkPicker;
 });
-define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts"], function (require, exports, components_7, eth_wallet_7, index_7, index_8) {
+define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts"], function (require, exports, components_6, eth_wallet_7, index_7, index_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const Theme = components_7.Styles.Theme.ThemeVars;
-    let Config = class Config extends components_7.Module {
+    const Theme = components_6.Styles.Theme.ThemeVars;
+    let Config = class Config extends components_6.Module {
         constructor() {
             super(...arguments);
             this.commissionsTableColumns = [
@@ -3230,7 +3217,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                     key: '',
                     textAlign: 'center',
                     onRenderCell: async (source, data, rowData) => {
-                        const icon = new components_7.Icon(undefined, {
+                        const icon = new components_6.Icon(undefined, {
                             name: "edit",
                             fill: "#03a9f4",
                             height: 18,
@@ -3250,7 +3237,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                     key: '',
                     textAlign: 'center',
                     onRenderCell: async (source, data, rowData) => {
-                        const icon = new components_7.Icon(undefined, {
+                        const icon = new components_6.Icon(undefined, {
                             name: "times",
                             fill: "#ed5748",
                             height: 18,
@@ -3376,17 +3363,17 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
         }
     };
     Config = __decorate([
-        components_7.customModule,
-        components_7.customElements("i-scom-nft-minter-config")
+        components_6.customModule,
+        components_6.customElements("i-scom-nft-minter-config")
     ], Config);
     exports.default = Config;
 });
-define("@scom/scom-nft-minter/token-selection/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_8) {
+define("@scom/scom-nft-minter/token-selection/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.modalStyle = exports.tokenStyle = exports.buttonStyle = exports.scrollbarStyle = void 0;
-    const Theme = components_8.Styles.Theme.ThemeVars;
-    exports.scrollbarStyle = components_8.Styles.style({
+    const Theme = components_7.Styles.Theme.ThemeVars;
+    exports.scrollbarStyle = components_7.Styles.style({
         $nest: {
             '&::-webkit-scrollbar-track': {
                 borderRadius: '12px',
@@ -3406,17 +3393,17 @@ define("@scom/scom-nft-minter/token-selection/index.css.ts", ["require", "export
             }
         }
     });
-    exports.buttonStyle = components_8.Styles.style({
+    exports.buttonStyle = components_7.Styles.style({
         boxShadow: 'none'
     });
-    exports.tokenStyle = components_8.Styles.style({
+    exports.tokenStyle = components_7.Styles.style({
         $nest: {
             '&:hover': {
                 background: Theme.action.hover
             }
         }
     });
-    exports.modalStyle = components_8.Styles.style({
+    exports.modalStyle = components_7.Styles.style({
         $nest: {
             '.modal': {
                 padding: 0,
@@ -3426,14 +3413,14 @@ define("@scom/scom-nft-minter/token-selection/index.css.ts", ["require", "export
         }
     });
 });
-define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/assets.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/token-selection/index.css.ts"], function (require, exports, components_9, index_9, assets_2, index_10, index_css_2) {
+define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports", "@ijstech/components", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/assets.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/token-selection/index.css.ts"], function (require, exports, components_8, index_9, assets_2, index_10, index_css_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.TokenSelection = void 0;
-    const Theme = components_9.Styles.Theme.ThemeVars;
+    const Theme = components_8.Styles.Theme.ThemeVars;
     const fallBackUrl = assets_2.default.tokenPath();
     ;
-    let TokenSelection = class TokenSelection extends components_9.Module {
+    let TokenSelection = class TokenSelection extends components_8.Module {
         constructor(parent, options) {
             super(parent, options);
             this._readonly = false;
@@ -3458,7 +3445,7 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
                 if (this.onSelectToken)
                     this.onSelectToken(token);
             };
-            this.$eventBus = components_9.application.EventBus;
+            this.$eventBus = components_8.application.EventBus;
             this.registerEvent();
         }
         ;
@@ -3547,7 +3534,7 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
             const chainId = this.chainId || index_10.getChainId();
             if (token) {
                 const tokenIconPath = assets_2.default.tokenPath(token, chainId);
-                const icon = new components_9.Icon(this.btnTokens, {
+                const icon = new components_8.Icon(this.btnTokens, {
                     width: 28,
                     height: 28,
                     image: {
@@ -3590,18 +3577,18 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
         }
     };
     TokenSelection = __decorate([
-        components_9.customElements('i-scom-nft-minter-token-selection')
+        components_8.customElements('i-scom-nft-minter-token-selection')
     ], TokenSelection);
     exports.TokenSelection = TokenSelection;
 });
-define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_10) {
+define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.tokenSelectionStyle = exports.inputGroupStyle = exports.inputStyle = exports.markdownStyle = exports.imageStyle = void 0;
-    const Theme = components_10.Styles.Theme.ThemeVars;
+    const Theme = components_9.Styles.Theme.ThemeVars;
     // Styles.Theme.defaultTheme.background.modal = "#fff";
     // Styles.Theme.applyTheme(Styles.Theme.defaultTheme);
-    exports.imageStyle = components_10.Styles.style({
+    exports.imageStyle = components_9.Styles.style({
         $nest: {
             '&>img': {
                 maxWidth: 'unset',
@@ -3610,10 +3597,10 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
             }
         }
     });
-    exports.markdownStyle = components_10.Styles.style({
+    exports.markdownStyle = components_9.Styles.style({
         overflowWrap: 'break-word'
     });
-    exports.inputStyle = components_10.Styles.style({
+    exports.inputStyle = components_9.Styles.style({
         $nest: {
             '> input': {
                 background: 'transparent',
@@ -3624,14 +3611,14 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
             }
         }
     });
-    exports.inputGroupStyle = components_10.Styles.style({
+    exports.inputGroupStyle = components_9.Styles.style({
         border: '2px solid transparent',
         background: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
         backgroundOrigin: 'border-box !important',
         backgroundClip: 'content-box, border-box !important',
         borderRadius: 16
     });
-    exports.tokenSelectionStyle = components_10.Styles.style({
+    exports.tokenSelectionStyle = components_9.Styles.style({
         $nest: {
             'i-button.token-button': {
                 justifyContent: 'start'
@@ -3639,13 +3626,13 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
         }
     });
 });
-define("@scom/scom-nft-minter/alert/index.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_11) {
+define("@scom/scom-nft-minter/alert/index.tsx", ["require", "exports", "@ijstech/components"], function (require, exports, components_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Alert = void 0;
-    const Theme = components_11.Styles.Theme.ThemeVars;
+    const Theme = components_10.Styles.Theme.ThemeVars;
     ;
-    let Alert = class Alert extends components_11.Module {
+    let Alert = class Alert extends components_10.Module {
         get message() {
             return this._message;
         }
@@ -3704,7 +3691,7 @@ define("@scom/scom-nft-minter/alert/index.tsx", ["require", "exports", "@ijstech
         }
     };
     Alert = __decorate([
-        components_11.customElements('i-scom-nft-minter-alert')
+        components_10.customElements('i-scom-nft-minter-alert')
     ], Alert);
     exports.Alert = Alert;
     ;
@@ -6299,16 +6286,27 @@ define("@scom/scom-nft-minter/scconfig.json.ts", ["require", "exports"], functio
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
                 }
+            },
+            "97": {
+                "ProductNFT": {
+                    "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
+                },
+                "ProductInfo": {
+                    "address": "0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
+                },
+                "Proxy": {
+                    "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
+                }
             }
         },
         "embedderCommissionFee": "0.01"
     };
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/scconfig.json.ts"], function (require, exports, components_12, eth_wallet_10, index_17, index_18, index_19, index_20, index_css_3, API_1, scconfig_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/scconfig.json.ts"], function (require, exports, components_11, eth_wallet_10, index_17, index_18, index_19, index_20, index_css_3, API_1, scconfig_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const Theme = components_12.Styles.Theme.ThemeVars;
-    let ScomNftMinter = class ScomNftMinter extends components_12.Module {
+    const Theme = components_11.Styles.Theme.ThemeVars;
+    let ScomNftMinter = class ScomNftMinter extends components_11.Module {
         constructor(parent, options) {
             super(parent, options);
             this._oldData = {};
@@ -6346,7 +6344,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 catch (_b) { }
             };
             index_19.setDataFromSCConfig(scconfig_json_1.default);
-            this.$eventBus = components_12.application.EventBus;
+            this.$eventBus = components_11.application.EventBus;
             this.registerEvent();
         }
         async init() {
@@ -6374,21 +6372,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             //     }
             //   }
             // }
-            this._data.donateTo = this.getAttribute('donateTo', true);
             this._data.link = this.getAttribute('link', true);
-            this._data.maxOrderQty = this.getAttribute('maxOrderQty', true);
-            this._data.maxPrice = this.getAttribute('maxPrice', true);
-            this._data.price = this.getAttribute('price', true);
-            this._data.qty = this.getAttribute('qty', true);
-            this._data.productId = this.getAttribute('productId', true);
             this._data.productType = this.getAttribute('productType', true);
             this._data.name = this.getAttribute('name', true);
             this._data.description = this.getAttribute('description', true);
             this._data.hideDescription = this.getAttribute('hideDescription', true);
             this._data.logo = this.getAttribute('logo', true);
+            this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
             const commissionFee = index_19.getEmbedderCommissionFee();
             this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_10.BigNumber(commissionFee).times(100)}% Commission Fee)`;
-            this._productId = this._data.productId;
             this.updateContractAddress();
             await this.refreshDApp();
             this.isReadyCallbackQueued = false;
@@ -6400,11 +6392,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return self;
         }
         get donateTo() {
-            var _a;
-            return (_a = this._data.donateTo) !== null && _a !== void 0 ? _a : '';
-        }
-        set donateTo(value) {
-            this._data.donateTo = value;
+            var _a, _b, _c;
+            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[index_20.getChainId()]) === null || _b === void 0 ? void 0 : _b.donateTo) !== null && _c !== void 0 ? _c : '';
         }
         get link() {
             var _a;
@@ -6413,40 +6402,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set link(value) {
             this._data.link = value;
         }
-        get maxOrderQty() {
-            var _a;
-            return (_a = this._data.maxOrderQty) !== null && _a !== void 0 ? _a : 0;
-        }
-        set maxOrderQty(value) {
-            this._data.maxOrderQty = value;
-        }
-        get maxPrice() {
-            var _a;
-            return (_a = this._data.maxPrice) !== null && _a !== void 0 ? _a : "0";
-        }
-        set maxPrice(value) {
-            this._data.maxPrice = value;
-        }
-        get price() {
-            var _a;
-            return (_a = this._data.price) !== null && _a !== void 0 ? _a : "0";
-        }
-        set price(value) {
-            this._data.price = value;
-        }
-        get qty() {
-            var _a;
-            return (_a = this._data.qty) !== null && _a !== void 0 ? _a : 0;
-        }
-        set qty(value) {
-            this._data.qty = value;
-        }
         get productId() {
-            var _a;
-            return (_a = this._data.productId) !== null && _a !== void 0 ? _a : 0;
-        }
-        set productId(value) {
-            this._data.productId = value;
+            var _a, _b, _c;
+            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[index_20.getChainId()]) === null || _b === void 0 ? void 0 : _b.productId) !== null && _c !== void 0 ? _c : 0;
         }
         get productType() {
             var _a;
@@ -6489,6 +6447,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         set commissions(value) {
             this._data.commissions = value;
+        }
+        get chainSpecificProperties() {
+            var _a;
+            return (_a = this._data.chainSpecificProperties) !== null && _a !== void 0 ? _a : {};
+        }
+        set chainSpecificProperties(value) {
+            this._data.chainSpecificProperties = value;
         }
         registerEvent() {
             this.$eventBus.register(this, "isWalletConnected" /* IsWalletConnected */, () => this.onWalletConnect(true));
@@ -6553,29 +6518,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     // "productType": {
                     //   type: 'string'
                     // },           
-                    "donateTo": {
-                        type: 'string',
-                        default: eth_wallet_10.Wallet.getClientInstance().address,
-                        format: "wallet-address"
-                    },
-                    // "productId": {
-                    //   type: 'number'
+                    // "donateTo": {
+                    //   type: 'string',
+                    //   default: Wallet.getClientInstance().address,
+                    //   format: "wallet-address"
                     // },
                     "link": {
                         type: 'string'
-                    },
-                    // "price": {
-                    //   type: 'string'
-                    // },
-                    // "maxPrice": {
-                    //   type: 'string'
-                    // },
-                    // "maxOrderQty": {
-                    //   type: 'number'
-                    // },
-                    // "qty": {
-                    //   type: 'number'
-                    // }
+                    }
                 }
             };
             if (!this._data.hideDescription) {
@@ -6624,25 +6574,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     this._data.name = userInputData.name;
                                 if (userInputData.productType != undefined)
                                     this._data.productType = userInputData.productType;
-                                if (userInputData.productId != undefined)
-                                    this._data.productId = userInputData.productId;
-                                if (userInputData.donateTo != undefined)
-                                    this._data.donateTo = userInputData.donateTo;
                                 if (userInputData.logo != undefined)
                                     this._data.logo = userInputData.logo;
                                 if (userInputData.description != undefined)
                                     this._data.description = userInputData.description;
                                 if (userInputData.link != undefined)
                                     this._data.link = userInputData.link;
-                                if (userInputData.price != undefined)
-                                    this._data.price = userInputData.price;
-                                if (userInputData.maxPrice != undefined)
-                                    this._data.maxPrice = userInputData.maxPrice;
-                                if (userInputData.maxOrderQty != undefined)
-                                    this._data.maxOrderQty = userInputData.maxOrderQty;
-                                if (userInputData.qty != undefined)
-                                    this._data.qty = userInputData.qty;
-                                this._productId = this._data.productId;
                                 this.configDApp.data = this._data;
                                 this.refreshDApp();
                                 // await this.newProduct((error: Error, receipt?: string) => {
@@ -6659,7 +6596,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             },
                             undo: () => {
                                 this._data = Object.assign({}, this._oldData);
-                                this._productId = this._data.productId;
                                 this.configDApp.data = this._data;
                                 this.refreshDApp();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
@@ -6711,7 +6647,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     target: 'Embedders',
                     elementName: 'i-scom-nft-minter-config',
                     getLinkParams: () => {
-                        const commissions = this._data.commissions || [];
+                        const commissions = self._data.commissions || [];
                         return {
                             data: window.btoa(JSON.stringify(commissions))
                         };
@@ -6721,13 +6657,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             const decodedString = window.atob(params.data);
                             const commissions = JSON.parse(decodedString);
                             let resultingData = Object.assign(Object.assign({}, self._data), { commissions });
-                            await this.setData(resultingData);
+                            await self.setData(resultingData);
                         }
                     },
                     bindOnChanged: (element, callback) => {
                         element.onCustomCommissionsChanged = async (data) => {
                             let resultingData = Object.assign(Object.assign({}, self._data), data);
-                            await this.setData(resultingData);
+                            await self.setData(resultingData);
                             await callback(data);
                         };
                     }
@@ -6739,7 +6675,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async setData(data) {
             this._data = data;
-            this._productId = data.productId;
             this.configDApp.data = data;
             const commissionFee = index_19.getEmbedderCommissionFee();
             this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_10.BigNumber(commissionFee).times(100)}% Commission Fee)`;
@@ -6787,8 +6722,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         //   this._productId = this._data.productId = result.productId;
         // }
         async refreshDApp() {
-            var _a, _b;
-            if (!this._data.productId || this._data.productId === 0) {
+            var _a;
+            if (!this.productId || this.productId === 0) {
                 return;
             }
             this._type = this._data.productType;
@@ -6813,32 +6748,33 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else {
                 this.imgLogo.url = this.imgLogo2.url = this._data.logo;
             }
-            this.productInfo = await API_1.getProductInfo(this._data.productId);
+            this.productInfo = await API_1.getProductInfo(this.productId);
             if (this.productInfo) {
                 const token = this.productInfo.token;
                 this.pnlInputFields.visible = true;
                 this.pnlUnsupportedNetwork.visible = false;
+                const price = eth_wallet_10.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
                 if (this._type === index_17.ProductType.Buy) {
-                    this.lblTitle.caption = `Mint Fee: ${(_b = this._data.price) !== null && _b !== void 0 ? _b : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
+                    this.lblTitle.caption = `Mint Fee: ${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
                     this.btnSubmit.caption = 'Mint';
                     this.lblRef.caption = 'smart contract:';
                     this.updateSpotsRemaining();
                     this.gridTokenInput.visible = false;
                 }
                 else {
-                    this.lblTitle.caption = new eth_wallet_10.BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
+                    this.lblTitle.caption = 'Make a Contributon';
                     this.btnSubmit.caption = 'Submit';
-                    this.lblRef.caption = new eth_wallet_10.BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
+                    this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
                     this.gridTokenInput.visible = true;
                 }
                 this.edtQty.value = "";
                 this.edtAmount.value = "";
                 this.lbOrderTotal.caption = "0";
-                this.pnlSpotsRemaining.visible = new eth_wallet_10.BigNumber(this._data.price).gt(0);
-                this.pnlBlockchain.visible = new eth_wallet_10.BigNumber(this._data.price).gt(0);
-                this.pnlQty.visible = new eth_wallet_10.BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
+                this.pnlSpotsRemaining.visible = new eth_wallet_10.BigNumber(price).gt(0);
+                this.pnlBlockchain.visible = new eth_wallet_10.BigNumber(price).gt(0);
+                this.pnlQty.visible = new eth_wallet_10.BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
                 this.lblAddress.caption = this.contractAddress;
-                // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
+                // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
                 this.tokenSelection.chainId = index_20.getChainId();
                 this.tokenSelection.token = token;
                 this.updateTokenBalance();
@@ -6850,12 +6786,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         updateSpotsRemaining() {
-            var _a, _b, _c;
-            if (this._data.productId >= 0) {
-                this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}/${(_a = this._data.qty) !== null && _a !== void 0 ? _a : 0}`;
+            if (this.productId >= 0) {
+                this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}`;
             }
             else {
-                this.lblSpotsRemaining.caption = `${(_b = this._data.qty) !== null && _b !== void 0 ? _b : 0}/${(_c = this._data.qty) !== null && _c !== void 0 ? _c : 0}`;
+                this.lblSpotsRemaining.caption = '';
             }
         }
         async initWalletData() {
@@ -6944,7 +6879,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateContractAddress() {
             if (this.approvalModelAction) {
-                if (!this._data.commissions || this._data.commissions.length == 0) {
+                if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == index_20.getChainId())) {
                     this.contractAddress = index_19.getContractAddress('ProductInfo');
                 }
                 else {
@@ -6975,7 +6910,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.tokenAmountIn = '0';
             }
             else {
-                this.tokenAmountIn = API_1.getProxyTokenAmountIn(this._data.price, qty, this._data.commissions);
+                this.tokenAmountIn = API_1.getProxyTokenAmountIn(this.productInfo.price.toFixed(), qty, this._data.commissions);
             }
             this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
         }
@@ -6985,7 +6920,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.tokenAmountIn = '0';
             }
             else {
-                this.tokenAmountIn = API_1.getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
+                this.tokenAmountIn = API_1.getProxyTokenAmountIn(this.productInfo.price.toFixed(), amount, this._data.commissions);
             }
             const commissionFee = index_19.getEmbedderCommissionFee();
             const total = new eth_wallet_10.BigNumber(amount).plus(new eth_wallet_10.BigNumber(amount).times(commissionFee));
@@ -6995,7 +6930,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async doSubmitAction() {
             var _a;
-            if (!this._data || !this._productId)
+            if (!this._data || !this.productId)
                 return;
             this.updateSubmitButton(true);
             // const chainId = getChainId();
@@ -7020,7 +6955,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const token = this.productInfo.token;
             const balance = await index_18.getTokenBalance(token);
             if (this._type === index_17.ProductType.Buy) {
-                if (this.edtQty.value && Number(this.edtQty.value) > this._data.maxOrderQty) {
+                if (this.edtQty.value && new eth_wallet_10.BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
                     this.mdAlert.message = {
                         status: 'error',
                         content: 'Quantity Greater Than Max Quantity'
@@ -7029,7 +6964,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
-                if (this._data.maxOrderQty > 1 && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
+                if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
                     this.mdAlert.message = {
                         status: 'error',
                         content: 'Invalid Quantity'
@@ -7038,9 +6973,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
-                const requireQty = this._data.maxOrderQty > 1 && this.edtQty.value ? Number(this.edtQty.value) : 1;
-                if (this._data.productId >= 0) {
-                    const product = await API_1.getProductInfo(this._data.productId);
+                const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
+                if (this.productId >= 0) {
+                    const product = await API_1.getProductInfo(this.productId);
                     if (product.quantity.lt(requireQty)) {
                         this.mdAlert.message = {
                             status: 'error',
@@ -7051,7 +6986,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return;
                     }
                 }
-                const maxOrderQty = new eth_wallet_10.BigNumber((_a = this._data.maxOrderQty) !== null && _a !== void 0 ? _a : 0);
+                const maxOrderQty = new eth_wallet_10.BigNumber((_a = this.productInfo.maxQuantity) !== null && _a !== void 0 ? _a : 0);
                 if (maxOrderQty.minus(requireQty).lt(0)) {
                     this.mdAlert.message = {
                         status: 'error',
@@ -7061,7 +6996,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
-                const amount = new eth_wallet_10.BigNumber(this._data.price).times(requireQty);
+                const amount = this.productInfo.price.times(requireQty);
                 if (balance.lt(amount)) {
                     this.mdAlert.message = {
                         status: 'error',
@@ -7105,7 +7040,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.approvalModelAction.doPayAction();
         }
         async buyToken(quantity) {
-            if (this._data.productId === undefined || this._data.productId === null)
+            if (this.productId === undefined || this.productId === null)
                 return;
             const callback = (error, receipt) => {
                 if (error) {
@@ -7118,12 +7053,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             };
             const token = this.productInfo.token;
             if (this._data.productType == index_17.ProductType.DonateToOwner || this._data.productType == index_17.ProductType.DonateToEveryone) {
-                await API_1.donate(this._data.productId, this._data.donateTo, this.edtAmount.value, this._data.commissions, token, callback, async () => {
+                await API_1.donate(this.productId, this.donateTo, this.edtAmount.value, this._data.commissions, token, callback, async () => {
                     await this.updateTokenBalance();
                 });
             }
             else if (this._data.productType == index_17.ProductType.Buy) {
-                await API_1.buyProduct(this._data.productId, quantity, this._data.commissions, token, callback, async () => {
+                await API_1.buyProduct(this.productId, quantity, this._data.commissions, token, callback, async () => {
                     await this.updateTokenBalance();
                     this.updateSpotsRemaining();
                 });
@@ -7189,8 +7124,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
     };
     ScomNftMinter = __decorate([
-        components_12.customModule,
-        components_12.customElements('i-scom-nft-minter')
+        components_11.customModule,
+        components_11.customElements('i-scom-nft-minter')
     ], ScomNftMinter);
     exports.default = ScomNftMinter;
 });

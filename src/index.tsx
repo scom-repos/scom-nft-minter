@@ -17,8 +17,8 @@ import {
   IDataSchema,
   ControlElement,
 } from '@ijstech/components';
-import { BigNumber, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
-import { IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
+import { BigNumber, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
+import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, getTokenList, setDataFromSCConfig, SupportedNetworks, INetwork } from './store/index';
 import { connectWallet, getChainId, hasWallet, isWalletConnected } from './wallet/index';
@@ -36,13 +36,8 @@ interface ScomNftMinterElement extends ControlElement {
   description?: string;
   hideDescription?: boolean;
   logo?: string;
-  donateTo?: string;
-  maxOrderQty?: number;
-  maxPrice?: string;
-  price?: string;
-  qty?: number;
-  productId?: number;
   link?: string;
+  chainSpecificProperties?: Record<number, IChainSpecificProperties>;
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -90,7 +85,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
-  private _productId: number | undefined;
   private _oldData: IEmbedData = {};
   private _data: IEmbedData = {};
   private $eventBus: IEventBus;
@@ -139,22 +133,16 @@ export default class ScomNftMinter extends Module implements PageBlock {
     //   }
     // }
 
-    this._data.donateTo = this.getAttribute('donateTo', true);
     this._data.link = this.getAttribute('link', true);
-    this._data.maxOrderQty = this.getAttribute('maxOrderQty', true);
-    this._data.maxPrice = this.getAttribute('maxPrice', true);
-    this._data.price = this.getAttribute('price', true);
-    this._data.qty = this.getAttribute('qty', true);
-    this._data.productId = this.getAttribute('productId', true);
     this._data.productType = this.getAttribute('productType', true);
     this._data.name = this.getAttribute('name', true);
     this._data.description = this.getAttribute('description', true);
     this._data.hideDescription = this.getAttribute('hideDescription', true);
     this._data.logo = this.getAttribute('logo', true);
+    this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
 
     const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
-    this._productId = this._data.productId;
 
     this.updateContractAddress();
     await this.refreshDApp();
@@ -169,11 +157,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   get donateTo() {
-    return this._data.donateTo ?? '';
-  }
-
-  set donateTo(value: string) {
-    this._data.donateTo = value;
+    return this._data.chainSpecificProperties?.[getChainId()]?.donateTo ?? '';
   }
 
   get link() {
@@ -184,44 +168,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.link = value;
   }
 
-  get maxOrderQty() {
-    return this._data.maxOrderQty ?? 0;
-  }
-
-  set maxOrderQty(value: number) {
-    this._data.maxOrderQty = value;
-  }
-
-  get maxPrice() {
-    return this._data.maxPrice ?? "0";
-  }
-
-  set maxPrice(value: string) {
-    this._data.maxPrice = value;
-  }
-
-  get price() {
-    return this._data.price ?? "0";
-  }
-
-  set price(value: string) {
-    this._data.price = value;
-  }
-
-  get qty() {
-    return this._data.qty ?? 0;
-  }
-
-  set qty(value: number) {
-    this._data.qty = value;
-  }
-
   get productId() {
-    return this._data.productId ?? 0;
-  }
-
-  set productId(value: number) {
-    this._data.productId = value;
+    return this._data.chainSpecificProperties?.[getChainId()]?.productId ?? 0;
   }
 
   get productType() {
@@ -270,6 +218,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set commissions(value: any) {
     this._data.commissions = value;
+  }
+
+  get chainSpecificProperties() {
+    return this._data.chainSpecificProperties ?? {};
+  }
+
+  set chainSpecificProperties(value: any) {
+    this._data.chainSpecificProperties = value;
   }
 
   private registerEvent() {
@@ -367,29 +323,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
         // "productType": {
         //   type: 'string'
         // },           
-        "donateTo": {
-          type: 'string',
-          default: Wallet.getClientInstance().address,
-          format: "wallet-address"
-        },
-        // "productId": {
-        //   type: 'number'
+        // "donateTo": {
+        //   type: 'string',
+        //   default: Wallet.getClientInstance().address,
+        //   format: "wallet-address"
         // },
         "link": {
           type: 'string'
-        },
-        // "price": {
-        //   type: 'string'
-        // },
-        // "maxPrice": {
-        //   type: 'string'
-        // },
-        // "maxOrderQty": {
-        //   type: 'number'
-        // },
-        // "qty": {
-        //   type: 'number'
-        // }
+        }
       }
     };
     if (!this._data.hideDescription) {
@@ -438,16 +379,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
               this._oldData = { ...this._data };
               if (userInputData.name != undefined) this._data.name = userInputData.name;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
-              if (userInputData.productId != undefined) this._data.productId = userInputData.productId;
-              if (userInputData.donateTo != undefined) this._data.donateTo = userInputData.donateTo;
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
               if (userInputData.description != undefined) this._data.description = userInputData.description;
               if (userInputData.link != undefined) this._data.link = userInputData.link;
-              if (userInputData.price != undefined) this._data.price = userInputData.price;
-              if (userInputData.maxPrice != undefined) this._data.maxPrice = userInputData.maxPrice;
-              if (userInputData.maxOrderQty != undefined) this._data.maxOrderQty = userInputData.maxOrderQty;
-              if (userInputData.qty != undefined) this._data.qty = userInputData.qty;
-              this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
               // await this.newProduct((error: Error, receipt?: string) => {
@@ -463,7 +397,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
             },
             undo: () => {
               this._data = { ...this._oldData };
-              this._productId = this._data.productId;
               this.configDApp.data = this._data;
               this.refreshDApp();
               if (builder?.setData) builder.setData(this._data);
@@ -509,7 +442,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
         target: 'Embedders',
         elementName: 'i-scom-nft-minter-config',
         getLinkParams: () => {
-          const commissions = this._data.commissions || [];
+          const commissions = self._data.commissions || [];
           return {
             data: window.btoa(JSON.stringify(commissions))
           }
@@ -522,7 +455,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
               ...self._data,
               commissions
             };
-            await this.setData(resultingData);
+            await self.setData(resultingData);
           }
         },        
         bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => {
@@ -531,7 +464,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
               ...self._data,
               ...data
             };
-            await this.setData(resultingData);
+            await self.setData(resultingData);
             await callback(data);
           }
         }
@@ -545,7 +478,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   async setData(data: IEmbedData) {
     this._data = data;
-    this._productId = data.productId;
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
@@ -598,7 +530,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   // }
 
   private async refreshDApp() {
-    if (!this._data.productId || this._data.productId === 0) {
+    if (!this.productId || this.productId === 0) {
       return;
     }
     this._type = this._data.productType;
@@ -624,32 +556,33 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.imgLogo.url = this.imgLogo2.url = this._data.logo;
     }
 
-    this.productInfo = await getProductInfo(this._data.productId);
+    this.productInfo = await getProductInfo(this.productId);
+    
     if (this.productInfo) {
       const token = this.productInfo.token;
       this.pnlInputFields.visible = true;
       this.pnlUnsupportedNetwork.visible = false;
-
+      const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
       if (this._type === ProductType.Buy) {
-        this.lblTitle.caption = `Mint Fee: ${this._data.price ?? ""} ${token?.symbol || ""}`;
+        this.lblTitle.caption = `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
         this.btnSubmit.caption = 'Mint';
         this.lblRef.caption = 'smart contract:';
         this.updateSpotsRemaining();
         this.gridTokenInput.visible = false;
       } else {
-        this.lblTitle.caption = new BigNumber(this._data.price).isZero() ? 'Make a Contributon' : '';
+        this.lblTitle.caption = 'Make a Contributon';
         this.btnSubmit.caption = 'Submit';
-        this.lblRef.caption = new BigNumber(this._data.price).isZero() ? 'All proceeds will go to following vetted wallet address:' : '';
+        this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
         this.gridTokenInput.visible = true;
       }
       this.edtQty.value = "";
       this.edtAmount.value = "";
       this.lbOrderTotal.caption = "0";
-      this.pnlSpotsRemaining.visible = new BigNumber(this._data.price).gt(0);
-      this.pnlBlockchain.visible = new BigNumber(this._data.price).gt(0);
-      this.pnlQty.visible = new BigNumber(this._data.price).gt(0) && this._data.maxOrderQty > 1;
+      this.pnlSpotsRemaining.visible = new BigNumber(price).gt(0);
+      this.pnlBlockchain.visible = new BigNumber(price).gt(0);
+      this.pnlQty.visible = new BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
       this.lblAddress.caption = this.contractAddress;
-      // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(this._data.price).gt(0);
+      // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
       this.tokenSelection.chainId = getChainId();
       this.tokenSelection.token = token;
       this.updateTokenBalance();
@@ -662,10 +595,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   private updateSpotsRemaining() {
-    if (this._data.productId >= 0) {
-      this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}/${this._data.qty ?? 0}`;
+    if (this.productId >= 0) {
+      this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}`;
     } else {
-      this.lblSpotsRemaining.caption = `${this._data.qty ?? 0}/${this._data.qty ?? 0}`;
+      this.lblSpotsRemaining.caption = '';
     }
   }
 
@@ -757,7 +690,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   updateContractAddress() {
     if (this.approvalModelAction) {
-      if (!this._data.commissions || this._data.commissions.length == 0) {
+      if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == getChainId())) {
         this.contractAddress = getContractAddress('ProductInfo');
       }
       else {
@@ -792,7 +725,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.tokenAmountIn = '0';
     }
     else {
-      this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, qty, this._data.commissions);
+      this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), qty, this._data.commissions);
     }
     this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
   }
@@ -803,7 +736,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.tokenAmountIn = '0';
     }
     else {
-      this.tokenAmountIn = getProxyTokenAmountIn(this._data.price, amount, this._data.commissions);
+      this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), amount, this._data.commissions);
     }
     const commissionFee = getEmbedderCommissionFee();
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
@@ -813,7 +746,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   private async doSubmitAction() {
-    if (!this._data || !this._productId) return;
+    if (!this._data || !this.productId) return;
     this.updateSubmitButton(true);
     // const chainId = getChainId();
     if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenSelection.token) {
@@ -837,7 +770,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     const token = this.productInfo.token
     const balance = await getTokenBalance(token);
     if (this._type === ProductType.Buy) {
-      if (this.edtQty.value && Number(this.edtQty.value) > this._data.maxOrderQty) {
+      if (this.edtQty.value && new BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
         this.mdAlert.message = {
           status: 'error',
           content: 'Quantity Greater Than Max Quantity'
@@ -846,7 +779,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
         this.updateSubmitButton(false);
         return;
       }
-      if (this._data.maxOrderQty > 1 && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
+      if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
         this.mdAlert.message = {
           status: 'error',
           content: 'Invalid Quantity'
@@ -855,9 +788,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
         this.updateSubmitButton(false);
         return;
       }
-      const requireQty = this._data.maxOrderQty > 1 && this.edtQty.value ? Number(this.edtQty.value) : 1;
-      if (this._data.productId >= 0) {
-        const product = await getProductInfo(this._data.productId);
+      const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
+      if (this.productId >= 0) {
+        const product = await getProductInfo(this.productId);
         if (product.quantity.lt(requireQty)) {
           this.mdAlert.message = {
             status: 'error',
@@ -868,7 +801,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
           return;
         }
       }
-      const maxOrderQty = new BigNumber(this._data.maxOrderQty ?? 0);
+      const maxOrderQty = new BigNumber(this.productInfo.maxQuantity ?? 0);
       if (maxOrderQty.minus(requireQty).lt(0)) {
         this.mdAlert.message = {
           status: 'error',
@@ -879,7 +812,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
         return;
       }
 
-      const amount = new BigNumber(this._data.price).times(requireQty);
+      const amount = this.productInfo.price.times(requireQty);
       if (balance.lt(amount)) {
         this.mdAlert.message = {
           status: 'error',
@@ -924,7 +857,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   private async buyToken(quantity: number) {
-    if (this._data.productId === undefined || this._data.productId === null) return;
+    if (this.productId === undefined || this.productId === null) return;
     const callback = (error: Error, receipt?: string) => {
       if (error) {
         this.mdAlert.message = {
@@ -936,14 +869,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
     };
     const token = this.productInfo.token;
     if (this._data.productType == ProductType.DonateToOwner || this._data.productType == ProductType.DonateToEveryone) {
-      await donate(this._data.productId, this._data.donateTo, this.edtAmount.value, this._data.commissions, token, callback,
+      await donate(this.productId, this.donateTo, this.edtAmount.value, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
         }
       );
     }
     else if (this._data.productType == ProductType.Buy) {
-      await buyProduct(this._data.productId, quantity, this._data.commissions, token, callback,
+      await buyProduct(this.productId, quantity, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
           this.updateSpotsRemaining();

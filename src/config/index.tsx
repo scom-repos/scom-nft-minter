@@ -6,10 +6,6 @@ import {
   Control,
   Styles,
   Input,
-  Upload,
-  Markdown,
-  IComboItem,
-  ComboBox,
   Table,
   Icon,
   Modal,
@@ -17,7 +13,6 @@ import {
   Button
 } from '@ijstech/components';
 import { ICommissionInfo, IEmbedData } from '../interface/index';
-import { textareaStyle } from './index.css';
 import { BigNumber } from '@ijstech/eth-wallet';
 import { formatNumber, isWalletAddress } from '../utils/index';
 import ScomNetworkPicker from '../network-picker/index';
