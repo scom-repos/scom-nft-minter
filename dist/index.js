@@ -3613,7 +3613,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
     });
     exports.inputGroupStyle = components_9.Styles.style({
         border: '2px solid transparent',
-        background: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
+        // background: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
         backgroundOrigin: 'border-box !important',
         backgroundClip: 'content-box, border-box !important',
         borderRadius: 16
