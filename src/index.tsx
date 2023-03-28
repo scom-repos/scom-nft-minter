@@ -242,7 +242,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.onSetupPage(connected);
     }
     if (connected) {
-      await this.updateTokenBalance();
+      this.updateContractAddress();
+      this.refreshDApp();
     }
   }
 
@@ -530,9 +531,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
   // }
 
   private async refreshDApp() {
-    if (!this.productId || this.productId === 0) {
-      return;
-    }
     this._type = this._data.productType;
     if (this._data.hideDescription) {
       this.pnlDescription.visible = false;
@@ -556,8 +554,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.imgLogo.url = this.imgLogo2.url = this._data.logo;
     }
 
-    this.productInfo = await getProductInfo(this.productId);
-    
+    if (!this.productId || this.productId === 0) {
+      return;
+    }
+    this.productInfo = await getProductInfo(this.productId);  
     if (this.productInfo) {
       const token = this.productInfo.token;
       this.pnlInputFields.visible = true;

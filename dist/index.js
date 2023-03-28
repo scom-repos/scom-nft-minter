@@ -6324,7 +6324,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.onSetupPage(connected);
                 }
                 if (connected) {
-                    await this.updateTokenBalance();
+                    this.updateContractAddress();
+                    this.refreshDApp();
                 }
             };
             this.onChainChanged = async () => {
@@ -6723,9 +6724,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         // }
         async refreshDApp() {
             var _a;
-            if (!this.productId || this.productId === 0) {
-                return;
-            }
             this._type = this._data.productType;
             if (this._data.hideDescription) {
                 this.pnlDescription.visible = false;
@@ -6747,6 +6745,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             else {
                 this.imgLogo.url = this.imgLogo2.url = this._data.logo;
+            }
+            if (!this.productId || this.productId === 0) {
+                return;
             }
             this.productInfo = await API_1.getProductInfo(this.productId);
             if (this.productInfo) {
