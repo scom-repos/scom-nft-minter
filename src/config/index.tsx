@@ -238,6 +238,7 @@ export default class Config extends Module {
             <i-scom-network-picker
               id='networkPicker'
               grid={{ area: 'network' }}
+              type='combobox'
               networks={SupportedNetworks}
               onCustomNetworkSelected={this.onNetworkSelected}
             />

@@ -3354,7 +3354,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                         this.$render("i-hstack", { width: '100%', horizontalAlignment: 'center', grid: { area: 'title' } },
                             this.$render("i-label", { caption: "Add Commission" })),
                         this.$render("i-label", { caption: "Network", grid: { area: 'lbNetwork' } }),
-                        this.$render("i-scom-network-picker", { id: 'networkPicker', grid: { area: 'network' }, networks: index_8.SupportedNetworks, onCustomNetworkSelected: this.onNetworkSelected }),
+                        this.$render("i-scom-network-picker", { id: 'networkPicker', grid: { area: 'network' }, type: 'combobox', networks: index_8.SupportedNetworks, onCustomNetworkSelected: this.onNetworkSelected }),
                         this.$render("i-label", { caption: "Wallet Address", grid: { area: 'lbWalletAddress' } }),
                         this.$render("i-input", { id: 'inputWalletAddress', grid: { area: 'walletAddress' }, width: '100%', onChanged: this.onInputWalletAddressChanged }),
                         this.$render("i-label", { id: 'lbErrMsg', font: { color: '#ed5748' }, grid: { area: 'errMsg' } }),
@@ -6306,91 +6306,20 @@ define("@scom/scom-nft-minter/scconfig.json.ts", ["require", "exports"], functio
 define("@scom/scom-nft-minter/scom-network-picker/assets.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_11) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.assets = void 0;
     const moduleDir = components_11.application.currentModuleDir;
-    class Assets {
-        static get instance() {
-            if (!this._instance)
-                this._instance = new this();
-            return this._instance;
-        }
-        get logo() {
-            let currentTheme = components_11.Styles.Theme.currentTheme;
-            let theme = currentTheme === components_11.Styles.Theme.defaultTheme ? "light" : "dark";
-            let _logo = this._getLogo(this.viewport, theme);
-            return _logo;
-        }
-        set breakpoints(value) {
-            this._breakpoints = value;
-        }
-        get breakpoints() {
-            return this._breakpoints;
-        }
-        get viewport() {
-            var _a, _b;
-            if (window.innerWidth > ((_a = this._breakpoints) === null || _a === void 0 ? void 0 : _a.tablet))
-                return "desktop";
-            else if (window.innerWidth > ((_b = this._breakpoints) === null || _b === void 0 ? void 0 : _b.mobile))
-                return "tablet";
-            else
-                return "mobile";
-        }
-        _getLogoPath(viewport, theme, type) {
-            let asset = components_11.application.assets(`logo/${type}`) || components_11.application.assets(`logo`);
-            let path;
-            if (typeof asset === 'object') {
-                if (typeof asset[viewport] === 'object') {
-                    path = asset[viewport][theme];
-                }
-                else if (typeof asset[viewport] === 'string') {
-                    path = asset[viewport];
-                }
-                else if (asset[theme]) {
-                    4;
-                    path = asset[theme];
-                }
-            }
-            else if (typeof asset === 'string') {
-                path = asset;
-            }
-            return path;
-        }
-        _getLogo(viewport, theme) {
-            const header = this._getLogoPath(viewport, theme, "header");
-            const footer = this._getLogoPath(viewport, theme, "footer");
-            return { header, footer };
-        }
-    }
-    exports.assets = Assets.instance;
     function fullPath(path) {
         return `${moduleDir}/${path}`;
     }
     ;
     exports.default = {
-        fonts: {
-            poppins: {
-                bold: fullPath('fonts/poppins/PoppinsBold.ttf'),
-                italic: fullPath('fonts/poppins/PoppinsItalic.ttf'),
-                light: fullPath('fonts/poppins/PoppinsLight.ttf'),
-                medium: fullPath('fonts/poppins/PoppinsMedium.ttf'),
-                regular: fullPath('fonts/poppins/PoppinsRegular.ttf'),
-                thin: fullPath('fonts/poppins/PoppinsThin.ttf'),
-            }
-        },
         img: {
             network: {
-                bsc: fullPath('img/network/bsc.svg'),
-                eth: fullPath('img/network/eth.svg'),
-                amio: fullPath('img/network/amio.svg'),
-                avax: fullPath('img/network/avax.svg'),
-                ftm: fullPath('img/network/ftm.svg'),
-                polygon: fullPath('img/network/polygon.svg'),
-            },
-            wallet: {
-                metamask: fullPath('img/wallet/metamask.png'),
-                trustwallet: fullPath('img/wallet/trustwallet.svg'),
-                binanceChainWallet: fullPath('img/wallet/binance-chain-wallet.svg'),
-                walletconnect: fullPath('img/wallet/walletconnect.svg')
+                bsc: fullPath('img/network/bsc.png'),
+                eth: fullPath('img/network/eth.png'),
+                amio: fullPath('img/network/amio.png'),
+                avax: fullPath('img/network/avax.png'),
+                ftm: fullPath('img/network/ftm.png'),
+                polygon: fullPath('img/network/polygon.png'),
             }
         },
         fullPath
