@@ -235,7 +235,7 @@ export default class Config extends Module {
             </i-hstack>
 
             <i-label caption="Network" grid={{ area: 'lbNetwork' }} />
-            <i-scom-nft-minter-network-picker
+            <i-scom-network-picker
               id='networkPicker'
               grid={{ area: 'network' }}
               networks={SupportedNetworks}

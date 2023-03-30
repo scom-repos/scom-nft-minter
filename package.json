@@ -15,7 +15,8 @@
         "@ijstech/eth-contract": "^0.1.10",
         "@ijstech/eth-wallet": "^0.1.35",
         "@scom/scom-product-contract": "^0.1.2",
-        "@scom/scom-commission-proxy-contract": "^0.1.2"
+        "@scom/scom-commission-proxy-contract": "^0.1.2",
+        "@scom/scom-network-picker": "file:./repos/scom-network-picker"
     },
     "scripts": {
         "copy": "sh ./scripts/copy.sh",

@@ -28,7 +28,9 @@ import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupS
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import scconfig from './scconfig.json';
-import ScomNetworkPicker from './network-picker/index';
+// import ScomNetworkPicker from './network-picker/index';
+import ScomNetworkPicker from './scom-network-picker/index';
+export { ScomNetworkPicker }
 
 interface ScomNftMinterElement extends ControlElement {
   name?: string;
@@ -938,9 +940,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
                   ]
                 }>
                 <i-label caption="Network" grid={{ area: 'lbNetwork' }} font={{ size: '0.875rem' }} />
-                <i-scom-nft-minter-network-picker
+                <i-scom-network-picker
                   id='networkPicker'
                   grid={{ area: 'network' }}
+                  type="combobox"
                   networks={SupportedNetworks}
                   switchNetworkOnSelect={true}
                   selectedChainId={getChainId()}
