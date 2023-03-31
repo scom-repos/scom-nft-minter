@@ -39,10 +39,10 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     }
     export interface IEmbedData {
         name?: string;
+        title?: string;
         productType?: ProductType;
         logo?: string;
         description?: string;
-        hideDescription?: boolean;
         link?: string;
         commissions?: ICommissionInfo[];
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
@@ -2681,9 +2681,9 @@ declare module "@scom/scom-nft-minter" {
     export { ScomNetworkPicker };
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
+        title?: string;
         productType?: string;
         description?: string;
-        hideDescription?: boolean;
         logo?: string;
         link?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
@@ -2698,7 +2698,6 @@ declare module "@scom/scom-nft-minter" {
     export default class ScomNftMinter extends Module implements PageBlock {
         private gridDApp;
         private imgLogo;
-        private imgLogo2;
         private markdownViewer;
         private pnlLink;
         private lblLink;
@@ -2719,7 +2718,6 @@ declare module "@scom/scom-nft-minter" {
         private edtAmount;
         private configDApp;
         private mdAlert;
-        private pnlDescription;
         private lbOrderTotal;
         private lbOrderTotalTitle;
         private networkPicker;
@@ -2752,8 +2750,6 @@ declare module "@scom/scom-nft-minter" {
         set name(value: string);
         get description(): string;
         set description(value: string);
-        get hideDescription(): boolean;
-        set hideDescription(value: boolean);
         get logo(): string;
         set logo(value: string);
         get commissions(): any;

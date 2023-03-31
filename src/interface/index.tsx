@@ -44,10 +44,10 @@ export interface IChainSpecificProperties {
 
 export interface IEmbedData {
   name?: string;
+  title?: string;
   productType?: ProductType;
   logo?: string;
   description?: string;
-  hideDescription?: boolean;
   link?: string;
   commissions?: ICommissionInfo[];
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;

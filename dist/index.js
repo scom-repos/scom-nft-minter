@@ -7024,8 +7024,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.link = this.getAttribute('link', true);
             this._data.productType = this.getAttribute('productType', true);
             this._data.name = this.getAttribute('name', true);
+            this._data.title = this.getAttribute('title', true);
             this._data.description = this.getAttribute('description', true);
-            this._data.hideDescription = this.getAttribute('hideDescription', true);
             this._data.logo = this.getAttribute('logo', true);
             this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
             const commissionFee = index_20.getEmbedderCommissionFee();
@@ -7076,13 +7076,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set description(value) {
             this._data.description = value;
         }
-        get hideDescription() {
-            var _a;
-            return (_a = this._data.hideDescription) !== null && _a !== void 0 ? _a : false;
-        }
-        set hideDescription(value) {
-            this._data.hideDescription = value;
-        }
         get logo() {
             var _a;
             return (_a = this._data.logo) !== null && _a !== void 0 ? _a : '';
@@ -7120,16 +7113,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 type: 'object',
                 properties: {}
             };
-            if (!this._data.hideDescription) {
-                propertiesSchema.properties['description'] = {
-                    type: 'string',
-                    format: 'multi'
-                };
-                propertiesSchema.properties['logo'] = {
-                    type: 'string',
-                    format: 'data-url'
-                };
-            }
             const themeSchema = {
                 type: 'object',
                 properties: {
@@ -7172,21 +7155,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     //   default: Wallet.getClientInstance().address,
                     //   format: "wallet-address"
                     // },
+                    "description": {
+                        type: 'string',
+                        format: 'multi'
+                    },
+                    "logo": {
+                        type: 'string',
+                        format: 'data-url'
+                    },
                     "link": {
                         type: 'string'
                     }
                 }
             };
-            if (!this._data.hideDescription) {
-                propertiesSchema.properties['description'] = {
-                    type: 'string',
-                    format: 'multi'
-                };
-                propertiesSchema.properties['logo'] = {
-                    type: 'string',
-                    format: 'data-url'
-                };
-            }
             const themeSchema = {
                 type: 'object',
                 properties: {
@@ -7373,26 +7354,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async refreshDApp() {
             var _a;
             this._type = this._data.productType;
-            if (this._data.hideDescription) {
-                this.pnlDescription.visible = false;
-                this.gridDApp.templateColumns = ['1fr'];
-                this.imgLogo2.visible = true;
-            }
-            else {
-                this.pnlDescription.visible = true;
-                this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
-                this.imgLogo2.visible = false;
-            }
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
             this.lblLink.caption = this._data.link || '';
             this.lblLink.link.href = this._data.link;
             if ((_a = this._data.logo) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = index_20.getIPFSGatewayUrl();
-                this.imgLogo.url = this.imgLogo2.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
             }
             else {
-                this.imgLogo.url = this.imgLogo2.url = this._data.logo;
+                this.imgLogo.url = this._data.logo;
             }
             if (!this.productId || this.productId === 0) {
                 return;
@@ -7404,14 +7375,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.pnlUnsupportedNetwork.visible = false;
                 const price = eth_wallet_11.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
                 if (this._type === index_18.ProductType.Buy) {
-                    this.lblTitle.caption = `Mint Fee: ${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
+                    this.lblTitle.caption = this._data.title || `Mint Fee: ${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
                     this.btnSubmit.caption = 'Mint';
                     this.lblRef.caption = 'smart contract:';
                     this.updateSpotsRemaining();
                     this.gridTokenInput.visible = false;
                 }
                 else {
-                    this.lblTitle.caption = 'Make a Contributon';
+                    this.lblTitle.caption = this._data.title || 'Make a Contributon';
                     this.btnSubmit.caption = 'Submit';
                     this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
                     this.gridTokenInput.visible = true;
@@ -7718,15 +7689,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         render() {
             return (this.$render("i-panel", { background: { color: Theme.background.main } },
-                this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['repeat(2, 1fr)'], padding: { bottom: '1.563rem' } },
-                    this.$render("i-vstack", { id: "pnlDescription", padding: { top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' } },
-                        this.$render("i-hstack", { margin: { bottom: '1.25rem' } },
-                            this.$render("i-image", { id: 'imgLogo', class: index_css_4.imageStyle, height: 100 })),
-                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_4.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
+                this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
                     this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
-                        this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' } },
-                            this.$render("i-image", { id: 'imgLogo2', class: index_css_4.imageStyle, height: 100 }),
+                        this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' }, gap: "0.5rem" },
+                            this.$render("i-image", { id: 'imgLogo', class: index_css_4.imageStyle, height: 100 }),
                             this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
+                            this.$render("i-markdown", { id: 'markdownViewer', class: index_css_4.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } }),
                             this.$render("i-label", { caption: "I don't have a digital wallet", link: { href: 'https://metamask.io/' }, opacity: 0.6, font: { size: '1rem' } })),
                         this.$render("i-hstack", { id: 'pnlSpotsRemaining', visible: false, gap: '0.25rem' },
                             this.$render("i-label", { caption: 'Spots Remaining:', font: { bold: true, size: '0.875rem' } }),

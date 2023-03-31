@@ -34,9 +34,9 @@ export { ScomNetworkPicker }
 
 interface ScomNftMinterElement extends ControlElement {
   name?: string;
+  title?: string;
   productType?: string;
   description?: string;
-  hideDescription?: boolean;
   logo?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
@@ -57,7 +57,6 @@ declare global {
 export default class ScomNftMinter extends Module implements PageBlock {
   private gridDApp: GridLayout;
   private imgLogo: Image;
-  private imgLogo2: Image;
   private markdownViewer: Markdown;
   private pnlLink: HStack;
   private lblLink: Label;
@@ -78,7 +77,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private edtAmount: Input;
   private configDApp: Config;
   private mdAlert: Alert;
-  private pnlDescription: VStack;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
   private networkPicker: ScomNetworkPicker;
@@ -138,8 +136,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.link = this.getAttribute('link', true);
     this._data.productType = this.getAttribute('productType', true);
     this._data.name = this.getAttribute('name', true);
+    this._data.title = this.getAttribute('title', true);
     this._data.description = this.getAttribute('description', true);
-    this._data.hideDescription = this.getAttribute('hideDescription', true);
     this._data.logo = this.getAttribute('logo', true);
     this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
 
@@ -196,14 +194,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set description(value: string) {
     this._data.description = value;
-  }
-
-  get hideDescription() {
-    return this._data.hideDescription ?? false;
-  }
-
-  set hideDescription(value: boolean) {
-    this._data.hideDescription = value;
   }
 
   get logo() {
@@ -277,16 +267,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
       properties: {
       }
     };
-    if (!this._data.hideDescription) {
-      propertiesSchema.properties['description'] = {
-        type: 'string',
-        format: 'multi'
-      };
-      propertiesSchema.properties['logo'] = {
-        type: 'string',
-        format: 'data-url'
-      };
-    }
     const themeSchema: IDataSchema = {
       type: 'object',
       properties: {
@@ -331,21 +311,20 @@ export default class ScomNftMinter extends Module implements PageBlock {
         //   default: Wallet.getClientInstance().address,
         //   format: "wallet-address"
         // },
+        "description": {
+          type: 'string',
+          format: 'multi'
+        },
+        "logo": {
+          type: 'string',
+          format: 'data-url'
+        },
         "link": {
           type: 'string'
         }
       }
     };
-    if (!this._data.hideDescription) {
-      propertiesSchema.properties['description'] = {
-        type: 'string',
-        format: 'multi'
-      };
-      propertiesSchema.properties['logo'] = {
-        type: 'string',
-        format: 'data-url'
-      };
-    }
+
     const themeSchema: IDataSchema = {
       type: 'object',
       properties: {
@@ -534,26 +513,16 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private async refreshDApp() {
     this._type = this._data.productType;
-    if (this._data.hideDescription) {
-      this.pnlDescription.visible = false;
-      this.gridDApp.templateColumns = ['1fr'];
-      this.imgLogo2.visible = true;
-    }
-    else {
-      this.pnlDescription.visible = true;
-      this.gridDApp.templateColumns = ['repeat(2, 1fr)'];
-      this.imgLogo2.visible = false;
-    }
     this.markdownViewer.load(this._data.description || '');
     this.pnlLink.visible = !!this._data.link;
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
     if (this._data.logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = this.imgLogo2.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = this.imgLogo2.url = this._data.logo;
+      this.imgLogo.url = this._data.logo;
     }
 
     if (!this.productId || this.productId === 0) {
@@ -566,13 +535,13 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.pnlUnsupportedNetwork.visible = false;
       const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
       if (this._type === ProductType.Buy) {
-        this.lblTitle.caption = `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
+        this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
         this.btnSubmit.caption = 'Mint';
         this.lblRef.caption = 'smart contract:';
         this.updateSpotsRemaining();
         this.gridTokenInput.visible = false;
       } else {
-        this.lblTitle.caption = 'Make a Contributon';
+        this.lblTitle.caption = this._data.title || 'Make a Contributon';
         this.btnSubmit.caption = 'Submit';
         this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
         this.gridTokenInput.visible = true;
@@ -898,25 +867,20 @@ export default class ScomNftMinter extends Module implements PageBlock {
           id='gridDApp'
           width='100%'
           height='100%'
-          templateColumns={['repeat(2, 1fr)']}
+          templateColumns={['1fr']}
           padding={{ bottom: '1.563rem' }}
         >
-          <i-vstack id="pnlDescription" padding={{ top: '0.5rem', bottom: '0.5rem', left: '5.25rem', right: '5.25rem' }}>
-            <i-hstack margin={{ bottom: '1.25rem' }}>
-              <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
-            </i-hstack>
-            <i-markdown
-              id='markdownViewer'
-              class={markdownStyle}
-              width='100%'
-              height='100%'
-              margin={{ bottom: '0.563rem' }}
-            ></i-markdown>
-          </i-vstack>
           <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
-            <i-vstack class="text-center" margin={{ bottom: '0.25rem' }}>
-              <i-image id='imgLogo2' class={imageStyle} height={100}></i-image>
+            <i-vstack class="text-center" margin={{ bottom: '0.25rem' }} gap="0.5rem">
+              <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
               <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
+              <i-markdown
+                id='markdownViewer'
+                class={markdownStyle}
+                width='100%'
+                height='100%'
+                margin={{ bottom: '0.563rem' }}
+              ></i-markdown>
               <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
             </i-vstack>
             <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>

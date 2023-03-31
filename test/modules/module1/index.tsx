@@ -16,8 +16,7 @@ export default class Module1 extends Module {
             logo: "ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte",
             productType: "DonateToEveryone",
             description: "#### If you'd like to support my work and help me create more exciting content, you can now make a donation using OSWAP. Your donation will help me continue creating high-quality videos and projects, and it's much appreciated. Thank you for your support, and please feel free to contact me if you have any questions or feedback.",
-            link: "",
-            hideDescription: true
+            link: ""
         });
         this.mainStack.appendChild(this.nftMinter1);
     }
@@ -28,7 +27,6 @@ export default class Module1 extends Module {
                 <i-scom-nft-minter
                     logo="ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte"
                     productType="DonateToEveryone"
-                    hideDescription={true}
                 ></i-scom-nft-minter>
             </i-hstack>
         </i-panel>
