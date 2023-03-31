@@ -45,7 +45,6 @@ export class TokenSelection extends Module {
   private _readonly: boolean = false;
   public onSelectToken: selectTokenCallback;
   private _chainId: number;
-  private isInited: boolean = false;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -83,7 +82,6 @@ export class TokenSelection extends Module {
   }
 
   private onSetup(init?: boolean) {
-    if (!this.isInited) this.init();
     this.renderTokenItems();
     if (init && this.token && !this.readonly) {
       const chainId = getChainId();
@@ -136,6 +134,7 @@ export class TokenSelection extends Module {
   }
 
   private renderTokenItems() {
+    if (!this.gridTokenList) return
     this.gridTokenList.clearInnerHTML();
     const _tokenList = this.tokenList;
     if (_tokenList.length) {
@@ -212,8 +211,7 @@ export class TokenSelection extends Module {
   
   init() {
     super.init();
-    this.readonly = this.getAttribute('readonly', true, false); 
-    this.isInited = true;
+    this.readonly = this.getAttribute('readonly', true, false);
   }
 
   render() {

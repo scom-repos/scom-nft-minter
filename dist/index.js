@@ -3424,7 +3424,6 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
         constructor(parent, options) {
             super(parent, options);
             this._readonly = false;
-            this.isInited = false;
             this.sortToken = (a, b, asc) => {
                 const _symbol1 = a.symbol.toLowerCase();
                 const _symbol2 = b.symbol.toLowerCase();
@@ -3473,8 +3472,6 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
             }
         }
         onSetup(init) {
-            if (!this.isInited)
-                this.init();
             this.renderTokenItems();
             if (init && this.token && !this.readonly) {
                 const chainId = index_10.getChainId();
@@ -3511,6 +3508,8 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
             }).sort(this.sortToken);
         }
         renderTokenItems() {
+            if (!this.gridTokenList)
+                return;
             this.gridTokenList.clearInnerHTML();
             const _tokenList = this.tokenList;
             if (_tokenList.length) {
@@ -3564,7 +3563,6 @@ define("@scom/scom-nft-minter/token-selection/index.tsx", ["require", "exports",
         init() {
             super.init();
             this.readonly = this.getAttribute('readonly', true, false);
-            this.isInited = true;
         }
         render() {
             return (this.$render("i-panel", null,
@@ -7029,6 +7027,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.logo = this.getAttribute('logo', true);
             this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
             const commissionFee = index_20.getEmbedderCommissionFee();
+            if (!this.lbOrderTotalTitle.isConnected)
+                await this.lbOrderTotalTitle.ready();
             this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_11.BigNumber(commissionFee).times(100)}% Commission Fee)`;
             this.updateContractAddress();
             await this.refreshDApp();
@@ -7356,6 +7356,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._type = this._data.productType;
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
+            (!this.lblLink.isConnected) && await this.lblLink.ready();
             this.lblLink.caption = this._data.link || '';
             this.lblLink.link.href = this._data.link;
             if ((_a = this._data.logo) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
@@ -7374,6 +7375,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.pnlInputFields.visible = true;
                 this.pnlUnsupportedNetwork.visible = false;
                 const price = eth_wallet_11.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+                (!this.lblTitle.isConnected) && await this.lblTitle.ready();
+                (!this.lblRef.isConnected) && await this.lblRef.ready();
                 if (this._type === index_18.ProductType.Buy) {
                     this.lblTitle.caption = this._data.title || `Mint Fee: ${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
                     this.btnSubmit.caption = 'Mint';
@@ -7393,6 +7396,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.pnlSpotsRemaining.visible = new eth_wallet_11.BigNumber(price).gt(0);
                 this.pnlBlockchain.visible = new eth_wallet_11.BigNumber(price).gt(0);
                 this.pnlQty.visible = new eth_wallet_11.BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
+                (!this.lblAddress.isConnected) && await this.lblAddress.ready();
                 this.lblAddress.caption = this.contractAddress;
                 // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
                 this.tokenSelection.chainId = index_21.getChainId();
@@ -7703,7 +7707,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this.$render("i-label", { caption: 'Blockchain:', font: { bold: true, size: '0.875rem' } }),
                             this.$render("i-label", { id: 'lblBlockchain', font: { size: '0.875rem' } })),
                         this.$render("i-vstack", { gap: '0.5rem' },
-                            this.$render("i-grid-layout", { width: '100%', verticalAlignment: 'center', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, templateColumns: ['1fr', '2fr'], templateRows: ['auto'], templateAreas: [
+                            this.$render("i-grid-layout", { width: '100%', verticalAlignment: 'center', padding: { top: '1rem', bottom: '1rem' }, templateColumns: ['1fr', '2fr'], templateRows: ['auto'], templateAreas: [
                                     ['lbNetwork', 'network']
                                 ] },
                                 this.$render("i-label", { caption: "Network", grid: { area: 'lbNetwork' }, font: { size: '0.875rem' } }),
@@ -7717,10 +7721,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-label", { caption: "Your donation", font: { weight: 500, size: '1rem' } }),
                                         this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },
                                             this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
-                                            this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' } }))),
-                                    this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, verticalAlignment: "center", class: index_css_4.inputGroupStyle, padding: { top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' } },
-                                        this.$render("i-scom-nft-minter-token-selection", { id: 'tokenSelection', class: index_css_4.tokenSelectionStyle, background: { color: 'transparent' }, width: "100%", readonly: true, onSelectToken: this.selectToken.bind(this) }),
-                                        this.$render("i-input", { id: "edtAmount", width: '100%', height: '100%', minHeight: 40, class: index_css_4.inputStyle, inputType: 'number', font: { size: '1.25rem' }, border: { radius: 4, color: '#e3e3e38a', width: 1, style: 'solid' }, placeholder: '0.00', onChanged: this.onAmountChanged.bind(this) })),
+                                            this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
+                                    this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, verticalAlignment: "center", class: index_css_4.inputGroupStyle, padding: { top: '0.5rem', bottom: '0.5rem' } },
+                                        this.$render("i-scom-nft-minter-token-selection", { id: 'tokenSelection', class: index_css_4.tokenSelectionStyle, background: { color: 'transparent' }, width: "100%", readonly: true, margin: { left: '-0.5rem', right: '-0.5rem' }, onSelectToken: this.selectToken.bind(this) }),
+                                        this.$render("i-input", { id: "edtAmount", width: '100%', height: '100%', minHeight: 40, class: index_css_4.inputStyle, inputType: 'number', font: { size: '1.25rem' }, border: { radius: 4, style: 'none' }, placeholder: '0.00', onChanged: this.onAmountChanged.bind(this) })),
                                     this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", margin: { top: '0.75rem' } },
                                         this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
                                         this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),

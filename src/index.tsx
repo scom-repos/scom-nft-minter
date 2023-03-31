@@ -142,6 +142,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
 
     const commissionFee = getEmbedderCommissionFee();
+    if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
 
     this.updateContractAddress();
@@ -515,6 +516,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._type = this._data.productType;
     this.markdownViewer.load(this._data.description || '');
     this.pnlLink.visible = !!this._data.link;
+    (!this.lblLink.isConnected) && await this.lblLink.ready();
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
     if (this._data.logo?.startsWith('ipfs://')) {
@@ -534,6 +536,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.pnlInputFields.visible = true;
       this.pnlUnsupportedNetwork.visible = false;
       const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+      (!this.lblTitle.isConnected) && await this.lblTitle.ready();
+      (!this.lblRef.isConnected) && await this.lblRef.ready();
       if (this._type === ProductType.Buy) {
         this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
         this.btnSubmit.caption = 'Mint';
@@ -552,6 +556,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.pnlSpotsRemaining.visible = new BigNumber(price).gt(0);
       this.pnlBlockchain.visible = new BigNumber(price).gt(0);
       this.pnlQty.visible = new BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
+      (!this.lblAddress.isConnected) && await this.lblAddress.ready();
       this.lblAddress.caption = this.contractAddress;
       // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
       this.tokenSelection.chainId = getChainId();
@@ -895,7 +900,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
               <i-grid-layout
                 width='100%'
                 verticalAlignment='center'
-                padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                padding={{ top: '1rem', bottom: '1rem' }}
                 templateColumns={['1fr', '2fr']}
                 templateRows={['auto']}
                 templateAreas={
@@ -924,7 +929,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
                     <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
                       <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
-                      <i-label id='lblBalance' font={{ size: '1rem' }}></i-label>
+                      <i-label id='lblBalance' font={{ size: '1rem' }} caption="0.00"></i-label>
                     </i-hstack>
                   </i-hstack>
                   <i-grid-layout
@@ -936,7 +941,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     height={56}
                     verticalAlignment="center"
                     class={inputGroupStyle}
-                    padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}
+                    padding={{ top: '0.5rem', bottom: '0.5rem'}}
+                    // padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}
                   >
                     <i-scom-nft-minter-token-selection
                       id='tokenSelection'
@@ -944,6 +950,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                       background={{ color: 'transparent' }}
                       width="100%"
                       readonly={true}
+                      margin={{left: '-0.5rem', right: '-0.5rem'}}
                       onSelectToken={this.selectToken.bind(this)}
                     ></i-scom-nft-minter-token-selection>
                     <i-input
@@ -954,7 +961,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                       class={inputStyle}
                       inputType='number'
                       font={{ size: '1.25rem' }}
-                      border={{ radius: 4, color: '#e3e3e38a', width: 1, style: 'solid' }}
+                      border={{ radius: 4, style: 'none' }}
                       placeholder='0.00'
                       onChanged={this.onAmountChanged.bind(this)}
                     ></i-input>

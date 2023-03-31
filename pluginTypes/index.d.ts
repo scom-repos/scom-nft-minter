@@ -681,7 +681,6 @@ declare module "@scom/scom-nft-minter/token-selection/index.tsx" {
         private _readonly;
         onSelectToken: selectTokenCallback;
         private _chainId;
-        private isInited;
         constructor(parent?: Container, options?: any);
         get token(): ITokenObject | undefined;
         set token(value: ITokenObject | undefined);
