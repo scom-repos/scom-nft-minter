@@ -942,7 +942,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     verticalAlignment="center"
                     class={inputGroupStyle}
                     padding={{ top: '0.5rem', bottom: '0.5rem'}}
-                    // padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}
+                    margin={{ left: '-0.5rem', right: '-0.75rem' }}
                   >
                     <i-scom-nft-minter-token-selection
                       id='tokenSelection'
@@ -950,7 +950,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
                       background={{ color: 'transparent' }}
                       width="100%"
                       readonly={true}
-                      margin={{left: '-0.5rem', right: '-0.5rem'}}
                       onSelectToken={this.selectToken.bind(this)}
                     ></i-scom-nft-minter-token-selection>
                     <i-input
