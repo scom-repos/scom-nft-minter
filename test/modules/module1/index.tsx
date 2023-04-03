@@ -23,12 +23,12 @@ export default class Module1 extends Module {
 
     render() {
         return <i-panel>
-            <i-hstack id="mainStack" margin={{top: '1rem', left: '1rem'}} gap="2rem">
+            <i-vstack id="mainStack" margin={{top: '1rem', left: '1rem'}} gap="2rem">
                 <i-scom-nft-minter
                     logo="ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte"
                     productType="DonateToEveryone"
                 ></i-scom-nft-minter>
-            </i-hstack>
+            </i-vstack>
         </i-panel>
     }
 }
