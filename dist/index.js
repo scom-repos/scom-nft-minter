@@ -3228,6 +3228,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                             this.inputWalletAddress.value = rowData.walletAddress;
                             this.modalAddCommission.visible = true;
                         };
+                        icon.classList.add('pointer');
                         return icon;
                     }
                 },
@@ -3255,6 +3256,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                                 }
                             }
                         };
+                        icon.classList.add('pointer');
                         return icon;
                     }
                 }

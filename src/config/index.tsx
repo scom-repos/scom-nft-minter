@@ -68,6 +68,7 @@ export default class Config extends Module {
           this.inputWalletAddress.value = rowData.walletAddress;
           this.modalAddCommission.visible = true;
         }
+        icon.classList.add('pointer')
         return icon;
       }
     },
@@ -95,6 +96,7 @@ export default class Config extends Module {
             }
           }
         }
+        icon.classList.add('pointer')
         return icon;
       }
     }

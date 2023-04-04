@@ -5,6 +5,9 @@ export const textareaStyle = Styles.style({
     'textarea': {
       border: 'none',
       outline: 'none'
+    },
+    '.pointer': {
+      cursor: 'pointer'
     }
   }
 })
