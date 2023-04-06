@@ -17,11 +17,11 @@ import {
   IDataSchema,
   ControlElement,
 } from '@ijstech/components';
-import { BigNumber, Utils, Wallet, WalletPlugin } from '@ijstech/eth-wallet';
+import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, getTokenList, setDataFromSCConfig, SupportedNetworks, INetwork } from './store/index';
-import { connectWallet, getChainId, hasWallet, isWalletConnected } from './wallet/index';
+import { getChainId, isWalletConnected } from './wallet/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
@@ -109,7 +109,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
-    await this.initWalletData();
     await this.onSetupPage(isWalletConnected());
 
     // if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
@@ -575,14 +574,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}`;
     } else {
       this.lblSpotsRemaining.caption = '';
-    }
-  }
-
-  private async initWalletData() {
-    const selectedProvider = localStorage.getItem('walletProvider') as WalletPlugin;
-    const isValidProvider = Object.values(WalletPlugin).includes(selectedProvider);
-    if (hasWallet() && isValidProvider) {
-      await connectWallet(selectedProvider);
     }
   }
 

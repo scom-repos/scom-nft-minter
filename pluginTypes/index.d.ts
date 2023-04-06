@@ -110,29 +110,9 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
     export { ApprovalStatus, getERC20Allowance, getERC20ApprovalModelAction, IERC20ApprovalOptions, IERC20ApprovalAction } from "@scom/scom-nft-minter/utils/approvalModel.ts";
 }
-/// <amd-module name="@scom/scom-nft-minter/wallet/walletList.ts" />
-declare module "@scom/scom-nft-minter/wallet/walletList.ts" {
-    import { WalletPlugin } from '@ijstech/eth-wallet';
-    export const walletList: ({
-        name: WalletPlugin;
-        displayName: string;
-        img: string;
-        iconFile?: undefined;
-    } | {
-        name: WalletPlugin;
-        displayName: string;
-        iconFile: string;
-        img?: undefined;
-    })[];
-}
 /// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
 declare module "@scom/scom-nft-minter/wallet/index.ts" {
-    import { IWallet, WalletPlugin } from "@ijstech/eth-wallet";
     export function isWalletConnected(): boolean;
-    export function connectWallet(walletPlugin: WalletPlugin, eventHandlers?: {
-        [key: string]: Function;
-    }): Promise<IWallet>;
-    export const hasWallet: () => boolean;
     export const getChainId: () => number;
 }
 /// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
@@ -503,6 +483,10 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         IsWalletConnected = "isWalletConnected",
         IsWalletDisconnected = "IsWalletDisconnected",
         chainChanged = "chainChanged"
+    }
+    export enum WalletPlugin {
+        MetaMask = "metamask",
+        WalletConnect = "walletconnect"
     }
     export interface INetwork {
         chainId: number;
@@ -2600,6 +2584,10 @@ declare module "@scom/scom-nft-minter/scom-network-picker/store/interface.ts" {
 declare module "@scom/scom-nft-minter/scom-network-picker/store/index.ts" {
     import { EventId, INetwork } from "@scom/scom-nft-minter/scom-network-picker/store/interface.ts";
     export { EventId, INetwork };
+    export enum WalletPlugin {
+        MetaMask = "metamask",
+        WalletConnect = "walletconnect"
+    }
     export const networks: INetwork[];
     export const updateNetworks: (options: any) => void;
     export function getChainId(): number;
@@ -2808,7 +2796,6 @@ declare module "@scom/scom-nft-minter" {
         private updateTheme;
         private refreshDApp;
         private updateSpotsRemaining;
-        private initWalletData;
         private initApprovalAction;
         updateContractAddress(): void;
         private selectToken;
