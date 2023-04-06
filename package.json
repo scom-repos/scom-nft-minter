@@ -13,7 +13,7 @@
         "@ijstech/compiler": "^0.1.22",
         "@ijstech/components": "^0.1.29",
         "@ijstech/eth-contract": "^0.1.10",
-        "@ijstech/eth-wallet": "^0.1.35",
+        "@ijstech/eth-wallet": "^0.1.51",
         "@scom/scom-product-contract": "^0.1.2",
         "@scom/scom-commission-proxy-contract": "^0.1.2",
         "@scom/scom-network-picker": "https://github.com/scom-repos/scom-network-picker"
