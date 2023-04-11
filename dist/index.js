@@ -2833,12 +2833,12 @@ define("@scom/scom-nft-minter/scom-network-picker/assets.ts", ["require", "expor
     exports.default = {
         img: {
             network: {
-                bsc: fullPath('img/network/bsc.png'),
-                eth: fullPath('img/network/eth.png'),
-                amio: fullPath('img/network/amio.png'),
-                avax: fullPath('img/network/avax.png'),
-                ftm: fullPath('img/network/ftm.png'),
-                polygon: fullPath('img/network/polygon.png'),
+                bsc: fullPath('img/networks/bsc.png'),
+                eth: fullPath('img/networks/eth.png'),
+                amio: fullPath('img/networks/amio.png'),
+                avax: fullPath('img/networks/avax.png'),
+                ftm: fullPath('img/networks/ftm.png'),
+                polygon: fullPath('img/networks/polygon.png'),
             }
         },
         fullPath
@@ -3216,6 +3216,9 @@ define("@scom/scom-nft-minter/scom-network-picker/index.css.ts", ["require", "ex
                                 }
                             }
                         }
+                    },
+                    '&> div': {
+                        transform: 'scale(1)'
                     }
                 }
             },
@@ -3421,7 +3424,7 @@ define("@scom/scom-nft-minter/scom-network-picker/index.tsx", ["require", "expor
                 },
                 border: { radius: 5, width: '1px', style: 'solid', color: Theme.divider },
                 font: { color: Theme.text.primary },
-                rightIcon: { name: 'angle-down', width: 20, height: 20, fill: 'rgba(0,0,0,.45)' },
+                rightIcon: { name: 'angle-down', width: 20, height: 20, fill: Theme.text.primary },
                 background: { color: 'transparent' },
                 caption: this.getNetworkLabel(),
                 onClick: () => {
@@ -7486,7 +7489,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },
                                             this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
                                             this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
-                                    this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, verticalAlignment: "center", class: index_css_4.inputGroupStyle, padding: { top: '0.5rem', bottom: '0.5rem' }, margin: { left: '-0.5rem', right: '-0.75rem' } },
+                                    this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, verticalAlignment: "center", class: index_css_4.inputGroupStyle },
                                         this.$render("i-scom-nft-minter-token-selection", { id: 'tokenSelection', class: index_css_4.tokenSelectionStyle, background: { color: 'transparent' }, width: "100%", readonly: true, onSelectToken: this.selectToken.bind(this) }),
                                         this.$render("i-input", { id: "edtAmount", width: '100%', height: '100%', minHeight: 40, class: index_css_4.inputStyle, inputType: 'number', font: { size: '1.25rem' }, border: { radius: 4, style: 'none' }, placeholder: '0.00', onChanged: this.onAmountChanged.bind(this) })),
                                     this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", margin: { top: '0.75rem' } },
