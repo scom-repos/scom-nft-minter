@@ -18,7 +18,7 @@ import { ICommissionInfo, IEmbedData } from '../interface/index';
 import { BigNumber } from '@ijstech/eth-wallet';
 import { formatNumber, isWalletAddress } from '../utils/index';
 import ScomNetworkPicker from '../scom-network-picker/index';
-import { getEmbedderCommissionFee, INetwork, SupportedNetworks } from '../store/index';
+import { getEmbedderCommissionFee, getNetworkInfo, SupportedNetworks } from '../store/index';
 import assets from '../assets';
 import { customStyle, tableStyle } from './index.css'
 const Theme = Styles.Theme.ThemeVars;
@@ -51,7 +51,7 @@ export default class Config extends Module {
       onRenderCell: function (source: Control, columnData: number, rowData: any) {
         const network = SupportedNetworks.find(net => net.chainId === columnData)
         if (!network) return <i-panel></i-panel>
-        const imgUrl = assets.img.network[network.img] || ''
+        const imgUrl = getNetworkInfo(columnData)?.image || ''
         const hstack = new HStack(undefined, {
           verticalAlignment: 'center',
           gap: 5
@@ -220,7 +220,7 @@ export default class Config extends Module {
     }
   }
 
-  onNetworkSelected(network: INetwork) {
+  onNetworkSelected() {
     this.validateModalFields();
   }
 

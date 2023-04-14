@@ -1,12 +1,8 @@
 import { application } from "@ijstech/components";
 import { Wallet } from "@ijstech/eth-wallet";
 import { isWalletConnected } from "../wallet/index";
-import { DefaultTokens } from "./tokens/index";
-
-export const getTokenList = (chainId: number) => {
-  const tokenList = [...DefaultTokens[chainId]];
-  return tokenList;
-}
+import { tokenStore } from '@scom/scom-token-list'
+import getNetworkList from '@scom/scom-network-list'
 
 export const enum EventId {
   ConnectWallet = 'connectWallet',
@@ -123,4 +119,12 @@ export async function switchNetwork(chainId: number) {
   }
 }
 
-export * from './tokens/index';
+export const getToken = (chainId: number, address: string) => {
+  const tokenList = tokenStore.getTokenList(chainId)
+  return tokenList?.find(t => t.address?.toLowerCase() === address.toLowerCase());
+}
+
+export const getNetworkInfo = (chainId: number) => {
+  const defaultNetworks = getNetworkList() || [];
+  return defaultNetworks.find(v => v.chainId === chainId);
+}

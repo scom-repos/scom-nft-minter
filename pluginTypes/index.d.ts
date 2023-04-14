@@ -1,3 +1,4 @@
+/// <reference path="@scom/scom-token-list/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
@@ -115,369 +116,8 @@ declare module "@scom/scom-nft-minter/wallet/index.ts" {
     export function isWalletConnected(): boolean;
     export const getChainId: () => number;
 }
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" {
-    export const Tokens_Avalanche: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        name: string;
-        symbol: string;
-        address: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/ethereum.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/ethereum.ts" {
-    export const Tokens_Ethereuem: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        symbol: string;
-        address: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/polygon.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/polygon.ts" {
-    export const Tokens_Polygon: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts" {
-    export const Tokens_BSC: ({
-        name: string;
-        symbol: string;
-        address: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        symbol: string;
-        address: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        symbol: string;
-        address: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/fantom.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/fantom.ts" {
-    export const Tokens_Fantom: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/cronos.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/cronos.ts" {
-    export const Tokens_Cronos: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/index.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/mainnet/index.ts" {
-    export { Tokens_Avalanche } from "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts";
-    export { Tokens_Ethereuem } from "@scom/scom-nft-minter/store/tokens/mainnet/ethereum.ts";
-    export { Tokens_Polygon } from "@scom/scom-nft-minter/store/tokens/mainnet/polygon.ts";
-    export { Tokens_BSC } from "@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts";
-    export { Tokens_Fantom } from "@scom/scom-nft-minter/store/tokens/mainnet/fantom.ts";
-    export { Tokens_Cronos } from "@scom/scom-nft-minter/store/tokens/mainnet/cronos.ts";
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/kovan.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/kovan.ts" {
-    export const Tokens_Kovan: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-        isVaultToken?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-        isVaultToken?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isVaultToken: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-        isVaultToken?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts" {
-    export const Tokens_BSC_Testnet: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" {
-    export const Tokens_Fuji: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/mumbai.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/mumbai.ts" {
-    export const Tokens_Mumbai: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/fantom-testnet.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/fantom-testnet.ts" {
-    export const Tokens_Fantom_Testnet: ({
-        address: string;
-        decimals: number;
-        name: string;
-        symbol: string;
-        isWETH: boolean;
-        isCommon?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/amino.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/amino.ts" {
-    export const Tokens_Amino: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/aminoX-testnet.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/aminoX-testnet.ts" {
-    export const Tokens_AminoXTestnet: ({
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/cronos-testnet.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/cronos-testnet.ts" {
-    export const Tokens_Cronos_Testnet: ({
-        address: string;
-        name: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon: boolean;
-        isWETH?: undefined;
-    })[];
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/index.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/testnet/index.ts" {
-    export { Tokens_Kovan } from "@scom/scom-nft-minter/store/tokens/testnet/kovan.ts";
-    export { Tokens_BSC_Testnet } from "@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts";
-    export { Tokens_Fuji } from "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts";
-    export { Tokens_Mumbai } from "@scom/scom-nft-minter/store/tokens/testnet/mumbai.ts";
-    export { Tokens_Fantom_Testnet } from "@scom/scom-nft-minter/store/tokens/testnet/fantom-testnet.ts";
-    export { Tokens_Amino } from "@scom/scom-nft-minter/store/tokens/testnet/amino.ts";
-    export { Tokens_AminoXTestnet } from "@scom/scom-nft-minter/store/tokens/testnet/aminoX-testnet.ts";
-    export { Tokens_Cronos_Testnet } from "@scom/scom-nft-minter/store/tokens/testnet/cronos-testnet.ts";
-}
-/// <amd-module name="@scom/scom-nft-minter/store/tokens/index.ts" />
-declare module "@scom/scom-nft-minter/store/tokens/index.ts" {
-    import { ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
-    const DefaultERC20Tokens: {
-        [chainId: number]: ITokenObject[];
-    };
-    const ChainNativeTokenByChainId: {
-        [chainId: number]: ITokenObject;
-    };
-    const DefaultTokens: {
-        [chainId: number]: ITokenObject[];
-    };
-    export { DefaultERC20Tokens, ChainNativeTokenByChainId, DefaultTokens };
-}
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
-    export const getTokenList: (chainId: number) => import("@scom/scom-nft-minter/interface/index.tsx").ITokenObject[];
     export const enum EventId {
         ConnectWallet = "connectWallet",
         IsWalletConnected = "isWalletConnected",
@@ -525,84 +165,49 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export const getEmbedderCommissionFee: () => string;
     export const getContractAddress: (type: ContractType) => any;
     export function switchNetwork(chainId: number): Promise<void>;
-    export * from "@scom/scom-nft-minter/store/tokens/index.ts";
-}
-/// <amd-module name="@scom/scom-nft-minter/scom-network-picker/assets.ts" />
-declare module "@scom/scom-nft-minter/scom-network-picker/assets.ts" {
-    function fullPath(path: string): string;
-    const _default: {
-        img: {
-            network: {
-                bsc: string;
-                eth: string;
-                amio: string;
-                avax: string;
-                ftm: string;
-                polygon: string;
-            };
-        };
-        fullPath: typeof fullPath;
-    };
-    export default _default;
+    export const getToken: (chainId: number, address: string) => import("@scom/scom-token-list/interface.ts").ITokenObject;
+    export const getNetworkInfo: (chainId: number) => any;
 }
 /// <amd-module name="@scom/scom-nft-minter/scom-network-picker/store/interface.ts" />
 declare module "@scom/scom-nft-minter/scom-network-picker/store/interface.ts" {
-    export interface INetwork {
-        chainId: number;
-        name: string;
-        img?: string;
-        rpc?: string;
-        symbol?: string;
-        env?: string;
-        explorerName?: string;
-        explorerTxUrl?: string;
-        explorerAddressUrl?: string;
-        isDisabled?: boolean;
-    }
     export const enum EventId {
         ConnectWallet = "connectWallet",
         IsWalletConnected = "isWalletConnected",
         chainChanged = "chainChanged",
         IsWalletDisconnected = "IsWalletDisconnected"
     }
+    export interface INetworkConfig {
+        chainId: number;
+        chainName?: string;
+    }
 }
 /// <amd-module name="@scom/scom-nft-minter/scom-network-picker/store/index.ts" />
 declare module "@scom/scom-nft-minter/scom-network-picker/store/index.ts" {
-    import { EventId, INetwork } from "@scom/scom-nft-minter/scom-network-picker/store/interface.ts";
-    export { EventId, INetwork };
+    import { INetwork } from '@ijstech/eth-wallet';
+    import { EventId, INetworkConfig } from "@scom/scom-nft-minter/scom-network-picker/store/interface.ts";
+    export { EventId, INetworkConfig };
     export enum WalletPlugin {
         MetaMask = "metamask",
         WalletConnect = "walletconnect"
     }
-    export const networks: INetwork[];
-    export const updateNetworks: (options: any) => void;
-    export function getChainId(): number;
-    export function getWalletProvider(): string;
-    export const getNetworkInfo: (chainId: number) => INetwork | undefined;
-    export const getNetworkList: () => INetwork[];
-    export const getNetworkType: (chainId: number) => string;
-    export const getDefaultChainId: () => number;
-    export const getSiteSupportedNetworks: () => INetwork[];
-    export const isValidEnv: (env: string) => boolean;
-    export const getInfuraId: () => string;
-    export const getEnv: () => string;
-    export const isDefaultNetworkFromWallet: () => boolean;
     export function isWalletConnected(): boolean;
     export function switchNetwork(chainId: number): Promise<void>;
+    export const getNetworks: (value: INetworkConfig[] | '*') => INetwork[];
 }
 /// <amd-module name="@scom/scom-nft-minter/scom-network-picker/index.css.ts" />
 declare module "@scom/scom-nft-minter/scom-network-picker/index.css.ts" {
-    const _default_1: string;
-    export default _default_1;
+    const _default: string;
+    export default _default;
 }
 /// <amd-module name="@scom/scom-nft-minter/scom-network-picker/index.tsx" />
 declare module "@scom/scom-nft-minter/scom-network-picker/index.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
-    import { INetwork } from "@scom/scom-nft-minter/scom-network-picker/store/index.ts";
+    import { INetworkConfig } from "@scom/scom-nft-minter/scom-network-picker/store/index.ts";
+    import { INetwork } from '@ijstech/eth-wallet';
     type IType = 'button' | 'combobox';
     interface PickerElement extends ControlElement {
         type?: IType;
-        networks?: INetwork[] | '*';
+        networks?: INetworkConfig[] | '*';
         selectedChainId?: number;
         switchNetworkOnSelect?: boolean;
         onCustomNetworkSelected?: (network: INetwork) => void;
@@ -630,6 +235,8 @@ declare module "@scom/scom-nft-minter/scom-network-picker/index.tsx" {
         get selectedNetwork(): INetwork;
         get type(): IType;
         set type(value: IType);
+        get networkList(): INetwork[];
+        set networkList(value: INetwork[]);
         setNetworkByChainId(chainId: number): void;
         clearNetwork(): void;
         private getNetwork;
@@ -647,25 +254,11 @@ declare module "@scom/scom-nft-minter/scom-network-picker/index.tsx" {
 }
 /// <amd-module name="@scom/scom-nft-minter/assets.ts" />
 declare module "@scom/scom-nft-minter/assets.ts" {
-    import { ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
     function fullPath(path: string): string;
-    function tokenPath(tokenObj?: ITokenObject, chainId?: number): string;
-    const _default_2: {
-        logo: string;
-        img: {
-            network: {
-                bsc: string;
-                eth: string;
-                amio: string;
-                avax: string;
-                ftm: string;
-                polygon: string;
-            };
-        };
+    const _default_1: {
         fullPath: typeof fullPath;
-        tokenPath: typeof tokenPath;
     };
-    export default _default_2;
+    export default _default_1;
 }
 /// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
 declare module "@scom/scom-nft-minter/config/index.css.ts" {
@@ -676,7 +269,6 @@ declare module "@scom/scom-nft-minter/config/index.css.ts" {
 declare module "@scom/scom-nft-minter/config/index.tsx" {
     import { Module, ControlElement } from '@ijstech/components';
     import { IEmbedData } from "@scom/scom-nft-minter/interface/index.tsx";
-    import { INetwork } from "@scom/scom-nft-minter/store/index.ts";
     global {
         namespace JSX {
             interface IntrinsicElements {
@@ -706,7 +298,7 @@ declare module "@scom/scom-nft-minter/config/index.tsx" {
         onAddCommissionClicked(): void;
         onConfirmCommissionClicked(): Promise<void>;
         validateModalFields(): boolean;
-        onNetworkSelected(network: INetwork): void;
+        onNetworkSelected(): void;
         onInputWalletAddressChanged(): void;
         private toggleVisible;
         render(): any;
@@ -806,7 +398,7 @@ declare module "@scom/scom-nft-minter/alert/index.tsx" {
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/ERC1155.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/ERC1155.json.ts" {
-    const _default_3: {
+    const _default_2: {
         abi: ({
             inputs: {
                 internalType: string;
@@ -848,7 +440,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
         })[];
         bytecode: string;
     };
-    export default _default_3;
+    export default _default_2;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/ERC1155.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/ERC1155.ts" {
@@ -959,7 +551,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.json.ts" {
-    const _default_4: {
+    const _default_3: {
         abi: ({
             inputs: {
                 internalType: string;
@@ -1001,7 +593,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
         })[];
         bytecode: string;
     };
-    export default _default_4;
+    export default _default_3;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.ts" {
@@ -1259,7 +851,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ERC20.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ERC20.json.ts" {
-    const _default_5: {
+    const _default_4: {
         abi: ({
             anonymous: boolean;
             inputs: {
@@ -1290,7 +882,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
         })[];
         bytecode: string;
     };
-    export default _default_5;
+    export default _default_4;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ERC20.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ERC20.ts" {
@@ -1382,7 +974,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/Product1155.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/Product1155.json.ts" {
-    const _default_6: {
+    const _default_5: {
         abi: ({
             inputs: {
                 internalType: string;
@@ -1424,7 +1016,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
         })[];
         bytecode: string;
     };
-    export default _default_6;
+    export default _default_5;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/Product1155.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/Product1155.ts" {
@@ -1699,7 +1291,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ProductInfo.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ProductInfo.json.ts" {
-    const _default_7: {
+    const _default_6: {
         abi: ({
             inputs: {
                 internalType: string;
@@ -1741,7 +1333,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/
         })[];
         bytecode: string;
     };
-    export default _default_7;
+    export default _default_6;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ProductInfo.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/ProductInfo.ts" {
@@ -1981,17 +1573,17 @@ declare module "@scom/scom-nft-minter/contracts/scom-product-contract/index.ts" 
     export var DefaultDeployOptions: IDeployOptions;
     export function deploy(wallet: IWallet, options?: IDeployOptions): Promise<IDeployResult>;
     export function onProgress(handler: any): void;
-    const _default_8: {
+    const _default_7: {
         Contracts: typeof Contracts;
         deploy: typeof deploy;
         DefaultDeployOptions: IDeployOptions;
         onProgress: typeof onProgress;
     };
-    export default _default_8;
+    export default _default_7;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/Proxy.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/Proxy.json.ts" {
-    const _default_9: {
+    const _default_8: {
         abi: ({
             anonymous: boolean;
             inputs: {
@@ -2080,7 +1672,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/c
         })[];
         bytecode: string;
     };
-    export default _default_9;
+    export default _default_8;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/Proxy.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/Proxy.ts" {
@@ -2243,7 +1835,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/c
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV2.json.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV2.json.ts" {
-    const _default_10: {
+    const _default_9: {
         abi: ({
             anonymous: boolean;
             inputs: {
@@ -2332,7 +1924,7 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/c
         })[];
         bytecode: string;
     };
-    export default _default_10;
+    export default _default_9;
 }
 /// <amd-module name="@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV2.ts" />
 declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV2.ts" {
@@ -2514,20 +2106,20 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/i
     export var DefaultDeployOptions: IDeployOptions;
     export function deploy(wallet: IWallet, options?: IDeployOptions): Promise<IDeployResult>;
     export function onProgress(handler: any): void;
-    const _default_11: {
+    const _default_10: {
         Contracts: typeof Contracts;
         deploy: typeof deploy;
         DefaultDeployOptions: IDeployOptions;
         onProgress: typeof onProgress;
     };
-    export default _default_11;
+    export default _default_10;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
     import { ProductType, ICommissionInfo, ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
     function getProductInfo(productId: number): Promise<{
-        token: ITokenObject;
+        token: import("@scom/scom-token-list/interface.ts").ITokenObject;
         productType: BigNumber;
         productId: BigNumber;
         uri: string;
@@ -2549,7 +2141,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter/scconfig.json.ts" />
 declare module "@scom/scom-nft-minter/scconfig.json.ts" {
-    const _default_12: {
+    const _default_11: {
         env: string;
         logo: string;
         configurator: string;
@@ -2590,6 +2182,8 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
             "@scom/scom-product-contract": string;
             "@scom/scom-commission-proxy-contract": string;
             "@scom/scom-network-picker": string;
+            "@scom/scom-network-list": string;
+            "@scom/scom-token-list": string;
         };
         ipfsGatewayUrl: string;
         contractInfo: {
@@ -2618,7 +2212,7 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
         };
         embedderCommissionFee: string;
     };
-    export default _default_12;
+    export default _default_11;
 }
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {

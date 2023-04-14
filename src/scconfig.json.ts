@@ -38,7 +38,9 @@ export default {
         "@ijstech/eth-contract": "*",
         "@scom/scom-product-contract": "*",
         "@scom/scom-commission-proxy-contract": "*",
-        "@scom/scom-network-picker": "*"
+        "@scom/scom-network-picker": "*",
+        "@scom/scom-network-list": "*",
+        "@scom/scom-token-list": "*"
     },
     "ipfsGatewayUrl": "https://ipfs.scom.dev/ipfs/",
     "contractInfo": {

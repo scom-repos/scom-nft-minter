@@ -2,7 +2,7 @@ import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo, ITokenObject } from './interface/index';
 import { Contracts as ProductContracts } from './contracts/scom-product-contract/index';
 import { Contracts as ProxyContracts } from './contracts/scom-commission-proxy-contract/index';
-import { DefaultTokens, getContractAddress } from './store/index';
+import { getContractAddress, getToken } from './store/index';
 import { registerSendTxEvents } from './utils/index';
 import { getChainId } from './wallet/index';
 
@@ -13,7 +13,7 @@ async function getProductInfo(productId: number) {
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const chainId = wallet.chainId;
-    const token = DefaultTokens[chainId]?.find(t => t.address?.toLowerCase() == product.token.toLowerCase());
+    const token = getToken(chainId, product.token)
 
     return {
         ...product,
