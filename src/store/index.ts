@@ -1,8 +1,6 @@
 import { application } from "@ijstech/components";
 import { Wallet } from "@ijstech/eth-wallet";
 import { isWalletConnected } from "../wallet/index";
-import { tokenStore } from '@scom/scom-token-list'
-import getNetworkList from '@scom/scom-network-list'
 
 export const enum EventId {
   ConnectWallet = 'connectWallet',
@@ -16,34 +14,19 @@ export enum WalletPlugin {
   WalletConnect = 'walletconnect',
 }
 
-export interface INetwork {
-  chainId: number;
-  name: string;
-  img?: string;
-  rpc?: string;
-	symbol?: string;
-	env?: string;
-  explorerName?: string;
-  explorerTxUrl?: string;
-  explorerAddressUrl?: string;
-  isDisabled?: boolean;
-};
-
-export const SupportedNetworks: INetwork[] = [
+export const SupportedNetworks = [
   {
-    name: "BSC Testnet",
-    chainId: 97,
-    img: "bsc"
+    chainName: "BSC Testnet",
+    chainId: 97
   },
   {
-    name: "Avalanche FUJI C-Chain",
-    chainId: 43113,
-    img: "avax"
+    chainName: "Avalanche FUJI C-Chain",
+    chainId: 43113
   }
 ];
 
 export const getNetworkName = (chainId: number) => {
-  return SupportedNetworks.find(v => v.chainId === chainId)?.name || ""
+  return SupportedNetworks.find(v => v.chainId === chainId)?.chainName || ""
 }
 
 export interface IContractDetailInfo {
@@ -117,14 +100,4 @@ export async function switchNetwork(chainId: number) {
   if (wallet?.clientSideProvider?.name === WalletPlugin.MetaMask) {
     await wallet.switchNetwork(chainId);
   }
-}
-
-export const getToken = (chainId: number, address: string) => {
-  const tokenList = tokenStore.getTokenList(chainId)
-  return tokenList?.find(t => t.address?.toLowerCase() === address.toLowerCase());
-}
-
-export const getNetworkInfo = (chainId: number) => {
-  const defaultNetworks = getNetworkList() || [];
-  return defaultNetworks.find(v => v.chainId === chainId);
 }

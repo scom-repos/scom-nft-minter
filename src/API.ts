@@ -2,9 +2,10 @@ import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo, ITokenObject } from './interface/index';
 import { Contracts as ProductContracts } from './contracts/scom-product-contract/index';
 import { Contracts as ProxyContracts } from './contracts/scom-commission-proxy-contract/index';
-import { getContractAddress, getToken } from './store/index';
+import { getContractAddress } from './store/index';
 import { registerSendTxEvents } from './utils/index';
 import { getChainId } from './wallet/index';
+import { tokenStore } from '@scom/scom-token-list';
 
 async function getProductInfo(productId: number) {
     let productInfoAddress = getContractAddress('ProductInfo');
@@ -13,7 +14,8 @@ async function getProductInfo(productId: number) {
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const chainId = wallet.chainId;
-    const token = getToken(chainId, product.token)
+    const _tokenList = tokenStore.getTokenList(chainId);
+    const token: any = _tokenList.find(token => product?.token && token.address.toLowerCase() === product.token.toLowerCase());
 
     return {
         ...product,

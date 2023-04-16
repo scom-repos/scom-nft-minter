@@ -85,7 +85,6 @@ export class TokenSelection extends Module {
     if (init && this.token && !this.readonly) {
       const chainId = getChainId();
       const _tokenList = tokenStore.getTokenList(chainId);
-      console.log(_tokenList, chainId)
       const token = _tokenList.find(t => (t.address && t.address == this.token?.address) || (t.symbol == this.token?.symbol))
       if (!token) {
         this.token = undefined;

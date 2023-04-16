@@ -18,10 +18,10 @@ import {
   ControlElement,
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
-import { BigNumber, Utils } from '@ijstech/eth-wallet';
+import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks, INetwork } from './store/index';
+import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks } from './store/index';
 import { getChainId, isWalletConnected } from './wallet/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
@@ -853,7 +853,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  private onNetworkSelected(network: any) {
+  private onNetworkSelected(network: INetwork) {
     console.log('network selected', network);
   }
 
