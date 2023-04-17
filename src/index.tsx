@@ -17,10 +17,11 @@ import {
   IDataSchema,
   ControlElement,
 } from '@ijstech/components';
-import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
+import {} from '@ijstech/eth-contract';
+import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { DefaultTokens, EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, getTokenList, setDataFromSCConfig, SupportedNetworks, INetwork } from './store/index';
+import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks } from './store/index';
 import { getChainId, isWalletConnected } from './wallet/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
