@@ -17,7 +17,7 @@ import {
 import { ICommissionInfo, IEmbedData } from '../interface/index';
 import { BigNumber, Wallet } from '@ijstech/eth-wallet';
 import { formatNumber, isWalletAddress } from '../utils/index';
-import ScomNetworkPicker from '../scom-network-picker/index';
+import ScomNetworkPicker from '@scom/scom-network-picker';
 import { getEmbedderCommissionFee, SupportedNetworks } from '../store/index';
 import { customStyle, tableStyle } from './index.css'
 const Theme = Styles.Theme.ThemeVars;

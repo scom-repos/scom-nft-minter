@@ -30,7 +30,7 @@ import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import scconfig from './scconfig.json';
 // import ScomNetworkPicker from './network-picker/index';
-import ScomNetworkPicker from './scom-network-picker/index';
+import ScomNetworkPicker from '@scom/scom-network-picker';
 export { ScomNetworkPicker }
 
 interface ScomNftMinterElement extends ControlElement {

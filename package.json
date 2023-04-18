@@ -16,9 +16,9 @@
         "@ijstech/eth-wallet": "^0.1.51",
         "@scom/scom-product-contract": "^0.1.2",
         "@scom/scom-commission-proxy-contract": "^0.1.2",
-        "@scom/scom-network-picker": "https://github.com/scom-repos/scom-network-picker",
-        "@scom/scom-token-list": "https://github.com/scom-repos/scom-token-list",
-        "@scom/scom-network-list": "https://github.com/scom-repos/scom-network-list"
+        "@scom/scom-network-picker": "^0.1.1",
+        "@scom/scom-token-list": "^0.1.0",
+        "@scom/scom-network-list": "^0.1.0"
     },
     "scripts": {
         "copy": "sh scripts/copy.sh",
