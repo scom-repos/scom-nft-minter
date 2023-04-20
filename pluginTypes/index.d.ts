@@ -2169,6 +2169,7 @@ declare module "@scom/scom-nft-minter" {
         private networkPicker;
         private pnlInputFields;
         private pnlUnsupportedNetwork;
+        private containerDapp;
         private productInfo;
         private _type;
         private _oldData;
@@ -2202,6 +2203,10 @@ declare module "@scom/scom-nft-minter" {
         set commissions(value: any);
         get chainSpecificProperties(): any;
         set chainSpecificProperties(value: any);
+        get wallets(): IWalletPlugin[];
+        set wallets(value: IWalletPlugin[]);
+        get networks(): INetworkConfig[];
+        set networks(value: INetworkConfig[]);
         private registerEvent;
         onWalletConnect: (connected: boolean) => Promise<void>;
         onChainChanged: () => Promise<void>;

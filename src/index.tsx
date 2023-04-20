@@ -84,6 +84,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private networkPicker: ScomNetworkPicker;
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
+  private containerDapp: ScomDappContainer;
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
@@ -118,28 +119,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.isReadyCallbackQueued = true;
     super.init();
     await this.onSetupPage(isWalletConnected());
-
-    // if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
-    //   const defaultTag = {
-    //     inputFontColor: '#ffffff',
-    //     inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
-    //     fontColor: '#323232',
-    //     backgroundColor: '#DBDBDB'
-    //   }
-    //   this.setTag(defaultTag);
-    //   if (this.parentElement) {
-    //     const toolbar = this.parentElement.closest('ide-toolbar') as any;
-    //     if (toolbar) toolbar.setTag(defaultTag);
-    //     const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
-    //     if (element) {
-    //       element.style.setProperty('--text-primary', defaultTag.fontColor);
-    //       element.style.setProperty('--background-main', defaultTag.backgroundColor);
-    //       element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-    //       element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
-    //     }
-    //   }
-    // }
-
     this._data.link = this.getAttribute('link', true);
     this._data.productType = this.getAttribute('productType', true);
     this._data.name = this.getAttribute('name', true);
@@ -147,6 +126,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.description = this.getAttribute('description', true);
     this._data.logo = this.getAttribute('logo', true);
     this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
+    this._data.networks = this.getAttribute('networks', true, []);
+    this._data.wallets = this.getAttribute('wallets', true, []);
 
     const commissionFee = getEmbedderCommissionFee();
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
@@ -226,6 +207,20 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set chainSpecificProperties(value: any) {
     this._data.chainSpecificProperties = value;
+  }
+
+  get wallets() {
+    return this._data.wallets ?? [];
+  }
+  set wallets(value: IWalletPlugin[]) {
+    this._data.wallets = value;
+  }
+
+  get networks() {
+    return this._data.networks ?? [];
+  }
+  set networks(value: INetworkConfig[]) {
+    this._data.networks = value;
   }
 
   private registerEvent() {
@@ -575,6 +570,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
       this.pnlInputFields.visible = false;
       this.pnlUnsupportedNetwork.visible = true;
     }
+    if (this.containerDapp) {
+      this.containerDapp.networks = this.networks as any[];
+      this.containerDapp.wallets = this.wallets;
+    }
   }
 
   private updateSpotsRemaining() {
@@ -868,6 +867,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     return (
       <i-panel>
         <i-scom-dapp-container
+          id="containerDapp"
           wallets={[]}
           networks={[]}
         >

@@ -3213,7 +3213,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         const product = await productInfo.products(productId);
         const chainId = wallet.chainId;
         const _tokenList = scom_token_list_2.tokenStore.getTokenList(chainId);
-        const token = _tokenList.find(token => (product === null || product === void 0 ? void 0 : product.token) && token.address.toLowerCase() === product.token.toLowerCase());
+        const token = _tokenList.find(token => (product === null || product === void 0 ? void 0 : product.token) && (token === null || token === void 0 ? void 0 : token.address) && token.address.toLowerCase() === product.token.toLowerCase());
         return Object.assign(Object.assign({}, product), { token });
     }
     exports.getProductInfo = getProductInfo;
@@ -3583,26 +3583,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.isReadyCallbackQueued = true;
             super.init();
             await this.onSetupPage(index_14.isWalletConnected());
-            // if (!this.tag || (typeof this.tag === 'object' && !Object.keys(this.tag).length)) {
-            //   const defaultTag = {
-            //     inputFontColor: '#ffffff',
-            //     inputBackgroundColor: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
-            //     fontColor: '#323232',
-            //     backgroundColor: '#DBDBDB'
-            //   }
-            //   this.setTag(defaultTag);
-            //   if (this.parentElement) {
-            //     const toolbar = this.parentElement.closest('ide-toolbar') as any;
-            //     if (toolbar) toolbar.setTag(defaultTag);
-            //     const element = this.parentElement.closest('sc-page-viewer-page-element') as any;
-            //     if (element) {
-            //       element.style.setProperty('--text-primary', defaultTag.fontColor);
-            //       element.style.setProperty('--background-main', defaultTag.backgroundColor);
-            //       element.style.setProperty('--input-font_color', defaultTag.inputFontColor);
-            //       element.style.setProperty('--input-background', defaultTag.inputBackgroundColor);
-            //     }
-            //   }
-            // }
             this._data.link = this.getAttribute('link', true);
             this._data.productType = this.getAttribute('productType', true);
             this._data.name = this.getAttribute('name', true);
@@ -3610,6 +3590,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.description = this.getAttribute('description', true);
             this._data.logo = this.getAttribute('logo', true);
             this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
+            this._data.networks = this.getAttribute('networks', true, []);
+            this._data.wallets = this.getAttribute('wallets', true, []);
             const commissionFee = index_13.getEmbedderCommissionFee();
             if (!this.lbOrderTotalTitle.isConnected)
                 await this.lbOrderTotalTitle.ready();
@@ -3680,6 +3662,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         set chainSpecificProperties(value) {
             this._data.chainSpecificProperties = value;
+        }
+        get wallets() {
+            var _a;
+            return (_a = this._data.wallets) !== null && _a !== void 0 ? _a : [];
+        }
+        set wallets(value) {
+            this._data.wallets = value;
+        }
+        get networks() {
+            var _a;
+            return (_a = this._data.networks) !== null && _a !== void 0 ? _a : [];
+        }
+        set networks(value) {
+            this._data.networks = value;
         }
         registerEvent() {
             this.$eventBus.register(this, "isWalletConnected" /* IsWalletConnected */, () => this.onWalletConnect(true));
@@ -3992,6 +3988,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.pnlInputFields.visible = false;
                 this.pnlUnsupportedNetwork.visible = true;
             }
+            if (this.containerDapp) {
+                this.containerDapp.networks = this.networks;
+                this.containerDapp.wallets = this.wallets;
+            }
         }
         updateSpotsRemaining() {
             if (this.productId >= 0) {
@@ -4270,7 +4270,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-scom-dapp-container", { wallets: [], networks: [] },
+                this.$render("i-scom-dapp-container", { id: "containerDapp", wallets: [], networks: [] },
                     this.$render("i-panel", { background: { color: Theme.background.main } },
                         this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
                             this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
