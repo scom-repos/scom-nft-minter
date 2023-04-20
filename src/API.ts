@@ -15,7 +15,7 @@ async function getProductInfo(productId: number) {
     const product = await productInfo.products(productId);
     const chainId = wallet.chainId;
     const _tokenList = tokenStore.getTokenList(chainId);
-    const token: any = _tokenList.find(token => product?.token && token.address.toLowerCase() === product.token.toLowerCase());
+    const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
 
     return {
         ...product,
