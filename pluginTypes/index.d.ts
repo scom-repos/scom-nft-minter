@@ -1,7 +1,7 @@
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
-    import { BigNumber } from "@ijstech/eth-wallet";
+    import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
     export interface PageBlock {
         getData: () => any;
         setData: (data: any) => Promise<void>;
@@ -46,6 +46,8 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         link?: string;
         commissions?: ICommissionInfo[];
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+        wallets: IWalletPlugin[];
+        networks: any[];
     }
     export interface ITokenObject {
         address?: string;
@@ -59,6 +61,11 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         isNative?: boolean | null;
         isWETH?: boolean | null;
         isNew?: boolean | null;
+    }
+    export interface IWalletPlugin {
+        name: string;
+        packageName?: string;
+        provider?: IClientSideProvider;
     }
 }
 /// <amd-module name="@scom/scom-nft-minter/utils/token.ts" />
@@ -2113,10 +2120,9 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, IDataSchema, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, IWalletPlugin, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import Config from "@scom/scom-nft-minter/config/index.tsx";
-    import ScomNetworkPicker from '@scom/scom-network-picker';
-    export { ScomNetworkPicker };
+    import { INetworkConfig } from '@scom/scom-network-picker';
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
         title?: string;
@@ -2125,6 +2131,8 @@ declare module "@scom/scom-nft-minter" {
         logo?: string;
         link?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+        wallets: IWalletPlugin[];
+        networks: INetworkConfig[];
     }
     global {
         namespace JSX {

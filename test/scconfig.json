@@ -14,6 +14,7 @@
   "dependencies": {
     "@scom/dapp": "*",
     "@scom/scom-nft-minter": "*",
+    "@scom/scom-dapp-container": "*",
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*",
     "@scom/scom-token-list": "*",

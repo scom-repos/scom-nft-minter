@@ -1,4 +1,4 @@
-import { BigNumber } from "@ijstech/eth-wallet";
+import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
 
 export interface PageBlock {
   // Properties
@@ -51,6 +51,8 @@ export interface IEmbedData {
   link?: string;
   commissions?: ICommissionInfo[];
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+  wallets: IWalletPlugin[];
+  networks: any[];
 }
 
 export interface ITokenObject {
@@ -66,3 +68,9 @@ export interface ITokenObject {
   isWETH?: boolean | null;
   isNew?: boolean | null;
 };
+
+export interface IWalletPlugin {
+  name: string;
+  packageName?: string;
+  provider?: IClientSideProvider;
+}

@@ -19,7 +19,7 @@ import {
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
 import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, PageBlock, ProductType } from './interface/index';
+import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks } from './store/index';
 import { getChainId, isWalletConnected } from './wallet/index';
@@ -29,9 +29,8 @@ import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupS
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import scconfig from './scconfig.json';
-// import ScomNetworkPicker from './network-picker/index';
-import ScomNetworkPicker from '@scom/scom-network-picker';
-export { ScomNetworkPicker }
+import ScomNetworkPicker, { INetworkConfig } from '@scom/scom-network-picker';
+import ScomDappContainer from '@scom/scom-dapp-container';
 
 interface ScomNftMinterElement extends ControlElement {
   name?: string;
@@ -41,6 +40,8 @@ interface ScomNftMinterElement extends ControlElement {
   logo?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+  wallets: IWalletPlugin[];
+  networks: INetworkConfig[];
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -86,8 +87,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
-  private _oldData: IEmbedData = {};
-  private _data: IEmbedData = {};
+  private _oldData: IEmbedData = {
+    wallets: [],
+    networks: []
+  };
+  private _data: IEmbedData = {
+    wallets: [],
+    networks: []
+  };
   private $eventBus: IEventBus;
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
@@ -859,159 +866,166 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   render() {
     return (
-      <i-panel background={{ color: Theme.background.main }}>
-        <i-grid-layout
-          id='gridDApp'
-          width='100%'
-          height='100%'
-          templateColumns={['1fr']}
-          padding={{ bottom: '1.563rem' }}
+      <i-panel>
+        <i-scom-dapp-container
+          wallets={[]}
+          networks={[]}
         >
-          <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
-            <i-vstack class="text-center" margin={{ bottom: '0.25rem' }} gap="0.5rem">
-              <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
-              <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
-              <i-markdown
-                id='markdownViewer'
-                class={markdownStyle}
-                width='100%'
-                height='100%'
-                margin={{ bottom: '0.563rem' }}
-              ></i-markdown>
-              <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
-            </i-vstack>
-            <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
-              <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
-              <i-label id='lblSpotsRemaining' font={{ size: '0.875rem' }}></i-label>
-            </i-hstack>
-            <i-hstack id='pnlBlockchain' visible={false} gap='0.25rem'>
-              <i-label caption='Blockchain:' font={{ bold: true, size: '0.875rem' }}></i-label>
-              <i-label id='lblBlockchain' font={{ size: '0.875rem' }}></i-label>
-            </i-hstack>
-            <i-vstack gap='0.5rem'>
-              <i-grid-layout
-                width='100%'
-                verticalAlignment='center'
-                padding={{ top: '1rem', bottom: '1rem' }}
-                templateColumns={['1fr', '2fr']}
-                templateRows={['auto']}
-                templateAreas={
-                  [
-                    ['lbNetwork', 'network']
-                  ]
-                }>
-                <i-label caption="Network" grid={{ area: 'lbNetwork' }} font={{ size: '0.875rem' }} />
-                <i-scom-network-picker
-                  id='networkPicker'
-                  grid={{ area: 'network' }}
-                  type="combobox"
-                  networks={SupportedNetworks}
-                  switchNetworkOnSelect={true}
-                  selectedChainId={getChainId()}
-                  onCustomNetworkSelected={this.onNetworkSelected}
-                />
-              </i-grid-layout>
-              <i-vstack gap='0.5rem' id='pnlInputFields'>
-                <i-vstack gap='0.25rem'>
-                  <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
-                    <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
-                    <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
-                  </i-hstack>
-                  <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
-                    <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
-                    <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
-                      <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
-                      <i-label id='lblBalance' font={{ size: '1rem' }} caption="0.00"></i-label>
-                    </i-hstack>
-                  </i-hstack>
-                  <i-grid-layout
-                    id='gridTokenInput'
-                    templateColumns={['60%', 'auto']}
-                    overflow="hidden"
-                    background={{ color: Theme.input.background }}
-                    font={{ color: Theme.input.fontColor }}
-                    height={56}
-                    verticalAlignment="center"
-                    class={inputGroupStyle}
-                  >
-                    <i-scom-nft-minter-token-selection
-                      id='tokenSelection'
-                      class={tokenSelectionStyle}
-                      background={{ color: 'transparent' }}
-                      width="100%"
-                      readonly={true}
-                      onSelectToken={this.selectToken.bind(this)}
-                    ></i-scom-nft-minter-token-selection>
-                    <i-input
-                      id="edtAmount"
-                      width='100%'
-                      height='100%'
-                      minHeight={40}
-                      class={inputStyle}
-                      inputType='number'
-                      font={{ size: '1.25rem' }}
-                      border={{ radius: 4, style: 'none' }}
-                      placeholder='0.00'
-                      onChanged={this.onAmountChanged.bind(this)}
-                    ></i-input>
-                  </i-grid-layout>
-                  <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
-                    <i-button
-                      id="btnApprove"
-                      width='100%'
-                      caption="Approve"
-                      padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
-                      font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
-                      rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                      border={{ radius: 12 }}
-                      visible={false}
-                      onClick={this.onApprove.bind(this)}
-                    ></i-button>
-                    <i-button
-                      id='btnSubmit'
-                      width='100%'
-                      caption='Submit'
-                      padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
-                      font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
-                      rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
-                      background={{ color: Theme.background.gradient }}
-                      border={{ radius: 12 }}
-                      onClick={this.onSubmit.bind(this)}
-                      enabled={false}
-                    ></i-button>
-                  </i-vstack>
+          <i-panel background={{ color: Theme.background.main }}>
+            <i-grid-layout
+              id='gridDApp'
+              width='100%'
+              height='100%'
+              templateColumns={['1fr']}
+              padding={{ bottom: '1.563rem' }}
+            >
+              <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
+                <i-vstack class="text-center" margin={{ bottom: '0.25rem' }} gap="0.5rem">
+                  <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
+                  <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
+                  <i-markdown
+                    id='markdownViewer'
+                    class={markdownStyle}
+                    width='100%'
+                    height='100%'
+                    margin={{ bottom: '0.563rem' }}
+                  ></i-markdown>
+                  <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
                 </i-vstack>
-                <i-hstack
-                  horizontalAlignment="space-between"
-                  verticalAlignment='center'
-                >
-                  <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
-                  <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
+                <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
+                  <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
+                  <i-label id='lblSpotsRemaining' font={{ size: '0.875rem' }}></i-label>
                 </i-hstack>
-                <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>
-                  <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
-                  <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
+                <i-hstack id='pnlBlockchain' visible={false} gap='0.25rem'>
+                  <i-label caption='Blockchain:' font={{ bold: true, size: '0.875rem' }}></i-label>
+                  <i-label id='lblBlockchain' font={{ size: '0.875rem' }}></i-label>
+                </i-hstack>
+                <i-vstack gap='0.5rem'>
+                  <i-grid-layout
+                    width='100%'
+                    verticalAlignment='center'
+                    padding={{ top: '1rem', bottom: '1rem' }}
+                    templateColumns={['1fr', '2fr']}
+                    templateRows={['auto']}
+                    templateAreas={
+                      [
+                        ['lbNetwork', 'network']
+                      ]
+                    }>
+                    <i-label caption="Network" grid={{ area: 'lbNetwork' }} font={{ size: '0.875rem' }} />
+                    <i-scom-network-picker
+                      id='networkPicker'
+                      grid={{ area: 'network' }}
+                      type="combobox"
+                      networks={SupportedNetworks}
+                      switchNetworkOnSelect={true}
+                      selectedChainId={getChainId()}
+                      onCustomNetworkSelected={this.onNetworkSelected}
+                    />
+                  </i-grid-layout>
+                  <i-vstack gap='0.5rem' id='pnlInputFields'>
+                    <i-vstack gap='0.25rem'>
+                      <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
+                        <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
+                        <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
+                      </i-hstack>
+                      <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
+                        <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
+                        <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
+                          <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
+                          <i-label id='lblBalance' font={{ size: '1rem' }} caption="0.00"></i-label>
+                        </i-hstack>
+                      </i-hstack>
+                      <i-grid-layout
+                        id='gridTokenInput'
+                        templateColumns={['60%', 'auto']}
+                        overflow="hidden"
+                        background={{ color: Theme.input.background }}
+                        font={{ color: Theme.input.fontColor }}
+                        height={56}
+                        verticalAlignment="center"
+                        class={inputGroupStyle}
+                      >
+                        <i-scom-nft-minter-token-selection
+                          id='tokenSelection'
+                          class={tokenSelectionStyle}
+                          background={{ color: 'transparent' }}
+                          width="100%"
+                          readonly={true}
+                          onSelectToken={this.selectToken.bind(this)}
+                        ></i-scom-nft-minter-token-selection>
+                        <i-input
+                          id="edtAmount"
+                          width='100%'
+                          height='100%'
+                          minHeight={40}
+                          class={inputStyle}
+                          inputType='number'
+                          font={{ size: '1.25rem' }}
+                          border={{ radius: 4, style: 'none' }}
+                          placeholder='0.00'
+                          onChanged={this.onAmountChanged.bind(this)}
+                        ></i-input>
+                      </i-grid-layout>
+                      <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
+                        <i-button
+                          id="btnApprove"
+                          width='100%'
+                          caption="Approve"
+                          padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                          font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
+                          rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                          border={{ radius: 12 }}
+                          visible={false}
+                          onClick={this.onApprove.bind(this)}
+                        ></i-button>
+                        <i-button
+                          id='btnSubmit'
+                          width='100%'
+                          caption='Submit'
+                          padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
+                          font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
+                          rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
+                          background={{ color: Theme.background.gradient }}
+                          border={{ radius: 12 }}
+                          onClick={this.onSubmit.bind(this)}
+                          enabled={false}
+                        ></i-button>
+                      </i-vstack>
+                    </i-vstack>
+                    <i-hstack
+                      horizontalAlignment="space-between"
+                      verticalAlignment='center'
+                    >
+                      <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
+                      <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
+                    </i-hstack>
+                    <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>
+                      <i-label id='lblRef' font={{ size: '0.875rem' }} opacity={0.5}></i-label>
+                      <i-label id='lblAddress' font={{ size: '0.875rem' }} overflowWrap='anywhere'></i-label>
+                    </i-vstack>
+                  </i-vstack>
+                  <i-vstack id='pnlUnsupportedNetwork' visible={false} horizontalAlignment='center'>
+                    <i-label caption='This network is not supported.' font={{ size: '1.5rem'}}></i-label>
+                  </i-vstack>
+                  <i-label
+                    caption='Terms & Condition'
+                    font={{ size: '0.875rem' }}
+                    link={{ href: 'https://docs.scom.dev/' }}
+                    opacity={0.6}
+                    margin={{ top: '1rem' }}
+                  ></i-label>
                 </i-vstack>
               </i-vstack>
-              <i-vstack id='pnlUnsupportedNetwork' visible={false} horizontalAlignment='center'>
-                <i-label caption='This network is not supported.' font={{ size: '1.5rem'}}></i-label>
-              </i-vstack>
-              <i-label
-                caption='Terms & Condition'
-                font={{ size: '0.875rem' }}
-                link={{ href: 'https://docs.scom.dev/' }}
-                opacity={0.6}
-                margin={{ top: '1rem' }}
-              ></i-label>
-            </i-vstack>
-          </i-vstack>
-          <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem' padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
-            <i-label caption='Details here: ' font={{ size: '1rem' }}></i-label>
-            <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
-          </i-hstack>
-        </i-grid-layout>
-        <i-scom-nft-minter-config id='configDApp' visible={false}></i-scom-nft-minter-config>
-        <i-scom-nft-minter-alert id='mdAlert'></i-scom-nft-minter-alert>
+              <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem' padding={{ top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }}>
+                <i-label caption='Details here: ' font={{ size: '1rem' }}></i-label>
+                <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
+              </i-hstack>
+            </i-grid-layout>
+            <i-scom-nft-minter-config id='configDApp' visible={false}></i-scom-nft-minter-config>
+            <i-scom-nft-minter-alert id='mdAlert'></i-scom-nft-minter-alert>
+          </i-panel>
+        </i-scom-dapp-container>
       </i-panel>
     )
   }
