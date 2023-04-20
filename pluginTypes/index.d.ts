@@ -48,6 +48,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         wallets: IWalletPlugin[];
         networks: any[];
+        showHeader?: boolean;
     }
     export interface ITokenObject {
         address?: string;
@@ -2133,6 +2134,7 @@ declare module "@scom/scom-nft-minter" {
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
+        showHeader?: boolean;
     }
     global {
         namespace JSX {
@@ -2207,6 +2209,8 @@ declare module "@scom/scom-nft-minter" {
         set wallets(value: IWalletPlugin[]);
         get networks(): INetworkConfig[];
         set networks(value: INetworkConfig[]);
+        get showHeader(): boolean;
+        set showHeader(value: boolean);
         private registerEvent;
         onWalletConnect: (connected: boolean) => Promise<void>;
         onChainChanged: () => Promise<void>;

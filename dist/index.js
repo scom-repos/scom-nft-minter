@@ -3582,6 +3582,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
+            // if (!this.containerDapp.isConnected) await this.containerDapp.ready();
             await this.onSetupPage(index_14.isWalletConnected());
             this._data.link = this.getAttribute('link', true);
             this._data.productType = this.getAttribute('productType', true);
@@ -3590,8 +3591,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.description = this.getAttribute('description', true);
             this._data.logo = this.getAttribute('logo', true);
             this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
-            this._data.networks = this.getAttribute('networks', true, []);
-            this._data.wallets = this.getAttribute('wallets', true, []);
+            this._data.networks = this.getAttribute('networks', true);
+            this._data.wallets = this.getAttribute('wallets', true);
+            this._data.showHeader = this.getAttribute('showHeader', true);
             const commissionFee = index_13.getEmbedderCommissionFee();
             if (!this.lbOrderTotalTitle.isConnected)
                 await this.lbOrderTotalTitle.ready();
@@ -3676,6 +3678,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         set networks(value) {
             this._data.networks = value;
+        }
+        get showHeader() {
+            var _a;
+            return (_a = this._data.showHeader) !== null && _a !== void 0 ? _a : true;
+        }
+        set showHeader(value) {
+            this._data.showHeader = value;
         }
         registerEvent() {
             this.$eventBus.register(this, "isWalletConnected" /* IsWalletConnected */, () => this.onWalletConnect(true));
@@ -3889,7 +3898,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const commissionFee = index_13.getEmbedderCommissionFee();
             this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_9.BigNumber(commissionFee).times(100)}% Commission Fee)`;
             this.updateContractAddress();
-            this.refreshDApp();
+            await this.refreshDApp();
         }
         getTag() {
             return this.tag;
@@ -3932,7 +3941,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         //   this._productId = this._data.productId = result.productId;
         // }
         async refreshDApp() {
-            var _a;
+            var _a, _b;
             this._type = this._data.productType;
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
@@ -3946,9 +3955,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else {
                 this.imgLogo.url = this._data.logo;
             }
-            if (!this.productId || this.productId === 0) {
+            const data = { wallets: this.wallets, networks: this.networks, showHeader: this.showHeader };
+            if ((_b = this.containerDapp) === null || _b === void 0 ? void 0 : _b.setData)
+                this.containerDapp.setData(data);
+            if (!this.productId || this.productId === 0)
                 return;
-            }
             this.productInfo = await API_1.getProductInfo(this.productId);
             if (this.productInfo) {
                 const token = this.productInfo.token;
@@ -3987,10 +3998,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else {
                 this.pnlInputFields.visible = false;
                 this.pnlUnsupportedNetwork.visible = true;
-            }
-            if (this.containerDapp) {
-                this.containerDapp.networks = this.networks;
-                this.containerDapp.wallets = this.wallets;
             }
         }
         updateSpotsRemaining() {
@@ -4270,7 +4277,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         render() {
             return (this.$render("i-panel", null,
-                this.$render("i-scom-dapp-container", { id: "containerDapp", wallets: [], networks: [] },
+                this.$render("i-scom-dapp-container", { id: "containerDapp" },
                     this.$render("i-panel", { background: { color: Theme.background.main } },
                         this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
                             this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
