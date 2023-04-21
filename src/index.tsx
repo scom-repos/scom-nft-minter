@@ -42,6 +42,7 @@ interface ScomNftMinterElement extends ControlElement {
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   wallets: IWalletPlugin[];
   networks: INetworkConfig[];
+  showHeader?: boolean;
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -118,6 +119,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
+    if (!this.containerDapp.isConnected) await this.containerDapp.ready();
     await this.onSetupPage(isWalletConnected());
     this._data.link = this.getAttribute('link', true);
     this._data.productType = this.getAttribute('productType', true);
@@ -126,8 +128,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.description = this.getAttribute('description', true);
     this._data.logo = this.getAttribute('logo', true);
     this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
-    this._data.networks = this.getAttribute('networks', true, []);
-    this._data.wallets = this.getAttribute('wallets', true, []);
+    this._data.networks = this.getAttribute('networks', true);
+    this._data.wallets = this.getAttribute('wallets', true);
+    this._data.showHeader = this.getAttribute('showHeader', true);
 
     const commissionFee = getEmbedderCommissionFee();
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
@@ -221,6 +224,13 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
   set networks(value: INetworkConfig[]) {
     this._data.networks = value;
+  }
+
+  get showHeader() {
+    return this._data.showHeader ?? true;
+  }
+  set showHeader(value: boolean) {
+    this._data.showHeader = value;
   }
 
   private registerEvent() {
@@ -467,7 +477,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
     this.updateContractAddress();
-    this.refreshDApp();
+    await this.refreshDApp();
   }
 
   getTag() {
@@ -528,10 +538,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.imgLogo.url = this._data.logo;
     }
-
-    if (!this.productId || this.productId === 0) {
-      return;
-    }
+    const data: any = { wallets: this.wallets, networks: this.networks, showHeader: this.showHeader }
+    if (this.containerDapp?.setData) this.containerDapp.setData(data)
+    if (!this.productId || this.productId === 0) return;
     this.productInfo = await getProductInfo(this.productId);  
     if (this.productInfo) {
       const token = this.productInfo.token;
@@ -569,10 +578,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.pnlInputFields.visible = false;
       this.pnlUnsupportedNetwork.visible = true;
-    }
-    if (this.containerDapp) {
-      this.containerDapp.networks = this.networks as any[];
-      this.containerDapp.wallets = this.wallets;
     }
   }
 
@@ -866,11 +871,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   render() {
     return (
       <i-panel>
-        <i-scom-dapp-container
-          id="containerDapp"
-          wallets={[]}
-          networks={[]}
-        >
+        <i-scom-dapp-container id="containerDapp">
           <i-panel background={{ color: Theme.background.main }}>
             <i-grid-layout
               id='gridDApp'

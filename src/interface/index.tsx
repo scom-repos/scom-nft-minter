@@ -53,6 +53,7 @@ export interface IEmbedData {
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   wallets: IWalletPlugin[];
   networks: any[];
+  showHeader?: boolean;
 }
 
 export interface ITokenObject {

@@ -20,13 +20,10 @@ export default class Module1 extends Module {
             "networks": [
                 {
                   "chainId": 43113
-                },
-                {
-                  "chainId": 97
                 }
               ],
             "wallets": [
-                { "name": "metamask" }
+              { "name": "metamask" }
             ]
         });
         this.mainStack.appendChild(this.nftMinter1);
