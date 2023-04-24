@@ -24,7 +24,8 @@ export default class Module1 extends Module {
               ],
             "wallets": [
               { "name": "metamask" }
-            ]
+            ],
+            defaultChainId: 97
         });
         this.mainStack.appendChild(this.nftMinter1);
     }
@@ -48,6 +49,7 @@ export default class Module1 extends Module {
                     chainId: 97
                   }
                 ]}
+                defaultChainId={97}
                 wallets={[{ name: 'metamask' }]}
               ></i-scom-nft-minter>
             </i-vstack>
