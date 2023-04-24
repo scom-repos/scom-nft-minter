@@ -908,7 +908,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     height='100%'
                     margin={{ bottom: '0.563rem' }}
                   ></i-markdown>
-                  <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
+                  {/* <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label> */}
                 </i-vstack>
                 <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
                   <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
@@ -942,7 +942,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     />
                   </i-grid-layout> */}
                   <i-vstack gap='0.5rem' id='pnlInputFields'>
-                    <i-vstack gap='0.25rem'>
+                    <i-vstack gap='0.25rem' margin={{bottom: '1rem'}}>
                       <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
                         <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
                         <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
@@ -960,7 +960,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
                         overflow="hidden"
                         background={{ color: Theme.input.background }}
                         font={{ color: Theme.input.fontColor }}
-                        height={56}
+                        height={56} width="50%"
+                        margin={{left: 'auto', right: 'auto'}}
                         verticalAlignment="center"
                         class={inputGroupStyle}
                       >
@@ -985,7 +986,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
                           onChanged={this.onAmountChanged.bind(this)}
                         ></i-input>
                       </i-grid-layout>
-                      <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
+                      <i-vstack
+                        horizontalAlignment="center" verticalAlignment='center'
+                        gap="8px" width="50%"
+                        margin={{top: '0.75rem', left: 'auto', right: 'auto'}}
+                      >
                         <i-button
                           id="btnApprove"
                           width='100%'
