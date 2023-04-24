@@ -46,6 +46,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         link?: string;
         commissions?: ICommissionInfo[];
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+        defaultChainId: number;
         wallets: IWalletPlugin[];
         networks: any[];
         showHeader?: boolean;
@@ -67,6 +68,10 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         name: string;
         packageName?: string;
         provider?: IClientSideProvider;
+    }
+    export interface INetworkConfig {
+        chainName?: string;
+        chainId: number;
     }
 }
 /// <amd-module name="@scom/scom-nft-minter/utils/token.ts" />
@@ -2121,9 +2126,8 @@ declare module "@scom/scom-nft-minter/scconfig.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, IDataSchema, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, IWalletPlugin, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import Config from "@scom/scom-nft-minter/config/index.tsx";
-    import { INetworkConfig } from '@scom/scom-network-picker';
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
         title?: string;
@@ -2132,6 +2136,7 @@ declare module "@scom/scom-nft-minter" {
         logo?: string;
         link?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+        defaultChainId: number;
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
         showHeader?: boolean;
@@ -2168,7 +2173,6 @@ declare module "@scom/scom-nft-minter" {
         private mdAlert;
         private lbOrderTotal;
         private lbOrderTotalTitle;
-        private networkPicker;
         private pnlInputFields;
         private pnlUnsupportedNetwork;
         private containerDapp;
@@ -2211,6 +2215,8 @@ declare module "@scom/scom-nft-minter" {
         set networks(value: INetworkConfig[]);
         get showHeader(): boolean;
         set showHeader(value: boolean);
+        get defaultChainId(): number;
+        set defaultChainId(value: number);
         private registerEvent;
         onWalletConnect: (connected: boolean) => Promise<void>;
         onChainChanged: () => Promise<void>;

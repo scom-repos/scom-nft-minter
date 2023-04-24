@@ -19,7 +19,7 @@ import {
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
 import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
+import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks } from './store/index';
 import { getChainId, isWalletConnected } from './wallet/index';
@@ -29,7 +29,7 @@ import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupS
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import scconfig from './scconfig.json';
-import ScomNetworkPicker, { INetworkConfig } from '@scom/scom-network-picker';
+// import ScomNetworkPicker, { INetworkConfig } from '@scom/scom-network-picker';
 import ScomDappContainer from '@scom/scom-dapp-container';
 
 interface ScomNftMinterElement extends ControlElement {
@@ -40,6 +40,7 @@ interface ScomNftMinterElement extends ControlElement {
   logo?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+  defaultChainId: number;
   wallets: IWalletPlugin[];
   networks: INetworkConfig[];
   showHeader?: boolean;
@@ -82,7 +83,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private mdAlert: Alert;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
-  private networkPicker: ScomNetworkPicker;
+  // private networkPicker: ScomNetworkPicker;
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
   private containerDapp: ScomDappContainer;
@@ -91,11 +92,13 @@ export default class ScomNftMinter extends Module implements PageBlock {
   private _type: ProductType | undefined;
   private _oldData: IEmbedData = {
     wallets: [],
-    networks: []
+    networks: [],
+    defaultChainId: 0
   };
   private _data: IEmbedData = {
     wallets: [],
-    networks: []
+    networks: [],
+    defaultChainId: 0
   };
   private $eventBus: IEventBus;
   private approvalModelAction: IERC20ApprovalAction;
@@ -119,7 +122,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
-    if (!this.containerDapp.isConnected) await this.containerDapp.ready();
+    // if (!this.containerDapp.isConnected) await this.containerDapp.ready();
     await this.onSetupPage(isWalletConnected());
     this._data.link = this.getAttribute('link', true);
     this._data.productType = this.getAttribute('productType', true);
@@ -131,6 +134,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.networks = this.getAttribute('networks', true);
     this._data.wallets = this.getAttribute('wallets', true);
     this._data.showHeader = this.getAttribute('showHeader', true);
+    this._data.defaultChainId = this.getAttribute('defaultChainId', true);
 
     const commissionFee = getEmbedderCommissionFee();
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
@@ -233,6 +237,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.showHeader = value;
   }
 
+  get defaultChainId() {
+    return this._data.defaultChainId;
+  }
+  set defaultChainId(value: number) {
+    this._data.defaultChainId = value;
+  }
+
+
   private registerEvent() {
     this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect(true));
     this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect(false));
@@ -269,7 +281,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private async onSetupPage(isWalletConnected: boolean) {
     if (isWalletConnected) {
-      this.networkPicker.setNetworkByChainId(getChainId());
+      // this.networkPicker.setNetworkByChainId(getChainId());
       await this.initApprovalAction();
     }
   }
@@ -411,14 +423,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
               this.oldTag = { ...this.tag };
               if (builder) builder.setTag(userInputData);
               else this.setTag(userInputData);
-              // this.setTag(userInputData);
+              if (this.containerDapp) this.containerDapp.setTag(userInputData);
             },
             undo: () => {
               if (!userInputData) return;
               this.tag = { ...this.oldTag };
               if (builder) builder.setTag(this.tag);
               else this.setTag(this.oldTag);
-              // this.setTag(this.oldTag);
+              if (this.containerDapp) this.containerDapp.setTag(this.oldTag);
             },
             redo: () => { }
           }
@@ -538,7 +550,12 @@ export default class ScomNftMinter extends Module implements PageBlock {
     else {
       this.imgLogo.url = this._data.logo;
     }
-    const data: any = { wallets: this.wallets, networks: this.networks, showHeader: this.showHeader }
+    const data: any = {
+      wallets: this.wallets,
+      networks: this.networks,
+      showHeader: this.showHeader,
+      defaultChainId: this.defaultChainId
+    }
     if (this.containerDapp?.setData) this.containerDapp.setData(data)
     if (!this.productId || this.productId === 0) return;
     this.productInfo = await getProductInfo(this.productId);  
@@ -902,7 +919,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                   <i-label id='lblBlockchain' font={{ size: '0.875rem' }}></i-label>
                 </i-hstack>
                 <i-vstack gap='0.5rem'>
-                  <i-grid-layout
+                  {/* <i-grid-layout
                     width='100%'
                     verticalAlignment='center'
                     padding={{ top: '1rem', bottom: '1rem' }}
@@ -923,7 +940,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                       selectedChainId={getChainId()}
                       onCustomNetworkSelected={this.onNetworkSelected}
                     />
-                  </i-grid-layout>
+                  </i-grid-layout> */}
                   <i-vstack gap='0.5rem' id='pnlInputFields'>
                     <i-vstack gap='0.25rem'>
                       <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
