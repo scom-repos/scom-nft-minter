@@ -3715,25 +3715,55 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const themeSchema = {
                 type: 'object',
                 properties: {
-                    backgroundColor: {
-                        type: 'string',
-                        format: 'color',
-                        readOnly: true
+                    "dark": {
+                        type: 'object',
+                        properties: {
+                            backgroundColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            fontColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            inputBackgroundColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            inputFontColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            }
+                        }
                     },
-                    fontColor: {
-                        type: 'string',
-                        format: 'color',
-                        readOnly: true
-                    },
-                    inputBackgroundColor: {
-                        type: 'string',
-                        format: 'color',
-                        readOnly: true
-                    },
-                    inputFontColor: {
-                        type: 'string',
-                        format: 'color',
-                        readOnly: true
+                    "light": {
+                        type: 'object',
+                        properties: {
+                            backgroundColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            fontColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            inputBackgroundColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            },
+                            inputFontColor: {
+                                type: 'string',
+                                format: 'color',
+                                readOnly: true
+                            }
+                        }
                     }
                 }
             };
@@ -3770,21 +3800,47 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const themeSchema = {
                 type: 'object',
                 properties: {
-                    backgroundColor: {
-                        type: 'string',
-                        format: 'color'
+                    "dark": {
+                        type: 'object',
+                        properties: {
+                            backgroundColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            fontColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            inputBackgroundColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            inputFontColor: {
+                                type: 'string',
+                                format: 'color'
+                            }
+                        }
                     },
-                    fontColor: {
-                        type: 'string',
-                        format: 'color'
-                    },
-                    inputBackgroundColor: {
-                        type: 'string',
-                        format: 'color'
-                    },
-                    inputFontColor: {
-                        type: 'string',
-                        format: 'color'
+                    "light": {
+                        type: 'object',
+                        properties: {
+                            backgroundColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            fontColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            inputBackgroundColor: {
+                                type: 'string',
+                                format: 'color'
+                            },
+                            inputFontColor: {
+                                type: 'string',
+                                format: 'color'
+                            }
+                        }
                     }
                 }
             };
@@ -3915,12 +3971,22 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         getTag() {
             return this.tag;
         }
+        updateTag(type, value) {
+            var _a;
+            this.tag[type] = (_a = this.tag[type]) !== null && _a !== void 0 ? _a : {};
+            for (let prop in value) {
+                if (value.hasOwnProperty(prop))
+                    this.tag[type][prop] = value[prop];
+            }
+        }
         async setTag(value) {
             const newValue = value || {};
-            for (let prop in newValue) {
-                if (newValue.hasOwnProperty(prop))
-                    this.tag[prop] = newValue[prop];
-            }
+            if (newValue.light)
+                this.updateTag('light', newValue.light);
+            if (newValue.dark)
+                this.updateTag('dark', newValue.dark);
+            if (this.containerDapp)
+                this.containerDapp.setTag(this.tag);
             this.updateTheme();
         }
         updateStyle(name, value) {
@@ -3929,12 +3995,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.style.removeProperty(name);
         }
         updateTheme() {
-            var _a, _b, _c, _d, _e;
-            this.updateStyle('--text-primary', (_a = this.tag) === null || _a === void 0 ? void 0 : _a.fontColor);
-            this.updateStyle('--background-main', (_b = this.tag) === null || _b === void 0 ? void 0 : _b.backgroundColor);
-            this.updateStyle('--input-font_color', (_c = this.tag) === null || _c === void 0 ? void 0 : _c.inputFontColor);
-            this.updateStyle('--input-background', (_d = this.tag) === null || _d === void 0 ? void 0 : _d.inputBackgroundColor);
-            this.updateStyle('--colors-primary-main', (_e = this.tag) === null || _e === void 0 ? void 0 : _e.buttonBackgroundColor);
+            var _a, _b, _c, _d, _e, _f;
+            const themeVar = ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.theme) || 'light';
+            this.updateStyle('--text-primary', (_b = this.tag[themeVar]) === null || _b === void 0 ? void 0 : _b.fontColor);
+            this.updateStyle('--background-main', (_c = this.tag[themeVar]) === null || _c === void 0 ? void 0 : _c.backgroundColor);
+            this.updateStyle('--input-font_color', (_d = this.tag[themeVar]) === null || _d === void 0 ? void 0 : _d.inputFontColor);
+            this.updateStyle('--input-background', (_e = this.tag[themeVar]) === null || _e === void 0 ? void 0 : _e.inputBackgroundColor);
+            this.updateStyle('--colors-primary-main', (_f = this.tag[themeVar]) === null || _f === void 0 ? void 0 : _f.buttonBackgroundColor);
         }
         // private newProduct = async (callback?: any, confirmationCallback?: any) => {
         //   if (
@@ -4289,9 +4356,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 });
             }
         }
-        onNetworkSelected(network) {
-            console.log('network selected', network);
-        }
         render() {
             return (this.$render("i-panel", null,
                 this.$render("i-scom-dapp-container", { id: "containerDapp" },
@@ -4301,8 +4365,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' }, gap: "0.5rem" },
                                     this.$render("i-image", { id: 'imgLogo', class: index_css_3.imageStyle, height: 100 }),
                                     this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
-                                    this.$render("i-markdown", { id: 'markdownViewer', class: index_css_3.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } }),
-                                    this.$render("i-label", { caption: "I don't have a digital wallet", link: { href: 'https://metamask.io/' }, opacity: 0.6, font: { size: '1rem' } })),
+                                    this.$render("i-markdown", { id: 'markdownViewer', class: index_css_3.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                                 this.$render("i-hstack", { id: 'pnlSpotsRemaining', visible: false, gap: '0.25rem' },
                                     this.$render("i-label", { caption: 'Spots Remaining:', font: { bold: true, size: '0.875rem' } }),
                                     this.$render("i-label", { id: 'lblSpotsRemaining', font: { size: '0.875rem' } })),
@@ -4311,7 +4374,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     this.$render("i-label", { id: 'lblBlockchain', font: { size: '0.875rem' } })),
                                 this.$render("i-vstack", { gap: '0.5rem' },
                                     this.$render("i-vstack", { gap: '0.5rem', id: 'pnlInputFields' },
-                                        this.$render("i-vstack", { gap: '0.25rem' },
+                                        this.$render("i-vstack", { gap: '0.25rem', margin: { bottom: '1rem' } },
                                             this.$render("i-hstack", { id: 'pnlQty', visible: false, horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { caption: 'Qty', font: { size: '0.875rem' } }),
                                                 this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_3.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4 } })),
@@ -4320,10 +4383,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                 this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },
                                                     this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
                                                     this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
-                                            this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, verticalAlignment: "center", class: index_css_3.inputGroupStyle },
+                                            this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['60%', 'auto'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, verticalAlignment: "center", class: index_css_3.inputGroupStyle },
                                                 this.$render("i-scom-nft-minter-token-selection", { id: 'tokenSelection', class: index_css_3.tokenSelectionStyle, background: { color: 'transparent' }, width: "100%", readonly: true, onSelectToken: this.selectToken.bind(this) }),
                                                 this.$render("i-input", { id: "edtAmount", width: '100%', height: '100%', minHeight: 40, class: index_css_3.inputStyle, inputType: 'number', font: { size: '1.25rem' }, border: { radius: 4, style: 'none' }, placeholder: '0.00', onChanged: this.onAmountChanged.bind(this) })),
-                                            this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", margin: { top: '0.75rem' } },
+                                            this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
                                                 this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
                                                 this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between", verticalAlignment: 'center' },

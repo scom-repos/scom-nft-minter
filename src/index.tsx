@@ -244,7 +244,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this._data.defaultChainId = value;
   }
 
-
   private registerEvent() {
     this.$eventBus.register(this, EventId.IsWalletConnected, () => this.onWalletConnect(true));
     this.$eventBus.register(this, EventId.IsWalletDisconnected, () => this.onWalletConnect(false));
@@ -295,25 +294,55 @@ export default class ScomNftMinter extends Module implements PageBlock {
     const themeSchema: IDataSchema = {
       type: 'object',
       properties: {
-        backgroundColor: {
-          type: 'string',
-          format: 'color',
-          readOnly: true
+        "dark": {
+          type: 'object',
+          properties: {
+            backgroundColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            fontColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            inputBackgroundColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            inputFontColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            }
+          }
         },
-        fontColor: {
-          type: 'string',
-          format: 'color',
-          readOnly: true
-        },
-        inputBackgroundColor: {
-          type: 'string',
-          format: 'color',
-          readOnly: true
-        },
-        inputFontColor: {
-          type: 'string',
-          format: 'color',
-          readOnly: true
+        "light": {
+          type: 'object',
+          properties: {
+            backgroundColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            fontColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            inputBackgroundColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            },
+            inputFontColor: {
+              type: 'string',
+              format: 'color',
+              readOnly: true
+            }
+          }
         }
       }
     }
@@ -353,21 +382,47 @@ export default class ScomNftMinter extends Module implements PageBlock {
     const themeSchema: IDataSchema = {
       type: 'object',
       properties: {
-        backgroundColor: {
-          type: 'string',
-          format: 'color'
+        "dark": {
+          type: 'object',
+          properties: {
+            backgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            fontColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputBackgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputFontColor: {
+              type: 'string',
+              format: 'color'
+            }
+          }
         },
-        fontColor: {
-          type: 'string',
-          format: 'color'
-        },
-        inputBackgroundColor: {
-          type: 'string',
-          format: 'color'
-        },
-        inputFontColor: {
-          type: 'string',
-          format: 'color'
+        "light": {
+          type: 'object',
+          properties: {
+            backgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            fontColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputBackgroundColor: {
+              type: 'string',
+              format: 'color'
+            },
+            inputFontColor: {
+              type: 'string',
+              format: 'color'
+            }
+          }
         }
       }
     }
@@ -496,12 +551,20 @@ export default class ScomNftMinter extends Module implements PageBlock {
     return this.tag;
   }
 
+  private updateTag(type: 'light'|'dark', value: any) {
+    this.tag[type] = this.tag[type] ?? {};
+    for (let prop in value) {
+      if (value.hasOwnProperty(prop))
+        this.tag[type][prop] = value[prop];
+    }
+  }
+
   async setTag(value: any) {
     const newValue = value || {};
-    for (let prop in newValue) {
-      if (newValue.hasOwnProperty(prop))
-        this.tag[prop] = newValue[prop];
-    }
+    if (newValue.light) this.updateTag('light', newValue.light);
+    if (newValue.dark) this.updateTag('dark', newValue.dark);
+    if (this.containerDapp)
+      this.containerDapp.setTag(this.tag);
     this.updateTheme();
   }
 
@@ -512,11 +575,12 @@ export default class ScomNftMinter extends Module implements PageBlock {
   }
 
   private updateTheme() {
-    this.updateStyle('--text-primary', this.tag?.fontColor);
-    this.updateStyle('--background-main', this.tag?.backgroundColor);
-    this.updateStyle('--input-font_color', this.tag?.inputFontColor);
-    this.updateStyle('--input-background', this.tag?.inputBackgroundColor);
-    this.updateStyle('--colors-primary-main', this.tag?.buttonBackgroundColor);
+    const themeVar = this.containerDapp?.theme || 'light';
+    this.updateStyle('--text-primary', this.tag[themeVar]?.fontColor);
+    this.updateStyle('--background-main', this.tag[themeVar]?.backgroundColor);
+    this.updateStyle('--input-font_color', this.tag[themeVar]?.inputFontColor);
+    this.updateStyle('--input-background', this.tag[themeVar]?.inputBackgroundColor);
+    this.updateStyle('--colors-primary-main', this.tag[themeVar]?.buttonBackgroundColor);
   }
 
   // private newProduct = async (callback?: any, confirmationCallback?: any) => {
@@ -881,10 +945,6 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  private onNetworkSelected(network: INetwork) {
-    console.log('network selected', network);
-  }
-
   render() {
     return (
       <i-panel>
@@ -908,7 +968,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     height='100%'
                     margin={{ bottom: '0.563rem' }}
                   ></i-markdown>
-                  <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label>
+                  {/* <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label> */}
                 </i-vstack>
                 <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
                   <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
@@ -942,7 +1002,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
                     />
                   </i-grid-layout> */}
                   <i-vstack gap='0.5rem' id='pnlInputFields'>
-                    <i-vstack gap='0.25rem'>
+                    <i-vstack gap='0.25rem' margin={{bottom: '1rem'}}>
                       <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
                         <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
                         <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
@@ -960,7 +1020,8 @@ export default class ScomNftMinter extends Module implements PageBlock {
                         overflow="hidden"
                         background={{ color: Theme.input.background }}
                         font={{ color: Theme.input.fontColor }}
-                        height={56}
+                        height={56} width="50%"
+                        margin={{left: 'auto', right: 'auto'}}
                         verticalAlignment="center"
                         class={inputGroupStyle}
                       >
@@ -985,7 +1046,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
                           onChanged={this.onAmountChanged.bind(this)}
                         ></i-input>
                       </i-grid-layout>
-                      <i-vstack horizontalAlignment="center" verticalAlignment='center' gap="8px" margin={{ top: '0.75rem' }}>
+                      <i-vstack
+                        horizontalAlignment="center" verticalAlignment='center'
+                        gap="8px" width="50%"
+                        margin={{top: '0.75rem', left: 'auto', right: 'auto'}}
+                      >
                         <i-button
                           id="btnApprove"
                           width='100%'

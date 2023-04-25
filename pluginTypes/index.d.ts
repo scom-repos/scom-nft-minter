@@ -2265,6 +2265,7 @@ declare module "@scom/scom-nft-minter" {
         getData(): IEmbedData;
         setData(data: IEmbedData): Promise<void>;
         getTag(): any;
+        private updateTag;
         setTag(value: any): Promise<void>;
         private updateStyle;
         private updateTheme;
@@ -2280,7 +2281,6 @@ declare module "@scom/scom-nft-minter" {
         private doSubmitAction;
         private onSubmit;
         private buyToken;
-        private onNetworkSelected;
         render(): any;
     }
 }
