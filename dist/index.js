@@ -3452,54 +3452,11 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     }
     exports.donate = donate;
 });
-define("@scom/scom-nft-minter/scconfig.json.ts", ["require", "exports"], function (require, exports) {
+define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    ///<amd-module name='@scom/scom-nft-minter/scconfig.json.ts'/> 
+    ///<amd-module name='@scom/scom-nft-minter/data.json.ts'/> 
     exports.default = {
-        "env": "testnet",
-        "logo": "logo",
-        "configurator": "@scom-nft-minter/config",
-        "main": "@scom-nft-minter/main",
-        "assets": "@scom-nft-minter/assets",
-        "moduleDir": "modules",
-        "modules": {
-            "@scom-nft-minter/assets": {
-                "path": "assets"
-            },
-            "@scom-nft-minter/interface": {
-                "path": "interface"
-            },
-            "@scom-nft-minter/utils": {
-                "path": "utils"
-            },
-            "@scom-nft-minter/store": {
-                "path": "store"
-            },
-            "@scom-nft-minter/wallet": {
-                "path": "wallet"
-            },
-            "@scom-nft-minter/token-selection": {
-                "path": "token-selection"
-            },
-            "@scom-nft-minter/alert": {
-                "path": "alert"
-            },
-            "@scom-nft-minter/config": {
-                "path": "config"
-            },
-            "@scom-nft-minter/main": {
-                "path": "main"
-            }
-        },
-        "dependencies": {
-            "@ijstech/eth-contract": "*",
-            "@scom/scom-product-contract": "*",
-            "@scom/scom-commission-proxy-contract": "*",
-            "@scom/scom-network-picker": "*",
-            "@scom/scom-network-list": "*",
-            "@scom/scom-token-list": "*"
-        },
         "ipfsGatewayUrl": "https://ipfs.scom.dev/ipfs/",
         "contractInfo": {
             "43113": {
@@ -3528,7 +3485,7 @@ define("@scom/scom-nft-minter/scconfig.json.ts", ["require", "exports"], functio
         "embedderCommissionFee": "0.01"
     };
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/scconfig.json.ts"], function (require, exports, components_8, eth_wallet_9, index_11, index_12, index_13, index_14, index_css_3, API_1, scconfig_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts"], function (require, exports, components_8, eth_wallet_9, index_11, index_12, index_13, index_14, index_css_3, API_1, data_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_8.Styles.Theme.ThemeVars;
@@ -3578,7 +3535,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 catch (_b) { }
             };
-            index_13.setDataFromSCConfig(scconfig_json_1.default);
+            index_13.setDataFromSCConfig(data_json_1.default);
             this.$eventBus = components_8.application.EventBus;
             this.registerEvent();
         }
@@ -3930,7 +3887,77 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             let self = this;
             return [
                 {
-                    name: 'Commissions',
+                    name: 'Builder Configurator',
+                    target: 'Builders',
+                    getActions: () => {
+                        const propertiesSchema = {
+                            type: 'object',
+                            properties: {
+                                "description": {
+                                    type: 'string',
+                                    format: 'multi'
+                                },
+                                "logo": {
+                                    type: 'string',
+                                    format: 'data-url'
+                                },
+                                "link": {
+                                    type: 'string'
+                                }
+                            }
+                        };
+                        const themeSchema = {
+                            type: 'object',
+                            properties: {
+                                "dark": {
+                                    type: 'object',
+                                    properties: {
+                                        backgroundColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        fontColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        inputBackgroundColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        inputFontColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        }
+                                    }
+                                },
+                                "light": {
+                                    type: 'object',
+                                    properties: {
+                                        backgroundColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        fontColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        inputBackgroundColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        },
+                                        inputFontColor: {
+                                            type: 'string',
+                                            format: 'color'
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        return this._getActions(propertiesSchema, themeSchema);
+                    }
+                },
+                {
+                    name: 'Emdedder Configurator',
                     target: 'Embedders',
                     elementName: 'i-scom-nft-minter-config',
                     getLinkParams: () => {

@@ -2048,52 +2048,9 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function donate(productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate };
 }
-/// <amd-module name="@scom/scom-nft-minter/scconfig.json.ts" />
-declare module "@scom/scom-nft-minter/scconfig.json.ts" {
+/// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
+declare module "@scom/scom-nft-minter/data.json.ts" {
     const _default_9: {
-        env: string;
-        logo: string;
-        configurator: string;
-        main: string;
-        assets: string;
-        moduleDir: string;
-        modules: {
-            "@scom-nft-minter/assets": {
-                path: string;
-            };
-            "@scom-nft-minter/interface": {
-                path: string;
-            };
-            "@scom-nft-minter/utils": {
-                path: string;
-            };
-            "@scom-nft-minter/store": {
-                path: string;
-            };
-            "@scom-nft-minter/wallet": {
-                path: string;
-            };
-            "@scom-nft-minter/token-selection": {
-                path: string;
-            };
-            "@scom-nft-minter/alert": {
-                path: string;
-            };
-            "@scom-nft-minter/config": {
-                path: string;
-            };
-            "@scom-nft-minter/main": {
-                path: string;
-            };
-        };
-        dependencies: {
-            "@ijstech/eth-contract": string;
-            "@scom/scom-product-contract": string;
-            "@scom/scom-commission-proxy-contract": string;
-            "@scom/scom-network-picker": string;
-            "@scom/scom-network-list": string;
-            "@scom/scom-token-list": string;
-        };
         ipfsGatewayUrl: string;
         contractInfo: {
             "43113": {
@@ -2252,7 +2209,24 @@ declare module "@scom/scom-nft-minter" {
             };
             userInputDataSchema: IDataSchema;
         }[];
-        getConfigurators(): {
+        getConfigurators(): ({
+            name: string;
+            target: string;
+            getActions: () => {
+                name: string;
+                icon: string;
+                command: (builder: any, userInputData: any) => {
+                    execute: () => Promise<void>;
+                    undo: () => void;
+                    redo: () => void;
+                };
+                userInputDataSchema: IDataSchema;
+            }[];
+            elementName?: undefined;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+            bindOnChanged?: undefined;
+        } | {
             name: string;
             target: string;
             elementName: string;
@@ -2261,7 +2235,8 @@ declare module "@scom/scom-nft-minter" {
             };
             setLinkParams: (params: any) => Promise<void>;
             bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
-        }[];
+            getActions?: undefined;
+        })[];
         getData(): IEmbedData;
         setData(data: IEmbedData): Promise<void>;
         getTag(): any;

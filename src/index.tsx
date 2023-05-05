@@ -28,7 +28,7 @@ import { TokenSelection } from './token-selection/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
-import scconfig from './scconfig.json';
+import scconfig from './data.json';
 // import ScomNetworkPicker, { INetworkConfig } from '@scom/scom-network-picker';
 import ScomDappContainer from '@scom/scom-dapp-container';
 
@@ -500,7 +500,79 @@ export default class ScomNftMinter extends Module implements PageBlock {
     let self = this;
     return [
       {
-        name: 'Commissions',
+        name: 'Builder Configurator',
+        target: 'Builders',
+        getActions: () => {
+          const propertiesSchema: IDataSchema = {
+            type: 'object',
+            properties: {
+              "description": {
+                type: 'string',
+                format: 'multi'
+              },
+              "logo": {
+                type: 'string',
+                format: 'data-url'
+              },
+              "link": {
+                type: 'string'
+              }
+            }
+          };
+      
+          const themeSchema: IDataSchema = {
+            type: 'object',
+            properties: {
+              "dark": {
+                type: 'object',
+                properties: {
+                  backgroundColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  fontColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  inputBackgroundColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  inputFontColor: {
+                    type: 'string',
+                    format: 'color'
+                  }
+                }
+              },
+              "light": {
+                type: 'object',
+                properties: {
+                  backgroundColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  fontColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  inputBackgroundColor: {
+                    type: 'string',
+                    format: 'color'
+                  },
+                  inputFontColor: {
+                    type: 'string',
+                    format: 'color'
+                  }
+                }
+              }
+            }
+          }
+      
+          return this._getActions(propertiesSchema, themeSchema);
+        }
+      },
+      {
+        name: 'Emdedder Configurator',
         target: 'Embedders',
         elementName: 'i-scom-nft-minter-config',
         getLinkParams: () => {
