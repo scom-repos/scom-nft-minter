@@ -42,6 +42,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         title?: string;
         productType?: ProductType;
         logo?: string;
+        logoUrl?: string;
         description?: string;
         link?: string;
         commissions?: ICommissionInfo[];
@@ -2091,6 +2092,7 @@ declare module "@scom/scom-nft-minter" {
         productType?: string;
         description?: string;
         logo?: string;
+        logoUrl?: string;
         link?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         defaultChainId: number;
@@ -2162,6 +2164,8 @@ declare module "@scom/scom-nft-minter" {
         set description(value: string);
         get logo(): string;
         set logo(value: string);
+        get logoUrl(): string;
+        set logoUrl(value: string);
         get commissions(): any;
         set commissions(value: any);
         get chainSpecificProperties(): any;

@@ -3612,6 +3612,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set logo(value) {
             this._data.logo = value;
         }
+        get logoUrl() {
+            return this._data.logoUrl;
+        }
+        set logoUrl(value) {
+            this._data.logoUrl = value;
+        }
         get commissions() {
             var _a;
             return (_a = this._data.commissions) !== null && _a !== void 0 ? _a : [];
@@ -3749,6 +3755,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         type: 'string',
                         format: 'data-url'
                     },
+                    "logoUrl": {
+                        type: 'string',
+                        title: 'Logo URL'
+                    },
                     "link": {
                         type: 'string'
                     }
@@ -3818,6 +3828,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     this._data.productType = userInputData.productType;
                                 if (userInputData.logo != undefined)
                                     this._data.logo = userInputData.logo;
+                                if (userInputData.logoUrl != undefined)
+                                    this._data.logoUrl = userInputData.logoUrl;
                                 if (userInputData.description != undefined)
                                     this._data.description = userInputData.description;
                                 if (userInputData.link != undefined)
@@ -3900,6 +3912,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 "logo": {
                                     type: 'string',
                                     format: 'data-url'
+                                },
+                                "logoUrl": {
+                                    type: 'string',
+                                    title: 'Logo URL'
                                 },
                                 "link": {
                                     type: 'string'
@@ -4047,19 +4063,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         //   this._productId = this._data.productId = result.productId;
         // }
         async refreshDApp() {
-            var _a, _b;
+            var _a;
             this._type = this._data.productType;
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
             (!this.lblLink.isConnected) && await this.lblLink.ready();
             this.lblLink.caption = this._data.link || '';
             this.lblLink.link.href = this._data.link;
-            if ((_a = this._data.logo) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
+            let _logo = this._data.logo || this._data.logoUrl;
+            if (_logo === null || _logo === void 0 ? void 0 : _logo.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = index_13.getIPFSGatewayUrl();
-                this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = _logo.replace('ipfs://', ipfsGatewayUrl);
             }
             else {
-                this.imgLogo.url = this._data.logo;
+                this.imgLogo.url = _logo;
             }
             const data = {
                 wallets: this.wallets,
@@ -4067,7 +4084,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 showHeader: this.showHeader,
                 defaultChainId: this.defaultChainId
             };
-            if ((_b = this.containerDapp) === null || _b === void 0 ? void 0 : _b.setData)
+            if ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.setData)
                 this.containerDapp.setData(data);
             if (!this.productId || this.productId === 0)
                 return;
