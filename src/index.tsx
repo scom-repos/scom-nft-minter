@@ -38,6 +38,7 @@ interface ScomNftMinterElement extends ControlElement {
   productType?: string;
   description?: string;
   logo?: string;
+  logoUrl?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   defaultChainId: number;
@@ -198,6 +199,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set logo(value: string) {
     this._data.logo = value;
+  }
+
+  get logoUrl() {
+    return this._data.logoUrl;
+  }
+
+  set logoUrl(value: string) {
+    this._data.logoUrl = value;
   }
 
   get commissions() {
@@ -373,6 +382,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
           type: 'string',
           format: 'data-url'
         },
+        "logoUrl": {
+          type: 'string',
+          title: 'Logo URL'
+        },
         "link": {
           type: 'string'
         }
@@ -442,6 +455,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
               if (userInputData.name != undefined) this._data.name = userInputData.name;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
+              if (userInputData.logoUrl != undefined) this._data.logoUrl = userInputData.logoUrl;
               if (userInputData.description != undefined) this._data.description = userInputData.description;
               if (userInputData.link != undefined) this._data.link = userInputData.link;
               this.configDApp.data = this._data;
@@ -513,6 +527,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
               "logo": {
                 type: 'string',
                 format: 'data-url'
+              },
+              "logoUrl": {
+                type: 'string',
+                title: 'Logo URL'
               },
               "link": {
                 type: 'string'
@@ -679,12 +697,13 @@ export default class ScomNftMinter extends Module implements PageBlock {
     (!this.lblLink.isConnected) && await this.lblLink.ready();
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
-    if (this._data.logo?.startsWith('ipfs://')) {
+    let _logo = this._data.logo || this._data.logoUrl;
+    if (_logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = _logo.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = this._data.logo;
+      this.imgLogo.url = _logo;
     }
     const data: any = {
       wallets: this.wallets,
