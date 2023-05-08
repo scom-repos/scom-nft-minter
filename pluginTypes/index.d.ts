@@ -2226,6 +2226,10 @@ declare module "@scom/scom-nft-minter" {
                 };
                 userInputDataSchema: IDataSchema;
             }[];
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
@@ -2239,6 +2243,10 @@ declare module "@scom/scom-nft-minter" {
             };
             setLinkParams: (params: any) => Promise<void>;
             bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
             getActions?: undefined;
         })[];
         getData(): IEmbedData;
