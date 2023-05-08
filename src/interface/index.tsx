@@ -47,6 +47,7 @@ export interface IEmbedData {
   title?: string;
   productType?: ProductType;
   logo?: string;
+  logoUrl?: string;
   description?: string;
   link?: string;
   commissions?: ICommissionInfo[];

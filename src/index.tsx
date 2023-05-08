@@ -38,6 +38,7 @@ interface ScomNftMinterElement extends ControlElement {
   productType?: string;
   description?: string;
   logo?: string;
+  logoUrl?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   defaultChainId: number;
@@ -198,6 +199,14 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   set logo(value: string) {
     this._data.logo = value;
+  }
+
+  get logoUrl() {
+    return this._data.logoUrl;
+  }
+
+  set logoUrl(value: string) {
+    this._data.logoUrl = value;
   }
 
   get commissions() {
@@ -373,6 +382,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
           type: 'string',
           format: 'data-url'
         },
+        "logoUrl": {
+          type: 'string',
+          title: 'Logo URL'
+        },
         "link": {
           type: 'string'
         }
@@ -442,6 +455,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
               if (userInputData.name != undefined) this._data.name = userInputData.name;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
+              if (userInputData.logoUrl != undefined) this._data.logoUrl = userInputData.logoUrl;
               if (userInputData.description != undefined) this._data.description = userInputData.description;
               if (userInputData.link != undefined) this._data.link = userInputData.link;
               this.configDApp.data = this._data;
@@ -475,17 +489,17 @@ export default class ScomNftMinter extends Module implements PageBlock {
           return {
             execute: async () => {
               if (!userInputData) return;
-              this.oldTag = { ...this.tag };
+              this.oldTag = JSON.parse(JSON.stringify(this.tag));
               if (builder) builder.setTag(userInputData);
               else this.setTag(userInputData);
               if (this.containerDapp) this.containerDapp.setTag(userInputData);
             },
             undo: () => {
               if (!userInputData) return;
-              this.tag = { ...this.oldTag };
+              this.tag = JSON.parse(JSON.stringify(this.oldTag));
               if (builder) builder.setTag(this.tag);
-              else this.setTag(this.oldTag);
-              if (this.containerDapp) this.containerDapp.setTag(this.oldTag);
+              else this.setTag(this.tag);
+              if (this.containerDapp) this.containerDapp.setTag(this.tag);
             },
             redo: () => { }
           }
@@ -513,6 +527,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
               "logo": {
                 type: 'string',
                 format: 'data-url'
+              },
+              "logoUrl": {
+                type: 'string',
+                title: 'Logo URL'
               },
               "link": {
                 type: 'string'
@@ -569,7 +587,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
           }
       
           return this._getActions(propertiesSchema, themeSchema);
-        }
+        },
+        getData: this.getData.bind(this),
+        setData: this.setData.bind(this),
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
       },
       {
         name: 'Emdedder Configurator',
@@ -601,7 +623,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
             await self.setData(resultingData);
             await callback(data);
           }
-        }
+        },
+        getData: this.getData.bind(this),
+        setData: this.setData.bind(this),
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
       }
     ]
   }
@@ -679,12 +705,13 @@ export default class ScomNftMinter extends Module implements PageBlock {
     (!this.lblLink.isConnected) && await this.lblLink.ready();
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
-    if (this._data.logo?.startsWith('ipfs://')) {
+    let _logo = this._data.logo || this._data.logoUrl;
+    if (_logo?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = this._data.logo.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = _logo.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = this._data.logo;
+      this.imgLogo.url = _logo;
     }
     const data: any = {
       wallets: this.wallets,
@@ -692,9 +719,9 @@ export default class ScomNftMinter extends Module implements PageBlock {
       showHeader: this.showHeader,
       defaultChainId: this.defaultChainId
     }
-    if (this.containerDapp?.setData) this.containerDapp.setData(data)
+    if (this.containerDapp?.setData) this.containerDapp.setData(data);
     if (!this.productId || this.productId === 0) return;
-    this.productInfo = await getProductInfo(this.productId);  
+    this.productInfo = await getProductInfo(this.productId);
     if (this.productInfo) {
       const token = this.productInfo.token;
       this.pnlInputFields.visible = true;
@@ -853,28 +880,31 @@ export default class ScomNftMinter extends Module implements PageBlock {
 
   private async onQtyChanged() {
     const qty = Number(this.edtQty.value);
-    if (qty === 0) {
+    if (qty === 0 || !this.productInfo) {
       this.tokenAmountIn = '0';
     }
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), qty, this._data.commissions);
     }
-    this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+    if (this.productInfo)
+      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
   }
 
   private async onAmountChanged() {
-    const amount = Number(this.edtAmount.value);
-    if (amount === 0) {
+    let amount = Number(this.edtAmount.value);
+    if (amount === 0 || !this.productInfo) {
       this.tokenAmountIn = '0';
+      this.edtAmount.value = '0';
     }
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), amount, this._data.commissions);
     }
+    amount = Number(this.edtAmount.value);
     const commissionFee = getEmbedderCommissionFee();
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
-    const token = this.productInfo.token
-    this.lbOrderTotal.caption = `${total} ${token.symbol}`;
-    this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+    const token = this.productInfo?.token
+    this.lbOrderTotal.caption = `${total} ${token?.symbol || ''}`;
+    token && this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
   }
 
   private async doSubmitAction() {
