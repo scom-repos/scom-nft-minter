@@ -2078,13 +2078,39 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
             };
         };
         embedderCommissionFee: string;
+        defaultBuilderData: {
+            name: string;
+            title: string;
+            productType: string;
+            description: string;
+            link: string;
+            hideDescription: boolean;
+            logo: string;
+            chainSpecificProperties: {
+                "97": {
+                    productId: number;
+                    donateTo: string;
+                };
+                "43113": {
+                    productId: number;
+                    donateTo: string;
+                };
+            };
+            defaultChainId: number;
+            networks: {
+                chainId: number;
+            }[];
+            wallets: {
+                name: string;
+            }[];
+        };
     };
     export default _default_9;
 }
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, IDataSchema, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, PageBlock, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import Config from "@scom/scom-nft-minter/config/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         name?: string;
@@ -2107,7 +2133,7 @@ declare module "@scom/scom-nft-minter" {
             }
         }
     }
-    export default class ScomNftMinter extends Module implements PageBlock {
+    export default class ScomNftMinter extends Module {
         private gridDApp;
         private imgLogo;
         private markdownViewer;
@@ -2179,40 +2205,11 @@ declare module "@scom/scom-nft-minter" {
         get defaultChainId(): number;
         set defaultChainId(value: number);
         private registerEvent;
-        onWalletConnect: (connected: boolean) => Promise<void>;
-        onChainChanged: () => Promise<void>;
+        private onWalletConnect;
+        private onChainChanged;
         private updateTokenBalance;
         private onSetupPage;
-        getEmbedderActions(): {
-            name: string;
-            icon: string;
-            command: (builder: any, userInputData: any) => {
-                execute: () => Promise<void>;
-                undo: () => void;
-                redo: () => void;
-            };
-            userInputDataSchema: IDataSchema;
-        }[];
-        getActions(): {
-            name: string;
-            icon: string;
-            command: (builder: any, userInputData: any) => {
-                execute: () => Promise<void>;
-                undo: () => void;
-                redo: () => void;
-            };
-            userInputDataSchema: IDataSchema;
-        }[];
-        _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema): {
-            name: string;
-            icon: string;
-            command: (builder: any, userInputData: any) => {
-                execute: () => Promise<void>;
-                undo: () => void;
-                redo: () => void;
-            };
-            userInputDataSchema: IDataSchema;
-        }[];
+        private _getActions;
         getConfigurators(): ({
             name: string;
             target: string;
@@ -2227,7 +2224,7 @@ declare module "@scom/scom-nft-minter" {
                 userInputDataSchema: IDataSchema;
             }[];
             getData: any;
-            setData: any;
+            setData: (data: IEmbedData) => Promise<void>;
             getTag: any;
             setTag: any;
             elementName?: undefined;
@@ -2249,17 +2246,17 @@ declare module "@scom/scom-nft-minter" {
             setTag: any;
             getActions?: undefined;
         })[];
-        getData(): IEmbedData;
-        setData(data: IEmbedData): Promise<void>;
-        getTag(): any;
+        private getData;
+        private setData;
+        private getTag;
         private updateTag;
-        setTag(value: any): Promise<void>;
+        private setTag;
         private updateStyle;
         private updateTheme;
         private refreshDApp;
         private updateSpotsRemaining;
         private initApprovalAction;
-        updateContractAddress(): void;
+        private updateContractAddress;
         private selectToken;
         private updateSubmitButton;
         private onApprove;

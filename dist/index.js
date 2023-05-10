@@ -3482,7 +3482,40 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                 }
             }
         },
-        "embedderCommissionFee": "0.01"
+        "embedderCommissionFee": "0.01",
+        "defaultBuilderData": {
+            "name": "Donation Dapp",
+            "title": "Support Tom's Blog",
+            "productType": "DonateToEveryone",
+            "description": "#### Tom's Blog is a rapidly growing blog site with a fanbase of over 30,000.  Help Tom's Blog grow!",
+            "link": "",
+            "hideDescription": true,
+            "logo": "ipfs://bafkreicdwbtx5niyhfzctxvxnwxjt3qfb3kyotrdpkdo26wky33lnt7lci",
+            "chainSpecificProperties": {
+                "97": {
+                    "productId": 1,
+                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+                },
+                "43113": {
+                    "productId": 1,
+                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+                }
+            },
+            "defaultChainId": 43113,
+            "networks": [
+                {
+                    "chainId": 43113
+                },
+                {
+                    "chainId": 97
+                }
+            ],
+            "wallets": [
+                {
+                    "name": "metamask"
+                }
+            ]
+        }
     };
 });
 define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts"], function (require, exports, components_8, eth_wallet_9, index_11, index_12, index_13, index_14, index_css_3, API_1, data_json_1) {
@@ -3670,149 +3703,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 await this.initApprovalAction();
             }
         }
-        getEmbedderActions() {
-            const propertiesSchema = {
-                type: 'object',
-                properties: {}
-            };
-            const themeSchema = {
-                type: 'object',
-                properties: {
-                    "dark": {
-                        type: 'object',
-                        properties: {
-                            backgroundColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            fontColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            inputBackgroundColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            inputFontColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            }
-                        }
-                    },
-                    "light": {
-                        type: 'object',
-                        properties: {
-                            backgroundColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            fontColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            inputBackgroundColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            },
-                            inputFontColor: {
-                                type: 'string',
-                                format: 'color',
-                                readOnly: true
-                            }
-                        }
-                    }
-                }
-            };
-            return this._getActions(propertiesSchema, themeSchema);
-        }
-        getActions() {
-            const propertiesSchema = {
-                type: 'object',
-                properties: {
-                    // "name": {
-                    //   type: 'string'
-                    // },
-                    // "productType": {
-                    //   type: 'string'
-                    // },           
-                    // "donateTo": {
-                    //   type: 'string',
-                    //   default: Wallet.getClientInstance().address,
-                    //   format: "wallet-address"
-                    // },
-                    "description": {
-                        type: 'string',
-                        format: 'multi'
-                    },
-                    "logo": {
-                        type: 'string',
-                        format: 'data-url'
-                    },
-                    "logoUrl": {
-                        type: 'string',
-                        title: 'Logo URL'
-                    },
-                    "link": {
-                        type: 'string'
-                    }
-                }
-            };
-            const themeSchema = {
-                type: 'object',
-                properties: {
-                    "dark": {
-                        type: 'object',
-                        properties: {
-                            backgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            fontColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputBackgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputFontColor: {
-                                type: 'string',
-                                format: 'color'
-                            }
-                        }
-                    },
-                    "light": {
-                        type: 'object',
-                        properties: {
-                            backgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            fontColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputBackgroundColor: {
-                                type: 'string',
-                                format: 'color'
-                            },
-                            inputFontColor: {
-                                type: 'string',
-                                format: 'color'
-                            }
-                        }
-                    }
-                }
-            };
-            return this._getActions(propertiesSchema, themeSchema);
-        }
         _getActions(propertiesSchema, themeSchema) {
             const actions = [
                 {
@@ -3972,7 +3862,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return this._getActions(propertiesSchema, themeSchema);
                     },
                     getData: this.getData.bind(this),
-                    setData: this.setData.bind(this),
+                    setData: async (data) => {
+                        const defaultData = data_json_1.default.defaultBuilderData;
+                        await this.setData(Object.assign(Object.assign({}, defaultData), data));
+                    },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
                 },
@@ -4032,10 +3925,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async setTag(value) {
             const newValue = value || {};
-            if (newValue.light)
-                this.updateTag('light', newValue.light);
-            if (newValue.dark)
-                this.updateTag('dark', newValue.dark);
+            for (let prop in newValue) {
+                if (newValue.hasOwnProperty(prop)) {
+                    if (prop === 'light' || prop === 'dark')
+                        this.updateTag(prop, newValue[prop]);
+                    else
+                        this.tag[prop] = newValue[prop];
+                }
+            }
             if (this.containerDapp)
                 this.containerDapp.setTag(this.tag);
             this.updateTheme();

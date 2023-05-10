@@ -59,7 +59,7 @@ declare global {
 
 @customModule
 @customElements('i-scom-nft-minter')
-export default class ScomNftMinter extends Module implements PageBlock {
+export default class ScomNftMinter extends Module {
   private gridDApp: GridLayout;
   private imgLogo: Image;
   private markdownViewer: Markdown;
@@ -259,7 +259,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     this.$eventBus.register(this, EventId.chainChanged, this.onChainChanged);
   }
 
-  onWalletConnect = async (connected: boolean) => {
+  private onWalletConnect = async (connected: boolean) => {
     let chainId = getChainId();
     if (connected && !chainId) {
       this.onSetupPage(true);
@@ -272,7 +272,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  onChainChanged = async () => {
+  private onChainChanged = async () => {
     this.onSetupPage(true);
     this.updateContractAddress();
     this.refreshDApp();
@@ -294,156 +294,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  getEmbedderActions() {
-    const propertiesSchema: IDataSchema = {
-      type: 'object',
-      properties: {
-      }
-    };
-    const themeSchema: IDataSchema = {
-      type: 'object',
-      properties: {
-        "dark": {
-          type: 'object',
-          properties: {
-            backgroundColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            fontColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            inputBackgroundColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            inputFontColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            }
-          }
-        },
-        "light": {
-          type: 'object',
-          properties: {
-            backgroundColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            fontColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            inputBackgroundColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            },
-            inputFontColor: {
-              type: 'string',
-              format: 'color',
-              readOnly: true
-            }
-          }
-        }
-      }
-    }
-
-    return this._getActions(propertiesSchema, themeSchema);
-  }
-
-  getActions() {
-    const propertiesSchema: IDataSchema = {
-      type: 'object',
-      properties: {
-        // "name": {
-        //   type: 'string'
-        // },
-        // "productType": {
-        //   type: 'string'
-        // },           
-        // "donateTo": {
-        //   type: 'string',
-        //   default: Wallet.getClientInstance().address,
-        //   format: "wallet-address"
-        // },
-        "description": {
-          type: 'string',
-          format: 'multi'
-        },
-        "logo": {
-          type: 'string',
-          format: 'data-url'
-        },
-        "logoUrl": {
-          type: 'string',
-          title: 'Logo URL'
-        },
-        "link": {
-          type: 'string'
-        }
-      }
-    };
-
-    const themeSchema: IDataSchema = {
-      type: 'object',
-      properties: {
-        "dark": {
-          type: 'object',
-          properties: {
-            backgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            fontColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputBackgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputFontColor: {
-              type: 'string',
-              format: 'color'
-            }
-          }
-        },
-        "light": {
-          type: 'object',
-          properties: {
-            backgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            fontColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputBackgroundColor: {
-              type: 'string',
-              format: 'color'
-            },
-            inputFontColor: {
-              type: 'string',
-              format: 'color'
-            }
-          }
-        }
-      }
-    }
-
-    return this._getActions(propertiesSchema, themeSchema);
-  }
-
-  _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema) {
+  private _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema) {
     const actions = [
       {
         name: 'Settings',
@@ -589,7 +440,10 @@ export default class ScomNftMinter extends Module implements PageBlock {
           return this._getActions(propertiesSchema, themeSchema);
         },
         getData: this.getData.bind(this),
-        setData: this.setData.bind(this),
+        setData: async (data: IEmbedData) => {
+          const defaultData = scconfig.defaultBuilderData as any;
+          await this.setData({...defaultData, ...data})
+        },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
       },
@@ -632,11 +486,11 @@ export default class ScomNftMinter extends Module implements PageBlock {
     ]
   }
 
-  getData() {
+  private getData() {
     return this._data;
   }
 
-  async setData(data: IEmbedData) {
+  private async setData(data: IEmbedData) {
     this._data = data;
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();
@@ -645,7 +499,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     await this.refreshDApp();
   }
 
-  getTag() {
+  private getTag() {
     return this.tag;
   }
 
@@ -657,10 +511,16 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  async setTag(value: any) {
+  private async setTag(value: any) {
     const newValue = value || {};
-    if (newValue.light) this.updateTag('light', newValue.light);
-    if (newValue.dark) this.updateTag('dark', newValue.dark);
+    for (let prop in newValue) {
+      if (newValue.hasOwnProperty(prop)) {
+        if (prop === 'light' || prop === 'dark')
+          this.updateTag(prop, newValue[prop]);
+        else
+          this.tag[prop] = newValue[prop];
+      }
+    }
     if (this.containerDapp)
       this.containerDapp.setTag(this.tag);
     this.updateTheme();
@@ -847,7 +707,7 @@ export default class ScomNftMinter extends Module implements PageBlock {
     }
   }
 
-  updateContractAddress() {
+  private updateContractAddress() {
     if (this.approvalModelAction) {
       if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == getChainId())) {
         this.contractAddress = getContractAddress('ProductInfo');
