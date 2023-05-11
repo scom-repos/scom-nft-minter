@@ -16,6 +16,7 @@ import {
   VStack,
   IDataSchema,
   ControlElement,
+  Icon,
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
 import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
@@ -84,6 +85,7 @@ export default class ScomNftMinter extends Module {
   private mdAlert: Alert;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
+  private iconOrderTotal: Icon;
   // private networkPicker: ScomNetworkPicker;
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
@@ -139,7 +141,8 @@ export default class ScomNftMinter extends Module {
 
     const commissionFee = getEmbedderCommissionFee();
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
-    this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
+    this.lbOrderTotalTitle.caption = `Total`;
+    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
 
     this.updateContractAddress();
     await this.refreshDApp();
@@ -295,7 +298,50 @@ export default class ScomNftMinter extends Module {
   }
 
   private _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema) {
+    let self = this;
     const actions = [
+      {
+        name: 'Commissions',
+        icon: 'dollar-sign',
+        command: (builder: any, userInputData: any) => {
+          return {
+            execute: async () => {
+              this._oldData = {...this._data};
+              let resultingData = {
+                ...self._data,
+                commissions: userInputData.commissions
+              };
+              await self.setData(resultingData);
+              if (builder?.setData) builder.setData(this._data);
+            },
+            undo: async () => {
+              this._data = {...this._oldData};
+              this.configDApp.data = this._data;
+              await self.setData(this._data);
+              if (builder?.setData) builder.setData(this._data);
+            },
+            redo: () => { }
+          }
+        },
+        customUI: {
+          render: (data?: any, onConfirm?: (result: boolean, data: any) => void) => {
+            const vstack = new VStack();
+            const config = new Config(null, {
+              commissions: self._data.commissions
+            });
+            const button = new Button(null, {
+              caption: 'Confirm',
+            });
+            vstack.append(config);
+            vstack.append(button);
+            button.onClick = async () => {
+              const commissions = config.data.commissions;
+              if (onConfirm) onConfirm(true, {commissions});
+            }
+            return vstack;
+          }
+        }
+      },         
       {
         name: 'Settings',
         icon: 'cog',
@@ -304,6 +350,7 @@ export default class ScomNftMinter extends Module {
             execute: async () => {
               this._oldData = { ...this._data };
               if (userInputData.name != undefined) this._data.name = userInputData.name;
+              if (userInputData.title != undefined) this._data.title = userInputData.title;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
               if (userInputData.logoUrl != undefined) this._data.logoUrl = userInputData.logoUrl;
@@ -371,9 +418,12 @@ export default class ScomNftMinter extends Module {
           const propertiesSchema: IDataSchema = {
             type: 'object',
             properties: {
+              "title": {
+                type: 'string'
+              },              
               "description": {
                 type: 'string',
-                format: 'multi'
+                format: 'multi'  
               },
               "logo": {
                 type: 'string',
@@ -494,7 +544,8 @@ export default class ScomNftMinter extends Module {
     this._data = data;
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();
-    this.lbOrderTotalTitle.caption = `Total (+${new BigNumber(commissionFee).times(100)}% Commission Fee)`;
+    this.lbOrderTotalTitle.caption = `Total`;
+    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
     this.updateContractAddress();
     await this.refreshDApp();
   }
@@ -919,7 +970,7 @@ export default class ScomNftMinter extends Module {
               templateColumns={['1fr']}
               padding={{ bottom: '1.563rem' }}
             >
-              <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }} verticalAlignment='space-between'>
+              <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '1rem', left: '1rem', right: '1rem' }} verticalAlignment='space-between'>
                 <i-vstack class="text-center" margin={{ bottom: '0.25rem' }} gap="0.5rem">
                   <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
                   <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
@@ -1042,7 +1093,10 @@ export default class ScomNftMinter extends Module {
                       horizontalAlignment="space-between"
                       verticalAlignment='center'
                     >
-                      <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
+                      <i-hstack verticalAlignment='center' gap="0.5rem">
+                        <i-label id="lbOrderTotalTitle" caption='Total' font={{ size: '1rem' }}></i-label>
+                        <i-icon id="iconOrderTotal" name="question-circle" fill={Theme.background.modal} width={20} height={20}></i-icon>
+                      </i-hstack>
                       <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
                     </i-hstack>
                     <i-vstack gap='0.25rem' margin={{ top: '1rem' }}>

@@ -369,6 +369,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_3.Styles.Theme.ThemeVars;
+    const CommissionFeeTooltipText = "For each transaction, you'll receive a 1% commission fee based on the total amount. This fee will be transferred to a designated commission contract within the corresponding blockchain network.";
     let Config = class Config extends components_3.Module {
         constructor() {
             super(...arguments);
@@ -472,6 +473,9 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
             this.commissionInfoList = [];
             const embedderFee = index_3.getEmbedderCommissionFee();
             this.lbCommissionShare.caption = `${index_2.formatNumber(new eth_wallet_6.BigNumber(embedderFee).times(100).toFixed(), 4)} %`;
+            const commissions = this.getAttribute('commissions', true);
+            this.tableCommissions.data = commissions || [];
+            this.toggleVisible();
         }
         get data() {
             const config = {
@@ -562,7 +566,7 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
                         this.$render("i-hstack", { gap: "4px" },
                             this.$render("i-label", { caption: "Commission Fee: ", opacity: 0.6, font: { size: '1rem' } }),
                             this.$render("i-label", { id: "lbCommissionShare", font: { size: '1rem' } }),
-                            this.$render("i-icon", { name: "question-circle", fill: Theme.background.modal, width: 20, height: 20 })),
+                            this.$render("i-icon", { name: "question-circle", fill: Theme.background.modal, width: 20, height: 20, tooltip: { content: CommissionFeeTooltipText } })),
                         this.$render("i-button", { id: "btnAddWallet", caption: "Add Wallet", border: { radius: '58px' }, padding: { top: '0.3rem', bottom: '0.3rem', left: '1rem', right: '1rem' }, background: { color: Theme.colors.primary.main }, font: { color: Theme.colors.primary.contrastText, size: '0.75rem', weight: 400 }, visible: false, onClick: this.onAddCommissionClicked.bind(this) })),
                     this.$render("i-vstack", { id: "pnlEmptyWallet", border: { radius: '8px' }, background: { color: Theme.background.modal }, padding: { top: '1.875rem', bottom: '1.875rem', left: '1.563rem', right: '1.563rem' }, gap: "1.25rem", width: "100%", class: "text-center" },
                         this.$render("i-label", { caption: "To receive commission fee please add your wallet address", font: { size: '1rem' } }),
@@ -3518,7 +3522,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         }
     };
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts"], function (require, exports, components_8, eth_wallet_9, index_11, index_12, index_13, index_14, index_css_3, API_1, data_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/wallet/index.ts", "@scom/scom-nft-minter/config/index.tsx", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts"], function (require, exports, components_8, eth_wallet_9, index_11, index_12, index_13, index_14, index_15, index_css_3, API_1, data_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_8.Styles.Theme.ThemeVars;
@@ -3591,7 +3595,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const commissionFee = index_13.getEmbedderCommissionFee();
             if (!this.lbOrderTotalTitle.isConnected)
                 await this.lbOrderTotalTitle.ready();
-            this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_9.BigNumber(commissionFee).times(100)}% Commission Fee)`;
+            this.lbOrderTotalTitle.caption = `Total`;
+            this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_9.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
             await this.refreshDApp();
             this.isReadyCallbackQueued = false;
@@ -3704,7 +3709,50 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         _getActions(propertiesSchema, themeSchema) {
+            let self = this;
             const actions = [
+                {
+                    name: 'Commissions',
+                    icon: 'dollar-sign',
+                    command: (builder, userInputData) => {
+                        return {
+                            execute: async () => {
+                                this._oldData = Object.assign({}, this._data);
+                                let resultingData = Object.assign(Object.assign({}, self._data), { commissions: userInputData.commissions });
+                                await self.setData(resultingData);
+                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                    builder.setData(this._data);
+                            },
+                            undo: async () => {
+                                this._data = Object.assign({}, this._oldData);
+                                this.configDApp.data = this._data;
+                                await self.setData(this._data);
+                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                    builder.setData(this._data);
+                            },
+                            redo: () => { }
+                        };
+                    },
+                    customUI: {
+                        render: (data, onConfirm) => {
+                            const vstack = new components_8.VStack();
+                            const config = new index_15.default(null, {
+                                commissions: self._data.commissions
+                            });
+                            const button = new components_8.Button(null, {
+                                caption: 'Confirm',
+                            });
+                            vstack.append(config);
+                            vstack.append(button);
+                            button.onClick = async () => {
+                                const commissions = config.data.commissions;
+                                if (onConfirm)
+                                    onConfirm(true, { commissions });
+                            };
+                            return vstack;
+                        }
+                    }
+                },
                 {
                     name: 'Settings',
                     icon: 'cog',
@@ -3714,6 +3762,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this._oldData = Object.assign({}, this._data);
                                 if (userInputData.name != undefined)
                                     this._data.name = userInputData.name;
+                                if (userInputData.title != undefined)
+                                    this._data.title = userInputData.title;
                                 if (userInputData.productType != undefined)
                                     this._data.productType = userInputData.productType;
                                 if (userInputData.logo != undefined)
@@ -3795,6 +3845,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         const propertiesSchema = {
                             type: 'object',
                             properties: {
+                                "title": {
+                                    type: 'string'
+                                },
                                 "description": {
                                     type: 'string',
                                     format: 'multi'
@@ -3908,7 +3961,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data = data;
             this.configDApp.data = data;
             const commissionFee = index_13.getEmbedderCommissionFee();
-            this.lbOrderTotalTitle.caption = `Total (+${new eth_wallet_9.BigNumber(commissionFee).times(100)}% Commission Fee)`;
+            this.lbOrderTotalTitle.caption = `Total`;
+            this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_9.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
             await this.refreshDApp();
         }
@@ -4314,7 +4368,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.$render("i-scom-dapp-container", { id: "containerDapp" },
                     this.$render("i-panel", { background: { color: Theme.background.main } },
                         this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
-                            this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' }, verticalAlignment: 'space-between' },
+                            this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '1rem', left: '1rem', right: '1rem' }, verticalAlignment: 'space-between' },
                                 this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' }, gap: "0.5rem" },
                                     this.$render("i-image", { id: 'imgLogo', class: index_css_3.imageStyle, height: 100 }),
                                     this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
@@ -4343,7 +4397,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                 this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
                                                 this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),
                                         this.$render("i-hstack", { horizontalAlignment: "space-between", verticalAlignment: 'center' },
-                                            this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { size: '1rem' } }),
+                                            this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
+                                                this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { size: '1rem' } }),
+                                                this.$render("i-icon", { id: "iconOrderTotal", name: "question-circle", fill: Theme.background.modal, width: 20, height: 20 })),
                                             this.$render("i-label", { id: 'lbOrderTotal', font: { size: '1rem' }, caption: "0" })),
                                         this.$render("i-vstack", { gap: '0.25rem', margin: { top: '1rem' } },
                                             this.$render("i-label", { id: 'lblRef', font: { size: '0.875rem' }, opacity: 0.5 }),
