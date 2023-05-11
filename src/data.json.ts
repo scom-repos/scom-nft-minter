@@ -24,5 +24,38 @@ export default {
             }
         }
     },
-    "embedderCommissionFee": "0.01"
+    "embedderCommissionFee": "0.01",
+    "defaultBuilderData": {
+        "name": "Donation Dapp",
+        "title": "Support Tom's Blog",
+        "productType": "DonateToEveryone",
+        "description": "#### Tom's Blog is a rapidly growing blog site with a fanbase of over 30,000.  Help Tom's Blog grow!",
+        "link": "",
+        "hideDescription": true,
+        "logo": "ipfs://bafkreicdwbtx5niyhfzctxvxnwxjt3qfb3kyotrdpkdo26wky33lnt7lci",
+        "chainSpecificProperties": {
+            "97": {
+                "productId": 1,
+                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            },
+            "43113": {
+                "productId": 1,
+                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            }
+        },
+        "defaultChainId": 43113,
+        "networks": [
+            {
+                "chainId": 43113
+            },
+            {
+                "chainId": 97
+            }
+        ],
+        "wallets": [
+            {
+                "name": "metamask"
+            }
+        ]
+    }
 }
