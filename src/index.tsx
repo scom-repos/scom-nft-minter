@@ -29,7 +29,7 @@ import { TokenSelection } from './token-selection/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { Alert } from './alert/index';
 import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
-import scconfig from './data.json';
+import configData from './data.json';
 // import ScomNetworkPicker, { INetworkConfig } from '@scom/scom-network-picker';
 import ScomDappContainer from '@scom/scom-dapp-container';
 
@@ -93,11 +93,6 @@ export default class ScomNftMinter extends Module {
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
-  private _oldData: IEmbedData = {
-    wallets: [],
-    networks: [],
-    defaultChainId: 0
-  };
   private _data: IEmbedData = {
     wallets: [],
     networks: [],
@@ -107,7 +102,6 @@ export default class ScomNftMinter extends Module {
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
   private tokenAmountIn: string;
-  private oldTag: any = {};
   tag: any = {};
   defaultEdit: boolean = true;
   private contractAddress: string;
@@ -117,7 +111,7 @@ export default class ScomNftMinter extends Module {
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
-    setDataFromSCConfig(scconfig);
+    setDataFromSCConfig(configData);
     this.$eventBus = application.EventBus;
     this.registerEvent();
   }
@@ -304,9 +298,14 @@ export default class ScomNftMinter extends Module {
         name: 'Commissions',
         icon: 'dollar-sign',
         command: (builder: any, userInputData: any) => {
+          let _oldData: IEmbedData = {
+            wallets: [],
+            networks: [],
+            defaultChainId: 0
+          };
           return {
             execute: async () => {
-              this._oldData = {...this._data};
+              _oldData = {...this._data};
               let resultingData = {
                 ...self._data,
                 commissions: userInputData.commissions
@@ -315,7 +314,7 @@ export default class ScomNftMinter extends Module {
               if (builder?.setData) builder.setData(this._data);
             },
             undo: async () => {
-              this._data = {...this._oldData};
+              this._data = {..._oldData};
               this.configDApp.data = this._data;
               await self.setData(this._data);
               if (builder?.setData) builder.setData(this._data);
@@ -346,11 +345,15 @@ export default class ScomNftMinter extends Module {
         name: 'Settings',
         icon: 'cog',
         command: (builder: any, userInputData: any) => {
+          let _oldData: IEmbedData = {
+            wallets: [],
+            networks: [],
+            defaultChainId: 0
+          };
           return {
             execute: async () => {
-              this._oldData = { ...this._data };
+              _oldData = { ...this._data };
               if (userInputData.name != undefined) this._data.name = userInputData.name;
-              if (userInputData.title != undefined) this._data.title = userInputData.title;
               if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
               if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
               if (userInputData.logoUrl != undefined) this._data.logoUrl = userInputData.logoUrl;
@@ -370,7 +373,7 @@ export default class ScomNftMinter extends Module {
               if (builder?.setData) builder.setData(this._data);
             },
             undo: () => {
-              this._data = { ...this._oldData };
+              this._data = { ..._oldData };
               this.configDApp.data = this._data;
               this.refreshDApp();
               if (builder?.setData) builder.setData(this._data);
@@ -384,17 +387,18 @@ export default class ScomNftMinter extends Module {
         name: 'Theme Settings',
         icon: 'palette',
         command: (builder: any, userInputData: any) => {
+          let oldTag = {};
           return {
             execute: async () => {
               if (!userInputData) return;
-              this.oldTag = JSON.parse(JSON.stringify(this.tag));
+              oldTag = JSON.parse(JSON.stringify(this.tag));
               if (builder) builder.setTag(userInputData);
               else this.setTag(userInputData);
               if (this.containerDapp) this.containerDapp.setTag(userInputData);
             },
             undo: () => {
               if (!userInputData) return;
-              this.tag = JSON.parse(JSON.stringify(this.oldTag));
+              this.tag = JSON.parse(JSON.stringify(oldTag));
               if (builder) builder.setTag(this.tag);
               else this.setTag(this.tag);
               if (this.containerDapp) this.containerDapp.setTag(this.tag);
@@ -491,7 +495,7 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          const defaultData = scconfig.defaultBuilderData as any;
+          const defaultData = configData.defaultBuilderData as any;
           await this.setData({...defaultData, ...data})
         },
         getTag: this.getTag.bind(this),

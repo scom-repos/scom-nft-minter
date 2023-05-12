@@ -3529,18 +3529,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
     let ScomNftMinter = class ScomNftMinter extends components_8.Module {
         constructor(parent, options) {
             super(parent, options);
-            this._oldData = {
-                wallets: [],
-                networks: [],
-                defaultChainId: 0
-            };
             this._data = {
                 wallets: [],
                 networks: [],
                 defaultChainId: 0
             };
             this.isApproving = false;
-            this.oldTag = {};
             this.tag = {};
             this.defaultEdit = true;
             this.onWalletConnect = async (connected) => {
@@ -3715,16 +3709,21 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     name: 'Commissions',
                     icon: 'dollar-sign',
                     command: (builder, userInputData) => {
+                        let _oldData = {
+                            wallets: [],
+                            networks: [],
+                            defaultChainId: 0
+                        };
                         return {
                             execute: async () => {
-                                this._oldData = Object.assign({}, this._data);
+                                _oldData = Object.assign({}, this._data);
                                 let resultingData = Object.assign(Object.assign({}, self._data), { commissions: userInputData.commissions });
                                 await self.setData(resultingData);
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
                             },
                             undo: async () => {
-                                this._data = Object.assign({}, this._oldData);
+                                this._data = Object.assign({}, _oldData);
                                 this.configDApp.data = this._data;
                                 await self.setData(this._data);
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
@@ -3757,13 +3756,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     name: 'Settings',
                     icon: 'cog',
                     command: (builder, userInputData) => {
+                        let _oldData = {
+                            wallets: [],
+                            networks: [],
+                            defaultChainId: 0
+                        };
                         return {
                             execute: async () => {
-                                this._oldData = Object.assign({}, this._data);
+                                _oldData = Object.assign({}, this._data);
                                 if (userInputData.name != undefined)
                                     this._data.name = userInputData.name;
-                                if (userInputData.title != undefined)
-                                    this._data.title = userInputData.title;
                                 if (userInputData.productType != undefined)
                                     this._data.productType = userInputData.productType;
                                 if (userInputData.logo != undefined)
@@ -3789,7 +3791,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     builder.setData(this._data);
                             },
                             undo: () => {
-                                this._data = Object.assign({}, this._oldData);
+                                this._data = Object.assign({}, _oldData);
                                 this.configDApp.data = this._data;
                                 this.refreshDApp();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
@@ -3804,11 +3806,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     name: 'Theme Settings',
                     icon: 'palette',
                     command: (builder, userInputData) => {
+                        let oldTag = {};
                         return {
                             execute: async () => {
                                 if (!userInputData)
                                     return;
-                                this.oldTag = JSON.parse(JSON.stringify(this.tag));
+                                oldTag = JSON.parse(JSON.stringify(this.tag));
                                 if (builder)
                                     builder.setTag(userInputData);
                                 else
@@ -3819,7 +3822,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             undo: () => {
                                 if (!userInputData)
                                     return;
-                                this.tag = JSON.parse(JSON.stringify(this.oldTag));
+                                this.tag = JSON.parse(JSON.stringify(oldTag));
                                 if (builder)
                                     builder.setTag(this.tag);
                                 else

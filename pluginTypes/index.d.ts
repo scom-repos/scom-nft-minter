@@ -2167,13 +2167,11 @@ declare module "@scom/scom-nft-minter" {
         private containerDapp;
         private productInfo;
         private _type;
-        private _oldData;
         private _data;
         private $eventBus;
         private approvalModelAction;
         private isApproving;
         private tokenAmountIn;
-        private oldTag;
         tag: any;
         defaultEdit: boolean;
         private contractAddress;
