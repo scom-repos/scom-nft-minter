@@ -145,11 +145,11 @@ export default class Config extends Module {
 
   async init() {
     super.init();
-    this.commissionInfoList = [];
     const embedderFee = getEmbedderCommissionFee();
     this.lbCommissionShare.caption = `${formatNumber(new BigNumber(embedderFee).times(100).toFixed(), 4)} %`;
-    const commissions = this.getAttribute('commissions', true);
-    this.tableCommissions.data = commissions || [];
+    const commissions = this.getAttribute('commissions', true, []);
+    this.commissionInfoList = commissions;
+    this.tableCommissions.data = commissions;
     this.toggleVisible();
   }
 
