@@ -470,11 +470,11 @@ define("@scom/scom-nft-minter/config/index.tsx", ["require", "exports", "@ijstec
         }
         async init() {
             super.init();
-            this.commissionInfoList = [];
             const embedderFee = index_3.getEmbedderCommissionFee();
             this.lbCommissionShare.caption = `${index_2.formatNumber(new eth_wallet_6.BigNumber(embedderFee).times(100).toFixed(), 4)} %`;
-            const commissions = this.getAttribute('commissions', true);
-            this.tableCommissions.data = commissions || [];
+            const commissions = this.getAttribute('commissions', true, []);
+            this.commissionInfoList = commissions;
+            this.tableCommissions.data = commissions;
             this.toggleVisible();
         }
         get data() {
@@ -3526,6 +3526,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_8.Styles.Theme.ThemeVars;
+    const currentTheme = components_8.Styles.Theme.currentTheme;
     let ScomNftMinter = class ScomNftMinter extends components_8.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -3573,7 +3574,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
-            // if (!this.containerDapp.isConnected) await this.containerDapp.ready();
+            const defaultColors = {
+                fontColor: currentTheme.text.primary,
+                backgroundColor: currentTheme.background.main,
+                inputFontColor: currentTheme.input.fontColor,
+                inputBackgroundColor: currentTheme.input.background
+            };
+            this.setTag({
+                light: Object.assign({}, defaultColors),
+                dark: Object.assign({}, defaultColors)
+            });
             await this.onSetupPage(index_14.isWalletConnected());
             this._data.link = this.getAttribute('link', true);
             this._data.productType = this.getAttribute('productType', true);
