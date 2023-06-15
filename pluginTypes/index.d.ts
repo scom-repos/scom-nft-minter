@@ -2116,6 +2116,7 @@ declare module "@scom/scom-nft-minter" {
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import Config from "@scom/scom-nft-minter/config/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
+        lazyLoad?: boolean;
         name?: string;
         title?: string;
         productType?: string;

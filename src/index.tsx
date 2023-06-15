@@ -34,6 +34,7 @@ import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 
 interface ScomNftMinterElement extends ControlElement {
+  lazyLoad?: boolean;
   name?: string;
   title?: string;
   productType?: string;
@@ -130,26 +131,29 @@ export default class ScomNftMinter extends Module {
       light: {...defaultColors},
       dark: {...defaultColors}
     })
-    await this.onSetupPage(isWalletConnected());
-    this._data.link = this.getAttribute('link', true);
-    this._data.productType = this.getAttribute('productType', true);
-    this._data.name = this.getAttribute('name', true);
-    this._data.title = this.getAttribute('title', true);
-    this._data.description = this.getAttribute('description', true);
-    this._data.logo = this.getAttribute('logo', true);
-    this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
-    this._data.networks = this.getAttribute('networks', true);
-    this._data.wallets = this.getAttribute('wallets', true);
-    this._data.showHeader = this.getAttribute('showHeader', true);
-    this._data.defaultChainId = this.getAttribute('defaultChainId', true);
+    const lazyLoad = this.getAttribute('lazyLoad', true, false);
+    if (!lazyLoad) {
+      await this.onSetupPage(isWalletConnected());
+      this._data.link = this.getAttribute('link', true);
+      this._data.productType = this.getAttribute('productType', true);
+      this._data.name = this.getAttribute('name', true);
+      this._data.title = this.getAttribute('title', true);
+      this._data.description = this.getAttribute('description', true);
+      this._data.logo = this.getAttribute('logo', true);
+      this._data.chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
+      this._data.networks = this.getAttribute('networks', true);
+      this._data.wallets = this.getAttribute('wallets', true);
+      this._data.showHeader = this.getAttribute('showHeader', true);
+      this._data.defaultChainId = this.getAttribute('defaultChainId', true);
 
-    const commissionFee = getEmbedderCommissionFee();
-    if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
-    this.lbOrderTotalTitle.caption = `Total`;
-    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
+      const commissionFee = getEmbedderCommissionFee();
+      if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
+      this.lbOrderTotalTitle.caption = `Total`;
+      this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
 
-    this.updateContractAddress();
-    await this.refreshDApp();
+      this.updateContractAddress();
+      await this.refreshDApp();
+    }
     this.isReadyCallbackQueued = false;
     this.executeReadyCallback();
   }
