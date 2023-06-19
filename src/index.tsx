@@ -559,6 +559,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private async setData(data: IEmbedData) {
+    await this.onSetupPage(isWalletConnected());
     this._data = data;
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();

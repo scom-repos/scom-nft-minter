@@ -3974,6 +3974,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return this._data;
         }
         async setData(data) {
+            await this.onSetupPage((0, index_14.isWalletConnected)());
             this._data = data;
             this.configDApp.data = data;
             const commissionFee = (0, index_13.getEmbedderCommissionFee)();
