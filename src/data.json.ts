@@ -27,12 +27,12 @@ export default {
     "embedderCommissionFee": "0.01",
     "defaultBuilderData": {
         "name": "Donation Dapp",
-        "title": "Support Tom's Blog",
+        // "title": "Title",
         "productType": "DonateToEveryone",
-        "description": "#### Tom's Blog is a rapidly growing blog site with a fanbase of over 30,000.  Help Tom's Blog grow!",
+        // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         "link": "",
         "hideDescription": true,
-        "logo": "ipfs://bafkreicdwbtx5niyhfzctxvxnwxjt3qfb3kyotrdpkdo26wky33lnt7lci",
+        // "logoUrl": "https://placehold.co/600x400?text=No+Image",
         "chainSpecificProperties": {
             "97": {
                 "productId": 1,

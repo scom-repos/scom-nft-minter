@@ -2083,12 +2083,9 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
         embedderCommissionFee: string;
         defaultBuilderData: {
             name: string;
-            title: string;
             productType: string;
-            description: string;
             link: string;
             hideDescription: boolean;
-            logo: string;
             chainSpecificProperties: {
                 "97": {
                     productId: number;

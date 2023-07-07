@@ -367,13 +367,16 @@ export default class ScomNftMinter extends Module {
           return {
             execute: async () => {
               _oldData = { ...this._data };
-              if (userInputData.name != undefined) this._data.name = userInputData.name;
-              if (userInputData.productType != undefined) this._data.productType = userInputData.productType;
-              if (userInputData.logo != undefined) this._data.logo = userInputData.logo;
-              if (userInputData.logoUrl != undefined) this._data.logoUrl = userInputData.logoUrl;
-              if (userInputData.description != undefined) this._data.description = userInputData.description;
-              if (userInputData.link != undefined) this._data.link = userInputData.link;
+              Object.assign(this._data, {
+                name: userInputData.name,
+                productType: userInputData.productType,
+                logo: userInputData.logo,
+                logoUrl: userInputData.logoUrl,
+                description: userInputData.description,
+                link: userInputData.link
+              })
               this.configDApp.data = this._data;
+              if (builder?.setData) builder.setData(this._data);
               this.refreshDApp();
               // await this.newProduct((error: Error, receipt?: string) => {
               //   if (error) {
@@ -384,7 +387,6 @@ export default class ScomNftMinter extends Module {
               //     this.mdAlert.showModal();
               //   }
               // }, this.updateSpotsRemaining);
-              if (builder?.setData) builder.setData(this._data);
             },
             undo: () => {
               this._data = { ..._oldData };
@@ -445,7 +447,7 @@ export default class ScomNftMinter extends Module {
               },
               "logo": {
                 type: 'string',
-                format: 'data-url'
+                format: 'data-cid'
               },
               "logoUrl": {
                 type: 'string',
@@ -509,8 +511,7 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          const defaultData = configData.defaultBuilderData as any;
-          await this.setData({...defaultData, ...data})
+          await this.setData({ ...data });
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -635,13 +636,14 @@ export default class ScomNftMinter extends Module {
     (!this.lblLink.isConnected) && await this.lblLink.ready();
     this.lblLink.caption = this._data.link || '';
     this.lblLink.link.href = this._data.link;
-    let _logo = this._data.logo || this._data.logoUrl;
-    if (_logo?.startsWith('ipfs://')) {
+    if (this._data.logo) {
+      this.imgLogo.url = getIPFSGatewayUrl() + this._data.logo;
+    } else if (this._data.logoUrl?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = _logo.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = this._data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = _logo;
+      this.imgLogo.url = this._data.logoUrl || "";
     }
     const data: any = {
       wallets: this.wallets,

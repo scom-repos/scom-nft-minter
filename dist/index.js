@@ -3489,12 +3489,12 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         "embedderCommissionFee": "0.01",
         "defaultBuilderData": {
             "name": "Donation Dapp",
-            "title": "Support Tom's Blog",
+            // "title": "Title",
             "productType": "DonateToEveryone",
-            "description": "#### Tom's Blog is a rapidly growing blog site with a fanbase of over 30,000.  Help Tom's Blog grow!",
+            // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             "link": "",
             "hideDescription": true,
-            "logo": "ipfs://bafkreicdwbtx5niyhfzctxvxnwxjt3qfb3kyotrdpkdo26wky33lnt7lci",
+            // "logoUrl": "https://placehold.co/600x400?text=No+Image",
             "chainSpecificProperties": {
                 "97": {
                     "productId": 1,
@@ -3777,19 +3777,17 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 _oldData = Object.assign({}, this._data);
-                                if (userInputData.name != undefined)
-                                    this._data.name = userInputData.name;
-                                if (userInputData.productType != undefined)
-                                    this._data.productType = userInputData.productType;
-                                if (userInputData.logo != undefined)
-                                    this._data.logo = userInputData.logo;
-                                if (userInputData.logoUrl != undefined)
-                                    this._data.logoUrl = userInputData.logoUrl;
-                                if (userInputData.description != undefined)
-                                    this._data.description = userInputData.description;
-                                if (userInputData.link != undefined)
-                                    this._data.link = userInputData.link;
+                                Object.assign(this._data, {
+                                    name: userInputData.name,
+                                    productType: userInputData.productType,
+                                    logo: userInputData.logo,
+                                    logoUrl: userInputData.logoUrl,
+                                    description: userInputData.description,
+                                    link: userInputData.link
+                                });
                                 this.configDApp.data = this._data;
+                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
+                                    builder.setData(this._data);
                                 this.refreshDApp();
                                 // await this.newProduct((error: Error, receipt?: string) => {
                                 //   if (error) {
@@ -3800,8 +3798,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 //     this.mdAlert.showModal();
                                 //   }
                                 // }, this.updateSpotsRemaining);
-                                if (builder === null || builder === void 0 ? void 0 : builder.setData)
-                                    builder.setData(this._data);
                             },
                             undo: () => {
                                 this._data = Object.assign({}, _oldData);
@@ -3870,7 +3866,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 },
                                 "logo": {
                                     type: 'string',
-                                    format: 'data-url'
+                                    format: 'data-cid'
                                 },
                                 "logoUrl": {
                                     type: 'string',
@@ -3932,8 +3928,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
-                        const defaultData = data_json_1.default.defaultBuilderData;
-                        await this.setData(Object.assign(Object.assign({}, defaultData), data));
+                        await this.setData(Object.assign({}, data));
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -4039,20 +4034,22 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         //   this._productId = this._data.productId = result.productId;
         // }
         async refreshDApp() {
-            var _a;
+            var _a, _b;
             this._type = this._data.productType;
             this.markdownViewer.load(this._data.description || '');
             this.pnlLink.visible = !!this._data.link;
             (!this.lblLink.isConnected) && await this.lblLink.ready();
             this.lblLink.caption = this._data.link || '';
             this.lblLink.link.href = this._data.link;
-            let _logo = this._data.logo || this._data.logoUrl;
-            if (_logo === null || _logo === void 0 ? void 0 : _logo.startsWith('ipfs://')) {
+            if (this._data.logo) {
+                this.imgLogo.url = (0, index_13.getIPFSGatewayUrl)() + this._data.logo;
+            }
+            else if ((_a = this._data.logoUrl) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = (0, index_13.getIPFSGatewayUrl)();
-                this.imgLogo.url = _logo.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = this._data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
             }
             else {
-                this.imgLogo.url = _logo;
+                this.imgLogo.url = this._data.logoUrl || "";
             }
             const data = {
                 wallets: this.wallets,
@@ -4060,7 +4057,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 showHeader: this.showHeader,
                 defaultChainId: this.defaultChainId
             };
-            if ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.setData)
+            if ((_b = this.containerDapp) === null || _b === void 0 ? void 0 : _b.setData)
                 this.containerDapp.setData(data);
             if (!this.productId || this.productId === 0)
                 return;
