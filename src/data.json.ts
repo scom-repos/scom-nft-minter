@@ -26,23 +26,23 @@ export default {
     },
     "embedderCommissionFee": "0.01",
     "defaultBuilderData": {
-        "name": "Donation Dapp",
+        // "name": "Donation Dapp",
         // "title": "Title",
-        "productType": "DonateToEveryone",
+        // "productType": "DonateToEveryone",
         // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        "link": "",
-        "hideDescription": true,
+        // "link": "",
+        // "hideDescription": true,
         // "logoUrl": "https://placehold.co/600x400?text=No+Image",
-        "chainSpecificProperties": {
-            "97": {
-                "productId": 1,
-                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-            },
-            "43113": {
-                "productId": 1,
-                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-            }
-        },
+        // "chainSpecificProperties": {
+        //     "97": {
+        //         "productId": 1,
+        //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+        //     },
+        //     "43113": {
+        //         "productId": 1,
+        //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+        //     }
+        // },
         "defaultChainId": 43113,
         "networks": [
             {

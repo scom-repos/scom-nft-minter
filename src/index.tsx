@@ -369,6 +369,7 @@ export default class ScomNftMinter extends Module {
               _oldData = { ...this._data };
               Object.assign(this._data, {
                 name: userInputData.name,
+                title: userInputData.title,
                 productType: userInputData.productType,
                 logo: userInputData.logo,
                 logoUrl: userInputData.logoUrl,
@@ -511,7 +512,8 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          await this.setData({ ...data });
+          const defaultData = configData.defaultBuilderData;
+          await this.setData({...defaultData, ...data});
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -629,22 +631,36 @@ export default class ScomNftMinter extends Module {
   //   this._productId = this._data.productId = result.productId;
   // }
 
-  private async refreshDApp() {
-    this._type = this._data.productType;
-    this.markdownViewer.load(this._data.description || '');
-    this.pnlLink.visible = !!this._data.link;
+  private async updateDAppUI(data: IEmbedData) {
+    this.markdownViewer.load(data.description || '');
+    this.pnlLink.visible = !!data.link;
     (!this.lblLink.isConnected) && await this.lblLink.ready();
-    this.lblLink.caption = this._data.link || '';
-    this.lblLink.link.href = this._data.link;
-    if (this._data.logo) {
-      this.imgLogo.url = getIPFSGatewayUrl() + this._data.logo;
-    } else if (this._data.logoUrl?.startsWith('ipfs://')) {
+    this.lblLink.caption = data.link || '';
+    this.lblLink.link.href = data.link;
+    if (data.logo) {
+      this.imgLogo.url = getIPFSGatewayUrl() + data.logo;
+    } else if (data.logoUrl?.startsWith('ipfs://')) {
       const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = this._data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
     }
     else {
-      this.imgLogo.url = this._data.logoUrl || "";
+      this.imgLogo.url = data.logoUrl || "";
     }
+    (!this.lblTitle.isConnected) && await this.lblTitle.ready();
+    this.lblTitle.caption = data.title || '';
+  }
+
+  private async refreshDApp() {
+    this._type = this._data.productType;
+    let tmpData = JSON.parse(JSON.stringify(this._data));
+    if (!this._data.title && !this._data.description && !this._data.logo  && !this._data.logoUrl  && !this._data.link) {
+      Object.assign(tmpData, {
+        title: "Title",
+        description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        logoUrl: "https://placehold.co/600x400?text=No+Image"
+      })
+    }
+    await this.updateDAppUI(tmpData);
     const data: any = {
       wallets: this.wallets,
       networks: this.networks,
@@ -659,7 +675,6 @@ export default class ScomNftMinter extends Module {
       this.pnlInputFields.visible = true;
       this.pnlUnsupportedNetwork.visible = false;
       const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
-      (!this.lblTitle.isConnected) && await this.lblTitle.ready();
       (!this.lblRef.isConnected) && await this.lblRef.ready();
       if (this._type === ProductType.Buy) {
         this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;

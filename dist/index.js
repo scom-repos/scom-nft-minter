@@ -3488,23 +3488,23 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         },
         "embedderCommissionFee": "0.01",
         "defaultBuilderData": {
-            "name": "Donation Dapp",
+            // "name": "Donation Dapp",
             // "title": "Title",
-            "productType": "DonateToEveryone",
+            // "productType": "DonateToEveryone",
             // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "link": "",
-            "hideDescription": true,
+            // "link": "",
+            // "hideDescription": true,
             // "logoUrl": "https://placehold.co/600x400?text=No+Image",
-            "chainSpecificProperties": {
-                "97": {
-                    "productId": 1,
-                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-                },
-                "43113": {
-                    "productId": 1,
-                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-                }
-            },
+            // "chainSpecificProperties": {
+            //     "97": {
+            //         "productId": 1,
+            //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            //     },
+            //     "43113": {
+            //         "productId": 1,
+            //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            //     }
+            // },
             "defaultChainId": 43113,
             "networks": [
                 {
@@ -3779,6 +3779,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 _oldData = Object.assign({}, this._data);
                                 Object.assign(this._data, {
                                     name: userInputData.name,
+                                    title: userInputData.title,
                                     productType: userInputData.productType,
                                     logo: userInputData.logo,
                                     logoUrl: userInputData.logoUrl,
@@ -3928,7 +3929,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
-                        await this.setData(Object.assign({}, data));
+                        const defaultData = data_json_1.default.defaultBuilderData;
+                        await this.setData(Object.assign(Object.assign({}, defaultData), data));
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -4033,31 +4035,45 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         //   );
         //   this._productId = this._data.productId = result.productId;
         // }
-        async refreshDApp() {
-            var _a, _b;
-            this._type = this._data.productType;
-            this.markdownViewer.load(this._data.description || '');
-            this.pnlLink.visible = !!this._data.link;
+        async updateDAppUI(data) {
+            var _a;
+            this.markdownViewer.load(data.description || '');
+            this.pnlLink.visible = !!data.link;
             (!this.lblLink.isConnected) && await this.lblLink.ready();
-            this.lblLink.caption = this._data.link || '';
-            this.lblLink.link.href = this._data.link;
-            if (this._data.logo) {
-                this.imgLogo.url = (0, index_13.getIPFSGatewayUrl)() + this._data.logo;
+            this.lblLink.caption = data.link || '';
+            this.lblLink.link.href = data.link;
+            if (data.logo) {
+                this.imgLogo.url = (0, index_13.getIPFSGatewayUrl)() + data.logo;
             }
-            else if ((_a = this._data.logoUrl) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
+            else if ((_a = data.logoUrl) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
                 const ipfsGatewayUrl = (0, index_13.getIPFSGatewayUrl)();
-                this.imgLogo.url = this._data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
             }
             else {
-                this.imgLogo.url = this._data.logoUrl || "";
+                this.imgLogo.url = data.logoUrl || "";
             }
+            (!this.lblTitle.isConnected) && await this.lblTitle.ready();
+            this.lblTitle.caption = data.title || '';
+        }
+        async refreshDApp() {
+            var _a;
+            this._type = this._data.productType;
+            let tmpData = JSON.parse(JSON.stringify(this._data));
+            if (!this._data.title && !this._data.description && !this._data.logo && !this._data.logoUrl && !this._data.link) {
+                Object.assign(tmpData, {
+                    title: "Title",
+                    description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                    logoUrl: "https://placehold.co/600x400?text=No+Image"
+                });
+            }
+            await this.updateDAppUI(tmpData);
             const data = {
                 wallets: this.wallets,
                 networks: this.networks,
                 showHeader: this.showHeader,
                 defaultChainId: this.defaultChainId
             };
-            if ((_b = this.containerDapp) === null || _b === void 0 ? void 0 : _b.setData)
+            if ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.setData)
                 this.containerDapp.setData(data);
             if (!this.productId || this.productId === 0)
                 return;
@@ -4067,7 +4083,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.pnlInputFields.visible = true;
                 this.pnlUnsupportedNetwork.visible = false;
                 const price = eth_wallet_9.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
-                (!this.lblTitle.isConnected) && await this.lblTitle.ready();
                 (!this.lblRef.isConnected) && await this.lblRef.ready();
                 if (this._type === index_11.ProductType.Buy) {
                     this.lblTitle.caption = this._data.title || `Mint Fee: ${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
