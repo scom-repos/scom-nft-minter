@@ -3526,7 +3526,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_8.Styles.Theme.ThemeVars;
-    const currentTheme = components_8.Styles.Theme.currentTheme;
     let ScomNftMinter = class ScomNftMinter extends components_8.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -3574,16 +3573,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
-            const defaultColors = {
-                fontColor: currentTheme.text.primary,
-                backgroundColor: currentTheme.background.main,
-                inputFontColor: currentTheme.input.fontColor,
-                inputBackgroundColor: currentTheme.input.background
-            };
-            this.setTag({
-                light: Object.assign({}, defaultColors),
-                dark: Object.assign({}, defaultColors)
-            });
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 await this.onSetupPage((0, index_14.isWalletConnected)());
@@ -4012,7 +4001,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateTheme() {
             var _a, _b, _c, _d, _e, _f;
-            const themeVar = ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.theme) || 'light';
+            const themeVar = ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.theme) || 'dark';
             this.updateStyle('--text-primary', (_b = this.tag[themeVar]) === null || _b === void 0 ? void 0 : _b.fontColor);
             this.updateStyle('--background-main', (_c = this.tag[themeVar]) === null || _c === void 0 ? void 0 : _c.backgroundColor);
             this.updateStyle('--input-font_color', (_d = this.tag[themeVar]) === null || _d === void 0 ? void 0 : _d.inputFontColor);
