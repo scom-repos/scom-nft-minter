@@ -50,7 +50,6 @@ interface ScomNftMinterElement extends ControlElement {
 }
 
 const Theme = Styles.Theme.ThemeVars;
-const currentTheme = Styles.Theme.currentTheme;
 
 declare global {
   namespace JSX {
@@ -121,16 +120,6 @@ export default class ScomNftMinter extends Module {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
-    const defaultColors = {
-      fontColor: currentTheme.text.primary,
-      backgroundColor: currentTheme.background.main,
-      inputFontColor: currentTheme.input.fontColor,
-      inputBackgroundColor: currentTheme.input.background
-    }
-    this.setTag({
-      light: {...defaultColors},
-      dark: {...defaultColors}
-    })
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       await this.onSetupPage(isWalletConnected());
@@ -606,7 +595,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private updateTheme() {
-    const themeVar = this.containerDapp?.theme || 'light';
+    const themeVar = this.containerDapp?.theme || 'dark';
     this.updateStyle('--text-primary', this.tag[themeVar]?.fontColor);
     this.updateStyle('--background-main', this.tag[themeVar]?.backgroundColor);
     this.updateStyle('--input-font_color', this.tag[themeVar]?.inputFontColor);
