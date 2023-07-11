@@ -1,6 +1,5 @@
 import { application } from "@ijstech/components";
 import { INetwork, Wallet } from "@ijstech/eth-wallet";
-import { isWalletConnected } from "../wallet/index";
 
 export const enum EventId {
   ConnectWallet = 'connectWallet',

@@ -125,11 +125,6 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
     export { ApprovalStatus, getERC20Allowance, getERC20ApprovalModelAction, IERC20ApprovalOptions, IERC20ApprovalAction } from "@scom/scom-nft-minter/utils/approvalModel.ts";
 }
-/// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
-declare module "@scom/scom-nft-minter/wallet/index.ts" {
-    export function isWalletConnected(): boolean;
-    export const getChainId: () => number;
-}
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
     export const enum EventId {
@@ -221,6 +216,11 @@ declare module "@scom/scom-nft-minter/config/index.tsx" {
         private toggleVisible;
         render(): any;
     }
+}
+/// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
+declare module "@scom/scom-nft-minter/wallet/index.ts" {
+    export function isWalletConnected(): boolean;
+    export const getChainId: () => number;
 }
 /// <amd-module name="@scom/scom-nft-minter/token-selection/index.css.ts" />
 declare module "@scom/scom-nft-minter/token-selection/index.css.ts" {

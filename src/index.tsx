@@ -22,8 +22,7 @@ import {} from '@ijstech/eth-contract';
 import { BigNumber, Constants, INetwork, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, setDataFromSCConfig, SupportedNetworks, initRpcWallet, getRpcWallet } from './store/index';
-import { getChainId, isWalletConnected } from './wallet/index';
+import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, setDataFromSCConfig, SupportedNetworks, initRpcWallet, getRpcWallet, getChainId } from './store/index';
 import Config from './config/index';
 import { TokenSelection } from './token-selection/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
@@ -122,7 +121,6 @@ export default class ScomNftMinter extends Module {
     super.init();
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
-      // await this.onSetupPage(isWalletConnected());
       this._data.link = this.getAttribute('link', true);
       this._data.productType = this.getAttribute('productType', true);
       this._data.name = this.getAttribute('name', true);
@@ -273,7 +271,7 @@ export default class ScomNftMinter extends Module {
   // }
 
   private onChainChanged = async () => {
-    this.onSetupPage(true);
+    this.onSetupPage();
     this.updateContractAddress();
     this.refreshDApp();
   }
@@ -287,11 +285,7 @@ export default class ScomNftMinter extends Module {
     } catch { }
   }
 
-  private async onSetupPage(isWalletConnected: boolean) {
-    // if (isWalletConnected) {
-    //   // this.networkPicker.setNetworkByChainId(getChainId());
-    //   await this.initApprovalAction();
-    // }
+  private async onSetupPage() {
     await this.initApprovalAction();
   }
 
@@ -557,7 +551,7 @@ export default class ScomNftMinter extends Module {
     const rpcWallet = getRpcWallet();
     const event = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
     });
-    await this.onSetupPage(isWalletConnected());
+    await this.onSetupPage();
     this.configDApp.data = data;
     const commissionFee = getEmbedderCommissionFee();
     this.lbOrderTotalTitle.caption = `Total`;
@@ -645,62 +639,66 @@ export default class ScomNftMinter extends Module {
   }
 
   private async refreshDApp() {
-    this._type = this._data.productType;
-    let tmpData = JSON.parse(JSON.stringify(this._data));
-    if (!this._data.title && !this._data.description && !this._data.logo  && !this._data.logoUrl  && !this._data.link) {
-      Object.assign(tmpData, {
-        title: "Title",
-        description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        logoUrl: "https://placehold.co/600x400?text=No+Image"
-      })
-    }
-    await this.updateDAppUI(tmpData);
-    const data: any = {
-      wallets: this.wallets,
-      networks: this.networks,
-      showHeader: this.showHeader,
-      defaultChainId: this.defaultChainId
-    }
-    if (this.containerDapp?.setData) this.containerDapp.setData(data);
-    if (!this.productId || this.productId === 0) return;
-    await Wallet.getClientInstance().init();
-    this.productInfo = await getProductInfo(this.productId);
-    if (this.productInfo) {
-      const token = this.productInfo.token;
-      this.pnlInputFields.visible = true;
-      this.pnlUnsupportedNetwork.visible = false;
-      const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
-      (!this.lblRef.isConnected) && await this.lblRef.ready();
-      if (this._type === ProductType.Buy) {
-        this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
-        this.btnSubmit.caption = 'Mint';
-        this.lblRef.caption = 'smart contract:';
-        this.updateSpotsRemaining();
-        this.gridTokenInput.visible = false;
-      } else {
-        this.lblTitle.caption = this._data.title || 'Make a Contributon';
-        this.btnSubmit.caption = 'Submit';
-        this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
-        this.gridTokenInput.visible = true;
+    setTimeout(async () => {
+      this._type = this._data.productType;
+      let tmpData = JSON.parse(JSON.stringify(this._data));
+      if (!this._data.title && !this._data.description && !this._data.logo  && !this._data.logoUrl  && !this._data.link) {
+        Object.assign(tmpData, {
+          title: "Title",
+          description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+          logoUrl: "https://placehold.co/600x400?text=No+Image"
+        })
       }
-      this.edtQty.value = "";
-      this.edtAmount.value = "";
-      this.lbOrderTotal.caption = "0";
-      this.pnlSpotsRemaining.visible = new BigNumber(price).gt(0);
-      this.pnlBlockchain.visible = new BigNumber(price).gt(0);
-      this.pnlQty.visible = new BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
-      (!this.lblAddress.isConnected) && await this.lblAddress.ready();
-      this.lblAddress.caption = this.contractAddress;
-      // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
-      this.tokenSelection.chainId = getChainId();
-      this.tokenSelection.token = token;
-      this.updateTokenBalance();
-      // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
-    }
-    else {
-      this.pnlInputFields.visible = false;
-      this.pnlUnsupportedNetwork.visible = true;
-    }
+      await this.updateDAppUI(tmpData);
+      const rpcWallet = getRpcWallet();
+      const data: any = {
+        wallets: this.wallets,
+        networks: this.networks,
+        showHeader: this.showHeader,
+        defaultChainId: this.defaultChainId,
+        rpcWalletId: rpcWallet.instanceId
+      }
+      if (this.containerDapp?.setData) this.containerDapp.setData(data);
+      if (!this.productId || this.productId === 0) return;
+      await Wallet.getClientInstance().init();
+      this.productInfo = await getProductInfo(this.productId);
+      if (this.productInfo) {
+        const token = this.productInfo.token;
+        this.pnlInputFields.visible = true;
+        this.pnlUnsupportedNetwork.visible = false;
+        const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+        (!this.lblRef.isConnected) && await this.lblRef.ready();
+        if (this._type === ProductType.Buy) {
+          this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
+          this.btnSubmit.caption = 'Mint';
+          this.lblRef.caption = 'smart contract:';
+          this.updateSpotsRemaining();
+          this.gridTokenInput.visible = false;
+        } else {
+          this.lblTitle.caption = this._data.title || 'Make a Contributon';
+          this.btnSubmit.caption = 'Submit';
+          this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
+          this.gridTokenInput.visible = true;
+        }
+        this.edtQty.value = "";
+        this.edtAmount.value = "";
+        this.lbOrderTotal.caption = "0";
+        this.pnlSpotsRemaining.visible = new BigNumber(price).gt(0);
+        this.pnlBlockchain.visible = new BigNumber(price).gt(0);
+        this.pnlQty.visible = new BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
+        (!this.lblAddress.isConnected) && await this.lblAddress.ready();
+        this.lblAddress.caption = this.contractAddress;
+        // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
+        this.tokenSelection.chainId = getChainId();
+        this.tokenSelection.token = token;
+        this.updateTokenBalance();
+        // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+      }
+      else {
+        this.pnlInputFields.visible = false;
+        this.pnlUnsupportedNetwork.visible = true;
+      }
+    });
   }
 
   private updateSpotsRemaining() {
