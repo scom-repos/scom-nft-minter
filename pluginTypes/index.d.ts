@@ -170,53 +170,6 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export const getContractAddress: (type: ContractType) => any;
     export function switchNetwork(chainId: number): Promise<void>;
 }
-/// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
-declare module "@scom/scom-nft-minter/config/index.css.ts" {
-    export const customStyle: string;
-    export const tableStyle: string;
-}
-/// <amd-module name="@scom/scom-nft-minter/config/index.tsx" />
-declare module "@scom/scom-nft-minter/config/index.tsx" {
-    import { Module, ControlElement } from '@ijstech/components';
-    import { ICommissionInfo, IEmbedData } from "@scom/scom-nft-minter/interface/index.tsx";
-    interface ScomNFTMinterConfigElement extends ControlElement {
-        commissions?: ICommissionInfo;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-nft-minter-config']: ScomNFTMinterConfigElement;
-            }
-        }
-    }
-    export default class Config extends Module {
-        private tableCommissions;
-        private modalAddCommission;
-        private networkPicker;
-        private inputWalletAddress;
-        private lbCommissionShare;
-        private btnAddWallet;
-        private pnlEmptyWallet;
-        private commissionInfoList;
-        private commissionsTableColumns;
-        private btnConfirm;
-        private lbErrMsg;
-        private _onCustomCommissionsChanged;
-        init(): Promise<void>;
-        get data(): IEmbedData;
-        set data(config: IEmbedData);
-        get onCustomCommissionsChanged(): (data: any) => Promise<void>;
-        set onCustomCommissionsChanged(value: (data: any) => Promise<void>);
-        onModalAddCommissionClosed(): void;
-        onAddCommissionClicked(): void;
-        onConfirmCommissionClicked(): Promise<void>;
-        validateModalFields(): boolean;
-        onNetworkSelected(): void;
-        onInputWalletAddressChanged(): void;
-        private toggleVisible;
-        render(): any;
-    }
-}
 /// <amd-module name="@scom/scom-nft-minter/token-selection/index.css.ts" />
 declare module "@scom/scom-nft-minter/token-selection/index.css.ts" {
     export const scrollbarStyle: string;
@@ -2097,7 +2050,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, VStack, IDataSchema, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
-    import Config from "@scom/scom-nft-minter/config/index.tsx";
+    import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -2238,7 +2191,7 @@ declare module "@scom/scom-nft-minter" {
                 data: string;
             };
             setLinkParams: (params: any) => Promise<void>;
-            bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
+            bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
             getData: any;
             setData: any;
             getTag: any;
