@@ -19,7 +19,7 @@ import {
   Icon,
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
-import { BigNumber, INetwork, Utils } from '@ijstech/eth-wallet';
+import { BigNumber, INetwork, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, switchNetwork, setDataFromSCConfig, SupportedNetworks } from './store/index';
@@ -658,6 +658,7 @@ export default class ScomNftMinter extends Module {
     }
     if (this.containerDapp?.setData) this.containerDapp.setData(data);
     if (!this.productId || this.productId === 0) return;
+    await Wallet.getClientInstance().init();
     this.productInfo = await getProductInfo(this.productId);
     if (this.productInfo) {
       const token = this.productInfo.token;

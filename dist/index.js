@@ -4066,6 +4066,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.containerDapp.setData(data);
             if (!this.productId || this.productId === 0)
                 return;
+            await eth_wallet_9.Wallet.getClientInstance().init();
             this.productInfo = await (0, API_1.getProductInfo)(this.productId);
             if (this.productInfo) {
                 const token = this.productInfo.token;
