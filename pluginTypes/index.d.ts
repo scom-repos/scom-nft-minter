@@ -1,3 +1,4 @@
+/// <reference path="@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
@@ -162,13 +163,17 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         contractInfoByChain: ContractInfoByChainType;
         ipfsGatewayUrl: string;
         embedderCommissionFee: string;
+        rpcWalletId: string;
     };
     export const setDataFromSCConfig: (options: any) => void;
     export const setIPFSGatewayUrl: (url: string) => void;
     export const getIPFSGatewayUrl: () => string;
     export const getEmbedderCommissionFee: () => string;
     export const getContractAddress: (type: ContractType) => any;
-    export function switchNetwork(chainId: number): Promise<void>;
+    export function initRpcWallet(defaultChainId: number): string;
+    export function getChainId(): number;
+    export function getRpcWallet(): import("wallet").IRpcWallet;
+    export function getClientWallet(): import("wallet").IClientWallet;
 }
 /// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
 declare module "@scom/scom-nft-minter/config/index.css.ts" {
@@ -2191,7 +2196,6 @@ declare module "@scom/scom-nft-minter" {
         get defaultChainId(): number;
         set defaultChainId(value: number);
         private registerEvent;
-        private onWalletConnect;
         private onChainChanged;
         private updateTokenBalance;
         private onSetupPage;
