@@ -50,7 +50,7 @@ async function newProduct(
     confirmationCallback?: any
 ) {
     let productInfoAddress = getContractAddress('ProductInfo');
-    const wallet = Wallet.getInstance();
+    const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
         transactionHash: callback,
@@ -114,7 +114,7 @@ async function buyProduct(
 ) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
-    const wallet = Wallet.getInstance();
+    const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
@@ -204,7 +204,7 @@ async function donate(
 ) {
     let proxyAddress = getContractAddress('Proxy');
     let productInfoAddress = getContractAddress('ProductInfo');
-    const wallet = Wallet.getInstance();
+    const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const tokenDecimals = token?.decimals || 18;

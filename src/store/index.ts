@@ -1,6 +1,5 @@
 import { application } from "@ijstech/components";
-import { Wallet } from "@ijstech/eth-wallet";
-import { isWalletConnected } from "../wallet/index";
+import { INetwork, Wallet } from "@ijstech/eth-wallet";
 
 export const enum EventId {
   ConnectWallet = 'connectWallet',
@@ -46,7 +45,8 @@ export type ContractInfoByChainType = { [key: number]: IContractInfo };
 export const state = {
   contractInfoByChain: {} as ContractInfoByChainType,
   ipfsGatewayUrl: "",
-  embedderCommissionFee: "0"
+  embedderCommissionFee: "0",
+  rpcWalletId: ""
 }
 
 export const setDataFromSCConfig = (options: any) => {
@@ -86,18 +86,40 @@ export const getEmbedderCommissionFee = () => {
 }
 
 export const getContractAddress = (type: ContractType) => {
-  const chainId = Wallet.getInstance().chainId;
+  const chainId = getChainId();
   const contracts = getContractInfo(chainId) || {};
   return contracts[type]?.address;
 }
 
-export async function switchNetwork(chainId: number) {
-  if (!isWalletConnected()) {
-    application.EventBus.dispatch(EventId.chainChanged, chainId);
-    return;
+export function initRpcWallet(defaultChainId: number) {
+  if (state.rpcWalletId) {
+    return state.rpcWalletId;
   }
-  const wallet = Wallet.getClientInstance();
-  if (wallet?.clientSideProvider?.name === WalletPlugin.MetaMask) {
-    await wallet.switchNetwork(chainId);
+  const clientWallet = Wallet.getClientInstance();
+  const networkList: INetwork[] = Object.values(application.store.networkMap);
+  const instanceId = clientWallet.initRpcWallet({
+    networks: networkList,
+    defaultChainId,
+    infuraId: application.store.infuraId,
+    multicalls: application.store.multicalls
+  });
+  state.rpcWalletId = instanceId;
+  if (clientWallet.address) {
+    const rpcWallet = Wallet.getRpcWalletInstance(instanceId);
+    rpcWallet.address = clientWallet.address;
   }
+  return instanceId;
+}
+
+export function getChainId() {
+  const rpcWallet = getRpcWallet();
+  return rpcWallet.chainId;
+}
+
+export function getRpcWallet() {
+  return Wallet.getRpcWalletInstance(state.rpcWalletId);
+}
+
+export function getClientWallet() {
+  return Wallet.getClientInstance();
 }
