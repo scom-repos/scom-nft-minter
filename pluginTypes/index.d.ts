@@ -2094,7 +2094,6 @@ declare module "@scom/scom-nft-minter" {
         private gridTokenInput;
         private tokenSelection;
         private edtAmount;
-        private configDApp;
         private mdAlert;
         private lbOrderTotal;
         private lbOrderTotalTitle;
@@ -2192,7 +2191,22 @@ declare module "@scom/scom-nft-minter" {
             };
             setLinkParams: (params: any) => Promise<void>;
             bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
-            getData: any;
+            getData: () => {
+                fee: string;
+                name?: string;
+                title?: string;
+                productType?: ProductType;
+                logo?: string;
+                logoUrl?: string;
+                description?: string;
+                link?: string;
+                commissions?: import("@scom/scom-nft-minter/interface/index.tsx").ICommissionInfo[];
+                chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+                defaultChainId: number;
+                wallets: IWalletPlugin[];
+                networks: any[];
+                showHeader?: boolean;
+            };
             setData: any;
             getTag: any;
             setTag: any;

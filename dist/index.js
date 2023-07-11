@@ -3461,7 +3461,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             },
                             undo: async () => {
                                 this._data = Object.assign({}, _oldData);
-                                this.configDApp.commissions = this._data.commissions || [];
+                                // this.configDApp.commissions = this._data.commissions || [];
                                 await self.setData(this._data);
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
@@ -3512,7 +3512,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     description: userInputData.description,
                                     link: userInputData.link
                                 });
-                                this.configDApp.commissions = this._data.commissions || [];
+                                // this.configDApp.commissions = this._data.commissions || [];
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
                                 this.refreshDApp();
@@ -3528,7 +3528,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             },
                             undo: () => {
                                 this._data = Object.assign({}, _oldData);
-                                this.configDApp.commissions = this._data.commissions || [];
+                                // this.configDApp.commissions = this._data.commissions || [];
                                 this.refreshDApp();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
@@ -3686,7 +3686,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             await callback(data);
                         };
                     },
-                    getData: this.getData.bind(this),
+                    getData: () => {
+                        const fee = (0, index_11.getEmbedderCommissionFee)();
+                        return Object.assign(Object.assign({}, this.getData()), { fee });
+                    },
                     setData: this.setData.bind(this),
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -3700,9 +3703,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             await this.onSetupPage((0, index_12.isWalletConnected)());
             this._data = data;
             const commissionFee = (0, index_11.getEmbedderCommissionFee)();
-            this.configDApp.fee = commissionFee;
-            this.configDApp.commissions = data.commissions || [];
-            this.configDApp.networks = data.networks || index_11.SupportedNetworks;
+            // this.configDApp.fee = commissionFee
+            // this.configDApp.commissions = data.commissions || [];
+            // this.configDApp.networks = data.networks || SupportedNetworks;
             this.lbOrderTotalTitle.caption = `Total`;
             this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_8.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();

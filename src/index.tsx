@@ -82,12 +82,11 @@ export default class ScomNftMinter extends Module {
   private gridTokenInput: GridLayout;
   private tokenSelection: TokenSelection;
   private edtAmount: Input;
-  private configDApp: ScomCommissionFeeSetup;
+  // private configDApp: ScomCommissionFeeSetup;
   private mdAlert: Alert;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
   private iconOrderTotal: Icon;
-  // private networkPicker: ScomNetworkPicker;
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
   private containerDapp: ScomDappContainer;
@@ -318,7 +317,7 @@ export default class ScomNftMinter extends Module {
             },
             undo: async () => {
               this._data = {..._oldData};
-              this.configDApp.commissions = this._data.commissions || [];
+              // this.configDApp.commissions = this._data.commissions || [];
               await self.setData(this._data);
               if (builder?.setData) builder.setData(this._data);
             },
@@ -367,7 +366,7 @@ export default class ScomNftMinter extends Module {
                 description: userInputData.description,
                 link: userInputData.link
               })
-              this.configDApp.commissions = this._data.commissions || [];
+              // this.configDApp.commissions = this._data.commissions || [];
               if (builder?.setData) builder.setData(this._data);
               this.refreshDApp();
               // await this.newProduct((error: Error, receipt?: string) => {
@@ -382,7 +381,7 @@ export default class ScomNftMinter extends Module {
             },
             undo: () => {
               this._data = { ..._oldData };
-              this.configDApp.commissions = this._data.commissions || [];
+              // this.configDApp.commissions = this._data.commissions || [];
               this.refreshDApp();
               if (builder?.setData) builder.setData(this._data);
             },
@@ -540,7 +539,10 @@ export default class ScomNftMinter extends Module {
             await callback(data);
           }
         },
-        getData: this.getData.bind(this),
+        getData: () => {
+          const fee = getEmbedderCommissionFee();
+          return {...this.getData(), fee}
+        },
         setData: this.setData.bind(this),
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -556,9 +558,9 @@ export default class ScomNftMinter extends Module {
     await this.onSetupPage(isWalletConnected());
     this._data = data;
     const commissionFee = getEmbedderCommissionFee();
-    this.configDApp.fee = commissionFee
-    this.configDApp.commissions = data.commissions || [];
-    this.configDApp.networks = data.networks || SupportedNetworks;
+    // this.configDApp.fee = commissionFee
+    // this.configDApp.commissions = data.commissions || [];
+    // this.configDApp.networks = data.networks || SupportedNetworks;
     this.lbOrderTotalTitle.caption = `Total`;
     this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
     this.updateContractAddress();
