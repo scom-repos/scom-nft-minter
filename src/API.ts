@@ -10,17 +10,20 @@ import { tokenStore } from '@scom/scom-token-list';
 async function getProductInfo(productId: number) {
     let productInfoAddress = getContractAddress('ProductInfo');
     if (!productInfoAddress) return null;
-    const wallet = Wallet.getInstance();
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-    const product = await productInfo.products(productId);
-    const chainId = wallet.chainId;
-    const _tokenList = tokenStore.getTokenList(chainId);
-    const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
-
-    return {
-        ...product,
-        token
-    };
+    try {
+        const wallet = Wallet.getInstance();
+        const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+        const product = await productInfo.products(productId);
+        const chainId = wallet.chainId;
+        const _tokenList = tokenStore.getTokenList(chainId);
+        const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
+        return {
+            ...product,
+            token
+        };
+    } catch {
+        return null;
+    }
 }
 
 async function getNFTBalance(productId: number) {

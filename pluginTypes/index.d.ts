@@ -170,53 +170,6 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export function getRpcWallet(): import("wallet").IRpcWallet;
     export function getClientWallet(): import("wallet").IClientWallet;
 }
-/// <amd-module name="@scom/scom-nft-minter/config/index.css.ts" />
-declare module "@scom/scom-nft-minter/config/index.css.ts" {
-    export const customStyle: string;
-    export const tableStyle: string;
-}
-/// <amd-module name="@scom/scom-nft-minter/config/index.tsx" />
-declare module "@scom/scom-nft-minter/config/index.tsx" {
-    import { Module, ControlElement } from '@ijstech/components';
-    import { ICommissionInfo, IEmbedData } from "@scom/scom-nft-minter/interface/index.tsx";
-    interface ScomNFTMinterConfigElement extends ControlElement {
-        commissions?: ICommissionInfo;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-nft-minter-config']: ScomNFTMinterConfigElement;
-            }
-        }
-    }
-    export default class Config extends Module {
-        private tableCommissions;
-        private modalAddCommission;
-        private networkPicker;
-        private inputWalletAddress;
-        private lbCommissionShare;
-        private btnAddWallet;
-        private pnlEmptyWallet;
-        private commissionInfoList;
-        private commissionsTableColumns;
-        private btnConfirm;
-        private lbErrMsg;
-        private _onCustomCommissionsChanged;
-        init(): Promise<void>;
-        get data(): IEmbedData;
-        set data(config: IEmbedData);
-        get onCustomCommissionsChanged(): (data: any) => Promise<void>;
-        set onCustomCommissionsChanged(value: (data: any) => Promise<void>);
-        onModalAddCommissionClosed(): void;
-        onAddCommissionClicked(): void;
-        onConfirmCommissionClicked(): Promise<void>;
-        validateModalFields(): boolean;
-        onNetworkSelected(): void;
-        onInputWalletAddressChanged(): void;
-        private toggleVisible;
-        render(): any;
-    }
-}
 /// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
 declare module "@scom/scom-nft-minter/wallet/index.ts" {
     export function isWalletConnected(): boolean;
@@ -2102,7 +2055,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, VStack, IDataSchema, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
-    import Config from "@scom/scom-nft-minter/config/index.tsx";
+    import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -2146,7 +2099,6 @@ declare module "@scom/scom-nft-minter" {
         private gridTokenInput;
         private tokenSelection;
         private edtAmount;
-        private configDApp;
         private mdAlert;
         private lbOrderTotal;
         private lbOrderTotalTitle;
@@ -2242,8 +2194,23 @@ declare module "@scom/scom-nft-minter" {
                 data: string;
             };
             setLinkParams: (params: any) => Promise<void>;
-            bindOnChanged: (element: Config, callback: (data: any) => Promise<void>) => void;
-            getData: any;
+            bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
+            getData: () => {
+                fee: string;
+                name?: string;
+                title?: string;
+                productType?: ProductType;
+                logo?: string;
+                logoUrl?: string;
+                description?: string;
+                link?: string;
+                commissions?: import("@scom/scom-nft-minter/interface/index.tsx").ICommissionInfo[];
+                chainSpecificProperties?: Record<number, IChainSpecificProperties>;
+                defaultChainId: number;
+                wallets: IWalletPlugin[];
+                networks: any[];
+                showHeader?: boolean;
+            };
             setData: any;
             getTag: any;
             setTag: any;
