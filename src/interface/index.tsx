@@ -1,4 +1,5 @@
 import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
+import { ITokenObject } from "@scom/scom-token-list";
 
 export interface PageBlock {
   // Properties
@@ -57,20 +58,6 @@ export interface IEmbedData {
   networks: any[];
   showHeader?: boolean;
 }
-
-export interface ITokenObject {
-  address?: string;
-  name: string;
-  decimals: number;
-  symbol: string;
-  status?: boolean | null;
-  logoURI?: string;
-  isCommon?: boolean | null;
-  balance?: string | number;
-  isNative?: boolean | null;
-  isWETH?: boolean | null;
-  isNew?: boolean | null;
-};
 
 export interface IWalletPlugin {
   name: string;

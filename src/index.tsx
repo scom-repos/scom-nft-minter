@@ -20,7 +20,7 @@ import {
 } from '@ijstech/components';
 import {} from '@ijstech/eth-contract';
 import { BigNumber, Constants, INetwork, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, ITokenObject, IWalletPlugin, PageBlock, ProductType } from './interface/index';
+import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PageBlock, ProductType } from './interface/index';
 import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
 import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, setDataFromSCConfig, SupportedNetworks, initRpcWallet, getRpcWallet, getChainId } from './store/index';
 import { TokenSelection } from './token-selection/index';
@@ -30,6 +30,7 @@ import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountI
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
+import { ITokenObject } from '@scom/scom-token-list';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;

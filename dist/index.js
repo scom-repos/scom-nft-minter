@@ -14,7 +14,6 @@ define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], func
         ProductType["DonateToOwner"] = "DonateToOwner";
         ProductType["DonateToEveryone"] = "DonateToEveryone";
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
-    ;
 });
 define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/eth-wallet"], function (require, exports, eth_wallet_1) {
     "use strict";

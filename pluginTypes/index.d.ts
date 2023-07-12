@@ -1,8 +1,10 @@
 /// <reference path="@ijstech/eth-wallet/index.d.ts" />
+/// <reference path="@scom/scom-dapp-container/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
     import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
+    import { ITokenObject } from "@scom/scom-token-list";
     export interface PageBlock {
         getData: () => any;
         setData: (data: any) => Promise<void>;
@@ -53,19 +55,6 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         networks: any[];
         showHeader?: boolean;
     }
-    export interface ITokenObject {
-        address?: string;
-        name: string;
-        decimals: number;
-        symbol: string;
-        status?: boolean | null;
-        logoURI?: string;
-        isCommon?: boolean | null;
-        balance?: string | number;
-        isNative?: boolean | null;
-        isWETH?: boolean | null;
-        isNew?: boolean | null;
-    }
     export interface IWalletPlugin {
         name: string;
         packageName?: string;
@@ -79,7 +68,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
 /// <amd-module name="@scom/scom-nft-minter/utils/token.ts" />
 declare module "@scom/scom-nft-minter/utils/token.ts" {
     import { BigNumber, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
-    import { ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ITokenObject } from "@scom/scom-token-list";
     export const getERC20Amount: (wallet: IWallet, tokenAddress: string, decimals: number) => Promise<BigNumber>;
     export const getTokenBalance: (token: ITokenObject) => Promise<BigNumber>;
     export const registerSendTxEvents: (sendTxEventHandlers: ISendTxEventsOptions) => void;
@@ -87,7 +76,7 @@ declare module "@scom/scom-nft-minter/utils/token.ts" {
 /// <amd-module name="@scom/scom-nft-minter/utils/approvalModel.ts" />
 declare module "@scom/scom-nft-minter/utils/approvalModel.ts" {
     import { BigNumber } from "@ijstech/eth-wallet";
-    import { ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ITokenObject } from "@scom/scom-token-list";
     export enum ApprovalStatus {
         TO_BE_APPROVED = 0,
         APPROVING = 1,
@@ -167,8 +156,8 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export const getContractAddress: (type: ContractType) => any;
     export function initRpcWallet(defaultChainId: number): string;
     export function getChainId(): number;
-    export function getRpcWallet(): import("wallet").IRpcWallet;
-    export function getClientWallet(): import("wallet").IClientWallet;
+    export function getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
+    export function getClientWallet(): import("@ijstech/eth-wallet").IClientWallet;
 }
 /// <amd-module name="@scom/scom-nft-minter/wallet/index.ts" />
 declare module "@scom/scom-nft-minter/wallet/index.ts" {
@@ -185,7 +174,7 @@ declare module "@scom/scom-nft-minter/token-selection/index.css.ts" {
 /// <amd-module name="@scom/scom-nft-minter/token-selection/index.tsx" />
 declare module "@scom/scom-nft-minter/token-selection/index.tsx" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    import { ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ITokenObject } from '@scom/scom-token-list';
     type selectTokenCallback = (token: ITokenObject) => void;
     interface TokenSelectionElement extends ControlElement {
         readonly?: boolean;
@@ -1988,7 +1977,8 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/i
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
-    import { ProductType, ICommissionInfo, ITokenObject } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ProductType, ICommissionInfo } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ITokenObject } from '@scom/scom-token-list';
     function getProductInfo(productId: number): Promise<{
         token: any;
         productType: BigNumber;

@@ -1,8 +1,6 @@
 import { BigNumber, Contracts, Wallet } from "@ijstech/eth-wallet";
+import { ITokenObject } from "@scom/scom-token-list";
 import { registerSendTxEvents } from './token';
-import {
-  ITokenObject
-} from '../interface/index';
 
 class ERC20ApprovalModel {
   private options: IERC20ApprovalOptions = {
