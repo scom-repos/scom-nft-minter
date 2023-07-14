@@ -288,9 +288,9 @@ export default class ScomNftMinter extends Module {
     await this.initApprovalAction();
   }
 
-  private _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema) {
+  private _getActions(propertiesSchema: IDataSchema, themeSchema: IDataSchema, category?: string) {
     let self = this;
-    const actions = [
+    const actions: any[] = [
       {
         name: 'Commissions',
         icon: 'dollar-sign',
@@ -339,78 +339,84 @@ export default class ScomNftMinter extends Module {
             return vstack;
           }
         }
-      },         
-      {
-        name: 'Settings',
-        icon: 'cog',
-        command: (builder: any, userInputData: any) => {
-          let _oldData: IEmbedData = {
-            wallets: [],
-            networks: [],
-            defaultChainId: 0
-          };
-          return {
-            execute: async () => {
-              _oldData = { ...this._data };
-              Object.assign(this._data, {
-                name: userInputData.name,
-                title: userInputData.title,
-                productType: userInputData.productType,
-                logo: userInputData.logo,
-                logoUrl: userInputData.logoUrl,
-                description: userInputData.description,
-                link: userInputData.link
-              })
-              // this.configDApp.commissions = this._data.commissions || [];
-              if (builder?.setData) builder.setData(this._data);
-              this.refreshDApp();
-              // await this.newProduct((error: Error, receipt?: string) => {
-              //   if (error) {
-              //     this.mdAlert.message = {
-              //       status: 'error',
-              //       content: error.message
-              //     };
-              //     this.mdAlert.showModal();
-              //   }
-              // }, this.updateSpotsRemaining);
-            },
-            undo: () => {
-              this._data = { ..._oldData };
-              // this.configDApp.commissions = this._data.commissions || [];
-              this.refreshDApp();
-              if (builder?.setData) builder.setData(this._data);
-            },
-            redo: () => { }
-          }
-        },
-        userInputDataSchema: propertiesSchema
-      },
-      {
-        name: 'Theme Settings',
-        icon: 'palette',
-        command: (builder: any, userInputData: any) => {
-          let oldTag = {};
-          return {
-            execute: async () => {
-              if (!userInputData) return;
-              oldTag = JSON.parse(JSON.stringify(this.tag));
-              if (builder) builder.setTag(userInputData);
-              else this.setTag(userInputData);
-              if (this.containerDapp) this.containerDapp.setTag(userInputData);
-            },
-            undo: () => {
-              if (!userInputData) return;
-              this.tag = JSON.parse(JSON.stringify(oldTag));
-              if (builder) builder.setTag(this.tag);
-              else this.setTag(this.tag);
-              if (this.containerDapp) this.containerDapp.setTag(this.tag);
-            },
-            redo: () => { }
-          }
-        },
-        userInputDataSchema: themeSchema
       }
-    ]
+    ];
+    if (category && category !== 'offers') {
+      actions.push(
+        {
+          name: 'Settings',
+          icon: 'cog',
+          command: (builder: any, userInputData: any) => {
+            let _oldData: IEmbedData = {
+              wallets: [],
+              networks: [],
+              defaultChainId: 0
+            };
+            return {
+              execute: async () => {
+                _oldData = { ...this._data };
+                Object.assign(this._data, {
+                  name: userInputData.name,
+                  title: userInputData.title,
+                  productType: userInputData.productType,
+                  logo: userInputData.logo,
+                  logoUrl: userInputData.logoUrl,
+                  description: userInputData.description,
+                  link: userInputData.link
+                })
+                // this.configDApp.commissions = this._data.commissions || [];
+                if (builder?.setData) builder.setData(this._data);
+                this.refreshDApp();
+                // await this.newProduct((error: Error, receipt?: string) => {
+                //   if (error) {
+                //     this.mdAlert.message = {
+                //       status: 'error',
+                //       content: error.message
+                //     };
+                //     this.mdAlert.showModal();
+                //   }
+                // }, this.updateSpotsRemaining);
+              },
+              undo: () => {
+                this._data = { ..._oldData };
+                // this.configDApp.commissions = this._data.commissions || [];
+                this.refreshDApp();
+                if (builder?.setData) builder.setData(this._data);
+              },
+              redo: () => { }
+            }
+          },
+          userInputDataSchema: propertiesSchema
+        }
+      );
+      actions.push(
+        {
+          name: 'Theme Settings',
+          icon: 'palette',
+          command: (builder: any, userInputData: any) => {
+            let oldTag = {};
+            return {
+              execute: async () => {
+                if (!userInputData) return;
+                oldTag = JSON.parse(JSON.stringify(this.tag));
+                if (builder) builder.setTag(userInputData);
+                else this.setTag(userInputData);
+                if (this.containerDapp) this.containerDapp.setTag(userInputData);
+              },
+              undo: () => {
+                if (!userInputData) return;
+                this.tag = JSON.parse(JSON.stringify(oldTag));
+                if (builder) builder.setTag(this.tag);
+                else this.setTag(this.tag);
+                if (this.containerDapp) this.containerDapp.setTag(this.tag);
+              },
+              redo: () => { }
+            }
+          },
+          userInputDataSchema: themeSchema
+        }
+      )
+    }
     return actions
   }
 
@@ -420,7 +426,7 @@ export default class ScomNftMinter extends Module {
       {
         name: 'Builder Configurator',
         target: 'Builders',
-        getActions: () => {
+        getActions: (category?: string) => {
           const propertiesSchema: IDataSchema = {
             type: 'object',
             properties: {
@@ -493,7 +499,7 @@ export default class ScomNftMinter extends Module {
             }
           }
       
-          return this._getActions(propertiesSchema, themeSchema);
+          return this._getActions(propertiesSchema, themeSchema, category);
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {

@@ -2043,7 +2043,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
-    import { Module, Container, VStack, IDataSchema, ControlElement } from '@ijstech/components';
+    import { Module, Container, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
@@ -2145,29 +2145,7 @@ declare module "@scom/scom-nft-minter" {
         getConfigurators(): ({
             name: string;
             target: string;
-            getActions: () => ({
-                name: string;
-                icon: string;
-                command: (builder: any, userInputData: any) => {
-                    execute: () => Promise<void>;
-                    undo: () => Promise<void>;
-                    redo: () => void;
-                };
-                customUI: {
-                    render: (data?: any, onConfirm?: (result: boolean, data: any) => void) => VStack;
-                };
-                userInputDataSchema?: undefined;
-            } | {
-                name: string;
-                icon: string;
-                command: (builder: any, userInputData: any) => {
-                    execute: () => Promise<void>;
-                    undo: () => void;
-                    redo: () => void;
-                };
-                userInputDataSchema: IDataSchema;
-                customUI?: undefined;
-            })[];
+            getActions: (category?: string) => any[];
             getData: any;
             setData: (data: IEmbedData) => Promise<void>;
             getTag: any;

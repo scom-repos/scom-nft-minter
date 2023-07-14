@@ -3455,7 +3455,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async onSetupPage() {
             await this.initApprovalAction();
         }
-        _getActions(propertiesSchema, themeSchema) {
+        _getActions(propertiesSchema, themeSchema, category) {
             let self = this;
             const actions = [
                 {
@@ -3506,8 +3506,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             return vstack;
                         }
                     }
-                },
-                {
+                }
+            ];
+            if (category && category !== 'offers') {
+                actions.push({
                     name: 'Settings',
                     icon: 'cog',
                     command: (builder, userInputData) => {
@@ -3553,8 +3555,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         };
                     },
                     userInputDataSchema: propertiesSchema
-                },
-                {
+                });
+                actions.push({
                     name: 'Theme Settings',
                     icon: 'palette',
                     command: (builder, userInputData) => {
@@ -3586,8 +3588,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         };
                     },
                     userInputDataSchema: themeSchema
-                }
-            ];
+                });
+            }
             return actions;
         }
         getConfigurators() {
@@ -3596,7 +3598,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 {
                     name: 'Builder Configurator',
                     target: 'Builders',
-                    getActions: () => {
+                    getActions: (category) => {
                         const propertiesSchema = {
                             type: 'object',
                             properties: {
@@ -3667,7 +3669,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 }
                             }
                         };
-                        return this._getActions(propertiesSchema, themeSchema);
+                        return this._getActions(propertiesSchema, themeSchema, category);
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
