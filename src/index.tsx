@@ -67,10 +67,13 @@ export default class ScomNftMinter extends Module {
   private pnlLink: HStack;
   private lblLink: Label;
   private lblTitle: Label;
+  private pnlMintFee: HStack;
+  private lblMintFee: Label;
   private pnlSpotsRemaining: HStack;
   private lblSpotsRemaining: Label;
-  private pnlBlockchain: HStack;
-  private lblBlockchain: Label;
+  private pnlMaxQty: HStack;
+  private lblMaxQty: Label;
+  private lblYouPay: Label;
   private pnlQty: HStack;
   private edtQty: Input;
   private lblBalance: Label;
@@ -682,26 +685,36 @@ export default class ScomNftMinter extends Module {
         const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
         (!this.lblRef.isConnected) && await this.lblRef.ready();
         if (this._type === ProductType.Buy) {
-          this.lblTitle.caption = this._data.title || `Mint Fee: ${price ?? ""} ${token?.symbol || ""}`;
+          this.lblYouPay.caption = `You pay`;
+          this.pnlMintFee.visible = true;
+          this.lblMintFee.caption = `${price ?? ""} ${token?.symbol || ""}`;
+          this.lblTitle.caption = this._data.title ;
           this.btnSubmit.caption = 'Mint';
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
-          this.gridTokenInput.visible = false;
+          // this.gridTokenInput.visible = false;
+          this.edtAmount.enabled = false;
+          this.pnlQty.visible = true;
+          this.pnlSpotsRemaining.visible = true;
+          this.pnlMaxQty.visible = true;
+          this.lblMaxQty.caption = this.productInfo.maxQuantity.toFixed();
         } else {
+          this.lblYouPay.caption = `Your donation`;
+          this.pnlMintFee.visible = false;
           this.lblTitle.caption = this._data.title || 'Make a Contributon';
           this.btnSubmit.caption = 'Submit';
           this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
-          this.gridTokenInput.visible = true;
+          // this.gridTokenInput.visible = true;
+          this.edtAmount.enabled = true;
+          this.pnlQty.visible = false;
+          this.pnlSpotsRemaining.visible = false;
+          this.pnlMaxQty.visible = false;
         }
         this.edtQty.value = "";
         this.edtAmount.value = "";
         this.lbOrderTotal.caption = "0";
-        this.pnlSpotsRemaining.visible = new BigNumber(price).gt(0);
-        this.pnlBlockchain.visible = new BigNumber(price).gt(0);
-        this.pnlQty.visible = new BigNumber(price).gt(0) && this.productInfo.maxQuantity.gt(1);
         (!this.lblAddress.isConnected) && await this.lblAddress.ready();
         this.lblAddress.caption = this.contractAddress;
-        // this.tokenSelection.readonly = this._data.token ? true : new BigNumber(price).gt(0);
         this.tokenSelection.chainId = getChainId();
         this.tokenSelection.token = token;
         this.updateTokenBalance();
@@ -833,11 +846,19 @@ export default class ScomNftMinter extends Module {
 
   private async onQtyChanged() {
     const qty = Number(this.edtQty.value);
-    if (qty === 0 || !this.productInfo) {
+    if (qty === 0) {
       this.tokenAmountIn = '0';
+      this.edtAmount.value = '0';
+      this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
     }
     else {
       this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), qty, this._data.commissions);
+      const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+      const amount = price.times(qty);
+      this.edtAmount.value = amount.toFixed();
+      const commissionFee = getEmbedderCommissionFee();
+      const total = amount.plus(amount.times(commissionFee));
+      this.lbOrderTotal.caption = `${total} ${this.productInfo.token?.symbol || ''}`;
     }
     if (this.productInfo)
       this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
@@ -1025,13 +1046,17 @@ export default class ScomNftMinter extends Module {
                   ></i-markdown>
                   {/* <i-label caption="I don't have a digital wallet" link={{ href: 'https://metamask.io/' }} opacity={0.6} font={{ size: '1rem' }}></i-label> */}
                 </i-vstack>
+                <i-hstack id='pnlMintFee' visible={false} gap='0.25rem'>
+                  <i-label caption='Mint Fee:' font={{ bold: true, size: '0.875rem' }}></i-label>
+                  <i-label id='lblMintFee' font={{ size: '0.875rem' }}></i-label>
+                </i-hstack>                
                 <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
                   <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
                   <i-label id='lblSpotsRemaining' font={{ size: '0.875rem' }}></i-label>
                 </i-hstack>
-                <i-hstack id='pnlBlockchain' visible={false} gap='0.25rem'>
-                  <i-label caption='Blockchain:' font={{ bold: true, size: '0.875rem' }}></i-label>
-                  <i-label id='lblBlockchain' font={{ size: '0.875rem' }}></i-label>
+                <i-hstack id='pnlMaxQty' visible={false} gap='0.25rem'>
+                  <i-label caption='Max Quantity per Order:' font={{ bold: true, size: '0.875rem' }}></i-label>
+                  <i-label id='lblMaxQty' font={{ size: '0.875rem' }}></i-label>
                 </i-hstack>
                 <i-vstack gap='0.5rem'>
                   {/* <i-grid-layout
@@ -1058,12 +1083,28 @@ export default class ScomNftMinter extends Module {
                   </i-grid-layout> */}
                   <i-vstack gap='0.5rem' id='pnlInputFields'>
                     <i-vstack gap='0.25rem' margin={{bottom: '1rem'}}>
-                      <i-hstack id='pnlQty' visible={false} horizontalAlignment='end' verticalAlignment='center' gap="0.5rem">
-                        <i-label caption='Qty' font={{ size: '0.875rem' }}></i-label>
-                        <i-input id='edtQty' onChanged={this.onQtyChanged.bind(this)} class={inputStyle} inputType='number' font={{ size: '0.875rem' }} border={{ radius: 4 }}></i-input>
+                      <i-hstack id='pnlQty' 
+                        visible={false} 
+                        horizontalAlignment='center'
+                        verticalAlignment='center' 
+                        gap="0.5rem" 
+                        width="50%"
+                        margin={{top: '0.75rem', left: 'auto', right: 'auto'}}
+                      >
+                        <i-label caption='Qty' font={{ weight: 500, size: '1rem' }}></i-label>
+                        <i-input 
+                          id='edtQty' 
+                          onChanged={this.onQtyChanged.bind(this)} 
+                          class={inputStyle} 
+                          inputType='number' 
+                          font={{ size: '0.875rem' }} 
+                          border={{ radius: 4 }}
+                          background={{ color: Theme.input.background }}
+                        >
+                        </i-input>
                       </i-hstack>
                       <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
-                        <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
+                        <i-label id="lblYouPay" font={{ weight: 500, size: '1rem' }}></i-label>
                         <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
                           <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
                           <i-label id='lblBalance' font={{ size: '1rem' }} caption="0.00"></i-label>
