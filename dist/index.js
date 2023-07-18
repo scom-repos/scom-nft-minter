@@ -4102,7 +4102,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
-                const amount = this.productInfo.price.times(requireQty);
+                const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
                 if (balance.lt(amount)) {
                     this.mdAlert.message = {
                         status: 'error',

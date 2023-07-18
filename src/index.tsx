@@ -948,7 +948,7 @@ export default class ScomNftMinter extends Module {
         return;
       }
 
-      const amount = this.productInfo.price.times(requireQty);
+      const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
       if (balance.lt(amount)) {
         this.mdAlert.message = {
           status: 'error',
