@@ -3493,11 +3493,17 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 fee: (0, index_10.getEmbedderCommissionFee)(),
                                 networks: self._data.networks
                             });
-                            const button = new components_6.Button(null, {
+                            const hstack = new components_6.HStack(null, {
+                                verticalAlignment: 'center',
+                            });
+                            const button = new components_6.Button(hstack, {
                                 caption: 'Confirm',
+                                width: '100%',
+                                height: 40,
+                                font: { color: Theme.colors.primary.contrastText }
                             });
                             vstack.append(config);
-                            vstack.append(button);
+                            vstack.append(hstack);
                             button.onClick = async () => {
                                 const commissions = config.commissions;
                                 if (onConfirm)
