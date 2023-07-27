@@ -2848,10 +2848,13 @@ declare module "@scom/scom-nft-minter" {
         private pnlLink;
         private lblLink;
         private lblTitle;
+        private pnlMintFee;
+        private lblMintFee;
         private pnlSpotsRemaining;
         private lblSpotsRemaining;
-        private pnlBlockchain;
-        private lblBlockchain;
+        private pnlMaxQty;
+        private lblMaxQty;
+        private lblYouPay;
         private pnlQty;
         private edtQty;
         private lblBalance;
