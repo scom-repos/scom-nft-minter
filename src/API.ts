@@ -2,9 +2,8 @@ import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo } from './interface/index';
 import { Contracts as ProductContracts } from './contracts/scom-product-contract/index';
 import { Contracts as ProxyContracts } from './contracts/scom-commission-proxy-contract/index';
-import { getContractAddress } from './store/index';
+import { getChainId, getContractAddress } from './store/index';
 import { registerSendTxEvents } from './utils/index';
-import { getChainId } from './wallet/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 
 async function getProductInfo(productId: number) {

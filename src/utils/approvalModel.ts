@@ -1,4 +1,4 @@
-import { BigNumber, Contracts, Wallet } from "@ijstech/eth-wallet";
+import { BigNumber, Contracts, Utils, Wallet } from "@ijstech/eth-wallet";
 import { ITokenObject } from "@scom/scom-token-list";
 import { registerSendTxEvents } from './token';
 
@@ -112,7 +112,7 @@ export const getERC20Allowance = async (token: ITokenObject, spenderAddress: str
     owner: wallet.address,
     spender: spenderAddress
   });
-  return allowance;
+  return Utils.fromDecimals(allowance, token.decimals || 18);
 }
 
 export const getERC20ApprovalModelAction = (spenderAddress: string, options: IERC20ApprovalEventOptions) => {

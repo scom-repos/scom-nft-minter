@@ -1,20 +1,6 @@
 import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
 import { ITokenObject } from "@scom/scom-token-list";
 
-export interface PageBlock {
-  // Properties
-  getData: () => any;
-  setData: (data: any) => Promise<void>;
-  getTag: () => any;
-  setTag: (tag: any) => Promise<void>
-  defaultEdit?: boolean;
-  tag?: any;
-
-  // Page Events
-  readonly onEdit: () => Promise<void>;
-  readonly onConfirm: () => Promise<void>;
-}
-
 export interface ICommissionInfo {
   chainId: number;
   walletAddress: string;

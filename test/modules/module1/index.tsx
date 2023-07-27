@@ -1,59 +1,78 @@
-import { Module, customModule, Container, VStack } from '@ijstech/components';
-import ScomNftMinter from '@scom/scom-nft-minter'
+import { Module, customModule, Container, VStack, application } from '@ijstech/components';
+import { getMulticallInfoList } from '@scom/scom-multicall';
+import { INetwork } from '@ijstech/eth-wallet';
+import getNetworkList from '@scom/scom-network-list';
+import ScomNftMinter from '@scom/scom-nft-minter';
 @customModule
 export default class Module1 extends Module {
-    private nftMinter1: ScomNftMinter;
-    private mainStack: VStack;
+  private nftMinter1: ScomNftMinter;
+  private mainStack: VStack;
 
-    constructor(parent?: Container, options?: any) {
-        super(parent, options);
+  constructor(parent?: Container, options?: any) {
+    super(parent, options);
+    const multicalls = getMulticallInfoList();
+    const networkMap = this.getNetworkMap(options.infuraId);
+    application.store = {
+      infuraId: options.infuraId,
+      multicalls,
+      networkMap
     }
+  }
 
-    async init() {
-        super.init();
-        this.nftMinter1 = await ScomNftMinter.create({
-            name: "Donation Dapp",
-            logo: "ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte",
-            productType: "DonateToEveryone",
-            description: "#### If you'd like to support my work and help me create more exciting content, you can now make a donation using OSWAP. Your donation will help me continue creating high-quality videos and projects, and it's much appreciated. Thank you for your support, and please feel free to contact me if you have any questions or feedback.",
-            link: "",
-            "networks": [
-                {
-                  "chainId": 43113
-                }
-              ],
-            "wallets": [
-              { "name": "metamask" }
-            ],
-            defaultChainId: 97
-        });
-        this.mainStack.appendChild(this.nftMinter1);
+  private getNetworkMap = (infuraId?: string) => {
+    const networkMap = {};
+    const defaultNetworkList: INetwork[] = getNetworkList();
+    const defaultNetworkMap: Record<number, INetwork> = defaultNetworkList.reduce((acc, cur) => {
+      acc[cur.chainId] = cur;
+      return acc;
+    }, {});
+    for (const chainId in defaultNetworkMap) {
+      const networkInfo = defaultNetworkMap[chainId];
+      const explorerUrl = networkInfo.blockExplorerUrls && networkInfo.blockExplorerUrls.length ? networkInfo.blockExplorerUrls[0] : "";
+      if (infuraId && networkInfo.rpcUrls && networkInfo.rpcUrls.length > 0) {
+        for (let i = 0; i < networkInfo.rpcUrls.length; i++) {
+          networkInfo.rpcUrls[i] = networkInfo.rpcUrls[i].replace(/{INFURA_ID}/g, infuraId);
+        }
+      }
+      networkMap[networkInfo.chainId] = {
+        ...networkInfo,
+        symbol: networkInfo.nativeCurrency?.symbol || "",
+        explorerTxUrl: explorerUrl ? `${explorerUrl}${explorerUrl.endsWith("/") ? "" : "/"}tx/` : "",
+        explorerAddressUrl: explorerUrl ? `${explorerUrl}${explorerUrl.endsWith("/") ? "" : "/"}address/` : ""
+      }
     }
+    return networkMap;
+  }
 
-    render() {
-        return (
-          <i-panel>
-            <i-vstack
-              id='mainStack'
-              margin={{ top: '1rem', left: '1rem' }}
-              gap='2rem'
-            >
-              <i-scom-nft-minter
-                logo='ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte'
-                productType='DonateToEveryone'
-                networks={[
-                  {
-                    chainId: 43113
-                  },
-                  {
-                    chainId: 97
-                  }
-                ]}
-                defaultChainId={97}
-                wallets={[{ name: 'metamask' }]}
-              ></i-scom-nft-minter>
-            </i-vstack>
-          </i-panel>
-        )
-    }
+  async init() {
+    super.init();
+  }
+
+  render() {
+    return (
+      <i-panel>
+        <i-vstack
+          id='mainStack'
+          margin={{ top: '1rem', left: '1rem' }}
+          gap='2rem'
+        >
+          <i-scom-nft-minter
+            logoUrl="ipfs://bafkreid4rgdbomv7lbboqo7kvmyruwulotrvqslej4jbwmd2ruzkmn4xte"
+            productType="DonateToEveryone"
+            description="#### If you'd like to support my work and help me create more exciting content, you can now make a donation using OSWAP. Your donation will help me continue creating high-quality videos and projects, and it's much appreciated. Thank you for your support, and please feel free to contact me if you have any questions or feedback."
+            networks={[
+              {
+                chainId: 43113
+              },
+              {
+                chainId: 97
+              }
+            ]}
+            defaultChainId={97}
+            wallets={[{ name: 'metamask' }]}
+          />
+        </i-vstack>
+      </i-panel>
+    )
+  }
 }
