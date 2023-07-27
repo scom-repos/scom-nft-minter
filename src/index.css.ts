@@ -1,8 +1,6 @@
 import { Styles } from "@ijstech/components";
 
 const Theme = Styles.Theme.ThemeVars;
-// Styles.Theme.defaultTheme.background.modal = "#fff";
-// Styles.Theme.applyTheme(Styles.Theme.defaultTheme);
 
 export const imageStyle = Styles.style({
   $nest: {
@@ -15,6 +13,7 @@ export const imageStyle = Styles.style({
 })
 
 export const markdownStyle = Styles.style({
+  color: Theme.text.primary,
   overflowWrap: 'break-word'
 })
 
@@ -41,8 +40,47 @@ export const inputGroupStyle = Styles.style({
 
 export const tokenSelectionStyle = Styles.style({
   $nest: {
-    'i-button.token-button': {
-      justifyContent: 'start'
+    'i-vstack.custom-border > i-hstack': {
+      display: 'none'
+    },
+    '#inputAmount': {
+      fontSize: '1.25rem'
+    },
+    '#gridTokenInput': {
+      height: '100%'
+    },
+    '.i-modal_header': {
+      display: 'none'
+    },
+    '#gridTokenList': {
+      maxHeight: '50vh',
+      overflow: 'auto',
+      $nest: {
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar': {
+          width: '5px',
+          height: '5px'
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#FF8800',
+          borderRadius: '5px'
+        }
+      }
+    },
+    '#pnlSortBalance': {
+      $nest: {
+        '.icon-sort-up': {
+          top: 1
+        },
+        '.icon-sort-down': {
+          bottom: 1
+        },
+        'i-icon svg': {
+          fill: 'inherit'
+        }
+      }
     }
   }
 })

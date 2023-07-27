@@ -8,26 +8,6 @@ export const enum EventId {
   chainChanged = 'chainChanged'
 }
 
-export enum WalletPlugin {
-  MetaMask = 'metamask',
-  WalletConnect = 'walletconnect',
-}
-
-export const SupportedNetworks = [
-  {
-    chainName: "BSC Testnet",
-    chainId: 97
-  },
-  {
-    chainName: "Avalanche FUJI C-Chain",
-    chainId: 43113
-  }
-];
-
-export const getNetworkName = (chainId: number) => {
-  return SupportedNetworks.find(v => v.chainId === chainId)?.chainName || ""
-}
-
 export interface IContractDetailInfo {
   address: string;
 }
@@ -113,7 +93,7 @@ export function initRpcWallet(defaultChainId: number) {
 
 export function getChainId() {
   const rpcWallet = getRpcWallet();
-  return rpcWallet.chainId;
+  return rpcWallet?.chainId;
 }
 
 export function getRpcWallet() {
@@ -122,4 +102,14 @@ export function getRpcWallet() {
 
 export function getClientWallet() {
   return Wallet.getClientInstance();
+}
+
+export function isClientWalletConnected() {
+  const wallet = Wallet.getClientInstance();
+  return wallet.isConnected;
+}
+
+export function isRpcWalletConnected() {
+  const wallet = getRpcWallet();
+  return wallet?.isConnected;
 }
