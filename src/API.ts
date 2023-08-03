@@ -2,15 +2,15 @@ import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo } from './interface/index';
 import { Contracts as ProductContracts } from './contracts/scom-product-contract/index';
 import { Contracts as ProxyContracts } from './contracts/scom-commission-proxy-contract/index';
-import { getChainId, getContractAddress } from './store/index';
 import { registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
+import { State } from './store/index';
 
-async function getProductInfo(productId: number) {
-    let productInfoAddress = getContractAddress('ProductInfo');
+async function getProductInfo(state: State, productId: number) {
+    let productInfoAddress = state.getContractAddress('ProductInfo');
     if (!productInfoAddress) return null;
     try {
-        const wallet = Wallet.getInstance();
+        const wallet = state.getRpcWallet();
         const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
         const product = await productInfo.products(productId);
         const chainId = wallet.chainId;
@@ -25,20 +25,8 @@ async function getProductInfo(productId: number) {
     }
 }
 
-async function getNFTBalance(productId: number) {
-    let productInfoAddress = getContractAddress('ProductInfo');
-    const wallet = Wallet.getInstance();
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-    const nftAddress = await productInfo.nft();
-    const product1155 = new ProductContracts.Product1155(wallet, nftAddress);
-    const nftBalance = await product1155.balanceOf({ 
-        account: wallet.address, 
-        id: productId
-    });
-    return nftBalance;
-}
-
 async function newProduct(
+    state: State,
     productType: ProductType,
     qty: number,
     maxQty: number,
@@ -48,7 +36,7 @@ async function newProduct(
     callback?: any,
     confirmationCallback?: any
 ) {
-    let productInfoAddress = getContractAddress('ProductInfo');
+    let productInfoAddress = state.getContractAddress('ProductInfo');
     const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
@@ -63,17 +51,17 @@ async function newProduct(
             break;
         case ProductType.DonateToOwner:
             productTypeCode = 1;
-            break;    
+            break;
         case ProductType.DonateToEveryone:
             productTypeCode = 2;
-            break;                    
+            break;
     }
     let receipt = await productInfo.newProduct({
         productType: productTypeCode,
         uri: '',
         quantity: qty,
-        maxQuantity: maxQty, 
-        maxPrice: Utils.toDecimals(maxPrice, tokenDecimals), 
+        maxQuantity: maxQty,
+        maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
         price: Utils.toDecimals(price, tokenDecimals),
         token: token?.address || ""
     });
@@ -104,6 +92,7 @@ function getProxyTokenAmountIn(productPrice: string, quantity: number, commissio
 }
 
 async function buyProduct(
+    state: State,
     productId: number,
     quantity: number,
     commissions: ICommissionInfo[],
@@ -111,14 +100,14 @@ async function buyProduct(
     callback?: any,
     confirmationCallback?: any
 ) {
-    let proxyAddress = getContractAddress('Proxy');
-    let productInfoAddress = getContractAddress('ProductInfo');
+    let proxyAddress = state.getContractAddress('Proxy');
+    let productInfoAddress = state.getContractAddress('ProductInfo');
     const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     const product = await productInfo.products(productId);
     const amount = product.price.times(quantity);
-    const _commissions = (commissions || []).filter(v => v.chainId === getChainId()).map(v => {
+    const _commissions = (commissions || []).filter(v => v.chainId === state.getChainId()).map(v => {
         return {
             to: v.walletAddress,
             amount: amount.times(v.share)
@@ -139,7 +128,7 @@ async function buyProduct(
                     amountIn: amount,
                     to: wallet.address
                 })
-            }   
+            }
             else {
                 const txData = await productInfo.buy.txData({
                     productId: productId,
@@ -171,28 +160,29 @@ async function buyProduct(
                     quantity,
                     to: wallet.address
                 })
-            }   
+            }
             else {
                 const txData = await productInfo.buyEth.txData({
                     productId: productId,
                     quantity,
                     to: wallet.address
-                }, amount);            
+                }, amount);
                 receipt = await proxy.ethIn({
                     target: productInfoAddress,
                     commissions: _commissions,
                     data: txData
                 }, amount.plus(commissionsAmount));
-            }            
+            }
         }
     }
-    catch(err) {
+    catch (err) {
         console.error(err);
     }
     return receipt;
 }
 
 async function donate(
+    state: State,
     productId: number,
     donateTo: string,
     amountIn: string,
@@ -201,8 +191,8 @@ async function donate(
     callback?: any,
     confirmationCallback?: any
 ) {
-    let proxyAddress = getContractAddress('Proxy');
-    let productInfoAddress = getContractAddress('ProductInfo');
+    let proxyAddress = state.getContractAddress('Proxy');
+    let productInfoAddress = state.getContractAddress('ProductInfo');
     const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
@@ -221,14 +211,14 @@ async function donate(
             registerSendTxEvents({
                 transactionHash: callback,
                 confirmation: confirmationCallback
-            });           
+            });
             if (commissionsAmount.isZero()) {
                 receipt = await productInfo.donate({
                     donor: wallet.address,
                     donee: donateTo,
                     productId: productId,
                     amountIn: amount
-                });           
+                });
             }
             else {
                 const txData = await productInfo.donate.txData({
@@ -254,13 +244,13 @@ async function donate(
             registerSendTxEvents({
                 transactionHash: callback,
                 confirmation: confirmationCallback
-            });            
+            });
             if (commissionsAmount.isZero()) {
                 receipt = await productInfo.donateEth({
                     donor: wallet.address,
                     donee: donateTo,
                     productId: productId
-                });           
+                });
             }
             else {
                 const txData = await productInfo.donateEth.txData({
@@ -276,7 +266,7 @@ async function donate(
             }
         }
     }
-    catch(err) {
+    catch (err) {
         console.error(err);
     }
     return receipt;
@@ -284,7 +274,6 @@ async function donate(
 
 export {
     getProductInfo,
-    getNFTBalance,
     newProduct,
     getProxyTokenAmountIn,
     buyProduct,

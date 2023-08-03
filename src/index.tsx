@@ -11,17 +11,15 @@ import {
   Input,
   Button,
   Container,
-  IEventBus,
-  application,
   VStack,
   ControlElement,
   Icon,
+  application,
 } from '@ijstech/components';
-import { } from '@ijstech/eth-contract';
-import { BigNumber, Constants, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
+import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { getERC20ApprovalModelAction, getTokenBalance, IERC20ApprovalAction } from './utils/index';
-import { EventId, getEmbedderCommissionFee, getContractAddress, getIPFSGatewayUrl, setDataFromSCConfig, initRpcWallet, getRpcWallet, getChainId } from './store/index';
+import { getTokenBalance } from './utils/index';
+import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import configData from './data.json';
@@ -30,6 +28,7 @@ import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
 import { ITokenObject } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
+import ScomWalletModal from '@scom/scom-wallet-modal';
 import formSchema from './formSchema.json';
 
 interface ScomNftMinterElement extends ControlElement {
@@ -61,6 +60,7 @@ declare global {
 @customModule
 @customElements('i-scom-nft-minter')
 export default class ScomNftMinter extends Module {
+  private state: State;
   private gridDApp: GridLayout;
   private imgLogo: Image;
   private markdownViewer: Markdown;
@@ -90,6 +90,7 @@ export default class ScomNftMinter extends Module {
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
   private containerDapp: ScomDappContainer;
+  private mdWallet: ScomWalletModal;
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
@@ -98,7 +99,6 @@ export default class ScomNftMinter extends Module {
     networks: [],
     defaultChainId: 0
   };
-  private $eventBus: IEventBus;
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
   private tokenAmountIn: string;
@@ -106,62 +106,23 @@ export default class ScomNftMinter extends Module {
   defaultEdit: boolean = true;
   private contractAddress: string;
   private rpcWalletEvents: IEventBusRegistry[] = [];
-  private clientEvents: any[] = [];
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
-    setDataFromSCConfig(configData);
-    this.$eventBus = application.EventBus;
-    this.registerEvent();
+    this.state = new State(configData);
   }
 
-  onHide() {
-    this.containerDapp.onHide();
-    const rpcWallet = getRpcWallet();
+  removeRpcWalletEvents() {
+    const rpcWallet = this.rpcWallet;
     for (let event of this.rpcWalletEvents) {
       rpcWallet.unregisterWalletEvent(event);
     }
     this.rpcWalletEvents = [];
-    for (let event of this.clientEvents) {
-      event.unregister();
-    }
-    this.clientEvents = [];
   }
 
-  async init() {
-    this.isReadyCallbackQueued = true;
-    super.init();
-    const lazyLoad = this.getAttribute('lazyLoad', true, false);
-    if (!lazyLoad) {
-      const link = this.getAttribute('link', true);
-      const productType = this.getAttribute('productType', true);
-      const name = this.getAttribute('name', true);
-      const title = this.getAttribute('title', true);
-      const description = this.getAttribute('description', true);
-      const logo = this.getAttribute('logo', true);
-      const logoUrl = this.getAttribute('logoUrl', true);
-      const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
-      const networks = this.getAttribute('networks', true);
-      const wallets = this.getAttribute('wallets', true);
-      const showHeader = this.getAttribute('showHeader', true);
-      const defaultChainId = this.getAttribute('defaultChainId', true);
-      await this.setData({
-        link,
-        productType,
-        name,
-        title,
-        chainSpecificProperties,
-        defaultChainId,
-        description,
-        logo,
-        logoUrl,
-        networks,
-        wallets,
-        showHeader,
-      });
-    }
-    this.isReadyCallbackQueued = false;
-    this.executeReadyCallback();
+  onHide() {
+    this.containerDapp.onHide();
+    this.removeRpcWalletEvents();
   }
 
   static async create(options?: ScomNftMinterElement, parent?: Container) {
@@ -170,8 +131,16 @@ export default class ScomNftMinter extends Module {
     return self;
   }
 
+  private get chainId() {
+    return this.state.getChainId();
+  }
+
+  private get rpcWallet() {
+    return this.state.getRpcWallet();
+  }
+
   get donateTo() {
-    return this._data.chainSpecificProperties?.[getChainId()]?.donateTo ?? '';
+    return this._data.chainSpecificProperties?.[this.chainId]?.donateTo ?? '';
   }
 
   get link() {
@@ -183,7 +152,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get productId() {
-    return this._data.chainSpecificProperties?.[getChainId()]?.productId ?? 0;
+    return this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
   }
 
   get productType() {
@@ -270,10 +239,6 @@ export default class ScomNftMinter extends Module {
     this._data.defaultChainId = value;
   }
 
-  private registerEvent() {
-    this.clientEvents.push(this.$eventBus.register(this, EventId.chainChanged, this.onChainChanged));
-  }
-
   private onChainChanged = async () => {
     this.onSetupPage();
     this.updateContractAddress();
@@ -285,12 +250,12 @@ export default class ScomNftMinter extends Module {
     if (!token) return;
     try {
       const symbol = token?.symbol || '';
-      this.lblBalance.caption = token ? `${(await getTokenBalance(token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
+      this.lblBalance.caption = token ? `${(await getTokenBalance(this.rpcWallet, token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
     } catch { }
   }
 
   private async onSetupPage() {
-    await this.initApprovalAction();
+    if (this.state.isRpcWalletConnected()) await this.initApprovalAction();
   }
 
   private _getActions(category?: string) {
@@ -328,7 +293,7 @@ export default class ScomNftMinter extends Module {
             const vstack = new VStack();
             const config = new ScomCommissionFeeSetup(null, {
               commissions: self._data.commissions,
-              fee: getEmbedderCommissionFee(),
+              fee: this.state.embedderCommissionFee,
               networks: self._data.networks
             });
             const hstack = new HStack(null, {
@@ -338,7 +303,7 @@ export default class ScomNftMinter extends Module {
               caption: 'Confirm',
               width: '100%',
               height: 40,
-              font: {color: Theme.colors.primary.contrastText}
+              font: { color: Theme.colors.primary.contrastText }
             });
             vstack.append(config);
             vstack.append(hstack);
@@ -374,6 +339,7 @@ export default class ScomNftMinter extends Module {
                 description: userInputData.description,
                 link: userInputData.link
               })
+              await this.resetRpcWallet();
               if (builder?.setData) builder.setData(this._data);
               this.refreshDApp();
               // await this.newProduct((error: Error, receipt?: string) => {
@@ -471,7 +437,7 @@ export default class ScomNftMinter extends Module {
           }
         },
         getData: () => {
-          const fee = getEmbedderCommissionFee();
+          const fee = this.state.embedderCommissionFee;
           return { ...this.getData(), fee }
         },
         setData: this.setData.bind(this),
@@ -485,31 +451,39 @@ export default class ScomNftMinter extends Module {
     return this._data;
   }
 
-  private async setData(data: IEmbedData) {
-    this._data = data;
-    const rpcWalletId = await initRpcWallet(this.defaultChainId);
-    const rpcWallet = getRpcWallet();
-    const event = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
+  private async resetRpcWallet() {
+    this.removeRpcWalletEvents();
+    const rpcWalletId = await this.state.initRpcWallet(this.defaultChainId);
+    const rpcWallet = this.rpcWallet;
+    const chainChangedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.ChainChanged, async (chainId: number) => {
+      this.onChainChanged();
+    });
+    const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
       this.onSetupPage();
       this.updateContractAddress();
       this.refreshDApp();
     });
-    this.rpcWalletEvents.push(event);
+    this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
 
-    const dappData = {
+    const data = {
+      defaultChainId: this.defaultChainId,
       wallets: this.wallets,
       networks: this.networks,
       showHeader: this.showHeader,
-      defaultChainId: this.defaultChainId,
       rpcWalletId: rpcWallet.instanceId
     }
-    if (this.containerDapp?.setData) this.containerDapp.setData(dappData);
+    if (this.containerDapp?.setData) this.containerDapp.setData(data);
+  }
+
+  private async setData(data: IEmbedData) {
+    this._data = data;
+    await this.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
-    if (this.tokenInput.rpcWalletId !== rpcWallet.instanceId) {
-      this.tokenInput.rpcWalletId = rpcWallet.instanceId;
+    if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
+      this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
     }
     await this.onSetupPage();
-    const commissionFee = getEmbedderCommissionFee();
+    const commissionFee = this.state.embedderCommissionFee;
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
     this.lbOrderTotalTitle.caption = `Total`;
     this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
@@ -579,8 +553,7 @@ export default class ScomNftMinter extends Module {
   private async initWallet() {
     try {
       await Wallet.getClientInstance().init();
-      const rpcWallet = getRpcWallet();
-      await rpcWallet.init();
+      await this.rpcWallet.init();
     } catch { }
   }
 
@@ -591,10 +564,9 @@ export default class ScomNftMinter extends Module {
     this.lblLink.caption = data.link || '';
     this.lblLink.link.href = data.link;
     if (data.logo) {
-      this.imgLogo.url = getIPFSGatewayUrl() + data.logo;
+      this.imgLogo.url = `${this.state.ipfsGatewayUrl}${data.logo}`;
     } else if (data.logoUrl?.startsWith('ipfs://')) {
-      const ipfsGatewayUrl = getIPFSGatewayUrl();
-      this.imgLogo.url = data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
+      this.imgLogo.url = data.logoUrl.replace('ipfs://', this.state.ipfsGatewayUrl);
     }
     else {
       this.imgLogo.url = data.logoUrl || "";
@@ -617,7 +589,7 @@ export default class ScomNftMinter extends Module {
       await this.updateDAppUI(tmpData);
       if (!this.productId || this.productId === 0) return;
       await this.initWallet();
-      this.productInfo = await getProductInfo(this.productId);
+      this.productInfo = await getProductInfo(this.state, this.productId);
       if (this.productInfo) {
         const token = this.productInfo.token;
         this.pnlInputFields.visible = true;
@@ -628,7 +600,7 @@ export default class ScomNftMinter extends Module {
           this.lblYouPay.caption = `You pay`;
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${price ?? ""} ${token?.symbol || ""}`;
-          this.lblTitle.caption = this._data.title ;
+          this.lblTitle.caption = this._data.title;
           this.btnSubmit.caption = 'Mint';
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
@@ -658,12 +630,13 @@ export default class ScomNftMinter extends Module {
         // this.tokenInput.tokenReadOnly = this._data.token ? true : new BigNumber(price).gt(0);
         this.tokenInput.token = token;
         this.updateTokenBalance();
-        // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+        // this.lblBalance.caption = (await getTokenBalance(this.rpcWallet, this._data.token)).toFixed(2);
       }
       else {
         this.pnlInputFields.visible = false;
         this.pnlUnsupportedNetwork.visible = true;
       }
+      this.checkNetwork();
     });
   }
 
@@ -689,8 +662,8 @@ export default class ScomNftMinter extends Module {
 
   private async initApprovalAction() {
     if (!this.approvalModelAction) {
-      this.contractAddress = getContractAddress('Proxy');
-      this.approvalModelAction = getERC20ApprovalModelAction(this.contractAddress, {
+      this.contractAddress = this.state.getContractAddress('Proxy');
+      this.approvalModelAction = await this.state.setApprovalModelAction({
         sender: this,
         payAction: async () => {
           await this.doSubmitAction();
@@ -709,6 +682,7 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.visible = false;
           this.isApproving = false;
           this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+          this.checkNetwork();
         },
         onApproving: async (token: ITokenObject, receipt?: string) => {
           this.isApproving = true;
@@ -746,29 +720,42 @@ export default class ScomNftMinter extends Module {
           this.showTxStatusModal('error', err);
         }
       });
+      this.state.approvalModel.spenderAddress = this.contractAddress;
     }
   }
 
   private updateContractAddress() {
     if (this.approvalModelAction) {
-      if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == getChainId())) {
-        this.contractAddress = getContractAddress('ProductInfo');
+      if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
+        this.contractAddress = this.state.getContractAddress('ProductInfo');
       }
       else {
-        this.contractAddress = getContractAddress('Proxy');
+        this.contractAddress = this.state.getContractAddress('Proxy');
       }
-      this.approvalModelAction.setSpenderAddress(this.contractAddress);
+      this.state.approvalModel.spenderAddress = this.contractAddress;
     }
   }
 
   private async selectToken(token: ITokenObject) {
     const symbol = token?.symbol || '';
-    this.lblBalance.caption = `${(await getTokenBalance(token)).toFixed(2)} ${symbol}`;
+    this.lblBalance.caption = `${(await getTokenBalance(this.rpcWallet, token)).toFixed(2)} ${symbol}`;
   }
 
   private updateSubmitButton(submitting: boolean) {
     this.btnSubmit.rightIcon.spin = submitting;
     this.btnSubmit.rightIcon.visible = submitting;
+  }
+
+  private checkNetwork() {
+    if (!isClientWalletConnected()) {
+      this.btnSubmit.caption = 'Connect Wallet';
+      this.btnSubmit.enabled = true;
+      return;
+    }
+    if (this.state.isRpcWalletConnected()) {
+      this.btnSubmit.caption = 'Switch Network';
+      this.btnSubmit.enabled = true;
+    }
   }
 
   private onApprove() {
@@ -788,11 +775,11 @@ export default class ScomNftMinter extends Module {
       const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
       const amount = price.times(qty);
       this.tokenInput.value = amount.toFixed();
-      const commissionFee = getEmbedderCommissionFee();
+      const commissionFee = this.state.embedderCommissionFee;
       const total = amount.plus(amount.times(commissionFee));
       this.lbOrderTotal.caption = `${total} ${this.productInfo.token?.symbol || ''}`;
     }
-    if (this.productInfo)
+    if (this.productInfo && this.state.isRpcWalletConnected())
       this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
   }
 
@@ -806,17 +793,17 @@ export default class ScomNftMinter extends Module {
       this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), amount, this._data.commissions);
     }
     amount = Number(this.tokenInput.value);
-    const commissionFee = getEmbedderCommissionFee();
+    const commissionFee = this.state.embedderCommissionFee;
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
     const token = this.productInfo?.token
     this.lbOrderTotal.caption = `${total} ${token?.symbol || ''}`;
-    token && this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+    if (token && this.state.isRpcWalletConnected())
+      this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
   }
 
   private async doSubmitAction() {
     if (!this._data || !this.productId) return;
     this.updateSubmitButton(true);
-    // const chainId = getChainId();
     if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenInput.token) {
       this.showTxStatusModal('error', 'Token Required');
       this.updateSubmitButton(false);
@@ -828,7 +815,7 @@ export default class ScomNftMinter extends Module {
     //   return;
     // }
     const token = this.productInfo.token
-    const balance = await getTokenBalance(token);
+    const balance = await getTokenBalance(this.rpcWallet, token);
     if (this._type === ProductType.Buy) {
       if (this.edtQty.value && new BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
         this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
@@ -842,7 +829,7 @@ export default class ScomNftMinter extends Module {
       }
       const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
       if (this.productId >= 0) {
-        const product = await getProductInfo(this.productId);
+        const product = await getProductInfo(this.state, this.productId);
         if (product.quantity.lt(requireQty)) {
           this.showTxStatusModal('error', 'Out of stock');
           this.updateSubmitButton(false);
@@ -880,6 +867,20 @@ export default class ScomNftMinter extends Module {
   }
 
   private async onSubmit() {
+    if (!isClientWalletConnected()) {
+			if (this.mdWallet) {
+				await application.loadPackage('@scom/scom-wallet-modal', '*');
+				this.mdWallet.networks = this.networks;
+				this.mdWallet.wallets = this.wallets;
+				this.mdWallet.showModal();
+			}
+			return;
+		}
+		if (!this.state.isRpcWalletConnected()) {
+			const clientWallet = Wallet.getClientInstance();
+			await clientWallet.switchNetwork(this.chainId);
+      return;
+		}
     this.showTxStatusModal('warning', 'Confirming');
     this.approvalModelAction.doPayAction();
   }
@@ -893,20 +894,56 @@ export default class ScomNftMinter extends Module {
     };
     const token = this.productInfo.token;
     if (this._data.productType == ProductType.DonateToOwner || this._data.productType == ProductType.DonateToEveryone) {
-      await donate(this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback,
+      await donate(this.state, this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
         }
       );
     }
     else if (this._data.productType == ProductType.Buy) {
-      await buyProduct(this.productId, quantity, this._data.commissions, token, callback,
+      await buyProduct(this.state, this.productId, quantity, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
           this.updateSpotsRemaining();
         }
       );
     }
+  }
+
+  async init() {
+    this.isReadyCallbackQueued = true;
+    super.init();
+    const lazyLoad = this.getAttribute('lazyLoad', true, false);
+    if (!lazyLoad) {
+      const link = this.getAttribute('link', true);
+      const productType = this.getAttribute('productType', true);
+      const name = this.getAttribute('name', true);
+      const title = this.getAttribute('title', true);
+      const description = this.getAttribute('description', true);
+      const logo = this.getAttribute('logo', true);
+      const logoUrl = this.getAttribute('logoUrl', true);
+      const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
+      const networks = this.getAttribute('networks', true);
+      const wallets = this.getAttribute('wallets', true);
+      const showHeader = this.getAttribute('showHeader', true);
+      const defaultChainId = this.getAttribute('defaultChainId', true);
+      await this.setData({
+        link,
+        productType,
+        name,
+        title,
+        chainSpecificProperties,
+        defaultChainId,
+        description,
+        logo,
+        logoUrl,
+        networks,
+        wallets,
+        showHeader,
+      });
+    }
+    this.isReadyCallbackQueued = false;
+    this.executeReadyCallback();
   }
 
   render() {
@@ -937,7 +974,7 @@ export default class ScomNftMinter extends Module {
                 <i-hstack id='pnlMintFee' visible={false} gap='0.25rem'>
                   <i-label caption='Mint Fee:' font={{ bold: true, size: '0.875rem' }}></i-label>
                   <i-label id='lblMintFee' font={{ size: '0.875rem' }}></i-label>
-                </i-hstack>                
+                </i-hstack>
                 <i-hstack id='pnlSpotsRemaining' visible={false} gap='0.25rem'>
                   <i-label caption='Spots Remaining:' font={{ bold: true, size: '0.875rem' }}></i-label>
                   <i-label id='lblSpotsRemaining' font={{ size: '0.875rem' }}></i-label>
@@ -948,22 +985,22 @@ export default class ScomNftMinter extends Module {
                 </i-hstack>
                 <i-vstack gap='0.5rem'>
                   <i-vstack gap='0.5rem' id='pnlInputFields'>
-                    <i-vstack gap='0.25rem' margin={{bottom: '1rem'}}>
-                      <i-hstack id='pnlQty' 
-                        visible={false} 
+                    <i-vstack gap='0.25rem' margin={{ bottom: '1rem' }}>
+                      <i-hstack id='pnlQty'
+                        visible={false}
                         horizontalAlignment='center'
-                        verticalAlignment='center' 
-                        gap="0.5rem" 
+                        verticalAlignment='center'
+                        gap="0.5rem"
                         width="50%"
-                        margin={{top: '0.75rem', left: 'auto', right: 'auto'}}
+                        margin={{ top: '0.75rem', left: 'auto', right: 'auto' }}
                       >
                         <i-label caption='Qty' font={{ weight: 500, size: '1rem' }}></i-label>
-                        <i-input 
-                          id='edtQty' 
-                          onChanged={this.onQtyChanged.bind(this)} 
-                          class={inputStyle} 
-                          inputType='number' 
-                          font={{ size: '0.875rem' }} 
+                        <i-input
+                          id='edtQty'
+                          onChanged={this.onQtyChanged.bind(this)}
+                          class={inputStyle}
+                          inputType='number'
+                          font={{ size: '0.875rem' }}
                           border={{ radius: 4 }}
                           background={{ color: Theme.input.background }}
                         >
@@ -1065,6 +1102,7 @@ export default class ScomNftMinter extends Module {
               </i-hstack>
             </i-grid-layout>
             <i-scom-commission-fee-setup visible={false} />
+            <i-scom-wallet-modal id="mdWallet" wallets={[]} />
             <i-scom-tx-status-modal id="txStatusModal" />
           </i-panel>
         </i-scom-dapp-container>

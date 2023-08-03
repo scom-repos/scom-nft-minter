@@ -15,117 +15,22 @@ define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], func
         ProductType["DonateToEveryone"] = "DonateToEveryone";
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
 });
-define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet"], function (require, exports, components_1, eth_wallet_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.isRpcWalletConnected = exports.isClientWalletConnected = exports.getClientWallet = exports.getRpcWallet = exports.getChainId = exports.initRpcWallet = exports.getContractAddress = exports.getEmbedderCommissionFee = exports.getIPFSGatewayUrl = exports.setIPFSGatewayUrl = exports.setDataFromSCConfig = exports.state = void 0;
-    exports.state = {
-        contractInfoByChain: {},
-        ipfsGatewayUrl: "",
-        embedderCommissionFee: "0",
-        rpcWalletId: ""
-    };
-    const setDataFromSCConfig = (options) => {
-        if (options.contractInfo) {
-            setContractInfo(options.contractInfo);
-        }
-        if (options.ipfsGatewayUrl) {
-            (0, exports.setIPFSGatewayUrl)(options.ipfsGatewayUrl);
-        }
-        if (options.embedderCommissionFee) {
-            setEmbedderCommissionFee(options.embedderCommissionFee);
-        }
-    };
-    exports.setDataFromSCConfig = setDataFromSCConfig;
-    const setContractInfo = (data) => {
-        exports.state.contractInfoByChain = data;
-    };
-    const getContractInfo = (chainId) => {
-        return exports.state.contractInfoByChain[chainId];
-    };
-    const setIPFSGatewayUrl = (url) => {
-        exports.state.ipfsGatewayUrl = url;
-    };
-    exports.setIPFSGatewayUrl = setIPFSGatewayUrl;
-    const getIPFSGatewayUrl = () => {
-        return exports.state.ipfsGatewayUrl;
-    };
-    exports.getIPFSGatewayUrl = getIPFSGatewayUrl;
-    const setEmbedderCommissionFee = (fee) => {
-        exports.state.embedderCommissionFee = fee;
-    };
-    const getEmbedderCommissionFee = () => {
-        return exports.state.embedderCommissionFee;
-    };
-    exports.getEmbedderCommissionFee = getEmbedderCommissionFee;
-    const getContractAddress = (type) => {
-        var _a;
-        const chainId = getChainId();
-        const contracts = getContractInfo(chainId) || {};
-        return (_a = contracts[type]) === null || _a === void 0 ? void 0 : _a.address;
-    };
-    exports.getContractAddress = getContractAddress;
-    function initRpcWallet(defaultChainId) {
-        if (exports.state.rpcWalletId) {
-            return exports.state.rpcWalletId;
-        }
-        const clientWallet = eth_wallet_1.Wallet.getClientInstance();
-        const networkList = Object.values(components_1.application.store.networkMap);
-        const instanceId = clientWallet.initRpcWallet({
-            networks: networkList,
-            defaultChainId,
-            infuraId: components_1.application.store.infuraId,
-            multicalls: components_1.application.store.multicalls
-        });
-        exports.state.rpcWalletId = instanceId;
-        if (clientWallet.address) {
-            const rpcWallet = eth_wallet_1.Wallet.getRpcWalletInstance(instanceId);
-            rpcWallet.address = clientWallet.address;
-        }
-        return instanceId;
-    }
-    exports.initRpcWallet = initRpcWallet;
-    function getChainId() {
-        const rpcWallet = getRpcWallet();
-        return rpcWallet === null || rpcWallet === void 0 ? void 0 : rpcWallet.chainId;
-    }
-    exports.getChainId = getChainId;
-    function getRpcWallet() {
-        return eth_wallet_1.Wallet.getRpcWalletInstance(exports.state.rpcWalletId);
-    }
-    exports.getRpcWallet = getRpcWallet;
-    function getClientWallet() {
-        return eth_wallet_1.Wallet.getClientInstance();
-    }
-    exports.getClientWallet = getClientWallet;
-    function isClientWalletConnected() {
-        const wallet = eth_wallet_1.Wallet.getClientInstance();
-        return wallet.isConnected;
-    }
-    exports.isClientWalletConnected = isClientWalletConnected;
-    function isRpcWalletConnected() {
-        const wallet = getRpcWallet();
-        return wallet === null || wallet === void 0 ? void 0 : wallet.isConnected;
-    }
-    exports.isRpcWalletConnected = isRpcWalletConnected;
-});
-define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/store/index.ts"], function (require, exports, eth_wallet_2, index_1) {
+define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/eth-wallet"], function (require, exports, eth_wallet_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = void 0;
     const getERC20Amount = async (wallet, tokenAddress, decimals) => {
         try {
-            let erc20 = new eth_wallet_2.Erc20(wallet, tokenAddress, decimals);
+            let erc20 = new eth_wallet_1.Erc20(wallet, tokenAddress, decimals);
             return await erc20.balance;
         }
         catch (_a) {
-            return new eth_wallet_2.BigNumber(0);
+            return new eth_wallet_1.BigNumber(0);
         }
     };
     exports.getERC20Amount = getERC20Amount;
-    const getTokenBalance = async (token) => {
-        const wallet = (0, index_1.getRpcWallet)();
-        let balance = new eth_wallet_2.BigNumber(0);
+    const getTokenBalance = async (wallet, token) => {
+        let balance = new eth_wallet_1.BigNumber(0);
         if (!token)
             return balance;
         if (token.address) {
@@ -138,7 +43,7 @@ define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/
     };
     exports.getTokenBalance = getTokenBalance;
     const registerSendTxEvents = (sendTxEventHandlers) => {
-        const wallet = eth_wallet_2.Wallet.getClientInstance();
+        const wallet = eth_wallet_1.Wallet.getClientInstance();
         wallet.registerSendTxEvents({
             transactionHash: (error, receipt) => {
                 if (sendTxEventHandlers.transactionHash) {
@@ -154,134 +59,92 @@ define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/
     };
     exports.registerSendTxEvents = registerSendTxEvents;
 });
-define("@scom/scom-nft-minter/utils/approvalModel.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/utils/token.ts"], function (require, exports, eth_wallet_3, token_1) {
+define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/scom-nft-minter/utils/token.ts"], function (require, exports, token_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getERC20ApprovalModelAction = exports.getERC20Allowance = exports.ApprovalStatus = void 0;
-    class ERC20ApprovalModel {
+    exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = void 0;
+    Object.defineProperty(exports, "getERC20Amount", { enumerable: true, get: function () { return token_1.getERC20Amount; } });
+    Object.defineProperty(exports, "getTokenBalance", { enumerable: true, get: function () { return token_1.getTokenBalance; } });
+    Object.defineProperty(exports, "registerSendTxEvents", { enumerable: true, get: function () { return token_1.registerSendTxEvents; } });
+});
+define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet"], function (require, exports, components_1, eth_wallet_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.isClientWalletConnected = exports.getClientWallet = exports.State = void 0;
+    class State {
         constructor(options) {
-            this.options = {
-                sender: null,
-                spenderAddress: '',
-                payAction: async () => { },
-                onToBeApproved: async (token) => { },
-                onToBePaid: async (token) => { },
-                onApproving: async (token, receipt, data) => { },
-                onApproved: async (token, data) => { },
-                onPaying: async (receipt, data) => { },
-                onPaid: async (data) => { },
-                onApprovingError: async (token, err) => { },
-                onPayingError: async (err) => { }
-            };
-            this.setSpenderAddress = (value) => {
-                this.options.spenderAddress = value;
-            };
-            this.checkAllowance = async (token, inputAmount) => {
-                let allowance = await (0, exports.getERC20Allowance)(token, this.options.spenderAddress);
-                if (!allowance) {
-                    await this.options.onToBePaid.bind(this.options.sender)(token);
-                }
-                else if (new eth_wallet_3.BigNumber(inputAmount).gt(allowance)) {
-                    await this.options.onToBeApproved.bind(this.options.sender)(token);
-                }
-                else {
-                    await this.options.onToBePaid.bind(this.options.sender)(token);
-                }
-            };
-            this.doApproveAction = async (token, inputAmount, data) => {
-                const txHashCallback = async (err, receipt) => {
-                    if (err) {
-                        await this.options.onApprovingError.bind(this.options.sender)(token, err);
-                    }
-                    else {
-                        await this.options.onApproving.bind(this.options.sender)(token, receipt, data);
-                    }
-                };
-                const confirmationCallback = async (receipt) => {
-                    await this.options.onApproved.bind(this.options.sender)(token, data);
-                    await this.checkAllowance(token, inputAmount);
-                };
-                approveERC20Max(token, this.options.spenderAddress, txHashCallback, confirmationCallback);
-            };
-            this.doPayAction = async (data) => {
-                const txHashCallback = async (err, receipt) => {
-                    if (err) {
-                        await this.options.onPayingError.bind(this.options.sender)(err);
-                    }
-                    else {
-                        await this.options.onPaying.bind(this.options.sender)(receipt, data);
-                    }
-                };
-                const confirmationCallback = async (receipt) => {
-                    await this.options.onPaid.bind(this.options.sender)(data);
-                };
-                (0, token_1.registerSendTxEvents)({
-                    transactionHash: txHashCallback,
-                    confirmation: confirmationCallback
-                });
-                await this.options.payAction.bind(this.options.sender)();
-            };
-            this.getAction = () => {
-                return {
-                    setSpenderAddress: this.setSpenderAddress,
-                    doApproveAction: this.doApproveAction,
-                    doPayAction: this.doPayAction,
-                    checkAllowance: this.checkAllowance
-                };
-            };
-            this.options = options;
+            this.contractInfoByChain = {};
+            this.ipfsGatewayUrl = '';
+            this.embedderCommissionFee = '0';
+            this.rpcWalletId = '';
+            this.initData(options);
+        }
+        initData(options) {
+            if (options.contractInfo) {
+                this.contractInfoByChain = options.contractInfo;
+            }
+            if (options.ipfsGatewayUrl) {
+                this.ipfsGatewayUrl = options.ipfsGatewayUrl;
+            }
+            if (options.embedderCommissionFee) {
+                this.embedderCommissionFee = options.embedderCommissionFee;
+            }
+        }
+        initRpcWallet(defaultChainId) {
+            var _a, _b, _c;
+            if (this.rpcWalletId) {
+                return this.rpcWalletId;
+            }
+            const clientWallet = eth_wallet_2.Wallet.getClientInstance();
+            const networkList = Object.values(((_a = components_1.application.store) === null || _a === void 0 ? void 0 : _a.networkMap) || []);
+            const instanceId = clientWallet.initRpcWallet({
+                networks: networkList,
+                defaultChainId,
+                infuraId: (_b = components_1.application.store) === null || _b === void 0 ? void 0 : _b.infuraId,
+                multicalls: (_c = components_1.application.store) === null || _c === void 0 ? void 0 : _c.multicalls
+            });
+            this.rpcWalletId = instanceId;
+            if (clientWallet.address) {
+                const rpcWallet = eth_wallet_2.Wallet.getRpcWalletInstance(instanceId);
+                rpcWallet.address = clientWallet.address;
+            }
+            return instanceId;
+        }
+        getContractAddress(type) {
+            var _a;
+            const chainId = this.getChainId();
+            const contracts = this.contractInfoByChain[chainId] || {};
+            return (_a = contracts[type]) === null || _a === void 0 ? void 0 : _a.address;
+        }
+        getRpcWallet() {
+            return this.rpcWalletId ? eth_wallet_2.Wallet.getRpcWalletInstance(this.rpcWalletId) : null;
+        }
+        isRpcWalletConnected() {
+            const wallet = this.getRpcWallet();
+            return wallet === null || wallet === void 0 ? void 0 : wallet.isConnected;
+        }
+        getChainId() {
+            const rpcWallet = this.getRpcWallet();
+            return rpcWallet === null || rpcWallet === void 0 ? void 0 : rpcWallet.chainId;
+        }
+        async setApprovalModelAction(options) {
+            const approvalOptions = Object.assign(Object.assign({}, options), { spenderAddress: '' });
+            let wallet = this.getRpcWallet();
+            this.approvalModel = new eth_wallet_2.ERC20ApprovalModel(wallet, approvalOptions);
+            let approvalModelAction = this.approvalModel.getAction();
+            return approvalModelAction;
         }
     }
-    var ApprovalStatus;
-    (function (ApprovalStatus) {
-        ApprovalStatus[ApprovalStatus["TO_BE_APPROVED"] = 0] = "TO_BE_APPROVED";
-        ApprovalStatus[ApprovalStatus["APPROVING"] = 1] = "APPROVING";
-        ApprovalStatus[ApprovalStatus["NONE"] = 2] = "NONE";
-    })(ApprovalStatus = exports.ApprovalStatus || (exports.ApprovalStatus = {}));
-    const approveERC20Max = async (token, spenderAddress, callback, confirmationCallback) => {
-        let wallet = eth_wallet_3.Wallet.getInstance();
-        let amount = new eth_wallet_3.BigNumber(2).pow(256).minus(1);
-        let erc20 = new eth_wallet_3.Contracts.ERC20(wallet, token.address);
-        (0, token_1.registerSendTxEvents)({
-            transactionHash: callback,
-            confirmation: confirmationCallback
-        });
-        let receipt = await erc20.approve({
-            spender: spenderAddress,
-            amount
-        });
-        return receipt;
-    };
-    const getERC20Allowance = async (token, spenderAddress) => {
-        if (!token || !token.address)
-            return null;
-        let wallet = eth_wallet_3.Wallet.getInstance();
-        let erc20 = new eth_wallet_3.Contracts.ERC20(wallet, token.address);
-        let allowance = await erc20.allowance({
-            owner: wallet.address,
-            spender: spenderAddress
-        });
-        return eth_wallet_3.Utils.fromDecimals(allowance, token.decimals || 18);
-    };
-    exports.getERC20Allowance = getERC20Allowance;
-    const getERC20ApprovalModelAction = (spenderAddress, options) => {
-        const approvalOptions = Object.assign(Object.assign({}, options), { spenderAddress });
-        const approvalModel = new ERC20ApprovalModel(approvalOptions);
-        const approvalModelAction = approvalModel.getAction();
-        return approvalModelAction;
-    };
-    exports.getERC20ApprovalModelAction = getERC20ApprovalModelAction;
-});
-define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/scom-nft-minter/utils/token.ts", "@scom/scom-nft-minter/utils/approvalModel.ts"], function (require, exports, token_2, approvalModel_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getERC20ApprovalModelAction = exports.getERC20Allowance = exports.ApprovalStatus = exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = void 0;
-    Object.defineProperty(exports, "getERC20Amount", { enumerable: true, get: function () { return token_2.getERC20Amount; } });
-    Object.defineProperty(exports, "getTokenBalance", { enumerable: true, get: function () { return token_2.getTokenBalance; } });
-    Object.defineProperty(exports, "registerSendTxEvents", { enumerable: true, get: function () { return token_2.registerSendTxEvents; } });
-    Object.defineProperty(exports, "ApprovalStatus", { enumerable: true, get: function () { return approvalModel_1.ApprovalStatus; } });
-    Object.defineProperty(exports, "getERC20Allowance", { enumerable: true, get: function () { return approvalModel_1.getERC20Allowance; } });
-    Object.defineProperty(exports, "getERC20ApprovalModelAction", { enumerable: true, get: function () { return approvalModel_1.getERC20ApprovalModelAction; } });
+    exports.State = State;
+    function getClientWallet() {
+        return eth_wallet_2.Wallet.getClientInstance();
+    }
+    exports.getClientWallet = getClientWallet;
+    function isClientWalletConnected() {
+        const wallet = eth_wallet_2.Wallet.getClientInstance();
+        return wallet.isConnected;
+    }
+    exports.isClientWalletConnected = isClientWalletConnected;
 });
 define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_2) {
     "use strict";
@@ -2029,7 +1892,7 @@ define("@scom/scom-nft-minter/contracts/scom-product-contract/contracts/index.ts
     Object.defineProperty(exports, "Product1155", { enumerable: true, get: function () { return Product1155_1.Product1155; } });
     Object.defineProperty(exports, "ProductInfo", { enumerable: true, get: function () { return ProductInfo_1.ProductInfo; } });
 });
-define("@scom/scom-nft-minter/contracts/scom-product-contract/index.ts", ["require", "exports", "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/index.ts", "@ijstech/eth-wallet"], function (require, exports, Contracts, eth_wallet_4) {
+define("@scom/scom-nft-minter/contracts/scom-product-contract/index.ts", ["require", "exports", "@scom/scom-nft-minter/contracts/scom-product-contract/contracts/index.ts", "@ijstech/eth-wallet"], function (require, exports, Contracts, eth_wallet_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.onProgress = exports.deploy = exports.DefaultDeployOptions = exports.Contracts = void 0;
@@ -2058,7 +1921,7 @@ define("@scom/scom-nft-minter/contracts/scom-product-contract/index.ts", ["requi
             progress('ERC20 deployed ' + erc20Address);
             if (options && options.initSupply) {
                 progress('Mint initial supply ' + options.initSupply);
-                let value = new eth_wallet_4.BigNumber(options.initSupply);
+                let value = new eth_wallet_3.BigNumber(options.initSupply);
                 let result = await erc20.mint(value);
                 progress('Transaction # ' + result.transactionHash);
             }
@@ -2792,10 +2655,12 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts
             { "inputs": [{ "internalType": "uint256", "name": "campaignId", "type": "uint256" }, { "internalType": "uint256", "name": "targetAndSelectorsStart", "type": "uint256" }, { "internalType": "uint256", "name": "targetAndSelectorsLength", "type": "uint256" }, { "internalType": "uint256", "name": "referrersStart", "type": "uint256" }, { "internalType": "uint256", "name": "referrersLength", "type": "uint256" }], "name": "getCampaignArrayData1", "outputs": [{ "internalType": "bytes24[]", "name": "targetAndSelectors", "type": "bytes24[]" }, { "internalType": "address[]", "name": "referrers", "type": "address[]" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "campaignId", "type": "uint256" }, { "internalType": "uint256", "name": "inTokensStart", "type": "uint256" }, { "internalType": "uint256", "name": "inTokensLength", "type": "uint256" }, { "internalType": "uint256", "name": "outTokensStart", "type": "uint256" }, { "internalType": "uint256", "name": "outTokensLength", "type": "uint256" }], "name": "getCampaignArrayData2", "outputs": [{ "internalType": "contract IERC20[]", "name": "inTokens", "type": "address[]" }, { "internalType": "bool[]", "name": "directTransferInToken", "type": "bool[]" }, { "components": [{ "internalType": "uint24", "name": "rate", "type": "uint24" }, { "internalType": "bool", "name": "feeOnProjectOwner", "type": "bool" }, { "internalType": "uint256", "name": "capPerTransaction", "type": "uint256" }, { "internalType": "uint256", "name": "capPerCampaign", "type": "uint256" }], "internalType": "struct ProxyV3.CommissionTokenConfig[]", "name": "commissionInTokenConfig", "type": "tuple[]" }, { "internalType": "contract IERC20[]", "name": "outTokens", "type": "address[]" }, { "components": [{ "internalType": "uint24", "name": "rate", "type": "uint24" }, { "internalType": "bool", "name": "feeOnProjectOwner", "type": "bool" }, { "internalType": "uint256", "name": "capPerTransaction", "type": "uint256" }, { "internalType": "uint256", "name": "capPerCampaign", "type": "uint256" }], "internalType": "struct ProxyV3.CommissionTokenConfig[]", "name": "commissionOutTokenConfig", "type": "tuple[]" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "campaignId", "type": "uint256" }], "name": "getCampaignArrayLength", "outputs": [{ "internalType": "uint256", "name": "targetAndSelectorsLength", "type": "uint256" }, { "internalType": "uint256", "name": "inTokensLength", "type": "uint256" }, { "internalType": "uint256", "name": "outTokensLength", "type": "uint256" }, { "internalType": "uint256", "name": "referrersLength", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getCampaignsLength", "outputs": [{ "internalType": "uint256", "name": "length", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "claimant", "type": "address" }, { "internalType": "contract IERC20", "name": "token", "type": "address" }], "name": "getClaimantBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "fromId", "type": "uint256" }, { "internalType": "uint256", "name": "count", "type": "uint256" }], "name": "getClaimantsInfo", "outputs": [{ "components": [{ "internalType": "address", "name": "claimant", "type": "address" }, { "internalType": "contract IERC20", "name": "token", "type": "address" }, { "internalType": "uint256", "name": "balance", "type": "uint256" }], "internalType": "struct ProxyV3.ClaimantInfo[]", "name": "claimantInfoList", "type": "tuple[]" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "projectId", "type": "uint256" }], "name": "getProject", "outputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "newOwner", "type": "address" }, { "internalType": "address[]", "name": "projectAdmins", "type": "address[]" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "projectId", "type": "uint256" }], "name": "getProjectAdminsLength", "outputs": [{ "internalType": "uint256", "name": "length", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getProjectsLength", "outputs": [{ "internalType": "uint256", "name": "length", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "isPermitted", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "name": "lastBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "components": [{ "internalType": "uint256", "name": "projectId", "type": "uint256" }, { "internalType": "uint24", "name": "maxInputTokensInEachCall", "type": "uint24" }, { "internalType": "uint24", "name": "maxOutputTokensInEachCall", "type": "uint24" }, { "internalType": "bool", "name": "referrersRequireApproval", "type": "bool" }, { "internalType": "uint64", "name": "startDate", "type": "uint64" }, { "internalType": "uint64", "name": "endDate", "type": "uint64" }, { "internalType": "bytes24[]", "name": "targetAndSelectors", "type": "bytes24[]" }, { "internalType": "bool", "name": "acceptAnyInToken", "type": "bool" }, { "internalType": "bool", "name": "acceptAnyOutToken", "type": "bool" }, { "internalType": "contract IERC20[]", "name": "inTokens", "type": "address[]" }, { "internalType": "bool[]", "name": "directTransferInToken", "type": "bool[]" }, { "components": [{ "internalType": "uint24", "name": "rate", "type": "uint24" }, { "internalType": "bool", "name": "feeOnProjectOwner", "type": "bool" }, { "internalType": "uint256", "name": "capPerTransaction", "type": "uint256" }, { "internalType": "uint256", "name": "capPerCampaign", "type": "uint256" }], "internalType": "struct ProxyV3.CommissionTokenConfig[]", "name": "commissionInTokenConfig", "type": "tuple[]" }, { "internalType": "contract IERC20[]", "name": "outTokens", "type": "address[]" }, { "components": [{ "internalType": "uint24", "name": "rate", "type": "uint24" }, { "internalType": "bool", "name": "feeOnProjectOwner", "type": "bool" }, { "internalType": "uint256", "name": "capPerTransaction", "type": "uint256" }, { "internalType": "uint256", "name": "capPerCampaign", "type": "uint256" }], "internalType": "struct ProxyV3.CommissionTokenConfig[]", "name": "commissionOutTokenConfig", "type": "tuple[]" }, { "internalType": "address[]", "name": "referrers", "type": "address[]" }], "internalType": "struct ProxyV3.CampaignParams", "name": "params", "type": "tuple" }], "name": "newCampaign", "outputs": [{ "internalType": "uint256", "name": "campaignId", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" },
@@ -2822,7 +2687,7 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts
             { "inputs": [{ "internalType": "uint256", "name": "projectId", "type": "uint256" }, { "internalType": "contract IERC20[]", "name": "token", "type": "address[]" }, { "internalType": "uint256[]", "name": "amount", "type": "uint256[]" }], "name": "unstakeMultiple", "outputs": [], "stateMutability": "payable", "type": "function" },
             { "stateMutability": "payable", "type": "receive" }
         ],
-        "bytecode": "60806040523480156200001157600080fd5b5060405162005dd938038062005dd9833981016040819052620000349162000097565b600080546001600160a01b031916331790556003805462ffffff831662ffffff1990911681179091556040519081527ffe25e86988ec652fe5401545da69d35d6d22e8bcf8632c423f273264a656d22f9060200160405180910390a150620000c5565b600060208284031215620000aa57600080fd5b815162ffffff81168114620000be57600080fd5b9392505050565b615d0480620000d56000396000f3fe6080604052600436106102d55760003560e01c806399dd156611610179578063d3b7d4c3116100d6578063f0f3f2c81161008a578063f9492ad311610064578063f9492ad3146108bc578063f9738d42146108f4578063fec3e5531461091457600080fd5b8063f0f3f2c81461084d578063f2fde38b1461087c578063f303ad6e1461089c57600080fd5b8063dfecbd8e116100bb578063dfecbd8e146107d3578063e5e05bd7146107f3578063ee42d3a31461082057600080fd5b8063d3b7d4c314610793578063d4ee1d90146107b357600080fd5b8063b0d36ce81161012d578063b60c164c11610112578063b60c164c146106d7578063d224d9ec146106f7578063d2ef84641461072457600080fd5b8063b0d36ce8146106ae578063b316d714146106c157600080fd5b8063a2f55ae51161015e578063a2f55ae51461064e578063a5184fbf1461066e578063a8d369ff1461068e57600080fd5b806399dd1566146105fe5780639c52a7f11461062e57600080fd5b80633fd8cc4e116102325780636e9c931c116101e657806383e40a51116101c057806383e40a511461055657806384fee38e1461058e5780638da5cb5b146105c657600080fd5b80636e9c931c146105035780636ecc20da146105235780637eb140341461053657600080fd5b806351a7c7161161021757806351a7c716146104bb57806360536172146104db57806362d53403146104f057600080fd5b80633fd8cc4e1461044d5780634d3c5da11461048d57600080fd5b80631e83409a1161028957806332e879c71161026e57806332e879c7146103fa578063368e98521461041a5780633a8c874f1461043a57600080fd5b80631e83409a146103c7578063202c0cee146103e757600080fd5b806311e9ff02116102ba57806311e9ff021461033a5780631333af521461037a578063188ff72b1461039a57600080fd5b80630455f177146102e1578063068c53911461031857600080fd5b366102dc57005b600080fd5b3480156102ed57600080fd5b506103016102fc366004614e1d565b610945565b60405161030f929190614e9c565b60405180910390f35b34801561032457600080fd5b50610338610333366004614f3a565b610b85565b005b34801561034657600080fd5b5061035a610355366004614f6a565b610c1e565b60408051948552602085019390935291830152606082015260800161030f565b34801561038657600080fd5b50610338610395366004614f94565b610c6e565b3480156103a657600080fd5b506103ba6103b5366004614fb1565b610cd7565b60405161030f9190614fd3565b3480156103d357600080fd5b506103386103e2366004615038565b610e78565b6103386103f536600461521c565b610e84565b34801561040657600080fd5b506103386104153660046153a1565b61199e565b34801561042657600080fd5b50610338610435366004614f3a565b611a08565b6103386104483660046153e3565b611a97565b34801561045957600080fd5b5061047d610468366004615038565b60026020526000908152604090205460ff1681565b604051901515815260200161030f565b34801561049957600080fd5b506104ad6104a8366004614f6a565b611b5e565b60405190815260200161030f565b3480156104c757600080fd5b506103386104d636600461545d565b611b8d565b3480156104e757600080fd5b50610338611b98565b6103386104fe366004614f6a565b611c8e565b34801561050f57600080fd5b5061033861051e36600461545d565b611c9a565b610338610531366004614f6a565b611ca5565b34801561054257600080fd5b50610338610551366004614f6a565b611cb1565b34801561056257600080fd5b506104ad610571366004615495565b600d60209081526000928352604080842090915290825290205481565b34801561059a57600080fd5b506104ad6105a9366004614f3a565b600960209081526000928352604080842090915290825290205481565b3480156105d257600080fd5b506000546105e6906001600160a01b031681565b6040516001600160a01b03909116815260200161030f565b34801561060a57600080fd5b5060035461061a9062ffffff1681565b60405162ffffff909116815260200161030f565b34801561063a57600080fd5b50610338610649366004615038565b611dd5565b34801561065a57600080fd5b50610338610669366004615038565b611e5b565b34801561067a57600080fd5b506104ad6106893660046153a1565b611ee4565b34801561069a57600080fd5b506104ad6106a93660046154c3565b612043565b6103386106bc3660046153e3565b6129cc565b3480156106cd57600080fd5b506104ad600b5481565b3480156106e357600080fd5b506103386106f23660046153a1565b612a78565b34801561070357600080fd5b5061071761071236600461550d565b612c19565b60405161030f919061560d565b34801561073057600080fd5b5061076d61073f366004614f6a565b600c602052600090815260409020805460018201546002909201546001600160a01b03918216929091169083565b604080516001600160a01b0394851681529390921660208401529082015260600161030f565b34801561079f57600080fd5b506104ad6107ae366004615495565b613277565b3480156107bf57600080fd5b506001546105e6906001600160a01b031681565b3480156107df57600080fd5b506103386107ee366004614f3a565b6132b1565b3480156107ff57600080fd5b506104ad61080e366004615038565b60046020526000908152604090205481565b34801561082c57600080fd5b506104ad61083b366004615038565b60056020526000908152604090205481565b34801561085957600080fd5b5061086d610868366004614f6a565b6133a4565b60405161030f9392919061579a565b34801561088857600080fd5b50610338610897366004615038565b613494565b3480156108a857600080fd5b506103386108b73660046153a1565b613511565b3480156108c857600080fd5b506104ad6108d7366004614f3a565b600a60209081526000928352604080842090915290825290205481565b34801561090057600080fd5b5061033861090f366004615038565b61355e565b34801561092057600080fd5b5061093461092f366004614e1d565b61357e565b60405161030f9594939291906157cf565b60608060006007888154811061095d5761095d61583c565b90600052602060002090600c020190506000816002018054905088111561098657600282015497505b6002820154610995888a61589a565b11156109ae5760028201546109ab9089906158ad565b96505b8667ffffffffffffffff8111156109c7576109c7615055565b6040519080825280602002602001820160405280156109f0578160200160208202803683370190505b5093505b86811015610a7d5760028201610a0a898361589a565b81548110610a1a57610a1a61583c565b9060005260206000200160009054906101000a900460401b848281518110610a4457610a4461583c565b7fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000909216602092830291909101909101526001016109f4565b50600a810154600090861115610a9557600a82015495505b600a820154610aa4868861589a565b1115610abd57600a820154610aba9087906158ad565b94505b8467ffffffffffffffff811115610ad657610ad6615055565b604051908082528060200260200182016040528015610aff578160200160208202803683370190505b5092505b84811015610b7957600a8201610b19878361589a565b81548110610b2957610b2961583c565b9060005260206000200160009054906101000a90046001600160a01b0316838281518110610b5957610b5961583c565b6001600160a01b0390921660209283029190910190910152600101610b03565b50509550959350505050565b600060068381548110610b9a57610b9a61583c565b6000918252602090912060049091020160018101549091506001600160a01b03163314610c0e5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e657200000000000000000000000000000000000060448201526064015b60405180910390fd5b610c19838284613ac0565b505050565b600080600080600060078681548110610c3957610c3961583c565b60009182526020909120600c90910201600281015460058201546006830154600a909301549199909850919650945092505050565b600380547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000001662ffffff83169081179091556040519081527ffe25e86988ec652fe5401545da69d35d6d22e8bcf8632c423f273264a656d22f906020015b60405180910390a150565b6060600083118015610ceb5750600b548311155b610d375760405162461bcd60e51b815260206004820152600d60248201527f6f7574206f6620626f756e6473000000000000000000000000000000000000006044820152606401610c05565b600083600b54610d4791906158ad565b610d5290600161589a565b905080831115610d60578092505b8267ffffffffffffffff811115610d7957610d79615055565b604051908082528060200260200182016040528015610de257816020015b60408051606081018252600080825260208083018290529282015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff909201910181610d975790505b5091508360005b84811015610e6f576000828152600c6020908152604091829020825160608101845281546001600160a01b0390811682526001830154169281019290925260020154918101919091528451859083908110610e4657610e4661583c565b602002602001018190525081610e5b906158c0565b915080610e67816158c0565b915050610de9565b50505092915050565b610e8181613b94565b50565b6007548710610ed55760405162461bcd60e51b815260206004820152601060248201527f696e76616c69642063616d706169676e000000000000000000000000000000006044820152606401610c05565b600060078881548110610eea57610eea61583c565b90600052602060002090600c020190508060030160008888610f0b906158f8565b60405160609290921b7fffffffffffffffffffffffffffffffffffffffff0000000000000000000000001660208301527fffffffff00000000000000000000000000000000000000000000000000000000166034820152603801604051602081830303815290604052610f7d90615948565b7fffffffffffffffffffffffffffffffffffffffffffffffff000000000000000016815260208101919091526040016000205460ff16610fff5760405162461bcd60e51b815260206004820152601460248201527f73656c6563746f72206e6f74206d6174636865640000000000000000000000006044820152606401610c05565b60018101544267010000000000000090910467ffffffffffffffff161180159061104a575060018101546f01000000000000000000000000000000900467ffffffffffffffff164211155b6110bc5760405162461bcd60e51b815260206004820152602860248201527f63616d706169676e206e6f74207374617274656420796574202f20616c72656160448201527f647920656e6465640000000000000000000000000000000000000000000000006064820152608401610c05565b60018101546601000000000000900460ff16158061112c5750600a8101541580159061112c57506001600160a01b0385166000818152600b83016020526040902054600a8301805490919081106111155761111561583c565b6000918252602090912001546001600160a01b0316145b6111785760405162461bcd60e51b815260206004820152600e60248201527f6e6f7420612072656665727265720000000000000000000000000000000000006044820152606401610c05565b825160018201546000919062ffffff168111156111d75760405162461bcd60e51b815260206004820152601760248201527f696e546f6b656e206c656e6774682065786365656465640000000000000000006044820152606401610c05565b60005b818110156114cb5760008682815181106111f6576111f661583c565b6020026020010151600001519050600082111561129557866112196001846158ad565b815181106112295761122961583c565b6020026020010151600001516001600160a01b0316816001600160a01b0316116112955760405162461bcd60e51b815260206004820152601f60248201527f696e20746f6b656e206e6f7420696e20617363656e64696e67206f72646572006044820152606401610c05565b600485015460ff16611325576001600160a01b03811660009081526008860160205260409020805462ffffff161515806112d7575080546301000000900460ff165b6113235760405162461bcd60e51b815260206004820152601660248201527f6e6f7420616e20616363657074656420746f6b656e73000000000000000000006044820152606401610c05565b505b60008783815181106113395761133961583c565b602002602001015160200151905060006001600160a01b0316826001600160a01b0316036114065784156113af5760405162461bcd60e51b815260206004820152601a60248201527f6d6f7265207468616e206f6e6520455448207472616e736665720000000000006044820152606401610c05565b8034146113fe5760405162461bcd60e51b815260206004820152601660248201527f45544820616d6f756e74206e6f74206d617463686564000000000000000000006044820152606401610c05565b809450611478565b6001600160a01b038216600090815260078701602052604090205460ff16156114435761143e6001600160a01b038316338e84613c8a565b611478565b61144d8282613d59565b90506114646001600160a01b0383168d6000613e88565b6114786001600160a01b0383168d83613e88565b60408051338152602081018390526001600160a01b0380851692908f16917fbe526fefdf314c4faee4a30e01b840fe0c1517bd7fc9295829eb6d8441e80b18910160405180910390a350506001016111da565b6000808a518b602001868e5af1806000036114ea573d6000803e3d6000fd5b5050835160018401549092506301000000900462ffffff1682111590506115535760405162461bcd60e51b815260206004820152601860248201527f6f7574546f6b656e206c656e67746820657863656564656400000000000000006044820152606401610c05565b6000805b828210156119485760008583815181106115735761157361583c565b60200260200101519050600083111561160a57856115926001856158ad565b815181106115a2576115a261583c565b60200260200101516001600160a01b0316816001600160a01b03161161160a5760405162461bcd60e51b815260206004820152601f60248201527f696e20746f6b656e206e6f7420696e20617363656e64696e67206f72646572006044820152606401610c05565b6004850154610100900460ff1661169f576001600160a01b03811660009081526009860160205260409020805462ffffff16151580611651575080546301000000900460ff165b61169d5760405162461bcd60e51b815260206004820152601660248201527f6e6f7420616e20616363657074656420746f6b656e73000000000000000000006044820152606401610c05565b505b60006001600160a01b0382166116f5576000805260056020527f05b8ccbb9d4d8fb16ea74ce3c29a41f1b461fbdaff4714a0d9a8eb05499746bc546116e490476158ad565b90506116f08982613fd6565b6117a8565b6001600160a01b038216600081815260056020526040908190205490517f70a082310000000000000000000000000000000000000000000000000000000081523060048201529091906370a0823190602401602060405180830381865afa158015611764573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906117889190615994565b61179291906158ad565b90506117a86001600160a01b0383168a83614093565b8751831080156117e65750816001600160a01b03168884815181106117cf576117cf61583c565b6020026020010151600001516001600160a01b0316105b1561183f57611834868e8c60018c88815181106118055761180561583c565b6020026020010151600001518d89815181106118235761182361583c565b6020026020010151602001516140dc565b6001909201916117a8565b87518310801561187d5750816001600160a01b03168884815181106118665761186661583c565b6020026020010151600001516001600160a01b0316145b156118e1576118d6868e8c60018c888151811061189c5761189c61583c565b602002602001015160000151868e8a815181106118bb576118bb61583c565b6020026020010151602001516118d191906158ad565b6140dc565b6001909201916118f0565b6118f0868e8c600086866140dc565b604080516001600160a01b038b811682526020820184905280851692908f16917fc2534859c9972270c16d5b4255d200f9a0385f9a6ce3add96c0427ff9fc70f93910160405180910390a35050600190910190611557565b855181101561199157611989848c8a60018a868151811061196b5761196b61583c565b6020026020010151600001518b87815181106118235761182361583c565b600101611948565b5050503d6000803e3d6000f35b6000546001600160a01b031633146119b557600080fd5b8060005b81811015611a02576119f08484838181106119d6576119d661583c565b90506020020160208101906119eb9190615038565b614548565b806119fa816158c0565b9150506119b9565b50505050565b600060068381548110611a1d57611a1d61583c565b6000918252602090912060049091020160018101549091506001600160a01b03163314611a8c5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c05565b610c198382846145f2565b82818114611ae75760405162461bcd60e51b815260206004820152601260248201527f6c656e677468206e6f74206d61746368656400000000000000000000000000006044820152606401610c05565b60005b81811015611b4357611b3b87878784818110611b0857611b0861583c565b9050602002016020810190611b1d9190615038565b868685818110611b2f57611b2f61583c565b905060200201356147fd565b600101611aea565b3415611b5557611b55876000346147fd565b50505050505050565b600060068281548110611b7357611b7361583c565b600091825260209091206002600490920201015492915050565b610c198383836148df565b6001546001600160a01b03163314611c185760405162461bcd60e51b815260206004820152602960248201527f416374696f6e20706572666f726d656420627920756e617574686f72697a656460448201527f20616464726573732e00000000000000000000000000000000000000000000006064820152608401610c05565b60018054600080546001600160a01b0383167fffffffffffffffffffffffff000000000000000000000000000000000000000091821681179092559091169091556040519081527fcfaaa26691e16e66e73290fc725eee1a6b4e0e693a1640484937aac25ffb55a49060200160405180910390a1565b610e81816000346148df565b610c198383836147fd565b610e81816000346147fd565b600060068281548110611cc657611cc661583c565b6000918252602090912060049091020160018101549091506001600160a01b03163314611d355760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c05565b8054611d4d90839083906001600160a01b03166145f2565b80547fffffffffffffffffffffffff0000000000000000000000000000000000000000908116331782556001808301805490921690915554611d9b90839083906001600160a01b0316613ac0565b60405133815282907fcae10d66f75f577faa75ec3d290ee81497368211d6817451dae38673b5ccf992906020015b60405180910390a25050565b6000546001600160a01b03163314611dec57600080fd5b6001600160a01b03811660008181526002602090815260409182902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016905590519182527f79ede3839cd7a7d8bd77e97e5c890565fe4f76cdbbeaa364646e28a8695a78849101610ccc565b6000546001600160a01b03163314611e7257600080fd5b6001600160a01b03811660008181526002602090815260409182902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016600117905590519182527f6d81a01b39982517ba331aeb4f387b0f9cc32334b65bb9a343a077973cf7adf59101610ccc565b6006805460018101808355600083815291929083908110611f0757611f0761583c565b60009182526020808320600490920290910180547fffffffffffffffffffffffff00000000000000000000000000000000000000009081163390811783556002830180546001810182559086528486200180549092168117909155835260038101909152604082208290559150835b8082101561200f576000868684818110611f9257611f9261583c565b9050602002016020810190611fa79190615038565b600285018054600181810183556000928352602080842090920180546001600160a01b039095167fffffffffffffffffffffffff0000000000000000000000000000000000000000909516851790559282526003870190526040902093019283905550611f76565b60405184907fd78a25afe0b6160e2dc1fc71b2845c76cc268398d17be04665b78ba59b47440790600090a250505092915050565b6006546000908235106120985760405162461bcd60e51b815260206004820152601160248201527f496e76616c69642070726f6a65637449640000000000000000000000000000006044820152606401610c05565b600060068360000135815481106120b1576120b161583c565b60009182526020808320338085526004939093020160038101909152604090922054600283018054939450919281106120ec576120ec61583c565b6000918252602090912001546001600160a01b03161461214e5760405162461bcd60e51b815260206004820152601360248201527f6e6f7420612070726f6a6563742061646d696e000000000000000000000000006044820152606401610c05565b61215e60c0840160a085016159ad565b67ffffffffffffffff1661217860a08501608086016159ad565b67ffffffffffffffff1611156121d05760405162461bcd60e51b815260206004820152601560248201527f696e76616c69642063616d706169676e206461746500000000000000000000006044820152606401610c05565b600780548435600090815260086020908152604082208054600181810183559184529183209091018390558354018084558382529194509190849081106122195761221961583c565b60009182526020918290208635600c9092020190815591506122419060408601908601614f94565b6001820180547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000001662ffffff929092169190911790556122876060850160408601614f94565b60018201805462ffffff929092166301000000027fffffffffffffffffffffffffffffffffffffffffffffffffffff000000ffffff9092169190911790556122d560808501606086016159d7565b6001820180549115156601000000000000027fffffffffffffffffffffffffffffffffffffffffffffffffff00ffffffffffff90921691909117905561232160a08501608086016159ad565b60018201805467ffffffffffffffff92909216670100000000000000027fffffffffffffffffffffffffffffffffff0000000000000000ffffffffffffff90921691909117905561237860c0850160a086016159ad565b60018201805467ffffffffffffffff929092166f01000000000000000000000000000000027fffffffffffffffffff0000000000000000ffffffffffffffffffffffffffffff9092169190911790556000806123d760c08701876159f4565b91506123e8905060c08701876159f4565b6123f6916002860191614d28565b505b808210156124a557600160038401600061241560c08a018a6159f4565b868181106124255761242561583c565b905060200201602081019061243a9190615a5c565b7fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000168152602081019190915260400160002080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016911515919091179055600191909101906123f8565b6124b6610100870160e088016159d7565b6004840180547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00169115159190911790556124f9610120870161010088016159d7565b600484018054911515610100027fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ff909216919091179055600091506125426101208701876159f4565b915061255490506101408701876159f4565b905081148015612572575061256d610160870187615a9e565b905081145b6125e45760405162461bcd60e51b815260206004820152602260248201527f696e20746f6b656e20636f6e666967206c656e677468206e6f74206d6174636860448201527f65640000000000000000000000000000000000000000000000000000000000006064820152608401610c05565b6125f26101208701876159f4565b612600916005860191614d9d565b505b8082101561274c576126186101408701876159f4565b838181106126285761262861583c565b905060200201602081019061263d91906159d7565b6007840160006126516101208a018a6159f4565b868181106126615761266161583c565b90506020020160208101906126769190615038565b6001600160a01b03168152602081019190915260400160002080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00169115159190911790556126ca610160870187615a9e565b838181106126da576126da61583c565b905060800201836008016000888061012001906126f791906159f4565b868181106127075761270761583c565b905060200201602081019061271c9190615038565b6001600160a01b03168152602081019190915260400160002061273f8282615b06565b5050600190910190612602565b6000915061275e6101808701876159f4565b915061277090506101a0870187615a9e565b905081146127e65760405162461bcd60e51b815260206004820152602360248201527f6f757420746f6b656e20636f6e666967206c656e677468206e6f74206d61746360448201527f68656400000000000000000000000000000000000000000000000000000000006064820152608401610c05565b6127f46101808701876159f4565b612802916006860191614d9d565b505b8082101561289c5761281a6101a0870187615a9e565b8381811061282a5761282a61583c565b9050608002018360090160008880610180019061284791906159f4565b868181106128575761285761583c565b905060200201602081019061286c9190615038565b6001600160a01b03168152602081019190915260400160002061288f8282615b06565b5050600190910190612804565b600091506128ae6101c08701876159f4565b9150508015156128c460808801606089016159d7565b1515146129135760405162461bcd60e51b815260206004820152601860248201527f696e76616c696420726566657272657273206c656e67746800000000000000006044820152606401610c05565b6129216101c08701876159f4565b61292f91600a860191614d9d565b505b808210156129985781600b8401600061294e6101c08a018a6159f4565b8681811061295e5761295e61583c565b90506020020160208101906129739190615038565b6001600160a01b03168152602081019190915260400160002055600190910190612931565b60405185907ff91d5ca55c5415a1aa70a5dfde98765e180ec8b56375e3de9149ee89efc28f9d90600090a250505050919050565b82818114612a1c5760405162461bcd60e51b815260206004820152601260248201527f6c656e677468206e6f74206d61746368656400000000000000000000000000006044820152606401610c05565b60005b81811015611b5557612a7087878784818110612a3d57612a3d61583c565b9050602002016020810190612a529190615038565b868685818110612a6457612a6461583c565b905060200201356148df565b600101612a1f565b8060005b81811015611a0257600080858584818110612a9957612a9961583c565b9050602002016020810190612aae9190615038565b90506001600160a01b038116612b07576000805260056020527f05b8ccbb9d4d8fb16ea74ce3c29a41f1b461fbdaff4714a0d9a8eb05499746bc54479250612af690836158ad565b9150612b023383613fd6565b612bc4565b6040517f70a082310000000000000000000000000000000000000000000000000000000081523060048201526001600160a01b038216906370a0823190602401602060405180830381865afa158015612b64573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190612b889190615994565b6001600160a01b038216600090815260056020526040902054909250612bae90836158ad565b9150612bc46001600160a01b0382163384614093565b60405182815233906001600160a01b038316907f2ae72b44f59d038340fca5739135a1d51fc5ab720bb02d983e4c5ff4119ca7b89060200160405180910390a350508080612c11906158c0565b915050612a7c565b612cb6604051806101e0016040528060008152602001600062ffffff168152602001600062ffffff168152602001600015158152602001600067ffffffffffffffff168152602001600067ffffffffffffffff168152602001606081526020016000151581526020016000151581526020016060815260200160608152602001606081526020016060815260200160608152602001606081525090565b600060078481548110612ccb57612ccb61583c565b6000918252602091829020600c9091020180548452600181015462ffffff8082169386019390935263010000008104909216604085015260ff6601000000000000830481161515606086015267ffffffffffffffff6701000000000000008404811660808701526f0100000000000000000000000000000090930490921660a08501526004810154808316151560e086015261010090819004909216151591840191909152905082156132705780600201805480602002602001604051908101604052809291908181526020018280548015612dec57602002820191906000526020600020905b815460401b7fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000168152600190910190602001808311612db2575b505050505060c08301526005810180546040805160208084028201810190925282815260009390918390830182828015612e4f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311612e31575b50505050508461012001819052508067ffffffffffffffff811115612e7657612e76615055565b604051908082528060200260200182016040528015612e9f578160200160208202803683370190505b506101408501528067ffffffffffffffff811115612ebf57612ebf615055565b604051908082528060200260200182016040528015612f2f57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff909201910181612edd5790505b506101608501525b8082101561305a57826007016000846005018481548110612f5a57612f5a61583c565b60009182526020808320909101546001600160a01b03168352820192909252604001902054610140850151805160ff9092169184908110612f9d57612f9d61583c565b602002602001019015159081151581525050826008016000846005018481548110612fca57612fca61583c565b60009182526020808320909101546001600160a01b0316835282810193909352604091820190208151608081018352815462ffffff8116825260ff6301000000909104161515938101939093526001810154918301919091526002015460608201526101608501518051849081106130445761304461583c565b6020908102919091010152600190910190612f37565b505060068101805460408051602080840282018101909252828152600093909183908301828280156130b557602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311613097575b50505050508461018001819052508067ffffffffffffffff8111156130dc576130dc615055565b60405190808252806020026020018201604052801561314c57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9092019101816130fa5790505b506101a08501525b80821015613207578260090160008460060184815481106131775761317761583c565b60009182526020808320909101546001600160a01b0316835282810193909352604091820190208151608081018352815462ffffff8116825260ff6301000000909104161515938101939093526001810154918301919091526002015460608201526101a08501518051849081106131f1576131f161583c565b6020908102919091010152600190910190613154565b82600a0180548060200260200160405190810160405280929190818152602001828054801561325f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311613241575b5050505050846101c0018190525050505b5092915050565b6001600160a01b038083166000908152600d602090815260408083209385168352928152828220548252600c905220600201545b92915050565b6000600683815481106132c6576132c661583c565b6000918252602090912060049091020180549091506001600160a01b031633146133325760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c05565b6001810180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b03841690811790915560405190815283907fd76f6b3fb9ea3802f0403d54d37db427cea79df08cd8817552eb23790d2b54919060200160405180910390a2505050565b60008060606000600685815481106133be576133be61583c565b600091825260209091206004909102018054600182015460028301546001600160a01b0392831697509116945090915067ffffffffffffffff81111561340657613406615055565b60405190808252806020026020018201604052801561342f578160200160208202803683370190505b506002820180546040805160208084028201810190925282815293955083018282801561348557602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311613467575b50505050509150509193909250565b6000546001600160a01b031633146134ab57600080fd5b600180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b0383169081179091556040519081527f686a7ab184e6928ddedba810af7b443d6baa40bf32c4787ccd72c5b4b28cae1b90602001610ccc565b8060005b81811015611a025761354c8484838181106135325761353261583c565b90506020020160208101906135479190615038565b613b94565b80613556816158c0565b915050613515565b6000546001600160a01b0316331461357557600080fd5b610e8181614548565b6060806060806060600060078b8154811061359b5761359b61583c565b90600052602060002090600c02019050600081600501805490508b11156135c45760058201549a505b60058201546135d38b8d61589a565b11156135ec5760058201546135e9908c906158ad565b99505b8967ffffffffffffffff81111561360557613605615055565b60405190808252806020026020018201604052801561362e578160200160208202803683370190505b5096508967ffffffffffffffff81111561364a5761364a615055565b604051908082528060200260200182016040528015613673578160200160208202803683370190505b5095508967ffffffffffffffff81111561368f5761368f615055565b6040519080825280602002602001820160405280156136ff57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9092019101816136ad5790505b5094505b8981101561388a57600582016137198c8361589a565b815481106137295761372961583c565b9060005260206000200160009054906101000a90046001600160a01b03168782815181106137595761375961583c565b60200260200101906001600160a01b031690816001600160a01b0316815250508160070160008883815181106137915761379161583c565b60200260200101516001600160a01b03166001600160a01b0316815260200190815260200160002060009054906101000a900460ff168682815181106137d9576137d961583c565b6020026020010190151590811515815250508160080160008883815181106138035761380361583c565b6020908102919091018101516001600160a01b031682528181019290925260409081016000208151608081018352815462ffffff811682526301000000900460ff1615159381019390935260018101549183019190915260020154606082015285518690839081106138775761387761583c565b6020908102919091010152600101613703565b5060068101546000908911156138a257600682015498505b60068201546138b1898b61589a565b11156138ca5760068201546138c7908a906158ad565b97505b8767ffffffffffffffff8111156138e3576138e3615055565b60405190808252806020026020018201604052801561390c578160200160208202803683370190505b5093508767ffffffffffffffff81111561392857613928615055565b60405190808252806020026020018201604052801561399857816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9092019101816139465790505b5092505b87811015613ab157600682016139b28a8361589a565b815481106139c2576139c261583c565b9060005260206000200160009054906101000a90046001600160a01b03168482815181106139f2576139f261583c565b60200260200101906001600160a01b031690816001600160a01b031681525050816009016000858381518110613a2a57613a2a61583c565b6020908102919091018101516001600160a01b031682528181019290925260409081016000208151608081018352815462ffffff811682526301000000900460ff161515938101939093526001810154918301919091526002015460608201528351849083908110613a9e57613a9e61583c565b602090810291909101015260010161399c565b50509550955095509550959050565b6001600160a01b03811660008181526003840160205260409020546002840180549091908110613af257613af261583c565b6000918252602090912001546001600160a01b031614610c19576002820180546001600160a01b03831660008181526003860160209081526040808320859055600185018655948252812090920180547fffffffffffffffffffffffff00000000000000000000000000000000000000001682179055915185917f1c3cea70d3dcea4dc82722f4fb7300d19f76e272a8349e73a99780429f2c151691a3505050565b336000908152600d602090815260408083206001600160a01b0385811680865291845282852054808652600c85528386208451606081018652815484168152600182015490931683870152600201805483860181905290879055928652600590945291842080549394929391928392613c0e9084906158ad565b90915550506001600160a01b038416613c3057613c2b3382613fd6565b613c44565b613c446001600160a01b0385163383614093565b6040518181526001600160a01b0385169033907f70eb43c4a8ae8c40502dcf22436c509c28d6ff421cf07c491be56984bd9870689060200160405180910390a350505050565b6040516001600160a01b0380851660248301528316604482015260648101829052611a029085907f23b872dd00000000000000000000000000000000000000000000000000000000906084015b604080517fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe08184030181529190526020810180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff167fffffffff0000000000000000000000000000000000000000000000000000000090931692909217909152614a9c565b6040517f70a082310000000000000000000000000000000000000000000000000000000081523060048201526000906001600160a01b038416906370a0823190602401602060405180830381865afa158015613db9573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613ddd9190615994565b9050613df46001600160a01b038416333085613c8a565b6040517f70a0823100000000000000000000000000000000000000000000000000000000815230600482015281906001600160a01b038516906370a0823190602401602060405180830381865afa158015613e53573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613e779190615994565b613e8191906158ad565b9392505050565b801580613f1b57506040517fdd62ed3e0000000000000000000000000000000000000000000000000000000081523060048201526001600160a01b03838116602483015284169063dd62ed3e90604401602060405180830381865afa158015613ef5573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613f199190615994565b155b613f8d5760405162461bcd60e51b815260206004820152603660248201527f5361666545524332303a20617070726f76652066726f6d206e6f6e2d7a65726f60448201527f20746f206e6f6e2d7a65726f20616c6c6f77616e6365000000000000000000006064820152608401610c05565b6040516001600160a01b038316602482015260448101829052610c199084907f095ea7b30000000000000000000000000000000000000000000000000000000090606401613cd7565b604080516000808252602082019092526001600160a01b0384169083906040516140009190615bc3565b60006040518083038185875af1925050503d806000811461403d576040519150601f19603f3d011682016040523d82523d6000602084013e614042565b606091505b5050905080610c195760405162461bcd60e51b815260206004820152601360248201527f4554485f5452414e534645525f4641494c4544000000000000000000000000006044820152606401610c05565b6040516001600160a01b038316602482015260448101829052610c199084907fa9059cbb0000000000000000000000000000000000000000000000000000000090606401613cd7565b600083614102576001600160a01b0383166000908152600988016020526040902061411d565b6001600160a01b038316600090815260088801602052604090205b805490915062ffffff1615611b555786548154620f4240906141449062ffffff1685615bdf565b61414e9190615bf6565b925081600101548311156141a45760405162461bcd60e51b815260206004820152600c60248201527f63617020657863656564656400000000000000000000000000000000000000006044820152606401610c05565b600354600090620f4240906141be9062ffffff1686615bdf565b6141c89190615bf6565b6001600160a01b0386166000908152600460205260408120805492935083929091906141f590849061589a565b9091555050825460009081906301000000900460ff16156142245785915061421d838361589a565b9050614234565b61422e83876158ad565b91508590505b60008481526009602090815260408083206001600160a01b038b1684529091529020548111156142a65760405162461bcd60e51b815260206004820152601560248201527f6e6f7420656e6f75676820636f6d6d697373696f6e00000000000000000000006044820152606401610c05565b60008481526009602090815260408083206001600160a01b038b16808552908352818420805486900390558d8452600a8352818420908452909152812080548392906142f390849061589a565b9091555050600285015460008b8152600a602090815260408083206001600160a01b038c16845290915290205411156143945760405162461bcd60e51b815260206004820152602560248201527f616363756d756c6174656420636f6d6d697373696f6e2065786365656465642060448201527f6c696d69740000000000000000000000000000000000000000000000000000006064820152608401610c05565b6001600160a01b03808a166000908152600d60209081526040808320938b168352929052908120549081900361447857600b600081546143d3906158c0565b90915550604080516060810182526001600160a01b03808d168083528b821660208085018281528587018a8152600b80546000908152600c8552898120985189549089167fffffffffffffffffffffffff0000000000000000000000000000000000000000918216178a55935160018a01805491909916941693909317909655516002909601959095559254918452600d83528484209084529091529190205561449f565b6000818152600c60205260408120600201805485929061449990849061589a565b90915550505b6000818152600c60209081526040808320600201546001600160a01b038c1684526004909252918290205491517fac98d1de12ec7e306f0033236185d2a9d904bb054995aa9987c7d5a6d7ff4c5792614532928e928d928992918b91906001600160a01b03968716815294909516602085015260408401929092526060830152608082015260a081019190915260c00190565b60405180910390a1505050505050505050505050565b6001600160a01b0381166000908152600460209081526040808320805490849055600590925282208054919283926145819084906158ad565b90915550506001600160a01b0382166145a35761459e3382613fd6565b6145b7565b6145b76001600160a01b0383163383614093565b816001600160a01b03167f6ec620dc21a80aff1281aac3592cbd6b0554bbf810aa4b75338ef3cc9ae1a66c82604051611dc991815260200190565b6001600160a01b0381166000818152600384016020526040902054600284018054919291839081106146265761462661583c565b6000918252602090912001546001600160a01b0316146146885760405162461bcd60e51b815260206004820152600c60248201527f6e6f7420616e2061646d696e00000000000000000000000000000000000000006044820152606401610c05565b600283015460009061469c906001906158ad565b90508082146147425760008460020182815481106146bc576146bc61583c565b6000918252602090912001546002860180546001600160a01b0390921692508291859081106146ed576146ed61583c565b600091825260208083209190910180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b0394851617905592909116815260038601909152604090208290555b8360020180548061475557614755615c31565b6000828152602080822083017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff90810180547fffffffffffffffffffffffff00000000000000000000000000000000000000001690559092019092556001600160a01b03851680835260038701909152604080832083905551909187917fe76d77167882521e5d6872e780957ffd683d0e4710f4f159f4170fa42589387b9190a35050505050565b6001600160a01b03821615614819576148168282613d59565b90505b60008381526009602090815260408083206001600160a01b03861684529091528120805483929061484b90849061589a565b90915550506001600160a01b0382166000908152600560205260408120805483929061487890849061589a565b909155505060008381526009602090815260408083206001600160a01b038616808552908352928190205481518581529283015285917f507ac39eb33610191cd8fd54286e91c5cc464c262861643be3978f5a9f18ab0291015b60405180910390a3505050565b600683815481106148f2576148f261583c565b60009182526020909120600490910201546001600160a01b0316331461495a5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c05565b60008381526009602090815260408083206001600160a01b03861684529091529020548111156149cc5760405162461bcd60e51b815260206004820152601760248201527f616d6f756e742065786365656465642062616c616e63650000000000000000006044820152606401610c05565b60008381526009602090815260408083206001600160a01b0386168452825280832080548590039055600590915281208054839290614a0c9084906158ad565b90915550506001600160a01b03821615614a3957614a346001600160a01b0383163383614093565b614a43565b614a433382613fd6565b60008381526009602090815260408083206001600160a01b038616808552908352928190205481518581529283015285917fc1e00202ee2c06861d326fc6374026b751863ff64218ccbaa38c3e603a8e72c291016148d2565b6000614af1826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b0316614b819092919063ffffffff16565b805190915015610c195780806020019051810190614b0f9190615c60565b610c195760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e60448201527f6f742073756363656564000000000000000000000000000000000000000000006064820152608401610c05565b6060614b908484600085614b98565b949350505050565b606082471015614c105760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f60448201527f722063616c6c00000000000000000000000000000000000000000000000000006064820152608401610c05565b600080866001600160a01b03168587604051614c2c9190615bc3565b60006040518083038185875af1925050503d8060008114614c69576040519150601f19603f3d011682016040523d82523d6000602084013e614c6e565b606091505b5091509150614c7f87838387614c8a565b979650505050505050565b60608315614cf9578251600003614cf2576001600160a01b0385163b614cf25760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610c05565b5081614b90565b614b908383815115614d0e5781518083602001fd5b8060405162461bcd60e51b8152600401610c059190615c7d565b828054828255906000526020600020908101928215614d8d579160200282015b82811115614d8d5781547fffffffffffffffff00000000000000000000000000000000000000000000000016833560401c178255602090920191600190910190614d48565b50614d99929150614e08565b5090565b828054828255906000526020600020908101928215614d8d579160200282015b82811115614d8d5781547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b03843516178255602090920191600190910190614dbd565b5b80821115614d995760008155600101614e09565b600080600080600060a08688031215614e3557600080fd5b505083359560208501359550604085013594606081013594506080013592509050565b600081518084526020808501945080840160005b83811015614e915781516001600160a01b031687529582019590820190600101614e6c565b509495945050505050565b604080825283519082018190526000906020906060840190828701845b82811015614ef75781517fffffffffffffffffffffffffffffffffffffffffffffffff00000000000000001684529284019290840190600101614eb9565b50505083810382850152614f0b8186614e58565b9695505050505050565b6001600160a01b0381168114610e8157600080fd5b8035614f3581614f15565b919050565b60008060408385031215614f4d57600080fd5b823591506020830135614f5f81614f15565b809150509250929050565b600060208284031215614f7c57600080fd5b5035919050565b62ffffff81168114610e8157600080fd5b600060208284031215614fa657600080fd5b8135613e8181614f83565b60008060408385031215614fc457600080fd5b50508035926020909101359150565b602080825282518282018190526000919060409081850190868401855b8281101561502b57815180516001600160a01b0390811686528782015116878601528501518585015260609093019290850190600101614ff0565b5091979650505050505050565b60006020828403121561504a57600080fd5b8135613e8181614f15565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b6040805190810167ffffffffffffffff811182821017156150a7576150a7615055565b60405290565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe016810167ffffffffffffffff811182821017156150f4576150f4615055565b604052919050565b600067ffffffffffffffff82111561511657615116615055565b5060051b60200190565b600082601f83011261513157600080fd5b81356020615146615141836150fc565b6150ad565b82815260069290921b8401810191818101908684111561516557600080fd5b8286015b848110156151ad57604081890312156151825760008081fd5b61518a615084565b813561519581614f15565b81528185013585820152835291830191604001615169565b509695505050505050565b600082601f8301126151c957600080fd5b813560206151d9615141836150fc565b82815260059290921b840181019181810190868411156151f857600080fd5b8286015b848110156151ad57803561520f81614f15565b83529183019183016151fc565b600080600080600080600060e0888a03121561523757600080fd5b8735965060208089013561524a81614f15565b9650604089013567ffffffffffffffff8082111561526757600080fd5b818b0191508b601f83011261527b57600080fd5b81358181111561528d5761528d615055565b6152bd847fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f840116016150ad565b8181528d858386010111156152d157600080fd5b8185850186830137600085838301015280995050506152f260608c01614f2a565b965061530060808c01614f2a565b955060a08b013592508083111561531657600080fd5b6153228c848d01615120565b945060c08b013592508083111561533857600080fd5b50506153468a828b016151b8565b91505092959891949750929550565b60008083601f84011261536757600080fd5b50813567ffffffffffffffff81111561537f57600080fd5b6020830191508360208260051b850101111561539a57600080fd5b9250929050565b600080602083850312156153b457600080fd5b823567ffffffffffffffff8111156153cb57600080fd5b6153d785828601615355565b90969095509350505050565b6000806000806000606086880312156153fb57600080fd5b85359450602086013567ffffffffffffffff8082111561541a57600080fd5b61542689838a01615355565b9096509450604088013591508082111561543f57600080fd5b5061544c88828901615355565b969995985093965092949392505050565b60008060006060848603121561547257600080fd5b83359250602084013561548481614f15565b929592945050506040919091013590565b600080604083850312156154a857600080fd5b82356154b381614f15565b91506020830135614f5f81614f15565b6000602082840312156154d557600080fd5b813567ffffffffffffffff8111156154ec57600080fd5b82016101e08185031215613e8157600080fd5b8015158114610e8157600080fd5b6000806040838503121561552057600080fd5b823591506020830135614f5f816154ff565b600081518084526020808501945080840160005b83811015614e915781517fffffffffffffffffffffffffffffffffffffffffffffffff00000000000000001687529582019590820190600101615546565b600081518084526020808501945080840160005b83811015614e91578151151587529582019590820190600101615598565b600081518084526020808501945080840160005b83811015614e91578151805162ffffff168852838101511515848901526040808201519089015260609081015190880152608090960195908201906001016155ca565b602081528151602082015260006020830151615630604084018262ffffff169052565b50604083015162ffffff81166060840152506060830151801515608084015250608083015167ffffffffffffffff811660a08401525060a083015167ffffffffffffffff811660c08401525060c08301516101e08060e0850152615698610200850183615532565b915060e08501516101006156af8187018315159052565b86015190506101206156c48682018315159052565b808701519150507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe06101408187860301818801526157028584614e58565b9450808801519250506101608187860301818801526157218584615584565b94508088015192505061018081878603018188015261574085846155b6565b9450808801519250506101a081878603018188015261575f8584614e58565b9450808801519250506101c081878603018188015261577e85846155b6565b908801518782039092018488015293509050614f0b8382614e58565b60006001600160a01b038086168352808516602084015250606060408301526157c66060830184614e58565b95945050505050565b60a0815260006157e260a0830188614e58565b82810360208401526157f48188615584565b9050828103604084015261580881876155b6565b9050828103606084015261581c8186614e58565b9050828103608084015261583081856155b6565b98975050505050505050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b808201808211156132ab576132ab61586b565b818103818111156132ab576132ab61586b565b60007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff82036158f1576158f161586b565b5060010190565b6000815160208301517fffffffff00000000000000000000000000000000000000000000000000000000808216935060048310156159405780818460040360031b1b83161693505b505050919050565b6000815160208301517fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000808216935060188310156159405760189290920360031b82901b161692915050565b6000602082840312156159a657600080fd5b5051919050565b6000602082840312156159bf57600080fd5b813567ffffffffffffffff81168114613e8157600080fd5b6000602082840312156159e957600080fd5b8135613e81816154ff565b60008083357fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1843603018112615a2957600080fd5b83018035915067ffffffffffffffff821115615a4457600080fd5b6020019150600581901b360382131561539a57600080fd5b600060208284031215615a6e57600080fd5b81357fffffffffffffffffffffffffffffffffffffffffffffffff000000000000000081168114613e8157600080fd5b60008083357fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1843603018112615ad357600080fd5b83018035915067ffffffffffffffff821115615aee57600080fd5b6020019150600781901b360382131561539a57600080fd5b8135615b1181614f83565b62ffffff811690508154817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000082161783556020840135615b50816154ff565b63ff00000081151560181b16837fffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000084161717845550505060408201356001820155606082013560028201555050565b60005b83811015615bba578181015183820152602001615ba2565b50506000910152565b60008251615bd5818460208701615b9f565b9190910192915050565b80820281158282048414176132ab576132ab61586b565b600082615c2c577f4e487b7100000000000000000000000000000000000000000000000000000000600052601260045260246000fd5b500490565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052603160045260246000fd5b600060208284031215615c7257600080fd5b8151613e81816154ff565b6020815260008251806020840152615c9c816040850160208701615b9f565b601f017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe016919091016040019291505056fea264697066735822122069cb384c254b82319b0190d00666733d0d1e9de81a2eadb8bbf807351132201d64736f6c63430008110033"
+        "bytecode": "60806040523480156200001157600080fd5b5060405162005e1938038062005e19833981016040819052620000349162000097565b600080546001600160a01b031916331790556003805462ffffff831662ffffff1990911681179091556040519081527ffe25e86988ec652fe5401545da69d35d6d22e8bcf8632c423f273264a656d22f9060200160405180910390a150620000c5565b600060208284031215620000aa57600080fd5b815162ffffff81168114620000be57600080fd5b9392505050565b615d4480620000d56000396000f3fe6080604052600436106102eb5760003560e01c80639c52a7f111610184578063d4ee1d90116100d6578063f2fde38b1161008a578063f9738d4211610064578063f9738d421461091f578063fb5474ae1461093f578063fec3e5531461095457600080fd5b8063f2fde38b146108a7578063f303ad6e146108c7578063f9492ad3146108e757600080fd5b8063e5e05bd7116100bb578063e5e05bd71461081e578063ee42d3a31461084b578063f0f3f2c81461087857600080fd5b8063d4ee1d90146107de578063dfecbd8e146107fe57600080fd5b8063b316d71411610138578063d224d9ec11610112578063d224d9ec14610722578063d2ef84641461074f578063d3b7d4c3146107be57600080fd5b8063b316d714146106d7578063b60c164c146106ed578063c6bdc0a21461070d57600080fd5b8063a5184fbf11610169578063a5184fbf14610684578063a8d369ff146106a4578063b0d36ce8146106c457600080fd5b80639c52a7f114610644578063a2f55ae51461066457600080fd5b80634d3c5da11161023d5780636ecc20da116101f157806384fee38e116101cb57806384fee38e146105a45780638da5cb5b146105dc57806399dd15661461061457600080fd5b80636ecc20da146105395780637eb140341461054c57806383e40a511461056c57600080fd5b8063605361721161022257806360536172146104f157806362d53403146105065780636e9c931c1461051957600080fd5b80634d3c5da1146104a357806351a7c716146104d157600080fd5b80631e83409a1161029f578063368e985211610279578063368e9852146104305780633a8c874f146104505780633fd8cc4e1461046357600080fd5b80631e83409a146103dd578063202c0cee146103fd57806332e879c71461041057600080fd5b806311e9ff02116102d057806311e9ff02146103505780631333af5214610390578063188ff72b146103b057600080fd5b80630455f177146102f7578063068c53911461032e57600080fd5b366102f257005b600080fd5b34801561030357600080fd5b50610317610312366004614e5d565b610985565b604051610325929190614edc565b60405180910390f35b34801561033a57600080fd5b5061034e610349366004614f7a565b610bc5565b005b34801561035c57600080fd5b5061037061036b366004614faa565b610c5e565b604080519485526020850193909352918301526060820152608001610325565b34801561039c57600080fd5b5061034e6103ab366004614fd4565b610cae565b3480156103bc57600080fd5b506103d06103cb366004614ff1565b610d17565b6040516103259190615013565b3480156103e957600080fd5b5061034e6103f8366004615078565b610eb8565b61034e61040b36600461525c565b610ec4565b34801561041c57600080fd5b5061034e61042b3660046153e1565b6119de565b34801561043c57600080fd5b5061034e61044b366004614f7a565b611a48565b61034e61045e366004615423565b611ad7565b34801561046f57600080fd5b5061049361047e366004615078565b60026020526000908152604090205460ff1681565b6040519015158152602001610325565b3480156104af57600080fd5b506104c36104be366004614faa565b611b9e565b604051908152602001610325565b3480156104dd57600080fd5b5061034e6104ec36600461549d565b611bcd565b3480156104fd57600080fd5b5061034e611bd8565b61034e610514366004614faa565b611cce565b34801561052557600080fd5b5061034e61053436600461549d565b611cda565b61034e610547366004614faa565b611ce5565b34801561055857600080fd5b5061034e610567366004614faa565b611cf1565b34801561057857600080fd5b506104c36105873660046154d5565b600d60209081526000928352604080842090915290825290205481565b3480156105b057600080fd5b506104c36105bf366004614f7a565b600960209081526000928352604080842090915290825290205481565b3480156105e857600080fd5b506000546105fc906001600160a01b031681565b6040516001600160a01b039091168152602001610325565b34801561062057600080fd5b506003546106309062ffffff1681565b60405162ffffff9091168152602001610325565b34801561065057600080fd5b5061034e61065f366004615078565b611e15565b34801561067057600080fd5b5061034e61067f366004615078565b611e9b565b34801561069057600080fd5b506104c361069f3660046153e1565b611f24565b3480156106b057600080fd5b506104c36106bf366004615503565b612083565b61034e6106d2366004615423565b612a0c565b3480156106e357600080fd5b506104c3600b5481565b3480156106f957600080fd5b5061034e6107083660046153e1565b612ab8565b34801561071957600080fd5b506006546104c3565b34801561072e57600080fd5b5061074261073d36600461554d565b612c59565b604051610325919061564d565b34801561075b57600080fd5b5061079861076a366004614faa565b600c602052600090815260409020805460018201546002909201546001600160a01b03918216929091169083565b604080516001600160a01b03948516815293909216602084015290820152606001610325565b3480156107ca57600080fd5b506104c36107d93660046154d5565b6132b7565b3480156107ea57600080fd5b506001546105fc906001600160a01b031681565b34801561080a57600080fd5b5061034e610819366004614f7a565b6132f1565b34801561082a57600080fd5b506104c3610839366004615078565b60046020526000908152604090205481565b34801561085757600080fd5b506104c3610866366004615078565b60056020526000908152604090205481565b34801561088457600080fd5b50610898610893366004614faa565b6133e4565b604051610325939291906157da565b3480156108b357600080fd5b5061034e6108c2366004615078565b6134d4565b3480156108d357600080fd5b5061034e6108e23660046153e1565b613551565b3480156108f357600080fd5b506104c3610902366004614f7a565b600a60209081526000928352604080842090915290825290205481565b34801561092b57600080fd5b5061034e61093a366004615078565b61359e565b34801561094b57600080fd5b506007546104c3565b34801561096057600080fd5b5061097461096f366004614e5d565b6135be565b60405161032595949392919061580f565b60608060006007888154811061099d5761099d61587c565b90600052602060002090600c02019050600081600201805490508811156109c657600282015497505b60028201546109d5888a6158da565b11156109ee5760028201546109eb9089906158ed565b96505b8667ffffffffffffffff811115610a0757610a07615095565b604051908082528060200260200182016040528015610a30578160200160208202803683370190505b5093505b86811015610abd5760028201610a4a89836158da565b81548110610a5a57610a5a61587c565b9060005260206000200160009054906101000a900460401b848281518110610a8457610a8461587c565b7fffffffffffffffffffffffffffffffffffffffffffffffff000000000000000090921660209283029190910190910152600101610a34565b50600a810154600090861115610ad557600a82015495505b600a820154610ae486886158da565b1115610afd57600a820154610afa9087906158ed565b94505b8467ffffffffffffffff811115610b1657610b16615095565b604051908082528060200260200182016040528015610b3f578160200160208202803683370190505b5092505b84811015610bb957600a8201610b5987836158da565b81548110610b6957610b6961587c565b9060005260206000200160009054906101000a90046001600160a01b0316838281518110610b9957610b9961587c565b6001600160a01b0390921660209283029190910190910152600101610b43565b50509550959350505050565b600060068381548110610bda57610bda61587c565b6000918252602090912060049091020160018101549091506001600160a01b03163314610c4e5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e657200000000000000000000000000000000000060448201526064015b60405180910390fd5b610c59838284613b00565b505050565b600080600080600060078681548110610c7957610c7961587c565b60009182526020909120600c90910201600281015460058201546006830154600a909301549199909850919650945092505050565b600380547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000001662ffffff83169081179091556040519081527ffe25e86988ec652fe5401545da69d35d6d22e8bcf8632c423f273264a656d22f906020015b60405180910390a150565b6060600083118015610d2b5750600b548311155b610d775760405162461bcd60e51b815260206004820152600d60248201527f6f7574206f6620626f756e6473000000000000000000000000000000000000006044820152606401610c45565b600083600b54610d8791906158ed565b610d929060016158da565b905080831115610da0578092505b8267ffffffffffffffff811115610db957610db9615095565b604051908082528060200260200182016040528015610e2257816020015b60408051606081018252600080825260208083018290529282015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff909201910181610dd75790505b5091508360005b84811015610eaf576000828152600c6020908152604091829020825160608101845281546001600160a01b0390811682526001830154169281019290925260020154918101919091528451859083908110610e8657610e8661587c565b602002602001018190525081610e9b90615900565b915080610ea781615900565b915050610e29565b50505092915050565b610ec181613bd4565b50565b6007548710610f155760405162461bcd60e51b815260206004820152601060248201527f696e76616c69642063616d706169676e000000000000000000000000000000006044820152606401610c45565b600060078881548110610f2a57610f2a61587c565b90600052602060002090600c020190508060030160008888610f4b90615938565b60405160609290921b7fffffffffffffffffffffffffffffffffffffffff0000000000000000000000001660208301527fffffffff00000000000000000000000000000000000000000000000000000000166034820152603801604051602081830303815290604052610fbd90615988565b7fffffffffffffffffffffffffffffffffffffffffffffffff000000000000000016815260208101919091526040016000205460ff1661103f5760405162461bcd60e51b815260206004820152601460248201527f73656c6563746f72206e6f74206d6174636865640000000000000000000000006044820152606401610c45565b60018101544267010000000000000090910467ffffffffffffffff161180159061108a575060018101546f01000000000000000000000000000000900467ffffffffffffffff164211155b6110fc5760405162461bcd60e51b815260206004820152602860248201527f63616d706169676e206e6f74207374617274656420796574202f20616c72656160448201527f647920656e6465640000000000000000000000000000000000000000000000006064820152608401610c45565b60018101546601000000000000900460ff16158061116c5750600a8101541580159061116c57506001600160a01b0385166000818152600b83016020526040902054600a8301805490919081106111555761115561587c565b6000918252602090912001546001600160a01b0316145b6111b85760405162461bcd60e51b815260206004820152600e60248201527f6e6f7420612072656665727265720000000000000000000000000000000000006044820152606401610c45565b825160018201546000919062ffffff168111156112175760405162461bcd60e51b815260206004820152601760248201527f696e546f6b656e206c656e6774682065786365656465640000000000000000006044820152606401610c45565b60005b8181101561150b5760008682815181106112365761123661587c565b602002602001015160000151905060008211156112d557866112596001846158ed565b815181106112695761126961587c565b6020026020010151600001516001600160a01b0316816001600160a01b0316116112d55760405162461bcd60e51b815260206004820152601f60248201527f696e20746f6b656e206e6f7420696e20617363656e64696e67206f72646572006044820152606401610c45565b600485015460ff16611365576001600160a01b03811660009081526008860160205260409020805462ffffff16151580611317575080546301000000900460ff165b6113635760405162461bcd60e51b815260206004820152601660248201527f6e6f7420616e20616363657074656420746f6b656e73000000000000000000006044820152606401610c45565b505b60008783815181106113795761137961587c565b602002602001015160200151905060006001600160a01b0316826001600160a01b0316036114465784156113ef5760405162461bcd60e51b815260206004820152601a60248201527f6d6f7265207468616e206f6e6520455448207472616e736665720000000000006044820152606401610c45565b80341461143e5760405162461bcd60e51b815260206004820152601660248201527f45544820616d6f756e74206e6f74206d617463686564000000000000000000006044820152606401610c45565b8094506114b8565b6001600160a01b038216600090815260078701602052604090205460ff16156114835761147e6001600160a01b038316338e84613cca565b6114b8565b61148d8282613d99565b90506114a46001600160a01b0383168d6000613ec8565b6114b86001600160a01b0383168d83613ec8565b60408051338152602081018390526001600160a01b0380851692908f16917fbe526fefdf314c4faee4a30e01b840fe0c1517bd7fc9295829eb6d8441e80b18910160405180910390a3505060010161121a565b6000808a518b602001868e5af18060000361152a573d6000803e3d6000fd5b5050835160018401549092506301000000900462ffffff1682111590506115935760405162461bcd60e51b815260206004820152601860248201527f6f7574546f6b656e206c656e67746820657863656564656400000000000000006044820152606401610c45565b6000805b828210156119885760008583815181106115b3576115b361587c565b60200260200101519050600083111561164a57856115d26001856158ed565b815181106115e2576115e261587c565b60200260200101516001600160a01b0316816001600160a01b03161161164a5760405162461bcd60e51b815260206004820152601f60248201527f696e20746f6b656e206e6f7420696e20617363656e64696e67206f72646572006044820152606401610c45565b6004850154610100900460ff166116df576001600160a01b03811660009081526009860160205260409020805462ffffff16151580611691575080546301000000900460ff165b6116dd5760405162461bcd60e51b815260206004820152601660248201527f6e6f7420616e20616363657074656420746f6b656e73000000000000000000006044820152606401610c45565b505b60006001600160a01b038216611735576000805260056020527f05b8ccbb9d4d8fb16ea74ce3c29a41f1b461fbdaff4714a0d9a8eb05499746bc5461172490476158ed565b90506117308982614016565b6117e8565b6001600160a01b038216600081815260056020526040908190205490517f70a082310000000000000000000000000000000000000000000000000000000081523060048201529091906370a0823190602401602060405180830381865afa1580156117a4573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906117c891906159d4565b6117d291906158ed565b90506117e86001600160a01b0383168a836140d3565b8751831080156118265750816001600160a01b031688848151811061180f5761180f61587c565b6020026020010151600001516001600160a01b0316105b1561187f57611874868e8c60018c88815181106118455761184561587c565b6020026020010151600001518d89815181106118635761186361587c565b60200260200101516020015161411c565b6001909201916117e8565b8751831080156118bd5750816001600160a01b03168884815181106118a6576118a661587c565b6020026020010151600001516001600160a01b0316145b1561192157611916868e8c60018c88815181106118dc576118dc61587c565b602002602001015160000151868e8a815181106118fb576118fb61587c565b60200260200101516020015161191191906158ed565b61411c565b600190920191611930565b611930868e8c6000868661411c565b604080516001600160a01b038b811682526020820184905280851692908f16917fc2534859c9972270c16d5b4255d200f9a0385f9a6ce3add96c0427ff9fc70f93910160405180910390a35050600190910190611597565b85518110156119d1576119c9848c8a60018a86815181106119ab576119ab61587c565b6020026020010151600001518b87815181106118635761186361587c565b600101611988565b5050503d6000803e3d6000f35b6000546001600160a01b031633146119f557600080fd5b8060005b81811015611a4257611a30848483818110611a1657611a1661587c565b9050602002016020810190611a2b9190615078565b614588565b80611a3a81615900565b9150506119f9565b50505050565b600060068381548110611a5d57611a5d61587c565b6000918252602090912060049091020160018101549091506001600160a01b03163314611acc5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c45565b610c59838284614632565b82818114611b275760405162461bcd60e51b815260206004820152601260248201527f6c656e677468206e6f74206d61746368656400000000000000000000000000006044820152606401610c45565b60005b81811015611b8357611b7b87878784818110611b4857611b4861587c565b9050602002016020810190611b5d9190615078565b868685818110611b6f57611b6f61587c565b9050602002013561483d565b600101611b2a565b3415611b9557611b958760003461483d565b50505050505050565b600060068281548110611bb357611bb361587c565b600091825260209091206002600490920201015492915050565b610c5983838361491f565b6001546001600160a01b03163314611c585760405162461bcd60e51b815260206004820152602960248201527f416374696f6e20706572666f726d656420627920756e617574686f72697a656460448201527f20616464726573732e00000000000000000000000000000000000000000000006064820152608401610c45565b60018054600080546001600160a01b0383167fffffffffffffffffffffffff000000000000000000000000000000000000000091821681179092559091169091556040519081527fcfaaa26691e16e66e73290fc725eee1a6b4e0e693a1640484937aac25ffb55a49060200160405180910390a1565b610ec18160003461491f565b610c5983838361483d565b610ec18160003461483d565b600060068281548110611d0657611d0661587c565b6000918252602090912060049091020160018101549091506001600160a01b03163314611d755760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c45565b8054611d8d90839083906001600160a01b0316614632565b80547fffffffffffffffffffffffff0000000000000000000000000000000000000000908116331782556001808301805490921690915554611ddb90839083906001600160a01b0316613b00565b60405133815282907fcae10d66f75f577faa75ec3d290ee81497368211d6817451dae38673b5ccf992906020015b60405180910390a25050565b6000546001600160a01b03163314611e2c57600080fd5b6001600160a01b03811660008181526002602090815260409182902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016905590519182527f79ede3839cd7a7d8bd77e97e5c890565fe4f76cdbbeaa364646e28a8695a78849101610d0c565b6000546001600160a01b03163314611eb257600080fd5b6001600160a01b03811660008181526002602090815260409182902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016600117905590519182527f6d81a01b39982517ba331aeb4f387b0f9cc32334b65bb9a343a077973cf7adf59101610d0c565b6006805460018101808355600083815291929083908110611f4757611f4761587c565b60009182526020808320600490920290910180547fffffffffffffffffffffffff00000000000000000000000000000000000000009081163390811783556002830180546001810182559086528486200180549092168117909155835260038101909152604082208290559150835b8082101561204f576000868684818110611fd257611fd261587c565b9050602002016020810190611fe79190615078565b600285018054600181810183556000928352602080842090920180546001600160a01b039095167fffffffffffffffffffffffff0000000000000000000000000000000000000000909516851790559282526003870190526040902093019283905550611fb6565b60405184907fd78a25afe0b6160e2dc1fc71b2845c76cc268398d17be04665b78ba59b47440790600090a250505092915050565b6006546000908235106120d85760405162461bcd60e51b815260206004820152601160248201527f496e76616c69642070726f6a65637449640000000000000000000000000000006044820152606401610c45565b600060068360000135815481106120f1576120f161587c565b600091825260208083203380855260049390930201600381019091526040909220546002830180549394509192811061212c5761212c61587c565b6000918252602090912001546001600160a01b03161461218e5760405162461bcd60e51b815260206004820152601360248201527f6e6f7420612070726f6a6563742061646d696e000000000000000000000000006044820152606401610c45565b61219e60c0840160a085016159ed565b67ffffffffffffffff166121b860a08501608086016159ed565b67ffffffffffffffff1611156122105760405162461bcd60e51b815260206004820152601560248201527f696e76616c69642063616d706169676e206461746500000000000000000000006044820152606401610c45565b600780548435600090815260086020908152604082208054600181810183559184529183209091018390558354018084558382529194509190849081106122595761225961587c565b60009182526020918290208635600c9092020190815591506122819060408601908601614fd4565b6001820180547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000001662ffffff929092169190911790556122c76060850160408601614fd4565b60018201805462ffffff929092166301000000027fffffffffffffffffffffffffffffffffffffffffffffffffffff000000ffffff9092169190911790556123156080850160608601615a17565b6001820180549115156601000000000000027fffffffffffffffffffffffffffffffffffffffffffffffffff00ffffffffffff90921691909117905561236160a08501608086016159ed565b60018201805467ffffffffffffffff92909216670100000000000000027fffffffffffffffffffffffffffffffffff0000000000000000ffffffffffffff9092169190911790556123b860c0850160a086016159ed565b60018201805467ffffffffffffffff929092166f01000000000000000000000000000000027fffffffffffffffffff0000000000000000ffffffffffffffffffffffffffffff90921691909117905560008061241760c0870187615a34565b9150612428905060c0870187615a34565b612436916002860191614d68565b505b808210156124e557600160038401600061245560c08a018a615a34565b868181106124655761246561587c565b905060200201602081019061247a9190615a9c565b7fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000168152602081019190915260400160002080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001691151591909117905560019190910190612438565b6124f6610100870160e08801615a17565b6004840180547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001691151591909117905561253961012087016101008801615a17565b600484018054911515610100027fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ff90921691909117905560009150612582610120870187615a34565b91506125949050610140870187615a34565b9050811480156125b257506125ad610160870187615ade565b905081145b6126245760405162461bcd60e51b815260206004820152602260248201527f696e20746f6b656e20636f6e666967206c656e677468206e6f74206d6174636860448201527f65640000000000000000000000000000000000000000000000000000000000006064820152608401610c45565b612632610120870187615a34565b612640916005860191614ddd565b505b8082101561278c57612658610140870187615a34565b838181106126685761266861587c565b905060200201602081019061267d9190615a17565b6007840160006126916101208a018a615a34565b868181106126a1576126a161587c565b90506020020160208101906126b69190615078565b6001600160a01b03168152602081019190915260400160002080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001691151591909117905561270a610160870187615ade565b8381811061271a5761271a61587c565b905060800201836008016000888061012001906127379190615a34565b868181106127475761274761587c565b905060200201602081019061275c9190615078565b6001600160a01b03168152602081019190915260400160002061277f8282615b46565b5050600190910190612642565b6000915061279e610180870187615a34565b91506127b090506101a0870187615ade565b905081146128265760405162461bcd60e51b815260206004820152602360248201527f6f757420746f6b656e20636f6e666967206c656e677468206e6f74206d61746360448201527f68656400000000000000000000000000000000000000000000000000000000006064820152608401610c45565b612834610180870187615a34565b612842916006860191614ddd565b505b808210156128dc5761285a6101a0870187615ade565b8381811061286a5761286a61587c565b905060800201836009016000888061018001906128879190615a34565b868181106128975761289761587c565b90506020020160208101906128ac9190615078565b6001600160a01b0316815260208101919091526040016000206128cf8282615b46565b5050600190910190612844565b600091506128ee6101c0870187615a34565b9150508015156129046080880160608901615a17565b1515146129535760405162461bcd60e51b815260206004820152601860248201527f696e76616c696420726566657272657273206c656e67746800000000000000006044820152606401610c45565b6129616101c0870187615a34565b61296f91600a860191614ddd565b505b808210156129d85781600b8401600061298e6101c08a018a615a34565b8681811061299e5761299e61587c565b90506020020160208101906129b39190615078565b6001600160a01b03168152602081019190915260400160002055600190910190612971565b60405185907ff91d5ca55c5415a1aa70a5dfde98765e180ec8b56375e3de9149ee89efc28f9d90600090a250505050919050565b82818114612a5c5760405162461bcd60e51b815260206004820152601260248201527f6c656e677468206e6f74206d61746368656400000000000000000000000000006044820152606401610c45565b60005b81811015611b9557612ab087878784818110612a7d57612a7d61587c565b9050602002016020810190612a929190615078565b868685818110612aa457612aa461587c565b9050602002013561491f565b600101612a5f565b8060005b81811015611a4257600080858584818110612ad957612ad961587c565b9050602002016020810190612aee9190615078565b90506001600160a01b038116612b47576000805260056020527f05b8ccbb9d4d8fb16ea74ce3c29a41f1b461fbdaff4714a0d9a8eb05499746bc54479250612b3690836158ed565b9150612b423383614016565b612c04565b6040517f70a082310000000000000000000000000000000000000000000000000000000081523060048201526001600160a01b038216906370a0823190602401602060405180830381865afa158015612ba4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190612bc891906159d4565b6001600160a01b038216600090815260056020526040902054909250612bee90836158ed565b9150612c046001600160a01b03821633846140d3565b60405182815233906001600160a01b038316907f2ae72b44f59d038340fca5739135a1d51fc5ab720bb02d983e4c5ff4119ca7b89060200160405180910390a350508080612c5190615900565b915050612abc565b612cf6604051806101e0016040528060008152602001600062ffffff168152602001600062ffffff168152602001600015158152602001600067ffffffffffffffff168152602001600067ffffffffffffffff168152602001606081526020016000151581526020016000151581526020016060815260200160608152602001606081526020016060815260200160608152602001606081525090565b600060078481548110612d0b57612d0b61587c565b6000918252602091829020600c9091020180548452600181015462ffffff8082169386019390935263010000008104909216604085015260ff6601000000000000830481161515606086015267ffffffffffffffff6701000000000000008404811660808701526f0100000000000000000000000000000090930490921660a08501526004810154808316151560e086015261010090819004909216151591840191909152905082156132b05780600201805480602002602001604051908101604052809291908181526020018280548015612e2c57602002820191906000526020600020905b815460401b7fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000168152600190910190602001808311612df2575b505050505060c08301526005810180546040805160208084028201810190925282815260009390918390830182828015612e8f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311612e71575b50505050508461012001819052508067ffffffffffffffff811115612eb657612eb6615095565b604051908082528060200260200182016040528015612edf578160200160208202803683370190505b506101408501528067ffffffffffffffff811115612eff57612eff615095565b604051908082528060200260200182016040528015612f6f57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff909201910181612f1d5790505b506101608501525b8082101561309a57826007016000846005018481548110612f9a57612f9a61587c565b60009182526020808320909101546001600160a01b03168352820192909252604001902054610140850151805160ff9092169184908110612fdd57612fdd61587c565b60200260200101901515908115158152505082600801600084600501848154811061300a5761300a61587c565b60009182526020808320909101546001600160a01b0316835282810193909352604091820190208151608081018352815462ffffff8116825260ff6301000000909104161515938101939093526001810154918301919091526002015460608201526101608501518051849081106130845761308461587c565b6020908102919091010152600190910190612f77565b505060068101805460408051602080840282018101909252828152600093909183908301828280156130f557602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116130d7575b50505050508461018001819052508067ffffffffffffffff81111561311c5761311c615095565b60405190808252806020026020018201604052801561318c57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff90920191018161313a5790505b506101a08501525b80821015613247578260090160008460060184815481106131b7576131b761587c565b60009182526020808320909101546001600160a01b0316835282810193909352604091820190208151608081018352815462ffffff8116825260ff6301000000909104161515938101939093526001810154918301919091526002015460608201526101a08501518051849081106132315761323161587c565b6020908102919091010152600190910190613194565b82600a0180548060200260200160405190810160405280929190818152602001828054801561329f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311613281575b5050505050846101c0018190525050505b5092915050565b6001600160a01b038083166000908152600d602090815260408083209385168352928152828220548252600c905220600201545b92915050565b6000600683815481106133065761330661587c565b6000918252602090912060049091020180549091506001600160a01b031633146133725760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c45565b6001810180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b03841690811790915560405190815283907fd76f6b3fb9ea3802f0403d54d37db427cea79df08cd8817552eb23790d2b54919060200160405180910390a2505050565b60008060606000600685815481106133fe576133fe61587c565b600091825260209091206004909102018054600182015460028301546001600160a01b0392831697509116945090915067ffffffffffffffff81111561344657613446615095565b60405190808252806020026020018201604052801561346f578160200160208202803683370190505b50600282018054604080516020808402820181019092528281529395508301828280156134c557602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116134a7575b50505050509150509193909250565b6000546001600160a01b031633146134eb57600080fd5b600180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b0383169081179091556040519081527f686a7ab184e6928ddedba810af7b443d6baa40bf32c4787ccd72c5b4b28cae1b90602001610d0c565b8060005b81811015611a425761358c8484838181106135725761357261587c565b90506020020160208101906135879190615078565b613bd4565b8061359681615900565b915050613555565b6000546001600160a01b031633146135b557600080fd5b610ec181614588565b6060806060806060600060078b815481106135db576135db61587c565b90600052602060002090600c02019050600081600501805490508b11156136045760058201549a505b60058201546136138b8d6158da565b111561362c576005820154613629908c906158ed565b99505b8967ffffffffffffffff81111561364557613645615095565b60405190808252806020026020018201604052801561366e578160200160208202803683370190505b5096508967ffffffffffffffff81111561368a5761368a615095565b6040519080825280602002602001820160405280156136b3578160200160208202803683370190505b5095508967ffffffffffffffff8111156136cf576136cf615095565b60405190808252806020026020018201604052801561373f57816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9092019101816136ed5790505b5094505b898110156138ca57600582016137598c836158da565b815481106137695761376961587c565b9060005260206000200160009054906101000a90046001600160a01b03168782815181106137995761379961587c565b60200260200101906001600160a01b031690816001600160a01b0316815250508160070160008883815181106137d1576137d161587c565b60200260200101516001600160a01b03166001600160a01b0316815260200190815260200160002060009054906101000a900460ff168682815181106138195761381961587c565b6020026020010190151590811515815250508160080160008883815181106138435761384361587c565b6020908102919091018101516001600160a01b031682528181019290925260409081016000208151608081018352815462ffffff811682526301000000900460ff1615159381019390935260018101549183019190915260020154606082015285518690839081106138b7576138b761587c565b6020908102919091010152600101613743565b5060068101546000908911156138e257600682015498505b60068201546138f1898b6158da565b111561390a576006820154613907908a906158ed565b97505b8767ffffffffffffffff81111561392357613923615095565b60405190808252806020026020018201604052801561394c578160200160208202803683370190505b5093508767ffffffffffffffff81111561396857613968615095565b6040519080825280602002602001820160405280156139d857816020015b6040805160808101825260008082526020808301829052928201819052606082015282527fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9092019101816139865790505b5092505b87811015613af157600682016139f28a836158da565b81548110613a0257613a0261587c565b9060005260206000200160009054906101000a90046001600160a01b0316848281518110613a3257613a3261587c565b60200260200101906001600160a01b031690816001600160a01b031681525050816009016000858381518110613a6a57613a6a61587c565b6020908102919091018101516001600160a01b031682528181019290925260409081016000208151608081018352815462ffffff811682526301000000900460ff161515938101939093526001810154918301919091526002015460608201528351849083908110613ade57613ade61587c565b60209081029190910101526001016139dc565b50509550955095509550959050565b6001600160a01b03811660008181526003840160205260409020546002840180549091908110613b3257613b3261587c565b6000918252602090912001546001600160a01b031614610c59576002820180546001600160a01b03831660008181526003860160209081526040808320859055600185018655948252812090920180547fffffffffffffffffffffffff00000000000000000000000000000000000000001682179055915185917f1c3cea70d3dcea4dc82722f4fb7300d19f76e272a8349e73a99780429f2c151691a3505050565b336000908152600d602090815260408083206001600160a01b0385811680865291845282852054808652600c85528386208451606081018652815484168152600182015490931683870152600201805483860181905290879055928652600590945291842080549394929391928392613c4e9084906158ed565b90915550506001600160a01b038416613c7057613c6b3382614016565b613c84565b613c846001600160a01b03851633836140d3565b6040518181526001600160a01b0385169033907f70eb43c4a8ae8c40502dcf22436c509c28d6ff421cf07c491be56984bd9870689060200160405180910390a350505050565b6040516001600160a01b0380851660248301528316604482015260648101829052611a429085907f23b872dd00000000000000000000000000000000000000000000000000000000906084015b604080517fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe08184030181529190526020810180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff167fffffffff0000000000000000000000000000000000000000000000000000000090931692909217909152614adc565b6040517f70a082310000000000000000000000000000000000000000000000000000000081523060048201526000906001600160a01b038416906370a0823190602401602060405180830381865afa158015613df9573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613e1d91906159d4565b9050613e346001600160a01b038416333085613cca565b6040517f70a0823100000000000000000000000000000000000000000000000000000000815230600482015281906001600160a01b038516906370a0823190602401602060405180830381865afa158015613e93573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613eb791906159d4565b613ec191906158ed565b9392505050565b801580613f5b57506040517fdd62ed3e0000000000000000000000000000000000000000000000000000000081523060048201526001600160a01b03838116602483015284169063dd62ed3e90604401602060405180830381865afa158015613f35573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190613f5991906159d4565b155b613fcd5760405162461bcd60e51b815260206004820152603660248201527f5361666545524332303a20617070726f76652066726f6d206e6f6e2d7a65726f60448201527f20746f206e6f6e2d7a65726f20616c6c6f77616e6365000000000000000000006064820152608401610c45565b6040516001600160a01b038316602482015260448101829052610c599084907f095ea7b30000000000000000000000000000000000000000000000000000000090606401613d17565b604080516000808252602082019092526001600160a01b0384169083906040516140409190615c03565b60006040518083038185875af1925050503d806000811461407d576040519150601f19603f3d011682016040523d82523d6000602084013e614082565b606091505b5050905080610c595760405162461bcd60e51b815260206004820152601360248201527f4554485f5452414e534645525f4641494c4544000000000000000000000000006044820152606401610c45565b6040516001600160a01b038316602482015260448101829052610c599084907fa9059cbb0000000000000000000000000000000000000000000000000000000090606401613d17565b600083614142576001600160a01b0383166000908152600988016020526040902061415d565b6001600160a01b038316600090815260088801602052604090205b805490915062ffffff1615611b955786548154620f4240906141849062ffffff1685615c1f565b61418e9190615c36565b925081600101548311156141e45760405162461bcd60e51b815260206004820152600c60248201527f63617020657863656564656400000000000000000000000000000000000000006044820152606401610c45565b600354600090620f4240906141fe9062ffffff1686615c1f565b6142089190615c36565b6001600160a01b0386166000908152600460205260408120805492935083929091906142359084906158da565b9091555050825460009081906301000000900460ff16156142645785915061425d83836158da565b9050614274565b61426e83876158ed565b91508590505b60008481526009602090815260408083206001600160a01b038b1684529091529020548111156142e65760405162461bcd60e51b815260206004820152601560248201527f6e6f7420656e6f75676820636f6d6d697373696f6e00000000000000000000006044820152606401610c45565b60008481526009602090815260408083206001600160a01b038b16808552908352818420805486900390558d8452600a8352818420908452909152812080548392906143339084906158da565b9091555050600285015460008b8152600a602090815260408083206001600160a01b038c16845290915290205411156143d45760405162461bcd60e51b815260206004820152602560248201527f616363756d756c6174656420636f6d6d697373696f6e2065786365656465642060448201527f6c696d69740000000000000000000000000000000000000000000000000000006064820152608401610c45565b6001600160a01b03808a166000908152600d60209081526040808320938b16835292905290812054908190036144b857600b6000815461441390615900565b90915550604080516060810182526001600160a01b03808d168083528b821660208085018281528587018a8152600b80546000908152600c8552898120985189549089167fffffffffffffffffffffffff0000000000000000000000000000000000000000918216178a55935160018a01805491909916941693909317909655516002909601959095559254918452600d8352848420908452909152919020556144df565b6000818152600c6020526040812060020180548592906144d99084906158da565b90915550505b6000818152600c60209081526040808320600201546001600160a01b038c1684526004909252918290205491517fac98d1de12ec7e306f0033236185d2a9d904bb054995aa9987c7d5a6d7ff4c5792614572928e928d928992918b91906001600160a01b03968716815294909516602085015260408401929092526060830152608082015260a081019190915260c00190565b60405180910390a1505050505050505050505050565b6001600160a01b0381166000908152600460209081526040808320805490849055600590925282208054919283926145c19084906158ed565b90915550506001600160a01b0382166145e3576145de3382614016565b6145f7565b6145f76001600160a01b03831633836140d3565b816001600160a01b03167f6ec620dc21a80aff1281aac3592cbd6b0554bbf810aa4b75338ef3cc9ae1a66c82604051611e0991815260200190565b6001600160a01b0381166000818152600384016020526040902054600284018054919291839081106146665761466661587c565b6000918252602090912001546001600160a01b0316146146c85760405162461bcd60e51b815260206004820152600c60248201527f6e6f7420616e2061646d696e00000000000000000000000000000000000000006044820152606401610c45565b60028301546000906146dc906001906158ed565b90508082146147825760008460020182815481106146fc576146fc61587c565b6000918252602090912001546002860180546001600160a01b03909216925082918590811061472d5761472d61587c565b600091825260208083209190910180547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b0394851617905592909116815260038601909152604090208290555b8360020180548061479557614795615c71565b6000828152602080822083017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff90810180547fffffffffffffffffffffffff00000000000000000000000000000000000000001690559092019092556001600160a01b03851680835260038701909152604080832083905551909187917fe76d77167882521e5d6872e780957ffd683d0e4710f4f159f4170fa42589387b9190a35050505050565b6001600160a01b03821615614859576148568282613d99565b90505b60008381526009602090815260408083206001600160a01b03861684529091528120805483929061488b9084906158da565b90915550506001600160a01b038216600090815260056020526040812080548392906148b89084906158da565b909155505060008381526009602090815260408083206001600160a01b038616808552908352928190205481518581529283015285917f507ac39eb33610191cd8fd54286e91c5cc464c262861643be3978f5a9f18ab0291015b60405180910390a3505050565b600683815481106149325761493261587c565b60009182526020909120600490910201546001600160a01b0316331461499a5760405162461bcd60e51b815260206004820152600e60248201527f6e6f742066726f6d206f776e65720000000000000000000000000000000000006044820152606401610c45565b60008381526009602090815260408083206001600160a01b0386168452909152902054811115614a0c5760405162461bcd60e51b815260206004820152601760248201527f616d6f756e742065786365656465642062616c616e63650000000000000000006044820152606401610c45565b60008381526009602090815260408083206001600160a01b0386168452825280832080548590039055600590915281208054839290614a4c9084906158ed565b90915550506001600160a01b03821615614a7957614a746001600160a01b03831633836140d3565b614a83565b614a833382614016565b60008381526009602090815260408083206001600160a01b038616808552908352928190205481518581529283015285917fc1e00202ee2c06861d326fc6374026b751863ff64218ccbaa38c3e603a8e72c29101614912565b6000614b31826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b0316614bc19092919063ffffffff16565b805190915015610c595780806020019051810190614b4f9190615ca0565b610c595760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e60448201527f6f742073756363656564000000000000000000000000000000000000000000006064820152608401610c45565b6060614bd08484600085614bd8565b949350505050565b606082471015614c505760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f60448201527f722063616c6c00000000000000000000000000000000000000000000000000006064820152608401610c45565b600080866001600160a01b03168587604051614c6c9190615c03565b60006040518083038185875af1925050503d8060008114614ca9576040519150601f19603f3d011682016040523d82523d6000602084013e614cae565b606091505b5091509150614cbf87838387614cca565b979650505050505050565b60608315614d39578251600003614d32576001600160a01b0385163b614d325760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610c45565b5081614bd0565b614bd08383815115614d4e5781518083602001fd5b8060405162461bcd60e51b8152600401610c459190615cbd565b828054828255906000526020600020908101928215614dcd579160200282015b82811115614dcd5781547fffffffffffffffff00000000000000000000000000000000000000000000000016833560401c178255602090920191600190910190614d88565b50614dd9929150614e48565b5090565b828054828255906000526020600020908101928215614dcd579160200282015b82811115614dcd5781547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b03843516178255602090920191600190910190614dfd565b5b80821115614dd95760008155600101614e49565b600080600080600060a08688031215614e7557600080fd5b505083359560208501359550604085013594606081013594506080013592509050565b600081518084526020808501945080840160005b83811015614ed15781516001600160a01b031687529582019590820190600101614eac565b509495945050505050565b604080825283519082018190526000906020906060840190828701845b82811015614f375781517fffffffffffffffffffffffffffffffffffffffffffffffff00000000000000001684529284019290840190600101614ef9565b50505083810382850152614f4b8186614e98565b9695505050505050565b6001600160a01b0381168114610ec157600080fd5b8035614f7581614f55565b919050565b60008060408385031215614f8d57600080fd5b823591506020830135614f9f81614f55565b809150509250929050565b600060208284031215614fbc57600080fd5b5035919050565b62ffffff81168114610ec157600080fd5b600060208284031215614fe657600080fd5b8135613ec181614fc3565b6000806040838503121561500457600080fd5b50508035926020909101359150565b602080825282518282018190526000919060409081850190868401855b8281101561506b57815180516001600160a01b0390811686528782015116878601528501518585015260609093019290850190600101615030565b5091979650505050505050565b60006020828403121561508a57600080fd5b8135613ec181614f55565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b6040805190810167ffffffffffffffff811182821017156150e7576150e7615095565b60405290565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe016810167ffffffffffffffff8111828210171561513457615134615095565b604052919050565b600067ffffffffffffffff82111561515657615156615095565b5060051b60200190565b600082601f83011261517157600080fd5b813560206151866151818361513c565b6150ed565b82815260069290921b840181019181810190868411156151a557600080fd5b8286015b848110156151ed57604081890312156151c25760008081fd5b6151ca6150c4565b81356151d581614f55565b815281850135858201528352918301916040016151a9565b509695505050505050565b600082601f83011261520957600080fd5b813560206152196151818361513c565b82815260059290921b8401810191818101908684111561523857600080fd5b8286015b848110156151ed57803561524f81614f55565b835291830191830161523c565b600080600080600080600060e0888a03121561527757600080fd5b8735965060208089013561528a81614f55565b9650604089013567ffffffffffffffff808211156152a757600080fd5b818b0191508b601f8301126152bb57600080fd5b8135818111156152cd576152cd615095565b6152fd847fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f840116016150ed565b8181528d8583860101111561531157600080fd5b81858501868301376000858383010152809950505061533260608c01614f6a565b965061534060808c01614f6a565b955060a08b013592508083111561535657600080fd5b6153628c848d01615160565b945060c08b013592508083111561537857600080fd5b50506153868a828b016151f8565b91505092959891949750929550565b60008083601f8401126153a757600080fd5b50813567ffffffffffffffff8111156153bf57600080fd5b6020830191508360208260051b85010111156153da57600080fd5b9250929050565b600080602083850312156153f457600080fd5b823567ffffffffffffffff81111561540b57600080fd5b61541785828601615395565b90969095509350505050565b60008060008060006060868803121561543b57600080fd5b85359450602086013567ffffffffffffffff8082111561545a57600080fd5b61546689838a01615395565b9096509450604088013591508082111561547f57600080fd5b5061548c88828901615395565b969995985093965092949392505050565b6000806000606084860312156154b257600080fd5b8335925060208401356154c481614f55565b929592945050506040919091013590565b600080604083850312156154e857600080fd5b82356154f381614f55565b91506020830135614f9f81614f55565b60006020828403121561551557600080fd5b813567ffffffffffffffff81111561552c57600080fd5b82016101e08185031215613ec157600080fd5b8015158114610ec157600080fd5b6000806040838503121561556057600080fd5b823591506020830135614f9f8161553f565b600081518084526020808501945080840160005b83811015614ed15781517fffffffffffffffffffffffffffffffffffffffffffffffff00000000000000001687529582019590820190600101615586565b600081518084526020808501945080840160005b83811015614ed15781511515875295820195908201906001016155d8565b600081518084526020808501945080840160005b83811015614ed1578151805162ffffff1688528381015115158489015260408082015190890152606090810151908801526080909601959082019060010161560a565b602081528151602082015260006020830151615670604084018262ffffff169052565b50604083015162ffffff81166060840152506060830151801515608084015250608083015167ffffffffffffffff811660a08401525060a083015167ffffffffffffffff811660c08401525060c08301516101e08060e08501526156d8610200850183615572565b915060e08501516101006156ef8187018315159052565b86015190506101206157048682018315159052565b808701519150507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe06101408187860301818801526157428584614e98565b94508088015192505061016081878603018188015261576185846155c4565b94508088015192505061018081878603018188015261578085846155f6565b9450808801519250506101a081878603018188015261579f8584614e98565b9450808801519250506101c08187860301818801526157be85846155f6565b908801518782039092018488015293509050614f4b8382614e98565b60006001600160a01b038086168352808516602084015250606060408301526158066060830184614e98565b95945050505050565b60a08152600061582260a0830188614e98565b828103602084015261583481886155c4565b9050828103604084015261584881876155f6565b9050828103606084015261585c8186614e98565b9050828103608084015261587081856155f6565b98975050505050505050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b808201808211156132eb576132eb6158ab565b818103818111156132eb576132eb6158ab565b60007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8203615931576159316158ab565b5060010190565b6000815160208301517fffffffff00000000000000000000000000000000000000000000000000000000808216935060048310156159805780818460040360031b1b83161693505b505050919050565b6000815160208301517fffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000808216935060188310156159805760189290920360031b82901b161692915050565b6000602082840312156159e657600080fd5b5051919050565b6000602082840312156159ff57600080fd5b813567ffffffffffffffff81168114613ec157600080fd5b600060208284031215615a2957600080fd5b8135613ec18161553f565b60008083357fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1843603018112615a6957600080fd5b83018035915067ffffffffffffffff821115615a8457600080fd5b6020019150600581901b36038213156153da57600080fd5b600060208284031215615aae57600080fd5b81357fffffffffffffffffffffffffffffffffffffffffffffffff000000000000000081168114613ec157600080fd5b60008083357fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1843603018112615b1357600080fd5b83018035915067ffffffffffffffff821115615b2e57600080fd5b6020019150600781901b36038213156153da57600080fd5b8135615b5181614fc3565b62ffffff811690508154817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000082161783556020840135615b908161553f565b63ff00000081151560181b16837fffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000084161717845550505060408201356001820155606082013560028201555050565b60005b83811015615bfa578181015183820152602001615be2565b50506000910152565b60008251615c15818460208701615bdf565b9190910192915050565b80820281158282048414176132eb576132eb6158ab565b600082615c6c577f4e487b7100000000000000000000000000000000000000000000000000000000600052601260045260246000fd5b500490565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052603160045260246000fd5b600060208284031215615cb257600080fd5b8151613ec18161553f565b6020815260008251806020840152615cdc816040850160208701615bdf565b601f017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe016919091016040019291505056fea2646970667358221220e4b6517e489844585c212afdb745911e4742f42632b8cb2120506f15878b418764736f6c63430008110033"
     };
 });
 define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV3.ts", ["require", "exports", "@ijstech/eth-contract", "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/ProxyV3.json.ts"], function (require, exports, eth_contract_9, ProxyV3_json_1) {
@@ -3153,6 +3018,11 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts
                 };
             };
             this.getCampaignArrayLength = getCampaignArrayLength_call;
+            let getCampaignsLength_call = async (options) => {
+                let result = await this.call('getCampaignsLength', [], options);
+                return new eth_contract_9.BigNumber(result);
+            };
+            this.getCampaignsLength = getCampaignsLength_call;
             let getClaimantBalanceParams = (params) => [params.claimant, params.token];
             let getClaimantBalance_call = async (params, options) => {
                 let result = await this.call('getClaimantBalance', getClaimantBalanceParams(params), options);
@@ -3183,6 +3053,11 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts
                 return new eth_contract_9.BigNumber(result);
             };
             this.getProjectAdminsLength = getProjectAdminsLength_call;
+            let getProjectsLength_call = async (options) => {
+                let result = await this.call('getProjectsLength', [], options);
+                return new eth_contract_9.BigNumber(result);
+            };
+            this.getProjectsLength = getProjectsLength_call;
             let isPermitted_call = async (param1, options) => {
                 let result = await this.call('isPermitted', [param1], options);
                 return result;
@@ -3609,7 +3484,7 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts
     Object.defineProperty(exports, "ProxyV2", { enumerable: true, get: function () { return ProxyV2_1.ProxyV2; } });
     Object.defineProperty(exports, "ProxyV3", { enumerable: true, get: function () { return ProxyV3_1.ProxyV3; } });
 });
-define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts", ["require", "exports", "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/index.ts", "@ijstech/eth-wallet"], function (require, exports, Contracts, eth_wallet_5) {
+define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts", ["require", "exports", "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/contracts/index.ts", "@ijstech/eth-wallet"], function (require, exports, Contracts, eth_wallet_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.onProgress = exports.deploy = exports.DefaultDeployOptions = exports.Contracts = void 0;
@@ -3633,7 +3508,7 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts"
         if (options.version == 'V3') {
             proxy = new Contracts.ProxyV3(wallet);
             progress('Deploy Proxy');
-            await proxy.deploy(eth_wallet_5.Utils.toDecimals(options.protocolRate, 6));
+            await proxy.deploy(eth_wallet_4.Utils.toDecimals(options.protocolRate, 6));
         }
         else {
             if (options.version == 'V2') {
@@ -3665,17 +3540,17 @@ define("@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts"
         onProgress
     };
 });
-define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/contracts/scom-product-contract/index.ts", "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_6, index_2, index_3, index_4, index_5, index_6, scom_token_list_1) {
+define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/contracts/scom-product-contract/index.ts", "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/index.ts", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_5, index_1, index_2, index_3, index_4, scom_token_list_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
-    async function getProductInfo(productId) {
-        let productInfoAddress = (0, index_5.getContractAddress)('ProductInfo');
+    exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getProductInfo = void 0;
+    async function getProductInfo(state, productId) {
+        let productInfoAddress = state.getContractAddress('ProductInfo');
         if (!productInfoAddress)
             return null;
         try {
-            const wallet = eth_wallet_6.Wallet.getInstance();
-            const productInfo = new index_3.Contracts.ProductInfo(wallet, productInfoAddress);
+            const wallet = state.getRpcWallet();
+            const productInfo = new index_2.Contracts.ProductInfo(wallet, productInfoAddress);
             const product = await productInfo.products(productId);
             const chainId = wallet.chainId;
             const _tokenList = scom_token_list_1.tokenStore.getTokenList(chainId);
@@ -3687,37 +3562,24 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getProductInfo = getProductInfo;
-    async function getNFTBalance(productId) {
-        let productInfoAddress = (0, index_5.getContractAddress)('ProductInfo');
-        const wallet = eth_wallet_6.Wallet.getInstance();
-        const productInfo = new index_3.Contracts.ProductInfo(wallet, productInfoAddress);
-        const nftAddress = await productInfo.nft();
-        const product1155 = new index_3.Contracts.Product1155(wallet, nftAddress);
-        const nftBalance = await product1155.balanceOf({
-            account: wallet.address,
-            id: productId
-        });
-        return nftBalance;
-    }
-    exports.getNFTBalance = getNFTBalance;
-    async function newProduct(productType, qty, maxQty, price, maxPrice, token, callback, confirmationCallback) {
-        let productInfoAddress = (0, index_5.getContractAddress)('ProductInfo');
-        const wallet = eth_wallet_6.Wallet.getClientInstance();
-        const productInfo = new index_3.Contracts.ProductInfo(wallet, productInfoAddress);
-        (0, index_6.registerSendTxEvents)({
+    async function newProduct(state, productType, qty, maxQty, price, maxPrice, token, callback, confirmationCallback) {
+        let productInfoAddress = state.getContractAddress('ProductInfo');
+        const wallet = eth_wallet_5.Wallet.getClientInstance();
+        const productInfo = new index_2.Contracts.ProductInfo(wallet, productInfoAddress);
+        (0, index_4.registerSendTxEvents)({
             transactionHash: callback,
             confirmation: confirmationCallback
         });
         const tokenDecimals = (token === null || token === void 0 ? void 0 : token.decimals) || 18;
         let productTypeCode;
         switch (productType) {
-            case index_2.ProductType.Buy:
+            case index_1.ProductType.Buy:
                 productTypeCode = 0;
                 break;
-            case index_2.ProductType.DonateToOwner:
+            case index_1.ProductType.DonateToOwner:
                 productTypeCode = 1;
                 break;
-            case index_2.ProductType.DonateToEveryone:
+            case index_1.ProductType.DonateToEveryone:
                 productTypeCode = 2;
                 break;
         }
@@ -3726,8 +3588,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             uri: '',
             quantity: qty,
             maxQuantity: maxQty,
-            maxPrice: eth_wallet_6.Utils.toDecimals(maxPrice, tokenDecimals),
-            price: eth_wallet_6.Utils.toDecimals(price, tokenDecimals),
+            maxPrice: eth_wallet_5.Utils.toDecimals(maxPrice, tokenDecimals),
+            price: eth_wallet_5.Utils.toDecimals(price, tokenDecimals),
             token: (token === null || token === void 0 ? void 0 : token.address) || ""
         });
         let productId;
@@ -3742,7 +3604,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     }
     exports.newProduct = newProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
-        const amount = new eth_wallet_6.BigNumber(productPrice).isZero() ? new eth_wallet_6.BigNumber(quantity) : new eth_wallet_6.BigNumber(productPrice).times(quantity);
+        const amount = new eth_wallet_5.BigNumber(productPrice).isZero() ? new eth_wallet_5.BigNumber(quantity) : new eth_wallet_5.BigNumber(productPrice).times(quantity);
         if (!commissions || !commissions.length) {
             return amount.toFixed();
         }
@@ -3756,25 +3618,25 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return amount.plus(commissionsAmount).toFixed();
     }
     exports.getProxyTokenAmountIn = getProxyTokenAmountIn;
-    async function buyProduct(productId, quantity, commissions, token, callback, confirmationCallback) {
-        let proxyAddress = (0, index_5.getContractAddress)('Proxy');
-        let productInfoAddress = (0, index_5.getContractAddress)('ProductInfo');
-        const wallet = eth_wallet_6.Wallet.getClientInstance();
-        const proxy = new index_4.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new index_3.Contracts.ProductInfo(wallet, productInfoAddress);
+    async function buyProduct(state, productId, quantity, commissions, token, callback, confirmationCallback) {
+        let proxyAddress = state.getContractAddress('Proxy');
+        let productInfoAddress = state.getContractAddress('ProductInfo');
+        const wallet = eth_wallet_5.Wallet.getClientInstance();
+        const proxy = new index_3.Contracts.Proxy(wallet, proxyAddress);
+        const productInfo = new index_2.Contracts.ProductInfo(wallet, productInfoAddress);
         const product = await productInfo.products(productId);
         const amount = product.price.times(quantity);
-        const _commissions = (commissions || []).filter(v => v.chainId === (0, index_5.getChainId)()).map(v => {
+        const _commissions = (commissions || []).filter(v => v.chainId === state.getChainId()).map(v => {
             return {
                 to: v.walletAddress,
                 amount: amount.times(v.share)
             };
         });
-        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_6.BigNumber(0);
+        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_5.BigNumber(0);
         let receipt;
         try {
             if (token === null || token === void 0 ? void 0 : token.address) {
-                (0, index_6.registerSendTxEvents)({
+                (0, index_4.registerSendTxEvents)({
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
@@ -3807,7 +3669,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 }
             }
             else {
-                (0, index_6.registerSendTxEvents)({
+                (0, index_4.registerSendTxEvents)({
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
@@ -3838,25 +3700,25 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.buyProduct = buyProduct;
-    async function donate(productId, donateTo, amountIn, commissions, token, callback, confirmationCallback) {
-        let proxyAddress = (0, index_5.getContractAddress)('Proxy');
-        let productInfoAddress = (0, index_5.getContractAddress)('ProductInfo');
-        const wallet = eth_wallet_6.Wallet.getClientInstance();
-        const proxy = new index_4.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new index_3.Contracts.ProductInfo(wallet, productInfoAddress);
+    async function donate(state, productId, donateTo, amountIn, commissions, token, callback, confirmationCallback) {
+        let proxyAddress = state.getContractAddress('Proxy');
+        let productInfoAddress = state.getContractAddress('ProductInfo');
+        const wallet = eth_wallet_5.Wallet.getClientInstance();
+        const proxy = new index_3.Contracts.Proxy(wallet, proxyAddress);
+        const productInfo = new index_2.Contracts.ProductInfo(wallet, productInfoAddress);
         const tokenDecimals = (token === null || token === void 0 ? void 0 : token.decimals) || 18;
-        const amount = eth_wallet_6.Utils.toDecimals(amountIn, tokenDecimals);
+        const amount = eth_wallet_5.Utils.toDecimals(amountIn, tokenDecimals);
         const _commissions = (commissions || []).map(v => {
             return {
                 to: v.walletAddress,
                 amount: amount.times(v.share)
             };
         });
-        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_6.BigNumber(0);
+        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_5.BigNumber(0);
         let receipt;
         try {
             if (token === null || token === void 0 ? void 0 : token.address) {
-                (0, index_6.registerSendTxEvents)({
+                (0, index_4.registerSendTxEvents)({
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
@@ -3889,7 +3751,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 }
             }
             else {
-                (0, index_6.registerSendTxEvents)({
+                (0, index_4.registerSendTxEvents)({
                     transactionHash: callback,
                     confirmation: confirmationCallback
                 });
@@ -4052,7 +3914,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
         }
     };
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_3, eth_wallet_7, index_7, index_8, index_9, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, formSchema_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_3, eth_wallet_6, index_5, index_6, index_7, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, formSchema_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_3.Styles.Theme.ThemeVars;
@@ -4068,7 +3930,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.tag = {};
             this.defaultEdit = true;
             this.rpcWalletEvents = [];
-            this.clientEvents = [];
             this.onChainChanged = async () => {
                 this.onSetupPage();
                 this.updateContractAddress();
@@ -4081,69 +3942,37 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     return;
                 try {
                     const symbol = (token === null || token === void 0 ? void 0 : token.symbol) || '';
-                    this.lblBalance.caption = token ? `${(await (0, index_8.getTokenBalance)(token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
+                    this.lblBalance.caption = token ? `${(await (0, index_6.getTokenBalance)(this.rpcWallet, token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
                 }
                 catch (_b) { }
             };
-            (0, index_9.setDataFromSCConfig)(data_json_1.default);
-            this.$eventBus = components_3.application.EventBus;
-            this.registerEvent();
+            this.state = new index_7.State(data_json_1.default);
         }
-        onHide() {
-            this.containerDapp.onHide();
-            const rpcWallet = (0, index_9.getRpcWallet)();
+        removeRpcWalletEvents() {
+            const rpcWallet = this.rpcWallet;
             for (let event of this.rpcWalletEvents) {
                 rpcWallet.unregisterWalletEvent(event);
             }
             this.rpcWalletEvents = [];
-            for (let event of this.clientEvents) {
-                event.unregister();
-            }
-            this.clientEvents = [];
         }
-        async init() {
-            this.isReadyCallbackQueued = true;
-            super.init();
-            const lazyLoad = this.getAttribute('lazyLoad', true, false);
-            if (!lazyLoad) {
-                const link = this.getAttribute('link', true);
-                const productType = this.getAttribute('productType', true);
-                const name = this.getAttribute('name', true);
-                const title = this.getAttribute('title', true);
-                const description = this.getAttribute('description', true);
-                const logo = this.getAttribute('logo', true);
-                const logoUrl = this.getAttribute('logoUrl', true);
-                const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
-                const networks = this.getAttribute('networks', true);
-                const wallets = this.getAttribute('wallets', true);
-                const showHeader = this.getAttribute('showHeader', true);
-                const defaultChainId = this.getAttribute('defaultChainId', true);
-                await this.setData({
-                    link,
-                    productType,
-                    name,
-                    title,
-                    chainSpecificProperties,
-                    defaultChainId,
-                    description,
-                    logo,
-                    logoUrl,
-                    networks,
-                    wallets,
-                    showHeader,
-                });
-            }
-            this.isReadyCallbackQueued = false;
-            this.executeReadyCallback();
+        onHide() {
+            this.containerDapp.onHide();
+            this.removeRpcWalletEvents();
         }
         static async create(options, parent) {
             let self = new this(parent, options);
             await self.ready();
             return self;
         }
+        get chainId() {
+            return this.state.getChainId();
+        }
+        get rpcWallet() {
+            return this.state.getRpcWallet();
+        }
         get donateTo() {
             var _a, _b, _c;
-            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[(0, index_9.getChainId)()]) === null || _b === void 0 ? void 0 : _b.donateTo) !== null && _c !== void 0 ? _c : '';
+            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[this.chainId]) === null || _b === void 0 ? void 0 : _b.donateTo) !== null && _c !== void 0 ? _c : '';
         }
         get link() {
             var _a;
@@ -4154,11 +3983,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         get productId() {
             var _a, _b, _c;
-            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[(0, index_9.getChainId)()]) === null || _b === void 0 ? void 0 : _b.productId) !== null && _c !== void 0 ? _c : 0;
+            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[this.chainId]) === null || _b === void 0 ? void 0 : _b.productId) !== null && _c !== void 0 ? _c : 0;
         }
         get productType() {
             var _a;
-            return (_a = this._data.productType) !== null && _a !== void 0 ? _a : index_7.ProductType.Buy;
+            return (_a = this._data.productType) !== null && _a !== void 0 ? _a : index_5.ProductType.Buy;
         }
         set productType(value) {
             this._data.productType = value;
@@ -4231,11 +4060,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set defaultChainId(value) {
             this._data.defaultChainId = value;
         }
-        registerEvent() {
-            this.clientEvents.push(this.$eventBus.register(this, "chainChanged" /* EventId.chainChanged */, this.onChainChanged));
-        }
         async onSetupPage() {
-            await this.initApprovalAction();
+            if (this.state.isRpcWalletConnected())
+                await this.initApprovalAction();
         }
         _getActions(category) {
             let self = this;
@@ -4271,7 +4098,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             const vstack = new components_3.VStack();
                             const config = new scom_commission_fee_setup_1.default(null, {
                                 commissions: self._data.commissions,
-                                fee: (0, index_9.getEmbedderCommissionFee)(),
+                                fee: this.state.embedderCommissionFee,
                                 networks: self._data.networks
                             });
                             const hstack = new components_3.HStack(null, {
@@ -4317,6 +4144,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     description: userInputData.description,
                                     link: userInputData.link
                                 });
+                                await this.resetRpcWallet();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
                                 this.refreshDApp();
@@ -4416,7 +4244,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         };
                     },
                     getData: () => {
-                        const fee = (0, index_9.getEmbedderCommissionFee)();
+                        const fee = this.state.embedderCommissionFee;
                         return Object.assign(Object.assign({}, this.getData()), { fee });
                     },
                     setData: this.setData.bind(this),
@@ -4428,37 +4256,44 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         getData() {
             return this._data;
         }
-        async setData(data) {
+        async resetRpcWallet() {
             var _a;
-            this._data = data;
-            const rpcWalletId = await (0, index_9.initRpcWallet)(this.defaultChainId);
-            const rpcWallet = (0, index_9.getRpcWallet)();
-            const event = rpcWallet.registerWalletEvent(this, eth_wallet_7.Constants.RpcWalletEvent.Connected, async (connected) => {
+            this.removeRpcWalletEvents();
+            const rpcWalletId = await this.state.initRpcWallet(this.defaultChainId);
+            const rpcWallet = this.rpcWallet;
+            const chainChangedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_6.Constants.RpcWalletEvent.ChainChanged, async (chainId) => {
+                this.onChainChanged();
+            });
+            const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_6.Constants.RpcWalletEvent.Connected, async (connected) => {
                 this.onSetupPage();
                 this.updateContractAddress();
                 this.refreshDApp();
             });
-            this.rpcWalletEvents.push(event);
-            const dappData = {
+            this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
+            const data = {
+                defaultChainId: this.defaultChainId,
                 wallets: this.wallets,
                 networks: this.networks,
                 showHeader: this.showHeader,
-                defaultChainId: this.defaultChainId,
                 rpcWalletId: rpcWallet.instanceId
             };
             if ((_a = this.containerDapp) === null || _a === void 0 ? void 0 : _a.setData)
-                this.containerDapp.setData(dappData);
+                this.containerDapp.setData(data);
+        }
+        async setData(data) {
+            this._data = data;
+            await this.resetRpcWallet();
             if (!this.tokenInput.isConnected)
                 await this.tokenInput.ready();
-            if (this.tokenInput.rpcWalletId !== rpcWallet.instanceId) {
-                this.tokenInput.rpcWalletId = rpcWallet.instanceId;
+            if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
+                this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
             }
             await this.onSetupPage();
-            const commissionFee = (0, index_9.getEmbedderCommissionFee)();
+            const commissionFee = this.state.embedderCommissionFee;
             if (!this.lbOrderTotalTitle.isConnected)
                 await this.lbOrderTotalTitle.ready();
             this.lbOrderTotalTitle.caption = `Total`;
-            this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_7.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
+            this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_6.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
             await this.refreshDApp();
         }
@@ -4519,9 +4354,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         // }
         async initWallet() {
             try {
-                await eth_wallet_7.Wallet.getClientInstance().init();
-                const rpcWallet = (0, index_9.getRpcWallet)();
-                await rpcWallet.init();
+                await eth_wallet_6.Wallet.getClientInstance().init();
+                await this.rpcWallet.init();
             }
             catch (_a) { }
         }
@@ -4533,11 +4367,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.lblLink.caption = data.link || '';
             this.lblLink.link.href = data.link;
             if (data.logo) {
-                this.imgLogo.url = (0, index_9.getIPFSGatewayUrl)() + data.logo;
+                this.imgLogo.url = `${this.state.ipfsGatewayUrl}${data.logo}`;
             }
             else if ((_a = data.logoUrl) === null || _a === void 0 ? void 0 : _a.startsWith('ipfs://')) {
-                const ipfsGatewayUrl = (0, index_9.getIPFSGatewayUrl)();
-                this.imgLogo.url = data.logoUrl.replace('ipfs://', ipfsGatewayUrl);
+                this.imgLogo.url = data.logoUrl.replace('ipfs://', this.state.ipfsGatewayUrl);
             }
             else {
                 this.imgLogo.url = data.logoUrl || "";
@@ -4560,14 +4393,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 if (!this.productId || this.productId === 0)
                     return;
                 await this.initWallet();
-                this.productInfo = await (0, API_1.getProductInfo)(this.productId);
+                this.productInfo = await (0, API_1.getProductInfo)(this.state, this.productId);
                 if (this.productInfo) {
                     const token = this.productInfo.token;
                     this.pnlInputFields.visible = true;
                     this.pnlUnsupportedNetwork.visible = false;
-                    const price = eth_wallet_7.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+                    const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
                     (!this.lblRef.isConnected) && await this.lblRef.ready();
-                    if (this._type === index_7.ProductType.Buy) {
+                    if (this._type === index_5.ProductType.Buy) {
                         this.lblYouPay.caption = `You pay`;
                         this.pnlMintFee.visible = true;
                         this.lblMintFee.caption = `${price !== null && price !== void 0 ? price : ""} ${(token === null || token === void 0 ? void 0 : token.symbol) || ""}`;
@@ -4602,12 +4435,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     // this.tokenInput.tokenReadOnly = this._data.token ? true : new BigNumber(price).gt(0);
                     this.tokenInput.token = token;
                     this.updateTokenBalance();
-                    // this.lblBalance.caption = (await getTokenBalance(this._data.token)).toFixed(2);
+                    // this.lblBalance.caption = (await getTokenBalance(this.rpcWallet, this._data.token)).toFixed(2);
                 }
                 else {
                     this.pnlInputFields.visible = false;
                     this.pnlUnsupportedNetwork.visible = true;
                 }
+                this.checkNetwork();
             });
         }
         updateSpotsRemaining() {
@@ -4633,8 +4467,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async initApprovalAction() {
             if (!this.approvalModelAction) {
-                this.contractAddress = (0, index_9.getContractAddress)('Proxy');
-                this.approvalModelAction = (0, index_8.getERC20ApprovalModelAction)(this.contractAddress, {
+                this.contractAddress = this.state.getContractAddress('Proxy');
+                this.approvalModelAction = await this.state.setApprovalModelAction({
                     sender: this,
                     payAction: async () => {
                         await this.doSubmitAction();
@@ -4652,7 +4486,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     onToBePaid: async (token) => {
                         this.btnApprove.visible = false;
                         this.isApproving = false;
-                        this.btnSubmit.enabled = new eth_wallet_7.BigNumber(this.tokenAmountIn).gt(0);
+                        this.btnSubmit.enabled = new eth_wallet_6.BigNumber(this.tokenAmountIn).gt(0);
+                        this.checkNetwork();
                     },
                     onApproving: async (token, receipt) => {
                         this.isApproving = true;
@@ -4690,26 +4525,38 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.showTxStatusModal('error', err);
                     }
                 });
+                this.state.approvalModel.spenderAddress = this.contractAddress;
             }
         }
         updateContractAddress() {
             if (this.approvalModelAction) {
-                if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == (0, index_9.getChainId)())) {
-                    this.contractAddress = (0, index_9.getContractAddress)('ProductInfo');
+                if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
+                    this.contractAddress = this.state.getContractAddress('ProductInfo');
                 }
                 else {
-                    this.contractAddress = (0, index_9.getContractAddress)('Proxy');
+                    this.contractAddress = this.state.getContractAddress('Proxy');
                 }
-                this.approvalModelAction.setSpenderAddress(this.contractAddress);
+                this.state.approvalModel.spenderAddress = this.contractAddress;
             }
         }
         async selectToken(token) {
             const symbol = (token === null || token === void 0 ? void 0 : token.symbol) || '';
-            this.lblBalance.caption = `${(await (0, index_8.getTokenBalance)(token)).toFixed(2)} ${symbol}`;
+            this.lblBalance.caption = `${(await (0, index_6.getTokenBalance)(this.rpcWallet, token)).toFixed(2)} ${symbol}`;
         }
         updateSubmitButton(submitting) {
             this.btnSubmit.rightIcon.spin = submitting;
             this.btnSubmit.rightIcon.visible = submitting;
+        }
+        checkNetwork() {
+            if (!(0, index_7.isClientWalletConnected)()) {
+                this.btnSubmit.caption = 'Connect Wallet';
+                this.btnSubmit.enabled = true;
+                return;
+            }
+            if (this.state.isRpcWalletConnected()) {
+                this.btnSubmit.caption = 'Switch Network';
+                this.btnSubmit.enabled = true;
+            }
         }
         onApprove() {
             this.showTxStatusModal('warning', 'Approving');
@@ -4725,14 +4572,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             else {
                 this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(this.productInfo.price.toFixed(), qty, this._data.commissions);
-                const price = eth_wallet_7.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+                const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
                 const amount = price.times(qty);
                 this.tokenInput.value = amount.toFixed();
-                const commissionFee = (0, index_9.getEmbedderCommissionFee)();
+                const commissionFee = this.state.embedderCommissionFee;
                 const total = amount.plus(amount.times(commissionFee));
                 this.lbOrderTotal.caption = `${total} ${((_b = this.productInfo.token) === null || _b === void 0 ? void 0 : _b.symbol) || ''}`;
             }
-            if (this.productInfo)
+            if (this.productInfo && this.state.isRpcWalletConnected())
                 this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
         }
         async onAmountChanged() {
@@ -4746,19 +4593,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(this.productInfo.price.toFixed(), amount, this._data.commissions);
             }
             amount = Number(this.tokenInput.value);
-            const commissionFee = (0, index_9.getEmbedderCommissionFee)();
-            const total = new eth_wallet_7.BigNumber(amount).plus(new eth_wallet_7.BigNumber(amount).times(commissionFee));
+            const commissionFee = this.state.embedderCommissionFee;
+            const total = new eth_wallet_6.BigNumber(amount).plus(new eth_wallet_6.BigNumber(amount).times(commissionFee));
             const token = (_a = this.productInfo) === null || _a === void 0 ? void 0 : _a.token;
             this.lbOrderTotal.caption = `${total} ${(token === null || token === void 0 ? void 0 : token.symbol) || ''}`;
-            token && this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+            if (token && this.state.isRpcWalletConnected())
+                this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
         }
         async doSubmitAction() {
             var _a;
             if (!this._data || !this.productId)
                 return;
             this.updateSubmitButton(true);
-            // const chainId = getChainId();
-            if ((this._type === index_7.ProductType.DonateToOwner || this._type === index_7.ProductType.DonateToEveryone) && !this.tokenInput.token) {
+            if ((this._type === index_5.ProductType.DonateToOwner || this._type === index_5.ProductType.DonateToEveryone) && !this.tokenInput.token) {
                 this.showTxStatusModal('error', 'Token Required');
                 this.updateSubmitButton(false);
                 return;
@@ -4769,9 +4616,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             //   return;
             // }
             const token = this.productInfo.token;
-            const balance = await (0, index_8.getTokenBalance)(token);
-            if (this._type === index_7.ProductType.Buy) {
-                if (this.edtQty.value && new eth_wallet_7.BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
+            const balance = await (0, index_6.getTokenBalance)(this.rpcWallet, token);
+            if (this._type === index_5.ProductType.Buy) {
+                if (this.edtQty.value && new eth_wallet_6.BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
                     this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
                     this.updateSubmitButton(false);
                     return;
@@ -4783,14 +4630,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
                 if (this.productId >= 0) {
-                    const product = await (0, API_1.getProductInfo)(this.productId);
+                    const product = await (0, API_1.getProductInfo)(this.state, this.productId);
                     if (product.quantity.lt(requireQty)) {
                         this.showTxStatusModal('error', 'Out of stock');
                         this.updateSubmitButton(false);
                         return;
                     }
                 }
-                const maxOrderQty = new eth_wallet_7.BigNumber((_a = this.productInfo.maxQuantity) !== null && _a !== void 0 ? _a : 0);
+                const maxOrderQty = new eth_wallet_6.BigNumber((_a = this.productInfo.maxQuantity) !== null && _a !== void 0 ? _a : 0);
                 if (maxOrderQty.minus(requireQty).lt(0)) {
                     this.showTxStatusModal('error', 'Over Maximum Order Quantity');
                     this.updateSubmitButton(false);
@@ -4820,6 +4667,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.updateSubmitButton(false);
         }
         async onSubmit() {
+            if (!(0, index_7.isClientWalletConnected)()) {
+                if (this.mdWallet) {
+                    await components_3.application.loadPackage('@scom/scom-wallet-modal', '*');
+                    this.mdWallet.networks = this.networks;
+                    this.mdWallet.wallets = this.wallets;
+                    this.mdWallet.showModal();
+                }
+                return;
+            }
+            if (!this.state.isRpcWalletConnected()) {
+                const clientWallet = eth_wallet_6.Wallet.getClientInstance();
+                await clientWallet.switchNetwork(this.chainId);
+                return;
+            }
             this.showTxStatusModal('warning', 'Confirming');
             this.approvalModelAction.doPayAction();
         }
@@ -4832,17 +4693,52 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
             };
             const token = this.productInfo.token;
-            if (this._data.productType == index_7.ProductType.DonateToOwner || this._data.productType == index_7.ProductType.DonateToEveryone) {
-                await (0, API_1.donate)(this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback, async () => {
+            if (this._data.productType == index_5.ProductType.DonateToOwner || this._data.productType == index_5.ProductType.DonateToEveryone) {
+                await (0, API_1.donate)(this.state, this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback, async () => {
                     await this.updateTokenBalance();
                 });
             }
-            else if (this._data.productType == index_7.ProductType.Buy) {
-                await (0, API_1.buyProduct)(this.productId, quantity, this._data.commissions, token, callback, async () => {
+            else if (this._data.productType == index_5.ProductType.Buy) {
+                await (0, API_1.buyProduct)(this.state, this.productId, quantity, this._data.commissions, token, callback, async () => {
                     await this.updateTokenBalance();
                     this.updateSpotsRemaining();
                 });
             }
+        }
+        async init() {
+            this.isReadyCallbackQueued = true;
+            super.init();
+            const lazyLoad = this.getAttribute('lazyLoad', true, false);
+            if (!lazyLoad) {
+                const link = this.getAttribute('link', true);
+                const productType = this.getAttribute('productType', true);
+                const name = this.getAttribute('name', true);
+                const title = this.getAttribute('title', true);
+                const description = this.getAttribute('description', true);
+                const logo = this.getAttribute('logo', true);
+                const logoUrl = this.getAttribute('logoUrl', true);
+                const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
+                const networks = this.getAttribute('networks', true);
+                const wallets = this.getAttribute('wallets', true);
+                const showHeader = this.getAttribute('showHeader', true);
+                const defaultChainId = this.getAttribute('defaultChainId', true);
+                await this.setData({
+                    link,
+                    productType,
+                    name,
+                    title,
+                    chainSpecificProperties,
+                    defaultChainId,
+                    description,
+                    logo,
+                    logoUrl,
+                    networks,
+                    wallets,
+                    showHeader,
+                });
+            }
+            this.isReadyCallbackQueued = false;
+            this.executeReadyCallback();
         }
         render() {
             return (this.$render("i-panel", null,
@@ -4894,6 +4790,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
                                 this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))),
                         this.$render("i-scom-commission-fee-setup", { visible: false }),
+                        this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] }),
                         this.$render("i-scom-tx-status-modal", { id: "txStatusModal" })))));
         }
     };
