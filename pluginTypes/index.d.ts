@@ -57,14 +57,21 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         chainId: number;
     }
 }
+/// <amd-module name="@scom/scom-nft-minter/utils/token.ts" />
+declare module "@scom/scom-nft-minter/utils/token.ts" {
+    import { BigNumber, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
+    import { ITokenObject } from "@scom/scom-token-list";
+    export const getERC20Amount: (wallet: IWallet, tokenAddress: string, decimals: number) => Promise<BigNumber>;
+    export const getTokenBalance: (wallet: IWallet, token: ITokenObject) => Promise<BigNumber>;
+    export const registerSendTxEvents: (sendTxEventHandlers: ISendTxEventsOptions) => void;
+}
+/// <amd-module name="@scom/scom-nft-minter/utils/index.ts" />
+declare module "@scom/scom-nft-minter/utils/index.ts" {
+    export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
+}
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
-    export const enum EventId {
-        ConnectWallet = "connectWallet",
-        IsWalletConnected = "isWalletConnected",
-        IsWalletDisconnected = "IsWalletDisconnected",
-        chainChanged = "chainChanged"
-    }
+    import { ERC20ApprovalModel, IERC20ApprovalEventOptions } from "@ijstech/eth-wallet";
     export interface IContractDetailInfo {
         address: string;
     }
@@ -77,69 +84,23 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export type ContractInfoByChainType = {
         [key: number]: IContractInfo;
     };
-    export const state: {
+    export class State {
         contractInfoByChain: ContractInfoByChainType;
         ipfsGatewayUrl: string;
         embedderCommissionFee: string;
         rpcWalletId: string;
-    };
-    export const setDataFromSCConfig: (options: any) => void;
-    export const setIPFSGatewayUrl: (url: string) => void;
-    export const getIPFSGatewayUrl: () => string;
-    export const getEmbedderCommissionFee: () => string;
-    export const getContractAddress: (type: ContractType) => any;
-    export function initRpcWallet(defaultChainId: number): string;
-    export function getChainId(): number;
-    export function getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
+        approvalModel: ERC20ApprovalModel;
+        constructor(options: any);
+        private initData;
+        initRpcWallet(defaultChainId: number): string;
+        getContractAddress(type: ContractType): any;
+        getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
+        isRpcWalletConnected(): boolean;
+        getChainId(): number;
+        setApprovalModelAction(options: IERC20ApprovalEventOptions): Promise<import("@ijstech/eth-wallet").IERC20ApprovalAction>;
+    }
     export function getClientWallet(): import("@ijstech/eth-wallet").IClientWallet;
     export function isClientWalletConnected(): boolean;
-    export function isRpcWalletConnected(): boolean;
-}
-/// <amd-module name="@scom/scom-nft-minter/utils/token.ts" />
-declare module "@scom/scom-nft-minter/utils/token.ts" {
-    import { BigNumber, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
-    import { ITokenObject } from "@scom/scom-token-list";
-    export const getERC20Amount: (wallet: IWallet, tokenAddress: string, decimals: number) => Promise<BigNumber>;
-    export const getTokenBalance: (token: ITokenObject) => Promise<BigNumber>;
-    export const registerSendTxEvents: (sendTxEventHandlers: ISendTxEventsOptions) => void;
-}
-/// <amd-module name="@scom/scom-nft-minter/utils/approvalModel.ts" />
-declare module "@scom/scom-nft-minter/utils/approvalModel.ts" {
-    import { BigNumber } from "@ijstech/eth-wallet";
-    import { ITokenObject } from "@scom/scom-token-list";
-    export enum ApprovalStatus {
-        TO_BE_APPROVED = 0,
-        APPROVING = 1,
-        NONE = 2
-    }
-    export const getERC20Allowance: (token: ITokenObject, spenderAddress: string) => Promise<BigNumber>;
-    export const getERC20ApprovalModelAction: (spenderAddress: string, options: IERC20ApprovalEventOptions) => IERC20ApprovalAction;
-    interface IERC20ApprovalEventOptions {
-        sender: any;
-        payAction: () => Promise<void>;
-        onToBeApproved: (token: ITokenObject) => Promise<void>;
-        onToBePaid: (token: ITokenObject) => Promise<void>;
-        onApproving: (token: ITokenObject, receipt?: string, data?: any) => Promise<void>;
-        onApproved: (token: ITokenObject, data?: any) => Promise<void>;
-        onPaying: (receipt?: string, data?: any) => Promise<void>;
-        onPaid: (data?: any) => Promise<void>;
-        onApprovingError: (token: ITokenObject, err: Error) => Promise<void>;
-        onPayingError: (err: Error) => Promise<void>;
-    }
-    export interface IERC20ApprovalOptions extends IERC20ApprovalEventOptions {
-        spenderAddress: string;
-    }
-    export interface IERC20ApprovalAction {
-        setSpenderAddress: (value: string) => void;
-        doApproveAction: (token: ITokenObject, inputAmount: string, data?: any) => Promise<void>;
-        doPayAction: (data?: any) => Promise<void>;
-        checkAllowance: (token: ITokenObject, inputAmount: string) => Promise<void>;
-    }
-}
-/// <amd-module name="@scom/scom-nft-minter/utils/index.ts" />
-declare module "@scom/scom-nft-minter/utils/index.ts" {
-    export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
-    export { ApprovalStatus, getERC20Allowance, getERC20ApprovalModelAction, IERC20ApprovalOptions, IERC20ApprovalAction } from "@scom/scom-nft-minter/utils/approvalModel.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
 declare module "@scom/scom-nft-minter/index.css.ts" {
@@ -2326,6 +2287,9 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/c
                 referrersLength: BigNumber;
             }>;
         };
+        getCampaignsLength: {
+            (options?: TransactionOptions): Promise<BigNumber>;
+        };
         getClaimantBalance: {
             (params: IGetClaimantBalanceParams, options?: TransactionOptions): Promise<BigNumber>;
         };
@@ -2345,6 +2309,9 @@ declare module "@scom/scom-nft-minter/contracts/scom-commission-proxy-contract/c
         };
         getProjectAdminsLength: {
             (projectId: number | BigNumber, options?: TransactionOptions): Promise<BigNumber>;
+        };
+        getProjectsLength: {
+            (options?: TransactionOptions): Promise<BigNumber>;
         };
         isPermitted: {
             (param1: string, options?: TransactionOptions): Promise<boolean>;
@@ -2672,7 +2639,8 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
     import { ProductType, ICommissionInfo } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
-    function getProductInfo(productId: number): Promise<{
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    function getProductInfo(state: State, productId: number): Promise<{
         token: any;
         productType: BigNumber;
         productId: BigNumber;
@@ -2683,15 +2651,14 @@ declare module "@scom/scom-nft-minter/API.ts" {
         maxPrice: BigNumber;
         status: BigNumber;
     }>;
-    function getNFTBalance(productId: number): Promise<BigNumber>;
-    function newProduct(productType: ProductType, qty: number, maxQty: number, price: string, maxPrice: string, token?: ITokenObject, callback?: any, confirmationCallback?: any): Promise<{
+    function newProduct(state: State, productType: ProductType, qty: number, maxQty: number, price: string, maxPrice: string, token?: ITokenObject, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
-    function buyProduct(productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function donate(productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate };
+    function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    export { getProductInfo, newProduct, getProxyTokenAmountIn, buyProduct, donate };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -2842,6 +2809,7 @@ declare module "@scom/scom-nft-minter" {
         }
     }
     export default class ScomNftMinter extends Module {
+        private state;
         private gridDApp;
         private imgLogo;
         private markdownViewer;
@@ -2871,10 +2839,10 @@ declare module "@scom/scom-nft-minter" {
         private pnlInputFields;
         private pnlUnsupportedNetwork;
         private containerDapp;
+        private mdWallet;
         private productInfo;
         private _type;
         private _data;
-        private $eventBus;
         private approvalModelAction;
         private isApproving;
         private tokenAmountIn;
@@ -2882,11 +2850,12 @@ declare module "@scom/scom-nft-minter" {
         defaultEdit: boolean;
         private contractAddress;
         private rpcWalletEvents;
-        private clientEvents;
         constructor(parent?: Container, options?: ScomNftMinterElement);
+        removeRpcWalletEvents(): void;
         onHide(): void;
-        init(): Promise<void>;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
+        private get chainId();
+        private get rpcWallet();
         get donateTo(): string;
         get link(): string;
         set link(value: string);
@@ -2913,7 +2882,6 @@ declare module "@scom/scom-nft-minter" {
         set showHeader(value: boolean);
         get defaultChainId(): number;
         set defaultChainId(value: number);
-        private registerEvent;
         private onChainChanged;
         private updateTokenBalance;
         private onSetupPage;
@@ -2961,6 +2929,7 @@ declare module "@scom/scom-nft-minter" {
             getActions?: undefined;
         })[];
         private getData;
+        private resetRpcWallet;
         private setData;
         private getTag;
         private updateTag;
@@ -2976,12 +2945,14 @@ declare module "@scom/scom-nft-minter" {
         private updateContractAddress;
         private selectToken;
         private updateSubmitButton;
+        private checkNetwork;
         private onApprove;
         private onQtyChanged;
         private onAmountChanged;
         private doSubmitAction;
         private onSubmit;
         private buyToken;
+        init(): Promise<void>;
         render(): any;
     }
 }
