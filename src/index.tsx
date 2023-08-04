@@ -601,7 +601,6 @@ export default class ScomNftMinter extends Module {
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${price ?? ""} ${token?.symbol || ""}`;
           this.lblTitle.caption = this._data.title;
-          this.btnSubmit.caption = 'Mint';
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
           // this.gridTokenInput.visible = false;
@@ -614,7 +613,6 @@ export default class ScomNftMinter extends Module {
           this.lblYouPay.caption = `Your donation`;
           this.pnlMintFee.visible = false;
           this.lblTitle.caption = this._data.title || 'Make a Contributon';
-          this.btnSubmit.caption = 'Submit';
           this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
           // this.gridTokenInput.visible = true;
           this.tokenInput.inputReadOnly = false;
@@ -636,7 +634,7 @@ export default class ScomNftMinter extends Module {
         this.pnlInputFields.visible = false;
         this.pnlUnsupportedNetwork.visible = true;
       }
-      this.checkNetwork();
+      this.determineBtnSubmitCaption();
     });
   }
 
@@ -682,7 +680,7 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.visible = false;
           this.isApproving = false;
           this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
-          this.checkNetwork();
+          this.determineBtnSubmitCaption();
         },
         onApproving: async (token: ITokenObject, receipt?: string) => {
           this.isApproving = true;
@@ -746,15 +744,18 @@ export default class ScomNftMinter extends Module {
     this.btnSubmit.rightIcon.visible = submitting;
   }
 
-  private checkNetwork() {
+  private determineBtnSubmitCaption() {
     if (!isClientWalletConnected()) {
       this.btnSubmit.caption = 'Connect Wallet';
-      this.btnSubmit.enabled = true;
-      return;
     }
-    if (this.state.isRpcWalletConnected()) {
+    else if (!this.state.isRpcWalletConnected()) {
       this.btnSubmit.caption = 'Switch Network';
-      this.btnSubmit.enabled = true;
+    }
+    else if (this._type === ProductType.Buy) {
+      this.btnSubmit.caption = 'Mint';
+    }
+    else {
+      this.btnSubmit.caption = 'Submit';
     }
   }
 
