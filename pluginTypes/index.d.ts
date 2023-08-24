@@ -68,6 +68,8 @@ declare module "@scom/scom-nft-minter/utils/token.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter/utils/index.ts" />
 declare module "@scom/scom-nft-minter/utils/index.ts" {
+    import { BigNumber } from '@ijstech/eth-wallet';
+    export const formatNumber: (value: string | number | BigNumber, decimals?: number) => string;
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
