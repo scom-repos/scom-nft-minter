@@ -8,9 +8,13 @@
         "@scom/scom-token-list",
         "@scom/scom-product-contract",
         "@scom/scom-commission-proxy-contract",
+        "@scom/scom-network-list",
+        "@scom/scom-multicall",
         "@scom/scom-dapp-container",
+        "@scom/scom-network-picker",
         "@scom/scom-commission-fee-setup",
         "@scom/scom-tx-status-modal",
+        "@scom/scom-token-modal",
         "@scom/scom-token-input",
         "@scom/scom-wallet-modal"
     ]

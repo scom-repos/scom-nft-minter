@@ -18,7 +18,7 @@ import {
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { getTokenBalance } from './utils/index';
+import { formatNumber, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
@@ -250,7 +250,7 @@ export default class ScomNftMinter extends Module {
     if (!token) return;
     try {
       const symbol = token?.symbol || '';
-      this.lblBalance.caption = token ? `${(await getTokenBalance(this.rpcWallet, token)).toFixed(2)} ${symbol}` : `0 ${symbol}`;
+      this.lblBalance.caption = token ? `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}` : `0 ${symbol}`;
     } catch { }
   }
 
@@ -599,7 +599,7 @@ export default class ScomNftMinter extends Module {
         if (this._type === ProductType.Buy) {
           this.lblYouPay.caption = `You pay`;
           this.pnlMintFee.visible = true;
-          this.lblMintFee.caption = `${price ?? ""} ${token?.symbol || ""}`;
+          this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}`;
           this.lblTitle.caption = this._data.title;
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
@@ -608,7 +608,7 @@ export default class ScomNftMinter extends Module {
           this.pnlQty.visible = true;
           this.pnlSpotsRemaining.visible = true;
           this.pnlMaxQty.visible = true;
-          this.lblMaxQty.caption = this.productInfo.maxQuantity.toFixed();
+          this.lblMaxQty.caption = formatNumber(this.productInfo.maxQuantity);
         } else {
           this.lblYouPay.caption = `Your donation`;
           this.pnlMintFee.visible = false;
@@ -628,7 +628,7 @@ export default class ScomNftMinter extends Module {
         // this.tokenInput.tokenReadOnly = this._data.token ? true : new BigNumber(price).gt(0);
         this.tokenInput.token = token;
         this.updateTokenBalance();
-        // this.lblBalance.caption = (await getTokenBalance(this.rpcWallet, this._data.token)).toFixed(2);
+        // this.lblBalance.caption = formatNumber(await getTokenBalance(this.rpcWallet, this._data.token));
       }
       else {
         this.pnlInputFields.visible = false;
@@ -640,7 +640,7 @@ export default class ScomNftMinter extends Module {
 
   private updateSpotsRemaining() {
     if (this.productId >= 0) {
-      this.lblSpotsRemaining.caption = `${this.productInfo.quantity.toFixed()}`;
+      this.lblSpotsRemaining.caption = `${formatNumber(this.productInfo.quantity)}`;
     } else {
       this.lblSpotsRemaining.caption = '';
     }
@@ -736,7 +736,7 @@ export default class ScomNftMinter extends Module {
 
   private async selectToken(token: ITokenObject) {
     const symbol = token?.symbol || '';
-    this.lblBalance.caption = `${(await getTokenBalance(this.rpcWallet, token)).toFixed(2)} ${symbol}`;
+    this.lblBalance.caption = `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}`;
   }
 
   private updateSubmitButton(submitting: boolean) {
@@ -778,7 +778,7 @@ export default class ScomNftMinter extends Module {
       this.tokenInput.value = amount.toFixed();
       const commissionFee = this.state.embedderCommissionFee;
       const total = amount.plus(amount.times(commissionFee));
-      this.lbOrderTotal.caption = `${total} ${this.productInfo.token?.symbol || ''}`;
+      this.lbOrderTotal.caption = `${formatNumber(total)} ${this.productInfo.token?.symbol || ''}`;
     }
     if (this.productInfo && this.state.isRpcWalletConnected())
       this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
@@ -797,7 +797,7 @@ export default class ScomNftMinter extends Module {
     const commissionFee = this.state.embedderCommissionFee;
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
     const token = this.productInfo?.token
-    this.lbOrderTotal.caption = `${total} ${token?.symbol || ''}`;
+    this.lbOrderTotal.caption = `${formatNumber(total)} ${token?.symbol || ''}`;
     if (token && this.state.isRpcWalletConnected())
       this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
   }
@@ -1102,7 +1102,6 @@ export default class ScomNftMinter extends Module {
                 <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
               </i-hstack>
             </i-grid-layout>
-            <i-scom-commission-fee-setup visible={false} />
             <i-scom-wallet-modal id="mdWallet" wallets={[]} />
             <i-scom-tx-status-modal id="txStatusModal" />
           </i-panel>
