@@ -319,71 +319,65 @@ export default class ScomNftMinter extends Module {
 
     if (category && category !== 'offers') {
       actions.push({
-        name: 'Settings',
-        icon: 'cog',
+        name: 'Edit',
+        icon: 'edit',
         command: (builder: any, userInputData: any) => {
-          let _oldData: IEmbedData = {
+          let oldData: IEmbedData = {
             wallets: [],
             networks: [],
             defaultChainId: 0
           };
-          return {
-            execute: async () => {
-              _oldData = { ...this._data };
-              Object.assign(this._data, {
-                name: userInputData.name,
-                title: userInputData.title,
-                productType: userInputData.productType,
-                logo: userInputData.logo,
-                logoUrl: userInputData.logoUrl,
-                description: userInputData.description,
-                link: userInputData.link
-              })
-              await this.resetRpcWallet();
-              if (builder?.setData) builder.setData(this._data);
-              this.refreshDApp();
-              // await this.newProduct((error: Error, receipt?: string) => {
-              //   if (error) {
-              //     this.showTxStatusModal('error', error);
-              //   }
-              // }, this.updateSpotsRemaining);
-            },
-            undo: () => {
-              this._data = { ..._oldData };
-              this.refreshDApp();
-              if (builder?.setData) builder.setData(this._data);
-            },
-            redo: () => { }
-          }
-        },
-        userInputDataSchema: formSchema.general.dataSchema
-      });
-
-      actions.push({
-        name: 'Theme Settings',
-        icon: 'palette',
-        command: (builder: any, userInputData: any) => {
           let oldTag = {};
           return {
             execute: async () => {
-              if (!userInputData) return;
+              oldData = JSON.parse(JSON.stringify(this._data));
+              const {
+                name,
+                title,
+                productType,
+                logo,
+                logoUrl,
+                description,
+                link,
+                ...themeSettings
+              } = userInputData;
+
+              const generalSettings = {
+                name,
+                title,
+                productType,
+                logo,
+                logoUrl,
+                description,
+                link
+              };
+
+              Object.assign(this._data, generalSettings);
+              await this.resetRpcWallet();
+              if (builder?.setData) builder.setData(this._data);
+              this.refreshDApp();
+
               oldTag = JSON.parse(JSON.stringify(this.tag));
-              if (builder) builder.setTag(userInputData);
-              else this.setTag(userInputData);
-              if (this.containerDapp) this.containerDapp.setTag(userInputData);
+              if (builder?.setTag) builder.setTag(themeSettings);
+              else this.setTag(themeSettings);
+              if (this.containerDapp) this.containerDapp.setTag(themeSettings);
             },
             undo: () => {
-              if (!userInputData) return;
+              this._data = JSON.parse(JSON.stringify(oldData));
+              this.refreshDApp();
+              if (builder?.setData) builder.setData(this._data);
+
               this.tag = JSON.parse(JSON.stringify(oldTag));
-              if (builder) builder.setTag(this.tag);
+              if (builder?.setTag) builder.setTag(this.tag);
               else this.setTag(this.tag);
               if (this.containerDapp) this.containerDapp.setTag(this.tag);
             },
             redo: () => { }
           }
         },
-        userInputDataSchema: formSchema.theme.dataSchema
-      })
+        userInputDataSchema: formSchema.dataSchema,
+        userInputUISchema: formSchema.uiSchema
+      });
     }
     return actions;
   }
