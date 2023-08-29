@@ -4,6 +4,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -596,45 +607,93 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
         }
     };
     exports.default = {
-        general: {
-            dataSchema: {
-                type: 'object',
-                properties: {
-                    title: {
-                        type: 'string'
-                    },
-                    description: {
-                        type: 'string',
-                        format: 'multi'
-                    },
-                    logo: {
-                        type: 'string',
-                        format: 'data-cid'
-                    },
-                    logoUrl: {
-                        type: 'string',
-                        title: 'Logo URL'
-                    },
-                    link: {
-                        type: 'string'
-                    }
+        dataSchema: {
+            type: 'object',
+            properties: {
+                title: {
+                    type: 'string'
+                },
+                description: {
+                    type: 'string',
+                    format: 'multi'
+                },
+                logo: {
+                    type: 'string',
+                    format: 'data-cid'
+                },
+                logoUrl: {
+                    type: 'string',
+                    title: 'Logo URL'
+                },
+                link: {
+                    type: 'string'
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
                 }
             }
         },
-        theme: {
-            dataSchema: {
-                type: 'object',
-                properties: {
-                    dark: {
-                        type: 'object',
-                        properties: theme
-                    },
-                    light: {
-                        type: 'object',
-                        properties: theme
-                    }
+        uiSchema: {
+            type: 'Categorization',
+            elements: [
+                {
+                    type: 'Category',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/title'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/description'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logo'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logoUrl'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/link'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Category',
+                    label: 'Theme',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    label: 'Dark',
+                                    scope: '#/properties/dark'
+                                },
+                                {
+                                    type: 'Control',
+                                    label: 'Light',
+                                    scope: '#/properties/light'
+                                }
+                            ]
+                        }
+                    ]
                 }
-            }
+            ]
         }
     };
 });
@@ -848,69 +907,48 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             ];
             if (category && category !== 'offers') {
                 actions.push({
-                    name: 'Settings',
-                    icon: 'cog',
+                    name: 'Edit',
+                    icon: 'edit',
                     command: (builder, userInputData) => {
-                        let _oldData = {
+                        let oldData = {
                             wallets: [],
                             networks: [],
                             defaultChainId: 0
                         };
+                        let oldTag = {};
                         return {
                             execute: async () => {
-                                _oldData = Object.assign({}, this._data);
-                                Object.assign(this._data, {
-                                    name: userInputData.name,
-                                    title: userInputData.title,
-                                    productType: userInputData.productType,
-                                    logo: userInputData.logo,
-                                    logoUrl: userInputData.logoUrl,
-                                    description: userInputData.description,
-                                    link: userInputData.link
-                                });
+                                oldData = JSON.parse(JSON.stringify(this._data));
+                                const { name, title, productType, logo, logoUrl, description, link } = userInputData, themeSettings = __rest(userInputData, ["name", "title", "productType", "logo", "logoUrl", "description", "link"]);
+                                const generalSettings = {
+                                    name,
+                                    title,
+                                    productType,
+                                    logo,
+                                    logoUrl,
+                                    description,
+                                    link
+                                };
+                                Object.assign(this._data, generalSettings);
                                 await this.resetRpcWallet();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
                                 this.refreshDApp();
-                                // await this.newProduct((error: Error, receipt?: string) => {
-                                //   if (error) {
-                                //     this.showTxStatusModal('error', error);
-                                //   }
-                                // }, this.updateSpotsRemaining);
+                                oldTag = JSON.parse(JSON.stringify(this.tag));
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
+                                    builder.setTag(themeSettings);
+                                else
+                                    this.setTag(themeSettings);
+                                if (this.containerDapp)
+                                    this.containerDapp.setTag(themeSettings);
                             },
                             undo: () => {
-                                this._data = Object.assign({}, _oldData);
+                                this._data = JSON.parse(JSON.stringify(oldData));
                                 this.refreshDApp();
                                 if (builder === null || builder === void 0 ? void 0 : builder.setData)
                                     builder.setData(this._data);
-                            },
-                            redo: () => { }
-                        };
-                    },
-                    userInputDataSchema: formSchema_json_1.default.general.dataSchema
-                });
-                actions.push({
-                    name: 'Theme Settings',
-                    icon: 'palette',
-                    command: (builder, userInputData) => {
-                        let oldTag = {};
-                        return {
-                            execute: async () => {
-                                if (!userInputData)
-                                    return;
-                                oldTag = JSON.parse(JSON.stringify(this.tag));
-                                if (builder)
-                                    builder.setTag(userInputData);
-                                else
-                                    this.setTag(userInputData);
-                                if (this.containerDapp)
-                                    this.containerDapp.setTag(userInputData);
-                            },
-                            undo: () => {
-                                if (!userInputData)
-                                    return;
                                 this.tag = JSON.parse(JSON.stringify(oldTag));
-                                if (builder)
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
                                     builder.setTag(this.tag);
                                 else
                                     this.setTag(this.tag);
@@ -920,7 +958,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             redo: () => { }
                         };
                     },
-                    userInputDataSchema: formSchema_json_1.default.theme.dataSchema
+                    userInputDataSchema: formSchema_json_1.default.dataSchema,
+                    userInputUISchema: formSchema_json_1.default.uiSchema
                 });
             }
             return actions;

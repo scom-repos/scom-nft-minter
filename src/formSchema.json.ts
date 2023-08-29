@@ -18,44 +18,92 @@ const theme = {
 }
 
 export default {
-    general: {
-        dataSchema: {
-            type: 'object',
-            properties: {
-                title: {
-                    type: 'string'
-                },
-                description: {
-                    type: 'string',
-                    format: 'multi'
-                },
-                logo: {
-                    type: 'string',
-                    format: 'data-cid'
-                },
-                logoUrl: {
-                    type: 'string',
-                    title: 'Logo URL'
-                },
-                link: {
-                    type: 'string'
-                }
+    dataSchema: {
+        type: 'object',
+        properties: {
+            title: {
+                type: 'string'
+            },
+            description: {
+                type: 'string',
+                format: 'multi'
+            },
+            logo: {
+                type: 'string',
+                format: 'data-cid'
+            },
+            logoUrl: {
+                type: 'string',
+                title: 'Logo URL'
+            },
+            link: {
+                type: 'string'
+            },
+            dark: {
+                type: 'object',
+                properties: theme
+            },
+            light: {
+                type: 'object',
+                properties: theme
             }
         }
     },
-    theme: {
-        dataSchema: {
-            type: 'object',
-            properties: {
-                dark: {
-                    type: 'object',
-                    properties: theme
-                },
-                light: {
-                    type: 'object',
-                    properties: theme
-                }
+    uiSchema: {
+        type: 'Categorization',
+        elements: [
+            {
+                type: 'Category',
+                label: 'General',
+                elements: [
+                    {
+                        type: 'VerticalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                scope: '#/properties/title'
+                            },
+                            {
+                                type: 'Control',
+                                scope: '#/properties/description'
+                            },
+                            {
+                                type: 'Control',
+                                scope: '#/properties/logo'
+                            },
+                            {
+                                type: 'Control',
+                                scope: '#/properties/logoUrl'
+                            },
+                            {
+                                type: 'Control',
+                                scope: '#/properties/link'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                type: 'Category',
+                label: 'Theme',
+                elements: [
+                    {
+                        type: 'VerticalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                label: 'Dark',
+                                scope: '#/properties/dark'
+                            },
+                            {
+                                type: 'Control',
+                                label: 'Light',
+                                scope: '#/properties/light'
+                            }
+                        ]
+                    }
+                ]
             }
-        }
+        ]
     }
 }

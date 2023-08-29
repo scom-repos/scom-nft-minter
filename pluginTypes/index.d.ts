@@ -183,79 +183,95 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     const _default_1: {
-        general: {
-            dataSchema: {
-                type: string;
-                properties: {
-                    title: {
-                        type: string;
+        dataSchema: {
+            type: string;
+            properties: {
+                title: {
+                    type: string;
+                };
+                description: {
+                    type: string;
+                    format: string;
+                };
+                logo: {
+                    type: string;
+                    format: string;
+                };
+                logoUrl: {
+                    type: string;
+                    title: string;
+                };
+                link: {
+                    type: string;
+                };
+                dark: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
                     };
-                    description: {
-                        type: string;
-                        format: string;
-                    };
-                    logo: {
-                        type: string;
-                        format: string;
-                    };
-                    logoUrl: {
-                        type: string;
-                        title: string;
-                    };
-                    link: {
-                        type: string;
+                };
+                light: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
                     };
                 };
             };
         };
-        theme: {
-            dataSchema: {
+        uiSchema: {
+            type: string;
+            elements: ({
                 type: string;
-                properties: {
-                    dark: {
+                label: string;
+                elements: {
+                    type: string;
+                    elements: {
                         type: string;
-                        properties: {
-                            backgroundColor: {
-                                type: string;
-                                format: string;
-                            };
-                            fontColor: {
-                                type: string;
-                                format: string;
-                            };
-                            inputBackgroundColor: {
-                                type: string;
-                                format: string;
-                            };
-                            inputFontColor: {
-                                type: string;
-                                format: string;
-                            };
-                        };
-                    };
-                    light: {
+                        scope: string;
+                    }[];
+                }[];
+            } | {
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: {
                         type: string;
-                        properties: {
-                            backgroundColor: {
-                                type: string;
-                                format: string;
-                            };
-                            fontColor: {
-                                type: string;
-                                format: string;
-                            };
-                            inputBackgroundColor: {
-                                type: string;
-                                format: string;
-                            };
-                            inputFontColor: {
-                                type: string;
-                                format: string;
-                            };
-                        };
-                    };
-                };
-            };
+                        label: string;
+                        scope: string;
+                    }[];
+                }[];
+            })[];
         };
     };
     export default _default_1;
