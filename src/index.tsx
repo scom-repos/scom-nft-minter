@@ -18,7 +18,7 @@ import {
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { formatNumber, getPair, getTokenBalance } from './utils/index';
+import { formatNumber, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
