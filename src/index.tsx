@@ -30,7 +30,6 @@ import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import formSchema from './formSchema.json';
-import getDexList from '@scom/scom-dex-list';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;

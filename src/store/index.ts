@@ -1,6 +1,5 @@
 import { application } from "@ijstech/components";
 import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
-import { IDexDetail, IDexInfo } from '@scom/scom-dex-list';
 export interface IContractDetailInfo {
   address: string;
 }
@@ -16,7 +15,6 @@ export interface IContractInfo {
 export type ContractInfoByChainType = { [key: number]: IContractInfo };
 
 export class State {
-  dexInfoList: IDexInfo[] = [];
   contractInfoByChain: ContractInfoByChainType = {};
   embedderCommissionFee: string = '0';
   rpcWalletId: string = '';
@@ -53,35 +51,6 @@ export class State {
       rpcWallet.address = clientWallet.address;
     }
     return instanceId;
-  }
-
-  setDexInfoList(value: IDexInfo[]) {
-    this.dexInfoList = value;
-  }
-
-  getDexInfoList(options?: { key?: string, chainId?: number }) {
-    if (!options) return this.dexInfoList;
-    const { key, chainId } = options;
-    let dexList = this.dexInfoList;
-    if (key) {
-      dexList = dexList.filter(v => v.dexCode === key);
-    }
-    if (chainId) {
-      dexList = dexList.filter(v => v.details.some(d => d.chainId === chainId));
-    }
-    return dexList;
-  }
-
-  getDexDetail(key: string, chainId: number) {
-    for (const dex of this.dexInfoList) {
-      if (dex.dexCode === key) {
-        const dexDetail: IDexDetail = dex.details.find(v => v.chainId === chainId);
-        if (dexDetail) {
-          return dexDetail;
-        }
-      }
-    }
-    return undefined;
   }
 
   getContractAddress(type: ContractType) {
