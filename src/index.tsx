@@ -17,8 +17,8 @@ import {
   application,
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IProviderUI, IWalletPlugin, ProductType } from './interface/index';
-import { formatNumber, getPair, getProviderProxySelectors, getTokenBalance } from './utils/index';
+import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
+import { formatNumber, getPair, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
@@ -46,7 +46,6 @@ interface ScomNftMinterElement extends ControlElement {
   wallets: IWalletPlugin[];
   networks: INetworkConfig[];
   showHeader?: boolean;
-  providers: IProviderUI[];
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -97,7 +96,6 @@ export default class ScomNftMinter extends Module {
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
   private _data: IEmbedData = {
-    providers: [],
     wallets: [],
     networks: [],
     defaultChainId: 0
@@ -269,7 +267,6 @@ export default class ScomNftMinter extends Module {
         icon: 'dollar-sign',
         command: (builder: any, userInputData: any) => {
           let _oldData: IEmbedData = {
-            providers: [],
             wallets: [],
             networks: [],
             defaultChainId: 0
@@ -327,7 +324,6 @@ export default class ScomNftMinter extends Module {
         icon: 'edit',
         command: (builder: any, userInputData: any) => {
           let oldData: IEmbedData = {
-            providers: [],
             wallets: [],
             networks: [],
             defaultChainId: 0
@@ -405,16 +401,8 @@ export default class ScomNftMinter extends Module {
         name: 'Project Owner Configurator',
         target: 'Project Owners',
         getProxySelectors: async () => {
-          const selectors = await getProviderProxySelectors(this.state, this._data.providers);
+          const selectors = [];
           return selectors;
-        },
-        getDexProviderOptions: (chainId: number) => {
-          const providers = this.state.getDexInfoList({ chainId });
-          return providers;
-        },
-        getPair: async (market: string, tokenA: ITokenObject, tokenB: ITokenObject) => {
-          const pair = await getPair(this.state, market, tokenA, tokenB);
-          return pair;
         },
         getActions: () => {
           return this.getProjectOwnerActions();
@@ -949,8 +937,6 @@ export default class ScomNftMinter extends Module {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
-    const dexList = getDexList();
-    this.state.setDexInfoList(dexList);
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const link = this.getAttribute('link', true);
@@ -965,7 +951,6 @@ export default class ScomNftMinter extends Module {
       const wallets = this.getAttribute('wallets', true);
       const showHeader = this.getAttribute('showHeader', true);
       const defaultChainId = this.getAttribute('defaultChainId', true);
-      const providers = this.getAttribute('providers', true, []);
       await this.setData({
         link,
         productType,
@@ -978,8 +963,7 @@ export default class ScomNftMinter extends Module {
         logoUrl,
         networks,
         wallets,
-        showHeader,
-        providers
+        showHeader
       });
     }
     this.isReadyCallbackQueued = false;
