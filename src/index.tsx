@@ -18,7 +18,7 @@ import {
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { formatNumber, getTokenBalance } from './utils/index';
+import { formatNumber, getProxySelectors, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
@@ -399,8 +399,8 @@ export default class ScomNftMinter extends Module {
       {
         name: 'Project Owner Configurator',
         target: 'Project Owners',
-        getProxySelectors: async () => {
-          const selectors = [];
+        getProxySelectors: async (chainId: number) => {
+          const selectors = await getProxySelectors(this.state, chainId);
           return selectors;
         },
         getActions: () => {

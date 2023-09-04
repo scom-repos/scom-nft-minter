@@ -1,4 +1,6 @@
-import { BigNumber } from '@ijstech/eth-wallet';
+import { BigNumber, IRpcWallet } from '@ijstech/eth-wallet';
+import { Contracts as ProductContracts } from '@scom/scom-product-contract';
+import { State } from "../store/index";
 
 export const formatNumber = (value: string | number | BigNumber, decimals?: number) => {
   let val = value;
@@ -31,6 +33,25 @@ const formatNumberWithSeparators = (value: number, precision?: number) => {
     return outputStr;
   }
   return value.toLocaleString('en-US');
+}
+
+export async function getProxySelectors(state: State, chainId: number): Promise<string[]> {
+  const wallet = state.getRpcWallet();
+  await wallet.init();
+  if (wallet.chainId != chainId) await wallet.switchNetwork(chainId);
+  let productInfoAddress = state.getContractAddress('ProductInfo');
+  let contract = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+  let permittedProxyFunctions: (keyof ProductContracts.ProductInfo)[] = [
+    "buy",
+    "buyEth",
+    "donate",
+    "donateEth"
+  ];
+  let selectors = permittedProxyFunctions
+    .map(e => e + "(" + contract._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")")
+    .map(e => wallet.soliditySha3(e).substring(0, 10))
+    .map(e => contract.address.toLowerCase() + e.replace("0x", ""));
+  return selectors;
 }
 
 export {
