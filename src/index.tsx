@@ -17,8 +17,8 @@ import {
   application,
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { formatNumber, getTokenBalance } from './utils/index';
+import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IProviderUI, IWalletPlugin, ProductType } from './interface/index';
+import { formatNumber, getPair, getProviderProxySelectors, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
@@ -30,6 +30,7 @@ import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import formSchema from './formSchema.json';
+import getDexList from '@scom/scom-dex-list';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -45,6 +46,7 @@ interface ScomNftMinterElement extends ControlElement {
   wallets: IWalletPlugin[];
   networks: INetworkConfig[];
   showHeader?: boolean;
+  providers: IProviderUI[];
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -95,6 +97,7 @@ export default class ScomNftMinter extends Module {
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
   private _data: IEmbedData = {
+    providers: [],
     wallets: [],
     networks: [],
     defaultChainId: 0
@@ -258,7 +261,7 @@ export default class ScomNftMinter extends Module {
     if (this.state.isRpcWalletConnected()) await this.initApprovalAction();
   }
 
-  private _getActions(category?: string) {
+  private getBuilderActions(category?: string) {
     let self = this;
     const actions: any = [
       {
@@ -266,6 +269,7 @@ export default class ScomNftMinter extends Module {
         icon: 'dollar-sign',
         command: (builder: any, userInputData: any) => {
           let _oldData: IEmbedData = {
+            providers: [],
             wallets: [],
             networks: [],
             defaultChainId: 0
@@ -323,6 +327,7 @@ export default class ScomNftMinter extends Module {
         icon: 'edit',
         command: (builder: any, userInputData: any) => {
           let oldData: IEmbedData = {
+            providers: [],
             wallets: [],
             networks: [],
             defaultChainId: 0
@@ -382,14 +387,50 @@ export default class ScomNftMinter extends Module {
     return actions;
   }
 
+  private getProjectOwnerActions() {
+    const actions: any[] = [
+      {
+        name: 'Settings',
+        userInputDataSchema: formSchema.dataSchema,
+        userInputUISchema: formSchema.uiSchema
+      }
+    ];
+    return actions;
+  }
+
   getConfigurators() {
     let self = this;
     return [
       {
+        name: 'Project Owner Configurator',
+        target: 'Project Owners',
+        getProxySelectors: async () => {
+          const selectors = await getProviderProxySelectors(this.state, this._data.providers);
+          return selectors;
+        },
+        getDexProviderOptions: (chainId: number) => {
+          const providers = this.state.getDexInfoList({ chainId });
+          return providers;
+        },
+        getPair: async (market: string, tokenA: ITokenObject, tokenB: ITokenObject) => {
+          const pair = await getPair(this.state, market, tokenA, tokenB);
+          return pair;
+        },
+        getActions: () => {
+          return this.getProjectOwnerActions();
+        },
+        getData: this.getData.bind(this),
+        setData: async (data: IEmbedData) => {
+          await this.setData(data);
+        },
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
+      },
+      {
         name: 'Builder Configurator',
         target: 'Builders',
         getActions: (category?: string) => {
-          return this._getActions(category);
+          return this.getBuilderActions(category);
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
@@ -558,9 +599,9 @@ export default class ScomNftMinter extends Module {
     this.lblLink.caption = data.link || '';
     this.lblLink.link.href = data.link;
     if (data.logo) {
-      this.imgLogo.url = `${this.state.ipfsGatewayUrl}${data.logo}`;
+      this.imgLogo.url = `/ipfs/${data.logo}`;
     } else if (data.logoUrl?.startsWith('ipfs://')) {
-      this.imgLogo.url = data.logoUrl.replace('ipfs://', this.state.ipfsGatewayUrl);
+      this.imgLogo.url = data.logoUrl.replace('ipfs://', '/ipfs/');
     }
     else {
       this.imgLogo.url = data.logoUrl || "";
@@ -908,6 +949,8 @@ export default class ScomNftMinter extends Module {
   async init() {
     this.isReadyCallbackQueued = true;
     super.init();
+    const dexList = getDexList();
+    this.state.setDexInfoList(dexList);
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const link = this.getAttribute('link', true);
@@ -922,6 +965,7 @@ export default class ScomNftMinter extends Module {
       const wallets = this.getAttribute('wallets', true);
       const showHeader = this.getAttribute('showHeader', true);
       const defaultChainId = this.getAttribute('defaultChainId', true);
+      const providers = this.getAttribute('providers', true, []);
       await this.setData({
         link,
         productType,
@@ -935,6 +979,7 @@ export default class ScomNftMinter extends Module {
         networks,
         wallets,
         showHeader,
+        providers
       });
     }
     this.isReadyCallbackQueued = false;

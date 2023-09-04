@@ -1,5 +1,4 @@
 export default {
-    "ipfsGatewayUrl": "https://ipfs.scom.dev/ipfs/",
     "contractInfo": {
         "43113": {
             "ProductNFT": {

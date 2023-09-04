@@ -43,6 +43,7 @@ export interface IEmbedData {
   wallets: IWalletPlugin[];
   networks: any[];
   showHeader?: boolean;
+  providers: IProviderUI[];
 }
 
 export interface IWalletPlugin {
@@ -53,5 +54,10 @@ export interface IWalletPlugin {
 
 export interface INetworkConfig {
   chainName?: string;
+  chainId: number;
+}
+
+export interface IProviderUI {
+  key: string;
   chainId: number;
 }
