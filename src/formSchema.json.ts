@@ -17,93 +17,230 @@ const theme = {
     }
 }
 
-export default {
-    dataSchema: {
-        type: 'object',
-        properties: {
-            title: {
-                type: 'string'
-            },
-            description: {
-                type: 'string',
-                format: 'multi'
-            },
-            logo: {
-                type: 'string',
-                format: 'data-cid'
-            },
-            logoUrl: {
-                type: 'string',
-                title: 'Logo URL'
-            },
-            link: {
-                type: 'string'
-            },
-            dark: {
-                type: 'object',
-                properties: theme
-            },
-            light: {
-                type: 'object',
-                properties: theme
+export function getBuilderSchema() {
+    return {
+        dataSchema: {
+            type: 'object',
+            properties: {
+                title: {
+                    type: 'string'
+                },
+                description: {
+                    type: 'string',
+                    format: 'multi'
+                },
+                logo: {
+                    type: 'string',
+                    format: 'data-cid'
+                },
+                logoUrl: {
+                    type: 'string',
+                    title: 'Logo URL'
+                },
+                link: {
+                    type: 'string'
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
+                }
             }
+        },
+        uiSchema: {
+            type: 'Categorization',
+            elements: [
+                {
+                    type: 'Category',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/title'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/description'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logo'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logoUrl'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/link'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Category',
+                    label: 'Theme',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    label: 'Dark',
+                                    scope: '#/properties/dark'
+                                },
+                                {
+                                    type: 'Control',
+                                    label: 'Light',
+                                    scope: '#/properties/light'
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
-    },
-    uiSchema: {
-        type: 'Categorization',
-        elements: [
-            {
-                type: 'Category',
-                label: 'General',
-                elements: [
-                    {
-                        type: 'VerticalLayout',
-                        elements: [
-                            {
-                                type: 'Control',
-                                scope: '#/properties/title'
-                            },
-                            {
-                                type: 'Control',
-                                scope: '#/properties/description'
-                            },
-                            {
-                                type: 'Control',
-                                scope: '#/properties/logo'
-                            },
-                            {
-                                type: 'Control',
-                                scope: '#/properties/logoUrl'
-                            },
-                            {
-                                type: 'Control',
-                                scope: '#/properties/link'
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                type: 'Category',
-                label: 'Theme',
-                elements: [
-                    {
-                        type: 'VerticalLayout',
-                        elements: [
-                            {
-                                type: 'Control',
-                                label: 'Dark',
-                                scope: '#/properties/dark'
-                            },
-                            {
-                                type: 'Control',
-                                label: 'Light',
-                                scope: '#/properties/light'
-                            }
-                        ]
-                    }
-                ]
+    }
+}
+
+export function getProjectOwnerSchema() {
+    return {
+        dataSchema: {
+            type: 'object',
+            properties: {
+                title: {
+                    type: 'string'
+                },
+                description: {
+                    type: 'string',
+                    format: 'multi'
+                },
+                logo: {
+                    type: 'string',
+                    format: 'data-cid'
+                },
+                logoUrl: {
+                    type: 'string',
+                    title: 'Logo URL'
+                },
+                productType: {
+                    type: 'string',
+                    title: 'Type',
+                    required: true,
+                    enum: [
+                        'Buy',
+                        'DonateToOwner',
+                        'DonateToEveryone'
+                    ]
+                },
+                productId: {
+                    type: 'integer',
+                    minimum: 1,
+                    required: true
+                },
+                donateTo: {
+                    type: 'string',
+                    format: 'wallet-address'
+                },
+                link: {
+                    type: 'string'
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
+                }
             }
-        ]
+        },
+        uiSchema: {
+            type: 'Categorization',
+            elements: [
+                {
+                    type: 'Category',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/title'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/productType'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/productId'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/donateTo',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/productType',
+                                            schema: {
+                                                enum: [
+                                                    'DonateToEveryone'
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/description'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logo'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/logoUrl'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/link'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Category',
+                    label: 'Theme',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    label: 'Dark',
+                                    scope: '#/properties/dark'
+                                },
+                                {
+                                    type: 'Control',
+                                    label: 'Light',
+                                    scope: '#/properties/light'
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
     }
 }

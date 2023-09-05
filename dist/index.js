@@ -32,7 +32,6 @@ define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/
     exports.isClientWalletConnected = exports.getClientWallet = exports.State = void 0;
     class State {
         constructor(options) {
-            this.dexInfoList = [];
             this.contractInfoByChain = {};
             this.embedderCommissionFee = '0';
             this.rpcWalletId = '';
@@ -65,33 +64,6 @@ define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/
                 rpcWallet.address = clientWallet.address;
             }
             return instanceId;
-        }
-        setDexInfoList(value) {
-            this.dexInfoList = value;
-        }
-        getDexInfoList(options) {
-            if (!options)
-                return this.dexInfoList;
-            const { key, chainId } = options;
-            let dexList = this.dexInfoList;
-            if (key) {
-                dexList = dexList.filter(v => v.dexCode === key);
-            }
-            if (chainId) {
-                dexList = dexList.filter(v => v.details.some(d => d.chainId === chainId));
-            }
-            return dexList;
-        }
-        getDexDetail(key, chainId) {
-            for (const dex of this.dexInfoList) {
-                if (dex.dexCode === key) {
-                    const dexDetail = dex.details.find(v => v.chainId === chainId);
-                    if (dexDetail) {
-                        return dexDetail;
-                    }
-                }
-            }
-            return undefined;
         }
         getContractAddress(type) {
             var _a;
@@ -173,10 +145,10 @@ define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/
     };
     exports.registerSendTxEvents = registerSendTxEvents;
 });
-define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-token-list", "@scom/oswap-openswap-contract", "@scom/scom-dex-list", "@scom/scom-nft-minter/utils/token.ts"], function (require, exports, eth_wallet_3, scom_token_list_1, oswap_openswap_contract_1, scom_dex_list_1, token_1) {
+define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-product-contract", "@scom/scom-nft-minter/utils/token.ts"], function (require, exports, eth_wallet_3, scom_product_contract_1, token_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = exports.getPair = exports.getProviderProxySelectors = exports.formatNumber = void 0;
+    exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = exports.getProxySelectors = exports.formatNumber = void 0;
     const formatNumber = (value, decimals) => {
         let val = value;
         const minValue = '0.0000001';
@@ -212,45 +184,26 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@ijstech/
         }
         return value.toLocaleString('en-US');
     };
-    const getWETH = (chainId) => {
-        return scom_token_list_1.WETHByChainId[chainId];
-    };
-    const getFactoryAddress = (state, key) => {
-        var _a;
-        const factoryAddress = ((_a = state.getDexDetail(key, state.getChainId())) === null || _a === void 0 ? void 0 : _a.factoryAddress) || '';
-        return factoryAddress;
-    };
-    const getProviderProxySelectors = async (state, providers) => {
-        var _a;
+    async function getProxySelectors(state, chainId) {
         const wallet = state.getRpcWallet();
         await wallet.init();
-        let selectorsSet = new Set();
-        for (let provider of providers) {
-            const dex = state.getDexInfoList({ key: provider.key, chainId: provider.chainId })[0];
-            if (dex) {
-                const routerAddress = ((_a = dex.details.find(v => v.chainId === provider.chainId)) === null || _a === void 0 ? void 0 : _a.routerAddress) || '';
-                const selectors = await (0, scom_dex_list_1.getSwapProxySelectors)(wallet, dex.dexType, provider.chainId, routerAddress);
-                selectors.forEach(v => selectorsSet.add(v));
-            }
-        }
-        return Array.from(selectorsSet);
-    };
-    exports.getProviderProxySelectors = getProviderProxySelectors;
-    const getPair = async (state, market, tokenA, tokenB) => {
-        const wallet = state.getRpcWallet();
-        let chainId = state.getChainId();
-        if (!tokenA.address)
-            tokenA = getWETH(chainId);
-        if (!tokenB.address)
-            tokenB = getWETH(chainId);
-        let factory = new oswap_openswap_contract_1.Contracts.OSWAP_Factory(wallet, getFactoryAddress(state, market));
-        let pair = await factory.getPair({
-            param1: tokenA.address,
-            param2: tokenB.address
-        });
-        return pair;
-    };
-    exports.getPair = getPair;
+        if (wallet.chainId != chainId)
+            await wallet.switchNetwork(chainId);
+        let productInfoAddress = state.getContractAddress('ProductInfo');
+        let contract = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+        let permittedProxyFunctions = [
+            "buy",
+            "buyEth",
+            "donate",
+            "donateEth"
+        ];
+        let selectors = permittedProxyFunctions
+            .map(e => e + "(" + contract._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")")
+            .map(e => wallet.soliditySha3(e).substring(0, 10))
+            .map(e => contract.address.toLowerCase() + e.replace("0x", ""));
+        return selectors;
+    }
+    exports.getProxySelectors = getProxySelectors;
     Object.defineProperty(exports, "getERC20Amount", { enumerable: true, get: function () { return token_1.getERC20Amount; } });
     Object.defineProperty(exports, "getTokenBalance", { enumerable: true, get: function () { return token_1.getTokenBalance; } });
     Object.defineProperty(exports, "registerSendTxEvents", { enumerable: true, get: function () { return token_1.registerSendTxEvents; } });
@@ -338,7 +291,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
         }
     });
 });
-define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_4, index_1, scom_product_contract_1, scom_commission_proxy_contract_1, index_2, scom_token_list_2) {
+define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_4, index_1, scom_product_contract_2, scom_commission_proxy_contract_1, index_2, scom_token_list_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getProductInfo = void 0;
@@ -348,10 +301,10 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             return null;
         try {
             const wallet = state.getRpcWallet();
-            const productInfo = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+            const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
             const product = await productInfo.products(productId);
             const chainId = wallet.chainId;
-            const _tokenList = scom_token_list_2.tokenStore.getTokenList(chainId);
+            const _tokenList = scom_token_list_1.tokenStore.getTokenList(chainId);
             const token = _tokenList.find(token => (product === null || product === void 0 ? void 0 : product.token) && (token === null || token === void 0 ? void 0 : token.address) && token.address.toLowerCase() === product.token.toLowerCase());
             return Object.assign(Object.assign({}, product), { token });
         }
@@ -363,7 +316,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     async function newProduct(state, productType, qty, maxQty, price, maxPrice, token, callback, confirmationCallback) {
         let productInfoAddress = state.getContractAddress('ProductInfo');
         const wallet = eth_wallet_4.Wallet.getClientInstance();
-        const productInfo = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_2.registerSendTxEvents)({
             transactionHash: callback,
             confirmation: confirmationCallback
@@ -421,7 +374,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         let productInfoAddress = state.getContractAddress('ProductInfo');
         const wallet = eth_wallet_4.Wallet.getClientInstance();
         const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         const product = await productInfo.products(productId);
         const amount = product.price.times(quantity);
         const _commissions = (commissions || []).filter(v => v.chainId === state.getChainId()).map(v => {
@@ -503,7 +456,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         let productInfoAddress = state.getContractAddress('ProductInfo');
         const wallet = eth_wallet_4.Wallet.getClientInstance();
         const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         const tokenDecimals = (token === null || token === void 0 ? void 0 : token.decimals) || 18;
         const amount = eth_wallet_4.Utils.toDecimals(amountIn, tokenDecimals);
         const _commissions = (commissions || []).map(v => {
@@ -649,6 +602,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
 define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getProjectOwnerSchema = exports.getBuilderSchema = void 0;
     ///<amd-module name='@scom/scom-nft-minter/formSchema.json.ts'/> 
     const theme = {
         backgroundColor: {
@@ -668,98 +622,236 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
             format: 'color'
         }
     };
-    exports.default = {
-        dataSchema: {
-            type: 'object',
-            properties: {
-                title: {
-                    type: 'string'
-                },
-                description: {
-                    type: 'string',
-                    format: 'multi'
-                },
-                logo: {
-                    type: 'string',
-                    format: 'data-cid'
-                },
-                logoUrl: {
-                    type: 'string',
-                    title: 'Logo URL'
-                },
-                link: {
-                    type: 'string'
-                },
-                dark: {
-                    type: 'object',
-                    properties: theme
-                },
-                light: {
-                    type: 'object',
-                    properties: theme
+    function getBuilderSchema() {
+        return {
+            dataSchema: {
+                type: 'object',
+                properties: {
+                    title: {
+                        type: 'string'
+                    },
+                    description: {
+                        type: 'string',
+                        format: 'multi'
+                    },
+                    logo: {
+                        type: 'string',
+                        format: 'data-cid'
+                    },
+                    logoUrl: {
+                        type: 'string',
+                        title: 'Logo URL'
+                    },
+                    link: {
+                        type: 'string'
+                    },
+                    dark: {
+                        type: 'object',
+                        properties: theme
+                    },
+                    light: {
+                        type: 'object',
+                        properties: theme
+                    }
                 }
+            },
+            uiSchema: {
+                type: 'Categorization',
+                elements: [
+                    {
+                        type: 'Category',
+                        label: 'General',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/title'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/description'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/logo'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/logoUrl'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/link'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        type: 'Category',
+                        label: 'Theme',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        label: 'Dark',
+                                        scope: '#/properties/dark'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        label: 'Light',
+                                        scope: '#/properties/light'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
-        },
-        uiSchema: {
-            type: 'Categorization',
-            elements: [
-                {
-                    type: 'Category',
-                    label: 'General',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/title'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/description'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/logo'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/logoUrl'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/link'
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    type: 'Category',
-                    label: 'Theme',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    label: 'Dark',
-                                    scope: '#/properties/dark'
-                                },
-                                {
-                                    type: 'Control',
-                                    label: 'Light',
-                                    scope: '#/properties/light'
-                                }
-                            ]
-                        }
-                    ]
+        };
+    }
+    exports.getBuilderSchema = getBuilderSchema;
+    function getProjectOwnerSchema() {
+        return {
+            dataSchema: {
+                type: 'object',
+                properties: {
+                    title: {
+                        type: 'string'
+                    },
+                    description: {
+                        type: 'string',
+                        format: 'multi'
+                    },
+                    logo: {
+                        type: 'string',
+                        format: 'data-cid'
+                    },
+                    logoUrl: {
+                        type: 'string',
+                        title: 'Logo URL'
+                    },
+                    productType: {
+                        type: 'string',
+                        title: 'Type',
+                        required: true,
+                        enum: [
+                            'Buy',
+                            'DonateToOwner',
+                            'DonateToEveryone'
+                        ]
+                    },
+                    productId: {
+                        type: 'integer',
+                        minimum: 1,
+                        required: true
+                    },
+                    donateTo: {
+                        type: 'string',
+                        format: 'wallet-address'
+                    },
+                    link: {
+                        type: 'string'
+                    },
+                    dark: {
+                        type: 'object',
+                        properties: theme
+                    },
+                    light: {
+                        type: 'object',
+                        properties: theme
+                    }
                 }
-            ]
-        }
-    };
+            },
+            uiSchema: {
+                type: 'Categorization',
+                elements: [
+                    {
+                        type: 'Category',
+                        label: 'General',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/title'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/productType'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/productId'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/donateTo',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/productType',
+                                                schema: {
+                                                    enum: [
+                                                        'DonateToEveryone'
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/description'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/logo'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/logoUrl'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/link'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        type: 'Category',
+                        label: 'Theme',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        label: 'Dark',
+                                        scope: '#/properties/dark'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        label: 'Light',
+                                        scope: '#/properties/light'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+    }
+    exports.getProjectOwnerSchema = getProjectOwnerSchema;
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-nft-minter/formSchema.json.ts", "@scom/scom-dex-list"], function (require, exports, components_3, eth_wallet_5, index_3, index_4, index_5, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, formSchema_json_1, scom_dex_list_2) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_3, eth_wallet_5, index_3, index_4, index_5, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, formSchema_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_3.Styles.Theme.ThemeVars;
@@ -767,7 +859,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         constructor(parent, options) {
             super(parent, options);
             this._data = {
-                providers: [],
                 wallets: [],
                 networks: [],
                 defaultChainId: 0
@@ -817,8 +908,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return this.state.getRpcWallet();
         }
         get donateTo() {
-            var _a, _b, _c;
-            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[this.chainId]) === null || _b === void 0 ? void 0 : _b.donateTo) !== null && _c !== void 0 ? _c : '';
+            var _a, _b, _c, _d;
+            return (_d = (_a = this._data.donateTo) !== null && _a !== void 0 ? _a : (_c = (_b = this._data.chainSpecificProperties) === null || _b === void 0 ? void 0 : _b[this.chainId]) === null || _c === void 0 ? void 0 : _c.donateTo) !== null && _d !== void 0 ? _d : '';
         }
         get link() {
             var _a;
@@ -828,8 +919,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.link = value;
         }
         get productId() {
-            var _a, _b, _c;
-            return (_c = (_b = (_a = this._data.chainSpecificProperties) === null || _a === void 0 ? void 0 : _a[this.chainId]) === null || _b === void 0 ? void 0 : _b.productId) !== null && _c !== void 0 ? _c : 0;
+            var _a, _b, _c, _d;
+            return (_d = (_a = this._data.productId) !== null && _a !== void 0 ? _a : (_c = (_b = this._data.chainSpecificProperties) === null || _b === void 0 ? void 0 : _b[this.chainId]) === null || _c === void 0 ? void 0 : _c.productId) !== null && _d !== void 0 ? _d : 0;
         }
         get productType() {
             var _a;
@@ -912,13 +1003,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         getBuilderActions(category) {
             let self = this;
+            const formSchema = (0, formSchema_json_1.getBuilderSchema)();
             const actions = [
                 {
                     name: 'Commissions',
                     icon: 'dollar-sign',
                     command: (builder, userInputData) => {
                         let _oldData = {
-                            providers: [],
                             wallets: [],
                             networks: [],
                             defaultChainId: 0
@@ -975,7 +1066,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     icon: 'edit',
                     command: (builder, userInputData) => {
                         let oldData = {
-                            providers: [],
                             wallets: [],
                             networks: [],
                             defaultChainId: 0
@@ -1023,18 +1113,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             redo: () => { }
                         };
                     },
-                    userInputDataSchema: formSchema_json_1.default.dataSchema,
-                    userInputUISchema: formSchema_json_1.default.uiSchema
+                    userInputDataSchema: formSchema.dataSchema,
+                    userInputUISchema: formSchema.uiSchema
                 });
             }
             return actions;
         }
         getProjectOwnerActions() {
+            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema)();
             const actions = [
                 {
                     name: 'Settings',
-                    userInputDataSchema: formSchema_json_1.default.dataSchema,
-                    userInputUISchema: formSchema_json_1.default.uiSchema
+                    userInputDataSchema: formSchema.dataSchema,
+                    userInputUISchema: formSchema.uiSchema
                 }
             ];
             return actions;
@@ -1045,17 +1136,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 {
                     name: 'Project Owner Configurator',
                     target: 'Project Owners',
-                    getProxySelectors: async () => {
-                        const selectors = await (0, index_4.getProviderProxySelectors)(this.state, this._data.providers);
+                    getProxySelectors: async (chainId) => {
+                        const selectors = await (0, index_4.getProxySelectors)(this.state, chainId);
                         return selectors;
-                    },
-                    getDexProviderOptions: (chainId) => {
-                        const providers = this.state.getDexInfoList({ chainId });
-                        return providers;
-                    },
-                    getPair: async (market, tokenA, tokenB) => {
-                        const pair = await (0, index_4.getPair)(this.state, market, tokenA, tokenB);
-                        return pair;
                     },
                     getActions: () => {
                         return this.getProjectOwnerActions();
@@ -1572,8 +1655,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async init() {
             this.isReadyCallbackQueued = true;
             super.init();
-            const dexList = (0, scom_dex_list_2.default)();
-            this.state.setDexInfoList(dexList);
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 const link = this.getAttribute('link', true);
@@ -1588,7 +1669,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const wallets = this.getAttribute('wallets', true);
                 const showHeader = this.getAttribute('showHeader', true);
                 const defaultChainId = this.getAttribute('defaultChainId', true);
-                const providers = this.getAttribute('providers', true, []);
                 await this.setData({
                     link,
                     productType,
@@ -1601,8 +1681,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     logoUrl,
                     networks,
                     wallets,
-                    showHeader,
-                    providers
+                    showHeader
                 });
             }
             this.isReadyCallbackQueued = false;

@@ -29,7 +29,7 @@ import { ITokenObject } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
-import formSchema from './formSchema.json';
+import { getBuilderSchema, getProjectOwnerSchema } from './formSchema.json';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -140,7 +140,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get donateTo() {
-    return this._data.chainSpecificProperties?.[this.chainId]?.donateTo ?? '';
+    return this._data.donateTo ?? this._data.chainSpecificProperties?.[this.chainId]?.donateTo ?? '';
   }
 
   get link() {
@@ -152,7 +152,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get productId() {
-    return this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
+    return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
   }
 
   get productType() {
@@ -260,6 +260,7 @@ export default class ScomNftMinter extends Module {
 
   private getBuilderActions(category?: string) {
     let self = this;
+    const formSchema = getBuilderSchema();
     const actions: any = [
       {
         name: 'Commissions',
@@ -383,6 +384,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private getProjectOwnerActions() {
+    const formSchema = getProjectOwnerSchema();
     const actions: any[] = [
       {
         name: 'Settings',

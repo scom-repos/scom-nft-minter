@@ -4,7 +4,6 @@
 /// <reference path="@scom/scom-token-input/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@scom/scom-token-input/@scom/scom-token-modal/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
-/// <reference path="@scom/scom-dex-list/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
     import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
@@ -38,6 +37,8 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         name?: string;
         title?: string;
         productType?: ProductType;
+        productId?: number;
+        donateTo?: string;
         logo?: string;
         logoUrl?: string;
         description?: string;
@@ -48,7 +49,6 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         wallets: IWalletPlugin[];
         networks: any[];
         showHeader?: boolean;
-        providers: IProviderUI[];
     }
     export interface IWalletPlugin {
         name: string;
@@ -59,15 +59,10 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         chainName?: string;
         chainId: number;
     }
-    export interface IProviderUI {
-        key: string;
-        chainId: number;
-    }
 }
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
     import { ERC20ApprovalModel, IERC20ApprovalEventOptions } from "@ijstech/eth-wallet";
-    import { IDexDetail, IDexInfo } from '@scom/scom-dex-list';
     export interface IContractDetailInfo {
         address: string;
     }
@@ -81,7 +76,6 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         [key: number]: IContractInfo;
     };
     export class State {
-        dexInfoList: IDexInfo[];
         contractInfoByChain: ContractInfoByChainType;
         embedderCommissionFee: string;
         rpcWalletId: string;
@@ -89,12 +83,6 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         constructor(options: any);
         private initData;
         initRpcWallet(defaultChainId: number): string;
-        setDexInfoList(value: IDexInfo[]): void;
-        getDexInfoList(options?: {
-            key?: string;
-            chainId?: number;
-        }): IDexInfo[];
-        getDexDetail(key: string, chainId: number): IDexDetail;
         getContractAddress(type: ContractType): any;
         getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
         isRpcWalletConnected(): boolean;
@@ -115,13 +103,10 @@ declare module "@scom/scom-nft-minter/utils/token.ts" {
 /// <amd-module name="@scom/scom-nft-minter/utils/index.ts" />
 declare module "@scom/scom-nft-minter/utils/index.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
-    import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    import { IProviderUI } from "@scom/scom-nft-minter/interface/index.tsx";
     export const formatNumber: (value: string | number | BigNumber, decimals?: number) => string;
-    export const getProviderProxySelectors: (state: State, providers: IProviderUI[]) => Promise<string[]>;
-    export const getPair: (state: State, market: string, tokenA: ITokenObject, tokenB: ITokenObject) => Promise<string>;
-    export { getERC20Amount, getTokenBalance, registerSendTxEvents, } from "@scom/scom-nft-minter/utils/token.ts";
+    export function getProxySelectors(state: State, chainId: number): Promise<string[]>;
+    export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
 declare module "@scom/scom-nft-minter/index.css.ts" {
@@ -199,7 +184,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
-    const _default_1: {
+    export function getBuilderSchema(): {
         dataSchema: {
             type: string;
             properties: {
@@ -291,14 +276,132 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             })[];
         };
     };
-    export default _default_1;
+    export function getProjectOwnerSchema(): {
+        dataSchema: {
+            type: string;
+            properties: {
+                title: {
+                    type: string;
+                };
+                description: {
+                    type: string;
+                    format: string;
+                };
+                logo: {
+                    type: string;
+                    format: string;
+                };
+                logoUrl: {
+                    type: string;
+                    title: string;
+                };
+                productType: {
+                    type: string;
+                    title: string;
+                    required: boolean;
+                    enum: string[];
+                };
+                productId: {
+                    type: string;
+                    minimum: number;
+                    required: boolean;
+                };
+                donateTo: {
+                    type: string;
+                    format: string;
+                };
+                link: {
+                    type: string;
+                };
+                dark: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+                light: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+            };
+        };
+        uiSchema: {
+            type: string;
+            elements: ({
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: ({
+                        type: string;
+                        scope: string;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    enum: string[];
+                                };
+                            };
+                        };
+                    })[];
+                }[];
+            } | {
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: {
+                        type: string;
+                        label: string;
+                        scope: string;
+                    }[];
+                }[];
+            })[];
+        };
+    };
 }
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProviderUI, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-    import { ITokenObject } from '@scom/scom-token-list';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -313,7 +416,6 @@ declare module "@scom/scom-nft-minter" {
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
         showHeader?: boolean;
-        providers: IProviderUI[];
     }
     global {
         namespace JSX {
@@ -404,9 +506,7 @@ declare module "@scom/scom-nft-minter" {
         getConfigurators(): ({
             name: string;
             target: string;
-            getProxySelectors: () => Promise<string[]>;
-            getDexProviderOptions: (chainId: number) => import("@scom/scom-dex-list").IDexInfo[];
-            getPair: (market: string, tokenA: ITokenObject, tokenB: ITokenObject) => Promise<string>;
+            getProxySelectors: (chainId: number) => Promise<string[]>;
             getActions: () => any[];
             getData: any;
             setData: (data: IEmbedData) => Promise<void>;
@@ -425,8 +525,6 @@ declare module "@scom/scom-nft-minter" {
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
-            getDexProviderOptions?: undefined;
-            getPair?: undefined;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
@@ -445,6 +543,8 @@ declare module "@scom/scom-nft-minter" {
                 name?: string;
                 title?: string;
                 productType?: ProductType;
+                productId?: number;
+                donateTo?: string;
                 logo?: string;
                 logoUrl?: string;
                 description?: string;
@@ -455,14 +555,11 @@ declare module "@scom/scom-nft-minter" {
                 wallets: IWalletPlugin[];
                 networks: any[];
                 showHeader?: boolean;
-                providers: IProviderUI[];
             };
             setData: any;
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
-            getDexProviderOptions?: undefined;
-            getPair?: undefined;
             getActions?: undefined;
         })[];
         private getData;

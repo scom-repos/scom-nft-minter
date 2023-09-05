@@ -33,6 +33,8 @@ export interface IEmbedData {
   name?: string;
   title?: string;
   productType?: ProductType;
+  productId?: number;
+  donateTo?: string;
   logo?: string;
   logoUrl?: string;
   description?: string;
