@@ -276,7 +276,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             })[];
         };
     };
-    export function getProjectOwnerSchema(): {
+    export function getProjectOwnerSchema(isDonation?: boolean): {
         dataSchema: {
             type: string;
             properties: {
@@ -295,20 +295,10 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                 };
-                productType: {
-                    type: string;
-                    title: string;
-                    required: boolean;
-                    enum: string[];
-                };
                 productId: {
                     type: string;
                     minimum: number;
                     required: boolean;
-                };
-                donateTo: {
-                    type: string;
-                    format: string;
                 };
                 link: {
                     type: string;
@@ -359,41 +349,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: ({
+            elements: {
                 type: string;
                 label: string;
                 elements: {
                     type: string;
-                    elements: ({
-                        type: string;
-                        scope: string;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    enum: string[];
-                                };
-                            };
-                        };
-                    })[];
+                    elements: any[];
                 }[];
-            } | {
-                type: string;
-                label: string;
-                elements: {
-                    type: string;
-                    elements: {
-                        type: string;
-                        label: string;
-                        scope: string;
-                    }[];
-                }[];
-            })[];
+            }[];
         };
     };
 }

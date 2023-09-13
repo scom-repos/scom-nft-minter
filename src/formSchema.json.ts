@@ -110,58 +110,56 @@ export function getBuilderSchema() {
     }
 }
 
-export function getProjectOwnerSchema() {
-    return {
-        dataSchema: {
-            type: 'object',
-            properties: {
-                title: {
-                    type: 'string'
-                },
-                description: {
-                    type: 'string',
-                    format: 'multi'
-                },
-                logo: {
-                    type: 'string',
-                    format: 'data-cid'
-                },
-                logoUrl: {
-                    type: 'string',
-                    title: 'Logo URL'
-                },
-                productType: {
-                    type: 'string',
-                    title: 'Type',
-                    required: true,
-                    enum: [
-                        'Buy',
-                        'DonateToOwner',
-                        'DonateToEveryone'
-                    ]
-                },
-                productId: {
-                    type: 'integer',
-                    minimum: 1,
-                    required: true
-                },
-                donateTo: {
-                    type: 'string',
-                    format: 'wallet-address'
-                },
-                link: {
-                    type: 'string'
-                },
-                dark: {
-                    type: 'object',
-                    properties: theme
-                },
-                light: {
-                    type: 'object',
-                    properties: theme
-                }
+export function getProjectOwnerSchema(isDonation?: boolean) {
+    const dataSchema = {
+        type: 'object',
+        properties: {
+            title: {
+                type: 'string'
+            },
+            description: {
+                type: 'string',
+                format: 'multi'
+            },
+            logo: {
+                type: 'string',
+                format: 'data-cid'
+            },
+            logoUrl: {
+                type: 'string',
+                title: 'Logo URL'
+            },
+            productId: {
+                type: 'integer',
+                minimum: 1,
+                required: true
+            },
+            link: {
+                type: 'string'
+            },
+            dark: {
+                type: 'object',
+                properties: theme
+            },
+            light: {
+                type: 'object',
+                properties: theme
             }
-        },
+        }
+    };
+    const donateElements = [];
+    if (isDonation) {
+        dataSchema.properties["donateTo"] = {
+            type: 'string',
+            format: 'wallet-address'
+        };
+        donateElements.push({
+            type: 'Control',
+            scope: '#/properties/donateTo',
+        });
+    }
+    return {
+        dataSchema: dataSchema,
         uiSchema: {
             type: 'Categorization',
             elements: [
@@ -184,21 +182,7 @@ export function getProjectOwnerSchema() {
                                     type: 'Control',
                                     scope: '#/properties/productId'
                                 },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/donateTo',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/productType',
-                                            schema: {
-                                                enum: [
-                                                    'DonateToEveryone'
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
+                                ...donateElements,
                                 {
                                     type: 'Control',
                                     scope: '#/properties/description'

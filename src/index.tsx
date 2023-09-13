@@ -384,7 +384,8 @@ export default class ScomNftMinter extends Module {
   }
 
   private getProjectOwnerActions() {
-    const formSchema = getProjectOwnerSchema();
+    const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
+    const formSchema = getProjectOwnerSchema(isDonation);
     const actions: any[] = [
       {
         name: 'Settings',

@@ -715,58 +715,56 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
         };
     }
     exports.getBuilderSchema = getBuilderSchema;
-    function getProjectOwnerSchema() {
-        return {
-            dataSchema: {
-                type: 'object',
-                properties: {
-                    title: {
-                        type: 'string'
-                    },
-                    description: {
-                        type: 'string',
-                        format: 'multi'
-                    },
-                    logo: {
-                        type: 'string',
-                        format: 'data-cid'
-                    },
-                    logoUrl: {
-                        type: 'string',
-                        title: 'Logo URL'
-                    },
-                    productType: {
-                        type: 'string',
-                        title: 'Type',
-                        required: true,
-                        enum: [
-                            'Buy',
-                            'DonateToOwner',
-                            'DonateToEveryone'
-                        ]
-                    },
-                    productId: {
-                        type: 'integer',
-                        minimum: 1,
-                        required: true
-                    },
-                    donateTo: {
-                        type: 'string',
-                        format: 'wallet-address'
-                    },
-                    link: {
-                        type: 'string'
-                    },
-                    dark: {
-                        type: 'object',
-                        properties: theme
-                    },
-                    light: {
-                        type: 'object',
-                        properties: theme
-                    }
+    function getProjectOwnerSchema(isDonation) {
+        const dataSchema = {
+            type: 'object',
+            properties: {
+                title: {
+                    type: 'string'
+                },
+                description: {
+                    type: 'string',
+                    format: 'multi'
+                },
+                logo: {
+                    type: 'string',
+                    format: 'data-cid'
+                },
+                logoUrl: {
+                    type: 'string',
+                    title: 'Logo URL'
+                },
+                productId: {
+                    type: 'integer',
+                    minimum: 1,
+                    required: true
+                },
+                link: {
+                    type: 'string'
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
                 }
-            },
+            }
+        };
+        const donateElements = [];
+        if (isDonation) {
+            dataSchema.properties["donateTo"] = {
+                type: 'string',
+                format: 'wallet-address'
+            };
+            donateElements.push({
+                type: 'Control',
+                scope: '#/properties/donateTo',
+            });
+        }
+        return {
+            dataSchema: dataSchema,
             uiSchema: {
                 type: 'Categorization',
                 elements: [
@@ -789,21 +787,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                         type: 'Control',
                                         scope: '#/properties/productId'
                                     },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/donateTo',
-                                        rule: {
-                                            effect: 'SHOW',
-                                            condition: {
-                                                scope: '#/properties/productType',
-                                                schema: {
-                                                    enum: [
-                                                        'DonateToEveryone'
-                                                    ]
-                                                }
-                                            }
-                                        }
-                                    },
+                                    ...donateElements,
                                     {
                                         type: 'Control',
                                         scope: '#/properties/description'
@@ -1120,7 +1104,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return actions;
         }
         getProjectOwnerActions() {
-            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema)();
+            const isDonation = this._data.productType === index_3.ProductType.DonateToOwner || this._data.productType === index_3.ProductType.DonateToEveryone;
+            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema)(isDonation);
             const actions = [
                 {
                     name: 'Settings',
