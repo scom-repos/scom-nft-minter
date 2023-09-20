@@ -104,7 +104,7 @@ declare module "@scom/scom-nft-minter/utils/token.ts" {
 declare module "@scom/scom-nft-minter/utils/index.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    export const formatNumber: (value: string | number | BigNumber, decimals?: number) => string;
+    export const formatNumber: (value: number | string | BigNumber, decimalFigures?: number) => string;
     export function getProxySelectors(state: State, chainId: number): Promise<string[]>;
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
