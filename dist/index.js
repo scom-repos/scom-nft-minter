@@ -151,7 +151,7 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/sco
     exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = exports.getProxySelectors = exports.formatNumber = void 0;
     const formatNumber = (value, decimalFigures) => {
         if (typeof value === 'object') {
-            value = value.toString();
+            value = value.toFixed();
         }
         const minValue = '0.0000001';
         return components_2.FormatUtils.formatNumber(value, { decimalFigures: decimalFigures || 4, minValue });
@@ -184,17 +184,8 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/sco
 define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.tokenSelectionStyle = exports.inputGroupStyle = exports.inputStyle = exports.markdownStyle = exports.imageStyle = void 0;
+    exports.tokenSelectionStyle = exports.inputStyle = exports.markdownStyle = void 0;
     const Theme = components_3.Styles.Theme.ThemeVars;
-    exports.imageStyle = components_3.Styles.style({
-        $nest: {
-            '&>img': {
-                maxWidth: 'unset',
-                maxHeight: 'unset',
-                borderRadius: 4
-            }
-        }
-    });
     exports.markdownStyle = components_3.Styles.style({
         color: Theme.text.primary,
         overflowWrap: 'break-word'
@@ -202,35 +193,20 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
     exports.inputStyle = components_3.Styles.style({
         $nest: {
             '> input': {
-                background: 'transparent',
-                border: 0,
-                padding: '0.25rem 0.5rem',
-                textAlign: 'right',
-                color: Theme.input.fontColor
+                // background: 'transparent',
+                // border: 0,
+                // padding: '0.25rem 0.5rem',
+                // textAlign: 'right',
+                // color: Theme.input.fontColor
+                textAlign: 'right'
             }
         }
     });
-    exports.inputGroupStyle = components_3.Styles.style({
-        border: '2px solid transparent',
-        // background: 'linear-gradient(#232B5A, #232B5A), linear-gradient(254.8deg, #E75B66 -8.08%, #B52082 84.35%)',
-        backgroundOrigin: 'border-box !important',
-        backgroundClip: 'content-box, border-box !important',
-        borderRadius: 16
-    });
     exports.tokenSelectionStyle = components_3.Styles.style({
         $nest: {
-            'i-vstack.custom-border > i-hstack': {
-                display: 'none'
-            },
-            '#inputAmount': {
-                fontSize: '1.25rem'
-            },
-            '#gridTokenInput': {
-                height: '100%'
-            },
-            '.i-modal_header': {
-                display: 'none'
-            },
+            // '.i-modal_header': {
+            //   display: 'none'
+            // },
             '#gridTokenList': {
                 maxHeight: '50vh',
                 overflow: 'auto',
@@ -248,19 +224,19 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
                     }
                 }
             },
-            '#pnlSortBalance': {
-                $nest: {
-                    '.icon-sort-up': {
-                        top: 1
-                    },
-                    '.icon-sort-down': {
-                        bottom: 1
-                    },
-                    'i-icon svg': {
-                        fill: 'inherit'
-                    }
-                }
-            }
+            // '#pnlSortBalance': {
+            //   $nest: {
+            //     '.icon-sort-up': {
+            //       top: 1
+            //     },
+            //     '.icon-sort-down': {
+            //       bottom: 1
+            //     },
+            //     'i-icon svg': {
+            //       fill: 'inherit'
+            //     }
+            //   }
+            // }
         }
     });
 });
@@ -825,6 +801,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.defaultEdit = true;
             this.rpcWalletEvents = [];
             this.onChainChanged = async () => {
+                this.tokenInput.chainId = this.state.getChainId();
                 this.onSetupPage();
                 this.updateContractAddress();
                 this.refreshDApp();
@@ -1185,13 +1162,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.containerDapp.setData(data);
         }
         async setData(data) {
+            var _a;
             this._data = data;
             await this.resetRpcWallet();
             if (!this.tokenInput.isConnected)
                 await this.tokenInput.ready();
-            if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
-                this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
-            }
+            // if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
+            //   this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
+            // }
+            this.tokenInput.chainId = (_a = this.state.getChainId()) !== null && _a !== void 0 ? _a : this.defaultChainId;
             await this.onSetupPage();
             const commissionFee = this.state.embedderCommissionFee;
             if (!this.lbOrderTotalTitle.isConnected)
@@ -1652,7 +1631,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
                             this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '1rem', left: '1rem', right: '1rem' }, verticalAlignment: 'space-between' },
                                 this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' }, gap: "0.5rem" },
-                                    this.$render("i-image", { id: 'imgLogo', class: index_css_1.imageStyle, height: 100 }),
+                                    this.$render("i-image", { id: 'imgLogo', height: 100, border: { radius: 4 } }),
                                     this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
                                     this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                                 this.$render("i-hstack", { id: 'pnlMintFee', visible: false, gap: '0.25rem' },
@@ -1669,14 +1648,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-vstack", { gap: '0.25rem', margin: { bottom: '1rem' } },
                                             this.$render("i-hstack", { id: 'pnlQty', visible: false, horizontalAlignment: 'center', verticalAlignment: 'center', gap: "0.5rem", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
                                                 this.$render("i-label", { caption: 'Qty', font: { weight: 500, size: '1rem' } }),
-                                                this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4 }, background: { color: Theme.input.background } })),
+                                                this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, background: { color: Theme.input.background } })),
                                             this.$render("i-hstack", { horizontalAlignment: 'space-between', verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { id: "lblYouPay", font: { weight: 500, size: '1rem' } }),
                                                 this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },
                                                     this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
                                                     this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
-                                            this.$render("i-grid-layout", { id: 'gridTokenInput', templateColumns: ['100%'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, verticalAlignment: "center", class: index_css_1.inputGroupStyle },
-                                                this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_1.tokenSelectionStyle, width: "100%", height: "100%", placeholder: "0.00", onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged })),
+                                            this.$render("i-grid-layout", { templateColumns: ['100%'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, verticalAlignment: "center", border: { radius: 16, width: '2px', style: 'solid', color: 'transparent' } },
+                                                this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_1.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
+                                                        maxHeight: '50vh'
+                                                    }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged })),
                                             this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
                                                 this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
                                                 this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),

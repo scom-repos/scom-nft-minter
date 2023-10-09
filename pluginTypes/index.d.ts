@@ -1,8 +1,6 @@
 /// <reference path="@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@scom/scom-commission-proxy-contract/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@scom/scom-dapp-container/@ijstech/eth-wallet/index.d.ts" />
-/// <reference path="@scom/scom-token-input/@ijstech/eth-wallet/index.d.ts" />
-/// <reference path="@scom/scom-token-input/@scom/scom-token-modal/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
@@ -110,10 +108,8 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
 declare module "@scom/scom-nft-minter/index.css.ts" {
-    export const imageStyle: string;
     export const markdownStyle: string;
     export const inputStyle: string;
-    export const inputGroupStyle: string;
     export const tokenSelectionStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
@@ -409,7 +405,6 @@ declare module "@scom/scom-nft-minter" {
         private btnApprove;
         private lblRef;
         private lblAddress;
-        private gridTokenInput;
         private tokenInput;
         private txStatusModal;
         private lbOrderTotal;
