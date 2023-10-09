@@ -20,7 +20,7 @@ import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, W
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
 import { formatNumber, getProxySelectors, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
-import { imageStyle, inputStyle, markdownStyle, tokenSelectionStyle, inputGroupStyle } from './index.css';
+import { inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
@@ -81,7 +81,6 @@ export default class ScomNftMinter extends Module {
   private btnApprove: Button;
   private lblRef: Label;
   private lblAddress: Label;
-  private gridTokenInput: GridLayout;
   private tokenInput: ScomTokenInput;
   private txStatusModal: ScomTxStatusModal;
   private lbOrderTotal: Label;
@@ -240,6 +239,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onChainChanged = async () => {
+    this.tokenInput.chainId = this.state.getChainId();
     this.onSetupPage();
     this.updateContractAddress();
     this.refreshDApp();
@@ -504,9 +504,10 @@ export default class ScomNftMinter extends Module {
     this._data = data;
     await this.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
-    if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
-      this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
-    }
+    // if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
+    //   this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
+    // }
+    this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
     await this.onSetupPage();
     const commissionFee = this.state.embedderCommissionFee;
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
@@ -986,7 +987,7 @@ export default class ScomNftMinter extends Module {
             >
               <i-vstack gap="0.5rem" padding={{ top: '1.75rem', bottom: '1rem', left: '1rem', right: '1rem' }} verticalAlignment='space-between'>
                 <i-vstack class="text-center" margin={{ bottom: '0.25rem' }} gap="0.5rem">
-                  <i-image id='imgLogo' class={imageStyle} height={100}></i-image>
+                  <i-image id='imgLogo' height={100} border={{radius: 4}}></i-image>
                   <i-label id='lblTitle' font={{ bold: true, size: '1.5rem' }}></i-label>
                   <i-markdown
                     id='markdownViewer'
@@ -1027,7 +1028,8 @@ export default class ScomNftMinter extends Module {
                           class={inputStyle}
                           inputType='number'
                           font={{ size: '0.875rem' }}
-                          border={{ radius: 4 }}
+                          border={{ radius: 4, style: 'none' }}
+                          padding={{top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem'}}
                           background={{ color: Theme.input.background }}
                         >
                         </i-input>
@@ -1040,7 +1042,6 @@ export default class ScomNftMinter extends Module {
                         </i-hstack>
                       </i-hstack>
                       <i-grid-layout
-                        id='gridTokenInput'
                         templateColumns={['100%']}
                         overflow="hidden"
                         background={{ color: Theme.input.background }}
@@ -1048,7 +1049,7 @@ export default class ScomNftMinter extends Module {
                         height={56} width="50%"
                         margin={{ left: 'auto', right: 'auto' }}
                         verticalAlignment="center"
-                        class={inputGroupStyle}
+                        border={{radius: 16, width: '2px', style: 'solid', color: 'transparent'}}
                       >
                         <i-scom-token-input
                           id="tokenInput"
@@ -1058,9 +1059,14 @@ export default class ScomNftMinter extends Module {
                           isBalanceShown={false}
                           isSortBalanceShown={false}
                           class={tokenSelectionStyle}
+                          padding={{left: '11px'}}
+                          font={{size: '1.25rem'}}
                           width="100%"
                           height="100%"
                           placeholder="0.00"
+                          modalStyles={{
+                            maxHeight: '50vh'
+                          }}
                           onSelectToken={this.selectToken}
                           onInputAmountChanged={this.onAmountChanged}
                         />
