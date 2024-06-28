@@ -29,10 +29,6 @@ export function getBuilderSchema() {
                     type: 'string',
                     format: 'multi'
                 },
-                logo: {
-                    type: 'string',
-                    format: 'data-cid'
-                },
                 logoUrl: {
                     type: 'string',
                     title: 'Logo URL'
@@ -67,10 +63,6 @@ export function getBuilderSchema() {
                                 {
                                     type: 'Control',
                                     scope: '#/properties/description'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/logo'
                                 },
                                 {
                                     type: 'Control',
@@ -120,10 +112,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             description: {
                 type: 'string',
                 format: 'multi'
-            },
-            logo: {
-                type: 'string',
-                format: 'data-cid'
             },
             logoUrl: {
                 type: 'string',
@@ -186,10 +174,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 {
                                     type: 'Control',
                                     scope: '#/properties/description'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/logo'
                                 },
                                 {
                                     type: 'Control',

@@ -37,7 +37,6 @@ interface ScomNftMinterElement extends ControlElement {
   title?: string;
   productType?: string;
   description?: string;
-  logo?: string;
   logoUrl?: string;
   link?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
@@ -176,14 +175,6 @@ export default class ScomNftMinter extends Module {
 
   set description(value: string) {
     this._data.description = value;
-  }
-
-  get logo() {
-    return this._data.logo ?? '';
-  }
-
-  set logo(value: string) {
-    this._data.logo = value;
   }
 
   get logoUrl() {
@@ -336,7 +327,6 @@ export default class ScomNftMinter extends Module {
                 name,
                 title,
                 productType,
-                logo,
                 logoUrl,
                 description,
                 link,
@@ -347,7 +337,6 @@ export default class ScomNftMinter extends Module {
                 name,
                 title,
                 productType,
-                logo,
                 logoUrl,
                 description,
                 link
@@ -468,7 +457,19 @@ export default class ScomNftMinter extends Module {
         setData: this.setData.bind(this),
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
-      }
+      },
+			{
+			  name: 'Editor',
+			  target: 'Editor',
+			  getActions: (category?: string) => {
+				const actions = this.getProjectOwnerActions();
+				return actions;
+			  },
+			  getData: this.getData.bind(this),
+			  setData: this.setData.bind(this),
+			  getTag: this.getTag.bind(this),
+			  setTag: this.setTag.bind(this)
+			}
     ]
   }
 
@@ -589,14 +590,7 @@ export default class ScomNftMinter extends Module {
     (!this.lblLink.isConnected) && await this.lblLink.ready();
     this.lblLink.caption = data.link || '';
     this.lblLink.link.href = data.link;
-    if (data.logo) {
-      this.imgLogo.url = `/ipfs/${data.logo}`;
-    } else if (data.logoUrl?.startsWith('ipfs://')) {
-      this.imgLogo.url = data.logoUrl.replace('ipfs://', '/ipfs/');
-    }
-    else {
-      this.imgLogo.url = data.logoUrl || "";
-    }
+    this.imgLogo.url = data.logoUrl || "";
     (!this.lblTitle.isConnected) && await this.lblTitle.ready();
     this.lblTitle.caption = data.title || '';
   }
@@ -605,7 +599,7 @@ export default class ScomNftMinter extends Module {
     setTimeout(async () => {
       this._type = this._data.productType;
       let tmpData = JSON.parse(JSON.stringify(this._data));
-      if (!this._data.title && !this._data.description && !this._data.logo && !this._data.logoUrl && !this._data.link) {
+      if (!this._data.title && !this._data.description && !this._data.logoUrl && !this._data.link) {
         Object.assign(tmpData, {
           title: "Title",
           description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -938,7 +932,6 @@ export default class ScomNftMinter extends Module {
   }
 
   async init() {
-    this.isReadyCallbackQueued = true;
     super.init();
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
@@ -947,7 +940,6 @@ export default class ScomNftMinter extends Module {
       const name = this.getAttribute('name', true);
       const title = this.getAttribute('title', true);
       const description = this.getAttribute('description', true);
-      const logo = this.getAttribute('logo', true);
       const logoUrl = this.getAttribute('logoUrl', true);
       const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
       const networks = this.getAttribute('networks', true);
@@ -962,14 +954,12 @@ export default class ScomNftMinter extends Module {
         chainSpecificProperties,
         defaultChainId,
         description,
-        logo,
         logoUrl,
         networks,
         wallets,
         showHeader
       });
     }
-    this.isReadyCallbackQueued = false;
     this.executeReadyCallback();
   }
 

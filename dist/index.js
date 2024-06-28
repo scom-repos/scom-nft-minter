@@ -571,10 +571,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                         type: 'string',
                         format: 'multi'
                     },
-                    logo: {
-                        type: 'string',
-                        format: 'data-cid'
-                    },
                     logoUrl: {
                         type: 'string',
                         title: 'Logo URL'
@@ -609,10 +605,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     {
                                         type: 'Control',
                                         scope: '#/properties/description'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/logo'
                                     },
                                     {
                                         type: 'Control',
@@ -662,10 +654,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                 description: {
                     type: 'string',
                     format: 'multi'
-                },
-                logo: {
-                    type: 'string',
-                    format: 'data-cid'
                 },
                 logoUrl: {
                     type: 'string',
@@ -728,10 +716,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     {
                                         type: 'Control',
                                         scope: '#/properties/description'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/logo'
                                     },
                                     {
                                         type: 'Control',
@@ -858,12 +842,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set description(value) {
             this._data.description = value;
         }
-        get logo() {
-            return this._data.logo ?? '';
-        }
-        set logo(value) {
-            this._data.logo = value;
-        }
         get logoUrl() {
             return this._data.logoUrl;
         }
@@ -986,12 +964,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 oldData = JSON.parse(JSON.stringify(this._data));
-                                const { name, title, productType, logo, logoUrl, description, link, ...themeSettings } = userInputData;
+                                const { name, title, productType, logoUrl, description, link, ...themeSettings } = userInputData;
                                 const generalSettings = {
                                     name,
                                     title,
                                     productType,
-                                    logo,
                                     logoUrl,
                                     description,
                                     link
@@ -1115,6 +1092,18 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     setData: this.setData.bind(this),
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
+                },
+                {
+                    name: 'Editor',
+                    target: 'Editor',
+                    getActions: (category) => {
+                        const actions = this.getProjectOwnerActions();
+                        return actions;
+                    },
+                    getData: this.getData.bind(this),
+                    setData: this.setData.bind(this),
+                    getTag: this.getTag.bind(this),
+                    setTag: this.setTag.bind(this)
                 }
             ];
         }
@@ -1228,15 +1217,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             (!this.lblLink.isConnected) && await this.lblLink.ready();
             this.lblLink.caption = data.link || '';
             this.lblLink.link.href = data.link;
-            if (data.logo) {
-                this.imgLogo.url = `/ipfs/${data.logo}`;
-            }
-            else if (data.logoUrl?.startsWith('ipfs://')) {
-                this.imgLogo.url = data.logoUrl.replace('ipfs://', '/ipfs/');
-            }
-            else {
-                this.imgLogo.url = data.logoUrl || "";
-            }
+            this.imgLogo.url = data.logoUrl || "";
             (!this.lblTitle.isConnected) && await this.lblTitle.ready();
             this.lblTitle.caption = data.title || '';
         }
@@ -1244,7 +1225,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             setTimeout(async () => {
                 this._type = this._data.productType;
                 let tmpData = JSON.parse(JSON.stringify(this._data));
-                if (!this._data.title && !this._data.description && !this._data.logo && !this._data.logoUrl && !this._data.link) {
+                if (!this._data.title && !this._data.description && !this._data.logoUrl && !this._data.link) {
                     Object.assign(tmpData, {
                         title: "Title",
                         description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -1566,7 +1547,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         async init() {
-            this.isReadyCallbackQueued = true;
             super.init();
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
@@ -1575,7 +1555,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const name = this.getAttribute('name', true);
                 const title = this.getAttribute('title', true);
                 const description = this.getAttribute('description', true);
-                const logo = this.getAttribute('logo', true);
                 const logoUrl = this.getAttribute('logoUrl', true);
                 const chainSpecificProperties = this.getAttribute('chainSpecificProperties', true);
                 const networks = this.getAttribute('networks', true);
@@ -1590,14 +1569,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     chainSpecificProperties,
                     defaultChainId,
                     description,
-                    logo,
                     logoUrl,
                     networks,
                     wallets,
                     showHeader
                 });
             }
-            this.isReadyCallbackQueued = false;
             this.executeReadyCallback();
         }
         render() {

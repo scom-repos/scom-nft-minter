@@ -37,7 +37,6 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         productType?: ProductType;
         productId?: number;
         donateTo?: string;
-        logo?: string;
         logoUrl?: string;
         description?: string;
         link?: string;
@@ -191,10 +190,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     format: string;
                 };
-                logo: {
-                    type: string;
-                    format: string;
-                };
                 logoUrl: {
                     type: string;
                     title: string;
@@ -283,10 +278,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     format: string;
                 };
-                logo: {
-                    type: string;
-                    format: string;
-                };
                 logoUrl: {
                     type: string;
                     title: string;
@@ -367,7 +358,6 @@ declare module "@scom/scom-nft-minter" {
         title?: string;
         productType?: string;
         description?: string;
-        logo?: string;
         logoUrl?: string;
         link?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
@@ -440,8 +430,6 @@ declare module "@scom/scom-nft-minter" {
         set name(value: string);
         get description(): string;
         set description(value: string);
-        get logo(): string;
-        set logo(value: string);
         get logoUrl(): string;
         set logoUrl(value: string);
         get commissions(): any;
@@ -503,7 +491,6 @@ declare module "@scom/scom-nft-minter" {
                 productType?: ProductType;
                 productId?: number;
                 donateTo?: string;
-                logo?: string;
                 logoUrl?: string;
                 description?: string;
                 link?: string;
@@ -519,6 +506,19 @@ declare module "@scom/scom-nft-minter" {
             setTag: any;
             getProxySelectors?: undefined;
             getActions?: undefined;
+        } | {
+            name: string;
+            target: string;
+            getActions: (category?: string) => any[];
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
+            getProxySelectors?: undefined;
+            elementName?: undefined;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+            bindOnChanged?: undefined;
         })[];
         private getData;
         private resetRpcWallet;

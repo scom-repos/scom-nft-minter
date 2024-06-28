@@ -35,7 +35,6 @@ export interface IEmbedData {
   productType?: ProductType;
   productId?: number;
   donateTo?: string;
-  logo?: string;
   logoUrl?: string;
   description?: string;
   link?: string;
