@@ -1236,6 +1236,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 if (!this.productId || this.productId === 0)
                     return;
                 await this.initWallet();
+                this.btnSubmit.enabled = !(0, index_5.isClientWalletConnected)() || !this.state.isRpcWalletConnected();
                 this.productInfo = await (0, API_1.getProductInfo)(this.state, this.productId);
                 if (this.productInfo) {
                     const token = this.productInfo.token;
@@ -1391,9 +1392,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         determineBtnSubmitCaption() {
             if (!(0, index_5.isClientWalletConnected)()) {
                 this.btnSubmit.caption = 'Connect Wallet';
+                this.btnSubmit.enabled = true;
             }
             else if (!this.state.isRpcWalletConnected()) {
                 this.btnSubmit.caption = 'Switch Network';
+                this.btnSubmit.enabled = true;
             }
             else if (this._type === index_3.ProductType.Buy) {
                 this.btnSubmit.caption = 'Mint';

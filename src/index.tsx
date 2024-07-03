@@ -609,6 +609,7 @@ export default class ScomNftMinter extends Module {
       await this.updateDAppUI(tmpData);
       if (!this.productId || this.productId === 0) return;
       await this.initWallet();
+      this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
       this.productInfo = await getProductInfo(this.state, this.productId);
       if (this.productInfo) {
         const token = this.productInfo.token;
@@ -767,9 +768,11 @@ export default class ScomNftMinter extends Module {
   private determineBtnSubmitCaption() {
     if (!isClientWalletConnected()) {
       this.btnSubmit.caption = 'Connect Wallet';
+      this.btnSubmit.enabled = true;
     }
     else if (!this.state.isRpcWalletConnected()) {
       this.btnSubmit.caption = 'Switch Network';
+      this.btnSubmit.enabled = true;
     }
     else if (this._type === ProductType.Buy) {
       this.btnSubmit.caption = 'Mint';
