@@ -1601,7 +1601,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-vstack", { gap: '0.25rem', margin: { bottom: '1rem' } },
                                             this.$render("i-hstack", { id: 'pnlQty', visible: false, horizontalAlignment: 'center', verticalAlignment: 'center', gap: "0.5rem", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
                                                 this.$render("i-label", { caption: 'Qty', font: { weight: 500, size: '1rem' } }),
-                                                this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, background: { color: Theme.input.background } })),
+                                                this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } })),
                                             this.$render("i-hstack", { horizontalAlignment: 'space-between', verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { id: "lblYouPay", font: { weight: 500, size: '1rem' } }),
                                                 this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },

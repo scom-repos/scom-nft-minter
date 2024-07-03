@@ -1020,7 +1020,6 @@ export default class ScomNftMinter extends Module {
                           font={{ size: '0.875rem' }}
                           border={{ radius: 4, style: 'none' }}
                           padding={{top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem'}}
-                          background={{ color: Theme.input.background }}
                         >
                         </i-input>
                       </i-hstack>
