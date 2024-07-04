@@ -185,6 +185,10 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 {
                                     type: 'Control',
                                     scope: '#/properties/link'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/requiredQuantity'
                                 }
                             ]
                         }

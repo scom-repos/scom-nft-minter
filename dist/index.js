@@ -748,6 +748,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     {
                                         type: 'Control',
                                         scope: '#/properties/link'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/requiredQuantity'
                                     }
                                 ]
                             }
