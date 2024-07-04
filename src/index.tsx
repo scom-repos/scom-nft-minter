@@ -21,7 +21,7 @@ import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWa
 import { formatNumber, getProxySelectors, getTokenBalance } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, donate, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
+import { buyProduct, donate, getNFTBalance, getProductInfo, getProxyTokenAmountIn, newProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -623,7 +623,17 @@ export default class ScomNftMinter extends Module {
           this.pnlQty.visible = true;
           this.pnlSpotsRemaining.visible = true;
           this.pnlTokenInput.visible = false;
-          this.edtQty.value = this._data.requiredQuantity != null ? Number(this._data.requiredQuantity) : "";
+          if (this._data.requiredQuantity != null) {
+            let qty = Number(this._data.requiredQuantity);
+            let nftBalance = await getNFTBalance(this.state, this.productId);
+            if (nftBalance) {
+              this.edtQty.value = Math.max(qty - Number(nftBalance), 0);
+            } else {
+              this.edtQty.value = qty;
+            }
+          } else {
+            this.edtQty.value = "";
+          }
           this.onQtyChanged();
         } else {
           this.pnlMintFee.visible = false;
@@ -790,8 +800,8 @@ export default class ScomNftMinter extends Module {
       this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
     }
     else {
-      this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), qty, this._data.commissions);
       const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+      this.tokenAmountIn = getProxyTokenAmountIn(price.toFixed(), qty, this._data.commissions);
       const amount = price.times(qty);
       this.tokenInput.value = amount.toFixed();
       const commissionFee = this.state.embedderCommissionFee;
@@ -809,7 +819,8 @@ export default class ScomNftMinter extends Module {
       this.tokenInput.value = '0';
     }
     else {
-      this.tokenAmountIn = getProxyTokenAmountIn(this.productInfo.price.toFixed(), amount, this._data.commissions);
+      const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+      this.tokenAmountIn = getProxyTokenAmountIn(price.toFixed(), amount, this._data.commissions);
     }
     amount = Number(this.tokenInput.value);
     const commissionFee = this.state.embedderCommissionFee;

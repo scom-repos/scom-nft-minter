@@ -64,7 +64,7 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export interface IContractDetailInfo {
         address: string;
     }
-    export type ContractType = 'ProductInfo' | 'Proxy';
+    export type ContractType = 'ProductInfo' | 'Proxy' | 'Product1155';
     export interface IContractInfo {
         ProductNFT: IContractDetailInfo;
         ProductInfo: IContractDetailInfo;
@@ -129,6 +129,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         maxPrice: BigNumber;
         status: BigNumber;
     }>;
+    function getNFTBalance(state: State, productId: number): Promise<string>;
     function newProduct(state: State, productType: ProductType, qty: number, maxQty: number, price: string, maxPrice: string, token?: ITokenObject, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
@@ -136,7 +137,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    export { getProductInfo, newProduct, getProxyTokenAmountIn, buyProduct, donate };
+    export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -152,6 +153,9 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                 Proxy: {
                     address: string;
                 };
+                Product1155: {
+                    address: string;
+                };
             };
             "97": {
                 ProductNFT: {
@@ -161,6 +165,9 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                     address: string;
                 };
                 Proxy: {
+                    address: string;
+                };
+                Product1155: {
                     address: string;
                 };
             };

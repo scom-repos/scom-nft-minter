@@ -228,7 +228,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_3, index_1, scom_product_contract_2, scom_commission_proxy_contract_1, index_2, scom_token_list_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getProductInfo = void 0;
+    exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productInfoAddress = state.getContractAddress('ProductInfo');
         if (!productInfoAddress)
@@ -250,6 +250,21 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getProductInfo = getProductInfo;
+    async function getNFTBalance(state, productId) {
+        let product1155Address = state.getContractAddress('Product1155');
+        if (!product1155Address)
+            return null;
+        try {
+            const wallet = state.getRpcWallet();
+            const product1155 = new scom_product_contract_2.Contracts.Product1155(wallet, product1155Address);
+            const nftBalance = await product1155.balanceOf({ account: wallet.address, id: productId });
+            return nftBalance.toFixed();
+        }
+        catch {
+            return null;
+        }
+    }
+    exports.getNFTBalance = getNFTBalance;
     async function newProduct(state, productType, qty, maxQty, price, maxPrice, token, callback, confirmationCallback) {
         let productInfoAddress = state.getContractAddress('ProductInfo');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
@@ -486,6 +501,9 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
+                },
+                "Product1155": {
+                    "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
                 }
             },
             "97": {
@@ -497,10 +515,13 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                 },
                 "Proxy": {
                     "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
+                },
+                "Product1155": {
+                    "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
                 }
             }
         },
-        "embedderCommissionFee": "0.01",
+        "embedderCommissionFee": "0",
         "defaultBuilderData": {
             // "name": "Donation Dapp",
             // "title": "Title",
@@ -1253,7 +1274,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.pnlQty.visible = true;
                         this.pnlSpotsRemaining.visible = true;
                         this.pnlTokenInput.visible = false;
-                        this.edtQty.value = this._data.requiredQuantity != null ? Number(this._data.requiredQuantity) : "";
+                        if (this._data.requiredQuantity != null) {
+                            let qty = Number(this._data.requiredQuantity);
+                            let nftBalance = await (0, API_1.getNFTBalance)(this.state, this.productId);
+                            if (nftBalance) {
+                                this.edtQty.value = Math.max(qty - Number(nftBalance), 0);
+                            }
+                            else {
+                                this.edtQty.value = qty;
+                            }
+                        }
+                        else {
+                            this.edtQty.value = "";
+                        }
                         this.onQtyChanged();
                     }
                     else {
@@ -1415,8 +1448,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
             }
             else {
-                this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(this.productInfo.price.toFixed(), qty, this._data.commissions);
                 const price = eth_wallet_4.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+                this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(price.toFixed(), qty, this._data.commissions);
                 const amount = price.times(qty);
                 this.tokenInput.value = amount.toFixed();
                 const commissionFee = this.state.embedderCommissionFee;
@@ -1433,7 +1466,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.tokenInput.value = '0';
             }
             else {
-                this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(this.productInfo.price.toFixed(), amount, this._data.commissions);
+                const price = eth_wallet_4.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+                this.tokenAmountIn = (0, API_1.getProxyTokenAmountIn)(price.toFixed(), amount, this._data.commissions);
             }
             amount = Number(this.tokenInput.value);
             const commissionFee = this.state.embedderCommissionFee;

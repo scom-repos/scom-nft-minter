@@ -9,6 +9,9 @@ export default {
             },
             "Proxy": {
                 "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
+            },
+            "Product1155": {
+                "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
             }
         },
         "97": {
@@ -20,10 +23,13 @@ export default {
             },
             "Proxy": {
                 "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
+            },
+            "Product1155": {
+                "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
             }
         }
     },
-    "embedderCommissionFee": "0.01",
+    "embedderCommissionFee": "0",
     "defaultBuilderData": {
         // "name": "Donation Dapp",
         // "title": "Title",

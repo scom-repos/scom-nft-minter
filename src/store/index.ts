@@ -4,7 +4,7 @@ export interface IContractDetailInfo {
   address: string;
 }
 
-export type ContractType = 'ProductInfo' | 'Proxy';
+export type ContractType = 'ProductInfo' | 'Proxy' | 'Product1155';
 
 export interface IContractInfo {
   ProductNFT: IContractDetailInfo;

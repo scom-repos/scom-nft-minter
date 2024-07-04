@@ -25,6 +25,19 @@ async function getProductInfo(state: State, productId: number) {
     }
 }
 
+async function getNFTBalance(state: State, productId: number) {
+    let product1155Address = state.getContractAddress('Product1155');
+    if (!product1155Address) return null;
+    try {
+        const wallet = state.getRpcWallet();
+        const product1155 = new ProductContracts.Product1155(wallet, product1155Address);
+        const nftBalance = await product1155.balanceOf({ account: wallet.address, id: productId });
+        return nftBalance.toFixed();
+    } catch {
+        return null;
+    }
+}
+
 async function newProduct(
     state: State,
     productType: ProductType,
@@ -274,6 +287,7 @@ async function donate(
 
 export {
     getProductInfo,
+    getNFTBalance,
     newProduct,
     getProxyTokenAmountIn,
     buyProduct,
