@@ -57,28 +57,20 @@ export default class Module1 extends Module {
           gap='2rem'
         >
           <i-scom-nft-minter
-            logoUrl="https://ipfs.scom.dev/ipfs/bafkreib5r2366j3aetopftg5uyhrpj3et7wm5hqpzqrb54tfcx7dwrvkmi"
-            productType="DonateToEveryone"
-            description="#### If you'd like to support my work and help me create more exciting content, you can now make a donation using OSWAP. Your donation will help me continue creating high-quality videos and projects, and it's much appreciated. Thank you for your support, and please feel free to contact me if you have any questions or feedback."
+            productType="Buy"
+            requiredQuantity={3}
             chainSpecificProperties={{
-              97: {
-                productId: 1,
-                donateTo: '0xCE001a607402Bba038F404106CA6682fBb1108F6'
-              },
               43113: {
-                productId: 1,
-                donateTo: '0xCE001a607402Bba038F404106CA6682fBb1108F6'
+                productId: 2,
+                donateTo: ''
               }
             }}
             networks={[
               {
                 chainId: 43113
-              },
-              {
-                chainId: 97
               }
             ]}
-            defaultChainId={97}
+            defaultChainId={43113}
             wallets={[{ name: 'metamask' }]}
           />
         </i-vstack>

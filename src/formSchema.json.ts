@@ -125,6 +125,9 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             link: {
                 type: 'string'
             },
+            requiredQuantity: {
+                type: 'integer',
+            },
             dark: {
                 type: 'object',
                 properties: theme

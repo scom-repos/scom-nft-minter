@@ -667,6 +667,9 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                 link: {
                     type: 'string'
                 },
+                requiredQuantity: {
+                    type: 'integer',
+                },
                 dark: {
                     type: 'object',
                     properties: theme
@@ -964,14 +967,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 oldData = JSON.parse(JSON.stringify(this._data));
-                                const { name, title, productType, logoUrl, description, link, ...themeSettings } = userInputData;
+                                const { name, title, productType, logoUrl, description, link, requiredQuantity, ...themeSettings } = userInputData;
                                 const generalSettings = {
                                     name,
                                     title,
                                     productType,
                                     logoUrl,
                                     description,
-                                    link
+                                    link,
+                                    requiredQuantity
                                 };
                                 Object.assign(this._data, generalSettings);
                                 await this.resetRpcWallet();
@@ -1212,27 +1216,22 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             catch { }
         }
         async updateDAppUI(data) {
+            this.markdownViewer.visible = !!data.description;
             this.markdownViewer.load(data.description || '');
             this.pnlLink.visible = !!data.link;
             (!this.lblLink.isConnected) && await this.lblLink.ready();
             this.lblLink.caption = data.link || '';
             this.lblLink.link.href = data.link;
+            this.imgLogo.visible = !!data.logoUrl;
             this.imgLogo.url = data.logoUrl || "";
+            this.lblTitle.visible = !!data.title;
             (!this.lblTitle.isConnected) && await this.lblTitle.ready();
             this.lblTitle.caption = data.title || '';
         }
         async refreshDApp() {
             setTimeout(async () => {
                 this._type = this._data.productType;
-                let tmpData = JSON.parse(JSON.stringify(this._data));
-                if (!this._data.title && !this._data.description && !this._data.logoUrl && !this._data.link) {
-                    Object.assign(tmpData, {
-                        title: "Title",
-                        description: "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                        logoUrl: "https://placehold.co/600x400?text=No+Image"
-                    });
-                }
-                await this.updateDAppUI(tmpData);
+                await this.updateDAppUI(this._data);
                 if (!this.productId || this.productId === 0)
                     return;
                 await this.initWallet();
@@ -1245,39 +1244,36 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     const price = eth_wallet_4.Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
                     (!this.lblRef.isConnected) && await this.lblRef.ready();
                     if (this._type === index_3.ProductType.Buy) {
-                        this.lblYouPay.caption = `You pay`;
                         this.pnlMintFee.visible = true;
                         this.lblMintFee.caption = `${price ? (0, index_4.formatNumber)(price) : ""} ${token?.symbol || ""}`;
                         this.lblTitle.caption = this._data.title;
                         this.lblRef.caption = 'smart contract:';
                         this.updateSpotsRemaining();
-                        // this.gridTokenInput.visible = false;
                         this.tokenInput.inputReadOnly = true;
                         this.pnlQty.visible = true;
                         this.pnlSpotsRemaining.visible = true;
-                        this.pnlMaxQty.visible = true;
-                        this.lblMaxQty.caption = (0, index_4.formatNumber)(this.productInfo.maxQuantity);
+                        this.pnlTokenInput.visible = false;
+                        this.edtQty.value = this._data.requiredQuantity != null ? Number(this._data.requiredQuantity) : "";
+                        this.onQtyChanged();
                     }
                     else {
-                        this.lblYouPay.caption = `Your donation`;
                         this.pnlMintFee.visible = false;
                         this.lblTitle.caption = this._data.title || 'Make a Contributon';
+                        this.lblTitle.visible = true;
                         this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
-                        // this.gridTokenInput.visible = true;
                         this.tokenInput.inputReadOnly = false;
                         this.pnlQty.visible = false;
                         this.pnlSpotsRemaining.visible = false;
-                        this.pnlMaxQty.visible = false;
+                        this.pnlTokenInput.visible = true;
+                        this.edtQty.value = "";
+                        this.lbOrderTotal.caption = "0";
                     }
-                    this.edtQty.value = "";
                     this.tokenInput.value = "";
-                    this.lbOrderTotal.caption = "0";
+                    this.pnlAddress.visible = this._type !== index_3.ProductType.Buy;
                     (!this.lblAddress.isConnected) && await this.lblAddress.ready();
                     this.lblAddress.caption = this.contractAddress;
-                    // this.tokenInput.tokenReadOnly = this._data.token ? true : new BigNumber(price).gt(0);
                     this.tokenInput.token = token;
                     this.updateTokenBalance();
-                    // this.lblBalance.caption = formatNumber(await getTokenBalance(this.rpcWallet, this._data.token));
                 }
                 else {
                     this.pnlInputFields.visible = false;
@@ -1316,7 +1312,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         await this.doSubmitAction();
                     },
                     onToBeApproved: async (token) => {
-                        this.btnApprove.visible = true;
+                        this.btnApprove.visible = (0, index_5.isClientWalletConnected)() && this.state.isRpcWalletConnected();
+                        this.btnSubmit.visible = !this.btnApprove.visible;
                         this.btnSubmit.enabled = false;
                         if (!this.isApproving) {
                             this.btnApprove.rightIcon.visible = false;
@@ -1327,6 +1324,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     onToBePaid: async (token) => {
                         this.btnApprove.visible = false;
+                        this.btnSubmit.visible = true;
                         this.isApproving = false;
                         this.btnSubmit.enabled = new eth_wallet_4.BigNumber(this.tokenAmountIn).gt(0);
                         this.determineBtnSubmitCaption();
@@ -1564,6 +1562,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const wallets = this.getAttribute('wallets', true);
                 const showHeader = this.getAttribute('showHeader', true);
                 const defaultChainId = this.getAttribute('defaultChainId', true);
+                const requiredQuantity = this.getAttribute('requiredQuantity', true);
                 await this.setData({
                     link,
                     productType,
@@ -1571,6 +1570,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     title,
                     chainSpecificProperties,
                     defaultChainId,
+                    requiredQuantity,
                     description,
                     logoUrl,
                     networks,
@@ -1584,53 +1584,50 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return (this.$render("i-panel", null,
                 this.$render("i-scom-dapp-container", { id: "containerDapp" },
                     this.$render("i-panel", { background: { color: Theme.background.main } },
-                        this.$render("i-grid-layout", { id: 'gridDApp', width: '100%', height: '100%', templateColumns: ['1fr'], padding: { bottom: '1.563rem' } },
-                            this.$render("i-vstack", { gap: "0.5rem", padding: { top: '1.75rem', bottom: '1rem', left: '1rem', right: '1rem' }, verticalAlignment: 'space-between' },
-                                this.$render("i-vstack", { class: "text-center", margin: { bottom: '0.25rem' }, gap: "0.5rem" },
-                                    this.$render("i-image", { id: 'imgLogo', height: 100, border: { radius: 4 } }),
-                                    this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
-                                    this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
-                                this.$render("i-hstack", { id: 'pnlMintFee', visible: false, gap: '0.25rem' },
-                                    this.$render("i-label", { caption: 'Mint Fee:', font: { bold: true, size: '0.875rem' } }),
-                                    this.$render("i-label", { id: 'lblMintFee', font: { size: '0.875rem' } })),
-                                this.$render("i-hstack", { id: 'pnlSpotsRemaining', visible: false, gap: '0.25rem' },
-                                    this.$render("i-label", { caption: 'Spots Remaining:', font: { bold: true, size: '0.875rem' } }),
-                                    this.$render("i-label", { id: 'lblSpotsRemaining', font: { size: '0.875rem' } })),
-                                this.$render("i-hstack", { id: 'pnlMaxQty', visible: false, gap: '0.25rem' },
-                                    this.$render("i-label", { caption: 'Max Quantity per Order:', font: { bold: true, size: '0.875rem' } }),
-                                    this.$render("i-label", { id: 'lblMaxQty', font: { size: '0.875rem' } })),
-                                this.$render("i-vstack", { gap: '0.5rem' },
+                        this.$render("i-grid-layout", { width: '100%', height: '100%', templateColumns: ['1fr'] },
+                            this.$render("i-stack", { direction: 'vertical', padding: { top: '1.5rem', bottom: '1.25rem', left: '1.25rem', right: '1.5rem' }, alignItems: "center" },
+                                this.$render("i-stack", { direction: 'vertical', width: "100%", maxWidth: 600, gap: '0.5rem' },
+                                    this.$render("i-vstack", { class: "text-center", gap: "0.5rem" },
+                                        this.$render("i-image", { id: 'imgLogo', height: 100, border: { radius: 4 } }),
+                                        this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
+                                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                                     this.$render("i-vstack", { gap: '0.5rem', id: 'pnlInputFields' },
-                                        this.$render("i-vstack", { gap: '0.25rem', margin: { bottom: '1rem' } },
-                                            this.$render("i-hstack", { id: 'pnlQty', visible: false, horizontalAlignment: 'center', verticalAlignment: 'center', gap: "0.5rem", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
-                                                this.$render("i-label", { caption: 'Qty', font: { weight: 500, size: '1rem' } }),
-                                                this.$render("i-input", { id: 'edtQty', onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '0.875rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } })),
+                                        this.$render("i-hstack", { id: 'pnlSpotsRemaining', width: "100%", justifyContent: "space-between", visible: false, gap: '0.5rem', lineHeight: 1.5 },
+                                            this.$render("i-label", { caption: 'Remaining', font: { bold: true, size: '1rem' } }),
+                                            this.$render("i-label", { id: 'lblSpotsRemaining', font: { size: '1rem' } })),
+                                        this.$render("i-hstack", { id: 'pnlMintFee', width: "100%", justifyContent: "space-between", visible: false, gap: '0.5rem', lineHeight: 1.5 },
+                                            this.$render("i-label", { caption: 'Price', font: { bold: true, size: '1rem' } }),
+                                            this.$render("i-label", { id: 'lblMintFee', font: { size: '1rem' } })),
+                                        this.$render("i-hstack", { id: 'pnlQty', width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5, visible: false },
+                                            this.$render("i-label", { caption: 'Quantity', font: { bold: true, size: '1rem' } }),
+                                            this.$render("i-panel", { width: "50%" },
+                                                this.$render("i-input", { id: 'edtQty', height: 35, width: "100%", onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } }))),
+                                        this.$render("i-hstack", { width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5 },
+                                            this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
+                                                this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { bold: true, size: '1rem' } }),
+                                                this.$render("i-icon", { id: "iconOrderTotal", name: "question-circle", fill: Theme.background.modal, width: 20, height: 20 })),
+                                            this.$render("i-label", { id: 'lbOrderTotal', font: { size: '1rem' }, caption: "0" })),
+                                        this.$render("i-vstack", { id: "pnlTokenInput", gap: '0.25rem', margin: { bottom: '1rem' }, visible: false },
                                             this.$render("i-hstack", { horizontalAlignment: 'space-between', verticalAlignment: 'center', gap: "0.5rem" },
-                                                this.$render("i-label", { id: "lblYouPay", font: { weight: 500, size: '1rem' } }),
+                                                this.$render("i-label", { caption: "Your donation", font: { weight: 500, size: '1rem' } }),
                                                 this.$render("i-hstack", { horizontalAlignment: 'end', verticalAlignment: 'center', gap: "0.5rem", opacity: 0.6 },
                                                     this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
                                                     this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
-                                            this.$render("i-grid-layout", { templateColumns: ['100%'], overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, verticalAlignment: "center", border: { radius: 16, width: '2px', style: 'solid', color: 'transparent' } },
+                                            this.$render("i-stack", { direction: "horizontal", overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, alignItems: "center", border: { radius: 16, width: '2px', style: 'solid', color: 'transparent' } },
                                                 this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_1.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
                                                         maxHeight: '50vh'
-                                                    }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged })),
-                                            this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", width: "50%", margin: { top: '0.75rem', left: 'auto', right: 'auto' } },
-                                                this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
-                                                this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false }))),
-                                        this.$render("i-hstack", { horizontalAlignment: "space-between", verticalAlignment: 'center' },
-                                            this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
-                                                this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { size: '1rem' } }),
-                                                this.$render("i-icon", { id: "iconOrderTotal", name: "question-circle", fill: Theme.background.modal, width: 20, height: 20 })),
-                                            this.$render("i-label", { id: 'lbOrderTotal', font: { size: '1rem' }, caption: "0" })),
-                                        this.$render("i-vstack", { gap: '0.25rem', margin: { top: '1rem' } },
+                                                    }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged }))),
+                                        this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", width: "100%", margin: { top: '0.5rem' } },
+                                            this.$render("i-button", { id: "btnApprove", width: '100%', caption: "Approve", padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, visible: false, onClick: this.onApprove.bind(this) }),
+                                            this.$render("i-button", { id: 'btnSubmit', width: '100%', caption: 'Submit', padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, font: { size: '1rem', color: Theme.colors.primary.contrastText, bold: true }, rightIcon: { visible: false, fill: Theme.colors.primary.contrastText }, background: { color: Theme.background.gradient }, border: { radius: 12 }, onClick: this.onSubmit.bind(this), enabled: false })),
+                                        this.$render("i-vstack", { id: "pnlAddress", gap: '0.25rem', margin: { top: '1rem' } },
                                             this.$render("i-label", { id: 'lblRef', font: { size: '0.875rem' }, opacity: 0.5 }),
                                             this.$render("i-label", { id: 'lblAddress', font: { size: '0.875rem' }, overflowWrap: 'anywhere' }))),
                                     this.$render("i-vstack", { id: 'pnlUnsupportedNetwork', visible: false, horizontalAlignment: 'center' },
                                         this.$render("i-label", { caption: 'This network is not supported.', font: { size: '1.5rem' } })),
-                                    this.$render("i-label", { caption: 'Terms & Condition', font: { size: '0.875rem' }, link: { href: 'https://docs.scom.dev/' }, opacity: 0.6, margin: { top: '1rem' } }))),
-                            this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem', padding: { top: '0.5rem', bottom: '0.5rem', left: '0.5rem', right: '0.5rem' } },
-                                this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
-                                this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))),
+                                    this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem' },
+                                        this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
+                                        this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))))),
                         this.$render("i-scom-wallet-modal", { id: "mdWallet", wallets: [] }),
                         this.$render("i-scom-tx-status-modal", { id: "txStatusModal" })))));
         }

@@ -46,6 +46,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         wallets: IWalletPlugin[];
         networks: any[];
         showHeader?: boolean;
+        requiredQuantity?: number;
     }
     export interface IWalletPlugin {
         name: string;
@@ -290,6 +291,9 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 link: {
                     type: string;
                 };
+                requiredQuantity: {
+                    type: string;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -365,6 +369,7 @@ declare module "@scom/scom-nft-minter" {
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
         showHeader?: boolean;
+        requiredQuantity?: number;
     }
     global {
         namespace JSX {
@@ -375,7 +380,6 @@ declare module "@scom/scom-nft-minter" {
     }
     export default class ScomNftMinter extends Module {
         private state;
-        private gridDApp;
         private imgLogo;
         private markdownViewer;
         private pnlLink;
@@ -385,14 +389,13 @@ declare module "@scom/scom-nft-minter" {
         private lblMintFee;
         private pnlSpotsRemaining;
         private lblSpotsRemaining;
-        private pnlMaxQty;
-        private lblMaxQty;
-        private lblYouPay;
+        private pnlTokenInput;
         private pnlQty;
         private edtQty;
         private lblBalance;
         private btnSubmit;
         private btnApprove;
+        private pnlAddress;
         private lblRef;
         private lblAddress;
         private tokenInput;
@@ -500,6 +503,7 @@ declare module "@scom/scom-nft-minter" {
                 wallets: IWalletPlugin[];
                 networks: any[];
                 showHeader?: boolean;
+                requiredQuantity?: number;
             };
             setData: any;
             getTag: any;
