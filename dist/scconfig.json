@@ -1,7 +1,7 @@
 {
     "name": "@scom/scom-nft-minter",
     "type": "widget",
-    "version": "0.1.21",
+    "version": "0.1.22",
     "dependencies": [
         "@ijstech/components",
         "@ijstech/eth-wallet",
