@@ -1393,6 +1393,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     onPaid: async (receipt) => {
                         this.btnSubmit.rightIcon.visible = false;
+                        if (this.txStatusModal)
+                            this.txStatusModal.closeModal();
                     },
                     onPayingError: async (err) => {
                         this.showTxStatusModal('error', err);
@@ -1541,6 +1543,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 await this.buyToken(1);
             }
             this.updateSubmitButton(false);
+            if (this.txStatusModal)
+                this.txStatusModal.closeModal();
         }
         async onSubmit() {
             if (!(0, index_5.isClientWalletConnected)()) {

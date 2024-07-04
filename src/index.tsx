@@ -739,6 +739,7 @@ export default class ScomNftMinter extends Module {
         },
         onPaid: async (receipt?: any) => {
           this.btnSubmit.rightIcon.visible = false;
+          if (this.txStatusModal) this.txStatusModal.closeModal();
         },
         onPayingError: async (err: Error) => {
           this.showTxStatusModal('error', err);
@@ -894,6 +895,7 @@ export default class ScomNftMinter extends Module {
       await this.buyToken(1);
     }
     this.updateSubmitButton(false);
+    if (this.txStatusModal) this.txStatusModal.closeModal();
   }
 
   private async onSubmit() {
