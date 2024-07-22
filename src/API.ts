@@ -2,6 +2,7 @@ import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
+import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
 import { registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
@@ -283,6 +284,34 @@ async function donate(
         console.error(err);
     }
     return receipt;
+}
+//
+//    ERC721 and oswap troll nft 
+//
+async function fetchUserNftBalance(state: State, address:string) {
+    if (!address) return null;
+    try {
+        const wallet = state.getRpcWallet();
+        const erc721 = new ProductContracts.ERC721(wallet, address);
+        const nftBalance = await erc721.balanceOf(wallet.address);
+        return nftBalance.toFixed();
+    } catch {
+        return null;
+    }
+}
+
+async function mintOswapTrollNft(state: State, address:string) {
+    if (!address) return null;
+    try {
+        const wallet = state.getRpcWallet();
+        const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
+        const mintFee = await trollNft.protocolFee();
+        const stake = await trollNft.minimumStake()
+        const receipt = await trollNft.stake(mintFee.plus(stake));
+        return receipt;
+    } catch {
+        return null;
+    }
 }
 
 export {

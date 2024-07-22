@@ -789,7 +789,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onApprove() {
-    this.showTxStatusModal('warning', 'Approving');
+    this.showTxStatusModal('warning', `Approving`);
     this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
   }
 

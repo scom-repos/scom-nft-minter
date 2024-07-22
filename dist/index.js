@@ -562,6 +562,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getProjectOwnerSchema = exports.getBuilderSchema = void 0;
     ///<amd-module name='@scom/scom-nft-minter/formSchema.json.ts'/> 
+    const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
     const theme = {
         backgroundColor: {
             type: 'string',
@@ -669,6 +670,28 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
         const dataSchema = {
             type: 'object',
             properties: {
+                nftType: {
+                    type: 'string',
+                    required: true,
+                    enum: [
+                        'ERC721',
+                        'ERC1155'
+                    ]
+                },
+                chainId: {
+                    type: 'number',
+                    enum: chainIds,
+                    required: true
+                },
+                nftAddress: {
+                    type: 'string',
+                    minimum: 1,
+                    required: true
+                },
+                productId: {
+                    type: 'integer',
+                    minimum: 1,
+                },
                 title: {
                     type: 'string'
                 },
@@ -679,11 +702,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                 logoUrl: {
                     type: 'string',
                     title: 'Logo URL'
-                },
-                productId: {
-                    type: 'integer',
-                    minimum: 1,
-                    required: true
                 },
                 link: {
                     type: 'string'
@@ -726,7 +744,11 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                 elements: [
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/title'
+                                        scope: '#/properties/nftType'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/chainId'
                                     },
                                     {
                                         type: 'Control',
@@ -739,6 +761,25 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     ...donateElements,
                                     {
                                         type: 'Control',
+                                        scope: '#/properties/requiredQuantity'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        type: 'Category',
+                        label: 'Branding',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/title'
+                                    },
+                                    {
+                                        type: 'Control',
                                         scope: '#/properties/description'
                                     },
                                     {
@@ -749,10 +790,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                         type: 'Control',
                                         scope: '#/properties/link'
                                     },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/requiredQuantity'
-                                    }
                                 ]
                             }
                         ]
