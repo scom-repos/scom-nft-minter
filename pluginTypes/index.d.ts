@@ -279,6 +279,25 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         dataSchema: {
             type: string;
             properties: {
+                nftType: {
+                    type: string;
+                    required: boolean;
+                    enum: string[];
+                };
+                chainId: {
+                    type: string;
+                    enum: number[];
+                    required: boolean;
+                };
+                nftAddress: {
+                    type: string;
+                    minimum: number;
+                    required: boolean;
+                };
+                productId: {
+                    type: string;
+                    minimum: number;
+                };
                 title: {
                     type: string;
                 };
@@ -289,11 +308,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 logoUrl: {
                     type: string;
                     title: string;
-                };
-                productId: {
-                    type: string;
-                    minimum: number;
-                    required: boolean;
                 };
                 link: {
                     type: string;

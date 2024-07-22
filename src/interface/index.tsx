@@ -9,7 +9,9 @@ export interface ICommissionInfo {
 export enum ProductType {
   Buy = "Buy",
   DonateToOwner = "DonateToOwner",
-  DonateToEveryone = "DonateToEveryone"
+  DonateToEveryone = "DonateToEveryone",
+
+  OswapTroll = "OswapTroll" // 721
 }
 
 export interface IProductInfo {
