@@ -14,7 +14,8 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     export enum ProductType {
         Buy = "Buy",
         DonateToOwner = "DonateToOwner",
-        DonateToEveryone = "DonateToEveryone"
+        DonateToEveryone = "DonateToEveryone",
+        OswapTroll = "OswapTroll"
     }
     export interface IProductInfo {
         productType: BigNumber;
@@ -380,6 +381,10 @@ declare module "@scom/scom-nft-minter" {
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
+        nftType?: string;
+        chainId?: number;
+        nftAddress?: string;
+        productId?: string;
         title?: string;
         productType?: string;
         description?: string;
