@@ -8,6 +8,7 @@
         "@scom/scom-token-list",
         "@scom/scom-product-contract",
         "@scom/scom-commission-proxy-contract",
+        "@scom/oswap-troll-nft-contract",
         "@scom/scom-network-list",
         "@scom/scom-multicall",
         "@scom/scom-dapp-container",

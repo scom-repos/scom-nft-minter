@@ -190,11 +190,20 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/productType'
+                                    scope: '#/properties/nftAddress'
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/productId'
+                                    scope: '#/properties/productId',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155'
+                                            }
+                                        }
+                                    }
                                 },
                                 ...donateElements,
                                 {

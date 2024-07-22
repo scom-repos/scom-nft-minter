@@ -34,6 +34,10 @@ import { getBuilderSchema, getProjectOwnerSchema } from './formSchema.json';
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
   name?: string;
+  nftType?: string;
+  chainId?: number;
+  nftAddress?: string;
+  productId?: string;
   title?: string;
   productType?: string;
   description?: string;

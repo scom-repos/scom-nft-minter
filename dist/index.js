@@ -13,6 +13,7 @@ define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], func
         ProductType["Buy"] = "Buy";
         ProductType["DonateToOwner"] = "DonateToOwner";
         ProductType["DonateToEveryone"] = "DonateToEveryone";
+        ProductType["OswapTroll"] = "OswapTroll"; // 721
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
 });
 define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet"], function (require, exports, components_1, eth_wallet_1) {
@@ -225,7 +226,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
         }
     });
 });
-define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_3, index_1, scom_product_contract_2, scom_commission_proxy_contract_1, index_2, scom_token_list_1) {
+define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_3, index_1, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_2, scom_token_list_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
@@ -485,6 +486,37 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
+    //
+    //    ERC721 and oswap troll nft 
+    //
+    async function fetchUserNftBalance(state, address) {
+        if (!address)
+            return null;
+        try {
+            const wallet = state.getRpcWallet();
+            const erc721 = new scom_product_contract_2.Contracts.ERC721(wallet, address);
+            const nftBalance = await erc721.balanceOf(wallet.address);
+            return nftBalance.toFixed();
+        }
+        catch {
+            return null;
+        }
+    }
+    async function mintOswapTrollNft(state, address) {
+        if (!address)
+            return null;
+        try {
+            const wallet = state.getRpcWallet();
+            const trollNft = new oswap_troll_nft_contract_1.Contracts.TrollNFT(wallet, address);
+            const mintFee = await trollNft.protocolFee();
+            const stake = await trollNft.minimumStake();
+            const receipt = await trollNft.stake(mintFee.plus(stake));
+            return receipt;
+        }
+        catch {
+            return null;
+        }
+    }
 });
 define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -752,11 +784,20 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     },
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/productType'
+                                        scope: '#/properties/nftAddress'
                                     },
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/productId'
+                                        scope: '#/properties/productId',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    const: 'ERC1155'
+                                                }
+                                            }
+                                        }
                                     },
                                     ...donateElements,
                                     {
@@ -1480,7 +1521,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         onApprove() {
-            this.showTxStatusModal('warning', 'Approving');
+            this.showTxStatusModal('warning', `Approving`);
             this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
         }
         async onQtyChanged() {
