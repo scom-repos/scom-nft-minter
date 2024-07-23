@@ -306,9 +306,24 @@ async function mintOswapTrollNft(state: State, address:string) {
         const wallet = state.getRpcWallet();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
         const mintFee = await trollNft.protocolFee();
-        const stake = await trollNft.minimumStake()
+        const stake = await trollNft.minimumStake();
         const receipt = await trollNft.stake(mintFee.plus(stake));
         return receipt;
+    } catch {
+        return null;
+    }
+}
+
+async function fetchOswapTrollNftRemaining(state: State, address:string) {
+    if (!address) return null;
+    try {
+        const wallet = state.getRpcWallet();
+        const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
+
+        const cap = await trollNft.cap();
+        const totalSupply = await trollNft.totalSupply();
+        
+        return cap.minus(totalSupply);
     } catch {
         return null;
     }
