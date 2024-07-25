@@ -35,6 +35,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     export interface IEmbedData {
         name?: string;
         title?: string;
+        nftType?: 'ERC721' | 'ERC1155';
+        chainId?: number;
+        nftAddress?: string;
         productType?: ProductType;
         productId?: number;
         donateTo?: string;
@@ -138,7 +141,13 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate };
+    function fetchUserNftBalance(state: State, address: string): Promise<string>;
+    function mintOswapTrollNft(state: State, address: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
+        cap: BigNumber;
+        price: BigNumber;
+    }>;
+    export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -381,10 +390,10 @@ declare module "@scom/scom-nft-minter" {
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
-        nftType?: string;
+        nftType?: 'ERC721' | 'ERC1155';
         chainId?: number;
         nftAddress?: string;
-        productId?: string;
+        productId?: number;
         title?: string;
         productType?: string;
         description?: string;
@@ -443,12 +452,15 @@ declare module "@scom/scom-nft-minter" {
         defaultEdit: boolean;
         private contractAddress;
         private rpcWalletEvents;
+        private cap;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
         private get chainId();
         private get rpcWallet();
+        get nftType(): "ERC721" | "ERC1155";
+        get nftAddress(): string;
         get donateTo(): string;
         get link(): string;
         set link(value: string);
@@ -517,6 +529,9 @@ declare module "@scom/scom-nft-minter" {
                 fee: string;
                 name?: string;
                 title?: string;
+                nftType?: "ERC721" | "ERC1155";
+                chainId?: number;
+                nftAddress?: string;
                 productType?: ProductType;
                 productId?: number;
                 donateTo?: string;
@@ -573,6 +588,7 @@ declare module "@scom/scom-nft-minter" {
         private onAmountChanged;
         private doSubmitAction;
         private onSubmit;
+        private mintNft;
         private buyToken;
         init(): Promise<void>;
         render(): any;

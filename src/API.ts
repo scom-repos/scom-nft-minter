@@ -314,16 +314,20 @@ async function mintOswapTrollNft(state: State, address:string) {
     }
 }
 
-async function fetchOswapTrollNftRemaining(state: State, address:string) {
+async function fetchOswapTrollNftInfo(state: State, address:string) {
     if (!address) return null;
     try {
         const wallet = state.getRpcWallet();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
-
+        const mintFee = await trollNft.protocolFee();
+        const stake = await trollNft.minimumStake();
         const cap = await trollNft.cap();
         const totalSupply = await trollNft.totalSupply();
         
-        return cap.minus(totalSupply);
+        return {
+            cap: cap.minus(totalSupply),
+            price: mintFee.plus(stake).shiftedBy(-18),
+        }
     } catch {
         return null;
     }
@@ -335,5 +339,8 @@ export {
     newProduct,
     getProxyTokenAmountIn,
     buyProduct,
-    donate
+    donate,
+    fetchOswapTrollNftInfo,
+    fetchUserNftBalance,
+    mintOswapTrollNft
 }
