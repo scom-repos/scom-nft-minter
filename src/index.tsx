@@ -25,7 +25,7 @@ import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFT
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-import { ITokenObject } from '@scom/scom-token-list';
+import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
@@ -905,13 +905,17 @@ export default class ScomNftMinter extends Module {
         this.updateSubmitButton(false);
         return;
       }
-      const balance = await fetchUserNftBalance(this.state, this.nftAddress);
+      // const balance = await fetchUserNftBalance(this.state, this.nftAddress);
+      const tokenList = tokenStore.getTokenList(this.chainId);
+      const token = tokenList.find(v => v.symbol === oswapTrollSymbol);
+      const balance = await getTokenBalance(this.rpcWallet, token);
       if (oswapTroll.price.gt(balance)) {
         this.showTxStatusModal('error', `Insufficient ${oswapTrollSymbol} Balance`);
         this.updateSubmitButton(false);
         return;
       }
       await this.mintNft();
+      return;
     }
     const token = this.productInfo.token
     const balance = await getTokenBalance(this.rpcWallet, token);
@@ -989,6 +993,7 @@ export default class ScomNftMinter extends Module {
     const txHashCallback = (err: Error, receipt?: string) => {
       if (err) {
         this.showTxStatusModal('error', err);
+        this.updateSubmitButton(false);
       }
     }
     const confirmationCallback = async (receipt: any) => {
@@ -997,13 +1002,14 @@ export default class ScomNftMinter extends Module {
         this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap);
         this.cap = oswapTroll.cap.toNumber();
       }
+      this.updateSubmitButton(false);
     }
     registerSendTxEvents({
       transactionHash: txHashCallback,
       confirmation: confirmationCallback
     });
 
-    await mintOswapTrollNft(this.state, this.nftAddress);
+    await mintOswapTrollNft(this.nftAddress, txHashCallback);
   }
 
   private async buyToken(quantity: number) {

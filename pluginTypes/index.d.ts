@@ -142,7 +142,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
-    function mintOswapTrollNft(state: State, address: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
         cap: BigNumber;
         price: BigNumber;

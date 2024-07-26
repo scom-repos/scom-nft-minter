@@ -503,18 +503,19 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.fetchUserNftBalance = fetchUserNftBalance;
-    async function mintOswapTrollNft(state, address) {
+    async function mintOswapTrollNft(address, callback) {
         if (!address)
             return null;
         try {
-            const wallet = state.getRpcWallet();
+            const wallet = eth_wallet_3.Wallet.getClientInstance();
             const trollNft = new oswap_troll_nft_contract_1.Contracts.TrollNFT(wallet, address);
             const mintFee = await trollNft.protocolFee();
             const stake = await trollNft.minimumStake();
             const receipt = await trollNft.stake(mintFee.plus(stake));
             return receipt;
         }
-        catch {
+        catch (e) {
+            callback(e);
             return null;
         }
     }
@@ -907,7 +908,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
     }
     exports.getProjectOwnerSchema = getProjectOwnerSchema;
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_4, eth_wallet_4, index_3, index_4, index_5, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, formSchema_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-token-list", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_4, eth_wallet_4, index_3, index_4, index_5, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, scom_token_list_2, formSchema_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const oswapTrollSymbol = 'OSWAP';
@@ -1674,13 +1675,17 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
-                const balance = await (0, API_1.fetchUserNftBalance)(this.state, this.nftAddress);
+                // const balance = await fetchUserNftBalance(this.state, this.nftAddress);
+                const tokenList = scom_token_list_2.tokenStore.getTokenList(this.chainId);
+                const token = tokenList.find(v => v.symbol === oswapTrollSymbol);
+                const balance = await (0, index_4.getTokenBalance)(this.rpcWallet, token);
                 if (oswapTroll.price.gt(balance)) {
                     this.showTxStatusModal('error', `Insufficient ${oswapTrollSymbol} Balance`);
                     this.updateSubmitButton(false);
                     return;
                 }
                 await this.mintNft();
+                return;
             }
             const token = this.productInfo.token;
             const balance = await (0, index_4.getTokenBalance)(this.rpcWallet, token);
@@ -1757,6 +1762,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const txHashCallback = (err, receipt) => {
                 if (err) {
                     this.showTxStatusModal('error', err);
+                    this.updateSubmitButton(false);
                 }
             };
             const confirmationCallback = async (receipt) => {
@@ -1765,12 +1771,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.lblSpotsRemaining.caption = (0, index_4.formatNumber)(oswapTroll.cap);
                     this.cap = oswapTroll.cap.toNumber();
                 }
+                this.updateSubmitButton(false);
             };
             (0, index_4.registerSendTxEvents)({
                 transactionHash: txHashCallback,
                 confirmation: confirmationCallback
             });
-            await (0, API_1.mintOswapTrollNft)(this.state, this.nftAddress);
+            await (0, API_1.mintOswapTrollNft)(this.nftAddress, txHashCallback);
         }
         async buyToken(quantity) {
             if (this.productId === undefined || this.productId === null)
