@@ -300,16 +300,17 @@ async function fetchUserNftBalance(state: State, address:string) {
     }
 }
 
-async function mintOswapTrollNft(state: State, address:string) {
+async function mintOswapTrollNft(address:string, callback: (err: Error, receipt?: string) => void) {
     if (!address) return null;
     try {
-        const wallet = state.getRpcWallet();
+        const wallet = Wallet.getClientInstance();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
         const mintFee = await trollNft.protocolFee();
         const stake = await trollNft.minimumStake();
         const receipt = await trollNft.stake(mintFee.plus(stake));
         return receipt;
-    } catch {
+    } catch (e) {
+        callback(e);
         return null;
     }
 }
