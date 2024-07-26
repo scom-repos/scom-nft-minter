@@ -122,7 +122,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { ProductType, ICommissionInfo } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    function getProductInfo(state: State, productId: number): Promise<{
+    function getProductInfo(state: State, erc1155Index: number): Promise<{
         token: any;
         productType: BigNumber;
         productId: BigNumber;
@@ -133,7 +133,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         maxPrice: BigNumber;
         status: BigNumber;
     }>;
-    function getNFTBalance(state: State, productId: number): Promise<string>;
+    function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
     function newProduct(state: State, productType: ProductType, qty: number, maxQty: number, price: string, maxPrice: string, token?: ITokenObject, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
@@ -304,7 +304,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     minimum: number;
                     required: boolean;
                 };
-                productId: {
+                erc1155Index: {
                     type: string;
                     minimum: number;
                 };

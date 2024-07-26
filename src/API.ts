@@ -1,4 +1,4 @@
-import { BigNumber, Utils, Wallet } from '@ijstech/eth-wallet';
+import { BigNumber, IMulticallContractCall, Utils, Wallet } from '@ijstech/eth-wallet';
 import { ProductType, ICommissionInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
@@ -7,13 +7,13 @@ import { registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
 
-async function getProductInfo(state: State, productId: number) {
+async function getProductInfo(state: State, erc1155Index: number) {
     let productInfoAddress = state.getContractAddress('ProductInfo');
     if (!productInfoAddress) return null;
     try {
         const wallet = state.getRpcWallet();
         const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-        const product = await productInfo.products(productId);
+        const product = await productInfo.products(erc1155Index);
         const chainId = wallet.chainId;
         const _tokenList = tokenStore.getTokenList(chainId);
         const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
@@ -26,13 +26,13 @@ async function getProductInfo(state: State, productId: number) {
     }
 }
 
-async function getNFTBalance(state: State, productId: number) {
+async function getNFTBalance(state: State, erc1155Index: number) {
     let product1155Address = state.getContractAddress('Product1155');
     if (!product1155Address) return null;
     try {
         const wallet = state.getRpcWallet();
         const product1155 = new ProductContracts.Product1155(wallet, product1155Address);
-        const nftBalance = await product1155.balanceOf({ account: wallet.address, id: productId });
+        const nftBalance = await product1155.balanceOf({ account: wallet.address, id: erc1155Index });
         return nftBalance.toFixed();
     } catch {
         return null;
@@ -319,11 +319,33 @@ async function fetchOswapTrollNftInfo(state: State, address:string) {
     try {
         const wallet = state.getRpcWallet();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
-        const mintFee = await trollNft.protocolFee();
-        const stake = await trollNft.minimumStake();
-        const cap = await trollNft.cap();
-        const totalSupply = await trollNft.totalSupply();
-        
+        let calls: IMulticallContractCall[] = [
+            {
+              contract: trollNft,
+              methodName: 'minimumStake',
+              params: [],
+              to: address
+            },
+            {
+              contract: trollNft,
+              methodName: 'cap',
+              params: [],
+              to: address
+            },
+            {
+              contract: trollNft,
+              methodName: 'totalSupply',
+              params: [],
+              to: address
+            },
+            {
+              contract: trollNft,
+              methodName: 'protocolFee',
+              params: [],
+              to: address
+            },
+        ];
+        let [stake, cap, totalSupply, mintFee]:BigNumber[] = await wallet.doMulticall(calls) || [];
         return {
             cap: cap.minus(totalSupply),
             price: mintFee.plus(stake).shiftedBy(-18),
