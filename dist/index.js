@@ -230,14 +230,14 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
-    async function getProductInfo(state, productId) {
+    async function getProductInfo(state, erc1155Index) {
         let productInfoAddress = state.getContractAddress('ProductInfo');
         if (!productInfoAddress)
             return null;
         try {
             const wallet = state.getRpcWallet();
             const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-            const product = await productInfo.products(productId);
+            const product = await productInfo.products(erc1155Index);
             const chainId = wallet.chainId;
             const _tokenList = scom_token_list_1.tokenStore.getTokenList(chainId);
             const token = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
@@ -251,14 +251,14 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getProductInfo = getProductInfo;
-    async function getNFTBalance(state, productId) {
+    async function getNFTBalance(state, erc1155Index) {
         let product1155Address = state.getContractAddress('Product1155');
         if (!product1155Address)
             return null;
         try {
             const wallet = state.getRpcWallet();
             const product1155 = new scom_product_contract_2.Contracts.Product1155(wallet, product1155Address);
-            const nftBalance = await product1155.balanceOf({ account: wallet.address, id: productId });
+            const nftBalance = await product1155.balanceOf({ account: wallet.address, id: erc1155Index });
             return nftBalance.toFixed();
         }
         catch {
@@ -525,10 +525,33 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         try {
             const wallet = state.getRpcWallet();
             const trollNft = new oswap_troll_nft_contract_1.Contracts.TrollNFT(wallet, address);
-            const mintFee = await trollNft.protocolFee();
-            const stake = await trollNft.minimumStake();
-            const cap = await trollNft.cap();
-            const totalSupply = await trollNft.totalSupply();
+            let calls = [
+                {
+                    contract: trollNft,
+                    methodName: 'minimumStake',
+                    params: [],
+                    to: address
+                },
+                {
+                    contract: trollNft,
+                    methodName: 'cap',
+                    params: [],
+                    to: address
+                },
+                {
+                    contract: trollNft,
+                    methodName: 'totalSupply',
+                    params: [],
+                    to: address
+                },
+                {
+                    contract: trollNft,
+                    methodName: 'protocolFee',
+                    params: [],
+                    to: address
+                },
+            ];
+            let [stake, cap, totalSupply, mintFee] = await wallet.doMulticall(calls) || [];
             return {
                 cap: cap.minus(totalSupply),
                 price: mintFee.plus(stake).shiftedBy(-18),
@@ -742,7 +765,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                     minimum: 1,
                     required: true
                 },
-                productId: {
+                erc1155Index: {
                     type: 'integer',
                     minimum: 1,
                 },
@@ -810,7 +833,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                     },
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/productId',
+                                        scope: '#/properties/erc1155Index',
                                         rule: {
                                             effect: 'SHOW',
                                             condition: {

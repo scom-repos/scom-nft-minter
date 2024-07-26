@@ -126,7 +126,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                 minimum: 1,
                 required: true
             },
-            productId: {//for 1155 only
+            erc1155Index: {//for 1155 only
                 type: 'integer',
                 minimum: 1,
             },
@@ -194,7 +194,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/productId',
+                                    scope: '#/properties/erc1155Index',
                                     rule: {
                                         effect: 'SHOW',
                                         condition: {
