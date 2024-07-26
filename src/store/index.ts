@@ -1,5 +1,6 @@
 import { application } from "@ijstech/components";
 import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
+import getNetworkList from "@scom/scom-network-list";
 export interface IContractDetailInfo {
   address: string;
 }
@@ -12,6 +13,16 @@ export interface IContractInfo {
   Proxy: IContractDetailInfo;
 }
 
+interface IExtendedNetwork extends INetwork {
+  shortName?: string;
+  isDisabled?: boolean;
+  isMainChain?: boolean;
+  explorerName?: string;
+  explorerTxUrl?: string;
+  explorerAddressUrl?: string;
+  isTestnet?: boolean;
+};
+
 export type ContractInfoByChainType = { [key: number]: IContractInfo };
 
 export class State {
@@ -19,12 +30,17 @@ export class State {
   embedderCommissionFee: string = '0';
   rpcWalletId: string = '';
   approvalModel: ERC20ApprovalModel;
+  networkMap = {} as { [key: number]: IExtendedNetwork };
+  infuraId: string = '';
 
   constructor(options: any) {
     this.initData(options);
   }
 
   private initData(options: any) {
+    if (options.infuraId) {
+      this.infuraId = options.infuraId;
+    }
     if (options.contractInfo) {
       this.contractInfoByChain = options.contractInfo;
     }
@@ -50,6 +66,28 @@ export class State {
       const rpcWallet = Wallet.getRpcWalletInstance(instanceId);
       rpcWallet.address = clientWallet.address;
     }
+
+    const defaultNetworkList = getNetworkList();
+    const defaultNetworkMap = defaultNetworkList.reduce((acc, cur) => {
+      acc[cur.chainId] = cur;
+      return acc;
+    }, {});
+    // const supportedNetworks = ConfigData.supportedNetworks || [];
+    for (let network of networkList) {
+      const networkInfo = defaultNetworkMap[network.chainId];
+      // const supportedNetwork = supportedNetworks.find(v => v.chainId == network.chainId);
+      // if (!networkInfo || !supportedNetwork) continue;
+      if (!networkInfo) continue;
+      if (this.infuraId && network.rpcUrls && network.rpcUrls.length > 0) {
+        for (let i = 0; i < network.rpcUrls.length; i++) {
+          network.rpcUrls[i] = network.rpcUrls[i].replace(/{InfuraId}/g, this.infuraId);
+        }
+      }
+      this.networkMap[network.chainId] = {
+        ...networkInfo,
+        ...network
+      };
+    }
     return instanceId;
   }
 
@@ -66,6 +104,19 @@ export class State {
   isRpcWalletConnected() {
     const wallet = this.getRpcWallet();
     return wallet?.isConnected;
+  }
+
+  getNetworkInfo = (chainId: number) => {
+    return this.networkMap[chainId];
+  }
+
+  getExplorerByAddress = (chainId: number, address: string) => {
+    let network = this.getNetworkInfo(chainId);
+    if (network && network.explorerAddressUrl) {
+      let url = `${network.explorerAddressUrl}${address}`;
+      return `<a href="${url}" style="color: var(--colors-primary-main); margin-block: 2px" target="_blank">${address}</a>`
+    }
+    return address;
   }
 
   getChainId() {

@@ -31,8 +31,6 @@ import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import { getBuilderSchema, getProjectOwnerSchema } from './formSchema.json';
 
-const oswapTrollSymbol = 'OSWAP';
-
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
   name?: string;
@@ -110,6 +108,7 @@ export default class ScomNftMinter extends Module {
   private contractAddress: string;
   private rpcWalletEvents: IEventBusRegistry[] = [];
   private cap: number;
+  private oswapTrollInfo: { token: ITokenObject; price: BigNumber };
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
@@ -635,18 +634,20 @@ export default class ScomNftMinter extends Module {
           this.pnlInputFields.visible = false;
           return;
         };
-        const { price, cap } = oswapTroll;
+        const { price, cap, tokenAddress } = oswapTroll;
         this.pnlInputFields.visible = true;
         this.pnlUnsupportedNetwork.visible = false;
         this.pnlMintFee.visible = true;
-        this.lblMintFee.caption = `${formatNumber(price)} ${oswapTrollSymbol}`;
+        const token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
+        this.oswapTrollInfo = { token , price };
+        this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
         this.pnlSpotsRemaining.visible = true;
-        this.lblSpotsRemaining.caption = formatNumber(cap);
+        this.lblSpotsRemaining.caption = formatNumber(cap, 0);
         this.cap = cap.toNumber();
         this.pnlQty.visible = true;
         this.edtQty.readOnly = true;
         this.edtQty.value = '1';
-        this.lbOrderTotal.caption = `${formatNumber(price)} ${oswapTrollSymbol}`;
+        this.lbOrderTotal.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
         this.pnlTokenInput.visible = false;
         this.determineBtnSubmitCaption();
         return;
@@ -710,19 +711,22 @@ export default class ScomNftMinter extends Module {
 
   private updateSpotsRemaining() {
     if (this.productId >= 0) {
-      this.lblSpotsRemaining.caption = `${formatNumber(this.productInfo.quantity)}`;
+      this.lblSpotsRemaining.caption = `${formatNumber(this.productInfo.quantity, 0)}`;
     } else {
       this.lblSpotsRemaining.caption = '';
     }
   }
 
-  private showTxStatusModal(status: 'warning' | 'success' | 'error', content?: string | Error) {
+  private showTxStatusModal(status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) {
     if (!this.txStatusModal) return;
     let params: any = { status };
     if (status === 'success') {
       params.txtHash = content;
     } else {
       params.content = content;
+    }
+    if (exMessage) {
+      params.exMessage = exMessage;
     }
     this.txStatusModal.message = { ...params };
     this.txStatusModal.showModal();
@@ -842,8 +846,16 @@ export default class ScomNftMinter extends Module {
   }
 
   private onApprove() {
-    this.showTxStatusModal('warning', `Approving`);
-    this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
+    if (this._type === ProductType.OswapTroll) {
+      const {  price, token } = this.oswapTrollInfo;
+      const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
+      const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
+      this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
+      this.approvalModelAction.doApproveAction(token, price.toFixed());
+    } else {
+      this.showTxStatusModal('warning', `Approving`);
+      this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
+    }
   }
 
   private async onQtyChanged() {
@@ -905,12 +917,10 @@ export default class ScomNftMinter extends Module {
         this.updateSubmitButton(false);
         return;
       }
-      // const balance = await fetchUserNftBalance(this.state, this.nftAddress);
-      const tokenList = tokenStore.getTokenList(this.chainId);
-      const token = tokenList.find(v => v.symbol === oswapTrollSymbol);
+      const token = this.oswapTrollInfo.token;
       const balance = await getTokenBalance(this.rpcWallet, token);
       if (oswapTroll.price.gt(balance)) {
-        this.showTxStatusModal('error', `Insufficient ${oswapTrollSymbol} Balance`);
+        this.showTxStatusModal('error', `Insufficient ${token.symbol} Balance`);
         this.updateSubmitButton(false);
         return;
       }
@@ -985,7 +995,13 @@ export default class ScomNftMinter extends Module {
 			await clientWallet.switchNetwork(this.chainId);
       return;
 		}
-    this.showTxStatusModal('warning', 'Confirming');
+    if (this._type === ProductType.OswapTroll) {
+      const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
+      const tokenAddress = this.state.getExplorerByAddress(this.chainId, this.oswapTrollInfo.token.address);
+      this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
+    } else {
+      this.showTxStatusModal('warning', 'Confirming');
+    }
     this.approvalModelAction.doPayAction();
   }
 
@@ -999,7 +1015,7 @@ export default class ScomNftMinter extends Module {
     const confirmationCallback = async (receipt: any) => {
       const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
       if (oswapTroll) {
-        this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap);
+        this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap, 0);
         this.cap = oswapTroll.cap.toNumber();
       }
       this.updateSubmitButton(false);

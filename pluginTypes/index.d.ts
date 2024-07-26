@@ -64,7 +64,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
 }
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
-    import { ERC20ApprovalModel, IERC20ApprovalEventOptions } from "@ijstech/eth-wallet";
+    import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork } from "@ijstech/eth-wallet";
     export interface IContractDetailInfo {
         address: string;
     }
@@ -74,6 +74,15 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         ProductInfo: IContractDetailInfo;
         Proxy: IContractDetailInfo;
     }
+    interface IExtendedNetwork extends INetwork {
+        shortName?: string;
+        isDisabled?: boolean;
+        isMainChain?: boolean;
+        explorerName?: string;
+        explorerTxUrl?: string;
+        explorerAddressUrl?: string;
+        isTestnet?: boolean;
+    }
     export type ContractInfoByChainType = {
         [key: number]: IContractInfo;
     };
@@ -82,12 +91,18 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         embedderCommissionFee: string;
         rpcWalletId: string;
         approvalModel: ERC20ApprovalModel;
+        networkMap: {
+            [key: number]: IExtendedNetwork;
+        };
+        infuraId: string;
         constructor(options: any);
         private initData;
         initRpcWallet(defaultChainId: number): string;
         getContractAddress(type: ContractType): any;
         getRpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
         isRpcWalletConnected(): boolean;
+        getNetworkInfo: (chainId: number) => IExtendedNetwork;
+        getExplorerByAddress: (chainId: number, address: string) => string;
         getChainId(): number;
         setApprovalModelAction(options: IERC20ApprovalEventOptions): Promise<import("@ijstech/eth-wallet").IERC20ApprovalAction>;
     }
@@ -146,12 +161,14 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
         cap: BigNumber;
         price: BigNumber;
+        tokenAddress: string;
     }>;
     export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
     const _default: {
+        infuraId: string;
         contractInfo: {
             "43113": {
                 ProductNFT: {
@@ -453,6 +470,7 @@ declare module "@scom/scom-nft-minter" {
         private contractAddress;
         private rpcWalletEvents;
         private cap;
+        private oswapTrollInfo;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;

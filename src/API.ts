@@ -345,11 +345,18 @@ async function fetchOswapTrollNftInfo(state: State, address:string) {
               params: [],
               to: address
             },
+            {
+                contract: trollNft,
+                methodName: 'stakeToken',
+                params: [],
+                to: address
+            },
         ];
-        let [stake, cap, totalSupply, mintFee]:BigNumber[] = await wallet.doMulticall(calls) || [];
+        let [stake, cap, totalSupply, mintFee, stakeToken] = await wallet.doMulticall(calls) || [];
         return {
-            cap: cap.minus(totalSupply),
-            price: mintFee.plus(stake).shiftedBy(-18),
+            cap: cap.minus(totalSupply) as BigNumber,
+            price: mintFee.plus(stake).shiftedBy(-18) as BigNumber,
+            tokenAddress: stakeToken as string
         }
     } catch {
         return null;
