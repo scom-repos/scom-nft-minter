@@ -1,3 +1,5 @@
+const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
+
 const theme = {
     backgroundColor: {
         type: 'string',
@@ -106,6 +108,28 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
     const dataSchema = {
         type: 'object',
         properties: {
+            nftType: {
+                type: 'string',
+                required: true,
+                enum: [
+                    'ERC721',
+                    'ERC1155'
+                ]
+            },
+            chainId: {
+                type: 'number',
+                enum: chainIds,
+                required: true
+            },
+            nftAddress:{
+                type: 'string',
+                minimum: 1,
+                required: true
+            },
+            erc1155Index: {//for 1155 only
+                type: 'integer',
+                minimum: 1,
+            },
             title: {
                 type: 'string'
             },
@@ -116,11 +140,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             logoUrl: {
                 type: 'string',
                 title: 'Logo URL'
-            },
-            productId: {
-                type: 'integer',
-                minimum: 1,
-                required: true
             },
             link: {
                 type: 'string'
@@ -163,17 +182,49 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                             elements: [
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/title'
+                                    scope: '#/properties/nftType'
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/productType'
+                                    scope: '#/properties/chainId'
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/productId'
+                                    scope: '#/properties/nftAddress'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/erc1155Index',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155'
+                                            }
+                                        }
+                                    }
                                 },
                                 ...donateElements,
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/requiredQuantity'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Category',
+                    label: 'Branding',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/title'
+                                },
                                 {
                                     type: 'Control',
                                     scope: '#/properties/description'
@@ -186,10 +237,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                     type: 'Control',
                                     scope: '#/properties/link'
                                 },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/requiredQuantity'
-                                }
                             ]
                         }
                     ]

@@ -9,7 +9,9 @@ export interface ICommissionInfo {
 export enum ProductType {
   Buy = "Buy",
   DonateToOwner = "DonateToOwner",
-  DonateToEveryone = "DonateToEveryone"
+  DonateToEveryone = "DonateToEveryone",
+
+  OswapTroll = "OswapTroll" // 721
 }
 
 export interface IProductInfo {
@@ -32,6 +34,9 @@ export interface IChainSpecificProperties {
 export interface IEmbedData {
   name?: string;
   title?: string;
+  nftType?: 'ERC721' | 'ERC1155';
+  chainId?: number;
+  nftAddress?: string;
   productType?: ProductType;
   productId?: number;
   donateTo?: string;

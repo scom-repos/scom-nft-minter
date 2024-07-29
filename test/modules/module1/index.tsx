@@ -57,20 +57,16 @@ export default class Module1 extends Module {
           gap='2rem'
         >
           <i-scom-nft-minter
-            productType="Buy"
-            requiredQuantity={3}
-            chainSpecificProperties={{
-              43113: {
-                productId: 2,
-                donateTo: ''
-              }
-            }}
+            nftType='ERC721'
+            nftAddress='0x946985e7C43Ed2fc7985e89a49A251D52d824122'
+            productType='OswapTroll'
+            //requiredQuantity={3}
             networks={[
               {
-                chainId: 43113
+                chainId: 97
               }
             ]}
-            defaultChainId={43113}
+            defaultChainId={97}
             wallets={[{ name: 'metamask' }]}
           />
         </i-vstack>
