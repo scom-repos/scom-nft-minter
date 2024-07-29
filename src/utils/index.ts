@@ -8,7 +8,7 @@ export const formatNumber = (value: number | string | BigNumber, decimalFigures?
     value = value.toFixed();
   }
   const minValue = '0.0000001';
-  return FormatUtils.formatNumber(value, {decimalFigures: decimalFigures || 4, minValue});
+  return FormatUtils.formatNumber(value, {decimalFigures: decimalFigures !== undefined ? decimalFigures : 4, minValue});
 };
 
 export async function getProxySelectors(state: State, chainId: number): Promise<string[]> {
