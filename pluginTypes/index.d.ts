@@ -103,6 +103,7 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
         isRpcWalletConnected(): boolean;
         getNetworkInfo: (chainId: number) => IExtendedNetwork;
         getExplorerByAddress: (chainId: number, address: string) => string;
+        viewExplorerByAddress: (chainId: number, address: string) => void;
         getChainId(): number;
         setApprovalModelAction(options: IERC20ApprovalEventOptions): Promise<import("@ijstech/eth-wallet").IERC20ApprovalAction>;
     }
@@ -130,6 +131,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const markdownStyle: string;
     export const inputStyle: string;
     export const tokenSelectionStyle: string;
+    export const linkStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
@@ -439,8 +441,11 @@ declare module "@scom/scom-nft-minter" {
         private lblTitle;
         private pnlMintFee;
         private lblMintFee;
-        private pnlSpotsRemaining;
         private lblSpotsRemaining;
+        private lbContract;
+        private lbToken;
+        private lbOwn;
+        private lbERC1155Index;
         private pnlTokenInput;
         private pnlQty;
         private edtQty;
@@ -471,6 +476,9 @@ declare module "@scom/scom-nft-minter" {
         private rpcWalletEvents;
         private cap;
         private oswapTrollInfo;
+        private detailWrapper;
+        private erc1155Wrapper;
+        private btnDetail;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
@@ -595,6 +603,11 @@ declare module "@scom/scom-nft-minter" {
         private updateDAppUI;
         private refreshDApp;
         private updateSpotsRemaining;
+        private onToggleDetail;
+        private onViewContract;
+        private onViewToken;
+        private onCopyContract;
+        private onCopyToken;
         private showTxStatusModal;
         private initApprovalAction;
         private updateContractAddress;

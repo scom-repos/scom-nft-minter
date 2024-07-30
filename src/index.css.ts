@@ -52,3 +52,19 @@ export const tokenSelectionStyle = Styles.style({
     // }
   }
 })
+
+export const linkStyle = Styles.style({
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  display: 'block',
+  cursor: 'pointer',
+  $nest: {
+    '*': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      width: '100%',
+    },
+  }
+})

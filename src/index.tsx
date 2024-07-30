@@ -15,12 +15,13 @@ import {
   ControlElement,
   Icon,
   application,
+  FormatUtils,
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
 import { formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
-import { inputStyle, markdownStyle, tokenSelectionStyle } from './index.css';
+import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
@@ -72,8 +73,11 @@ export default class ScomNftMinter extends Module {
   private lblTitle: Label;
   private pnlMintFee: HStack;
   private lblMintFee: Label;
-  private pnlSpotsRemaining: HStack;
   private lblSpotsRemaining: Label;
+  private lbContract: Label;
+  private lbToken: Label;
+  private lbOwn: Label;
+  private lbERC1155Index: Label;
   private pnlTokenInput: VStack;
   private pnlQty: HStack;
   private edtQty: Input;
@@ -109,6 +113,9 @@ export default class ScomNftMinter extends Module {
   private rpcWalletEvents: IEventBusRegistry[] = [];
   private cap: number;
   private oswapTrollInfo: { token: ITokenObject; price: BigNumber };
+  private detailWrapper: HStack;
+  private erc1155Wrapper: HStack;
+  private btnDetail: Button;
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
@@ -634,14 +641,21 @@ export default class ScomNftMinter extends Module {
           this.pnlInputFields.visible = false;
           return;
         };
+        const nftBalance = await fetchUserNftBalance(this.state, this.nftAddress);
         const { price, cap, tokenAddress } = oswapTroll;
+        const token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
         this.pnlInputFields.visible = true;
         this.pnlUnsupportedNetwork.visible = false;
+        this.detailWrapper.visible = true;
+        this.onToggleDetail();
+        this.btnDetail.visible = true;
+        this.erc1155Wrapper.visible = false;
+        this.lbContract.caption = FormatUtils.truncateWalletAddress(this.nftAddress);
+        this.lbToken.caption = FormatUtils.truncateWalletAddress(tokenAddress);
+        this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
         this.pnlMintFee.visible = true;
-        const token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
         this.oswapTrollInfo = { token , price };
         this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
-        this.pnlSpotsRemaining.visible = true;
         this.lblSpotsRemaining.caption = formatNumber(cap, 0);
         this.cap = cap.toNumber();
         this.pnlQty.visible = true;
@@ -661,6 +675,15 @@ export default class ScomNftMinter extends Module {
         const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
         (!this.lblRef.isConnected) && await this.lblRef.ready();
         if (this._type === ProductType.Buy) {
+          const nftBalance = await getNFTBalance(this.state, this.productId);
+          this.detailWrapper.visible = true;
+          this.onToggleDetail();
+          this.btnDetail.visible = true;
+          this.erc1155Wrapper.visible = true;
+          this.lbERC1155Index.caption = `${this.productId}`;
+          this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress);
+          this.lbToken.caption = token.address ? FormatUtils.truncateWalletAddress(token.address) : token.symbol;
+          this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}`;
           this.lblTitle.caption = this._data.title;
@@ -668,11 +691,9 @@ export default class ScomNftMinter extends Module {
           this.updateSpotsRemaining();
           this.tokenInput.inputReadOnly = true;
           this.pnlQty.visible = true;
-          this.pnlSpotsRemaining.visible = true;
           this.pnlTokenInput.visible = false;
           if (this._data.requiredQuantity != null) {
             let qty = Number(this._data.requiredQuantity);
-            let nftBalance = await getNFTBalance(this.state, this.productId);
             if (nftBalance) {
               this.edtQty.value = Math.max(qty - Number(nftBalance), 0);
             } else {
@@ -683,13 +704,14 @@ export default class ScomNftMinter extends Module {
           }
           this.onQtyChanged();
         } else {
+          this.detailWrapper.visible = false;
+          this.btnDetail.visible = false;
           this.pnlMintFee.visible = false;
           this.lblTitle.caption = this._data.title || 'Make a Contributon';
           this.lblTitle.visible = true;
           this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
           this.tokenInput.inputReadOnly = false;
           this.pnlQty.visible = false;
-          this.pnlSpotsRemaining.visible = false;
           this.pnlTokenInput.visible = true;
           this.edtQty.value = "";
           this.lbOrderTotal.caption = "0";
@@ -715,6 +737,31 @@ export default class ScomNftMinter extends Module {
     } else {
       this.lblSpotsRemaining.caption = '';
     }
+  }
+
+  private onToggleDetail() {
+    const isExpanding = this.detailWrapper.visible;
+    this.detailWrapper.visible = !isExpanding;
+    this.btnDetail.caption = `${isExpanding ? 'More' : 'Hide'} Information`;
+    this.btnDetail.rightIcon.name = isExpanding ? 'caret-down' : 'caret-up';
+  }
+
+  private onViewContract() {
+    this.state.viewExplorerByAddress(this.chainId, this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress)
+  }
+
+  private onViewToken() {
+    const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+    this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
+  }
+
+  private onCopyContract() {
+    application.copyToClipboard(this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress);
+  }
+
+  private onCopyToken() {
+    const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+    application.copyToClipboard(token.address || token.symbol);
   }
 
   private showTxStatusModal(status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) {
@@ -1018,6 +1065,8 @@ export default class ScomNftMinter extends Module {
         this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap, 0);
         this.cap = oswapTroll.cap.toNumber();
       }
+      const nftBalance = await fetchUserNftBalance(this.state, this.nftAddress);
+      this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
       this.updateSubmitButton(false);
     }
     registerSendTxEvents({
@@ -1047,6 +1096,9 @@ export default class ScomNftMinter extends Module {
       await buyProduct(this.state, this.productId, quantity, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
+          this.productInfo = await getProductInfo(this.state, this.productId);
+          const nftBalance = await getNFTBalance(this.state, this.productId);
+          this.lbOwn.caption = nftBalance;
           this.updateSpotsRemaining();
         }
       );
@@ -1116,11 +1168,48 @@ export default class ScomNftMinter extends Module {
                       margin={{ bottom: '0.563rem' }}
                     ></i-markdown>
                   </i-vstack>
-                  <i-vstack gap='0.5rem' id='pnlInputFields'>
-                    <i-hstack id='pnlSpotsRemaining' width="100%" justifyContent="space-between" visible={false} gap='0.5rem' lineHeight={1.5}>
-                      <i-label caption='Remaining' font={{ bold: true, size: '1rem' }}></i-label>
-                      <i-label id='lblSpotsRemaining' font={{ size: '1rem' }}></i-label>
+                  <i-vstack gap="0.5rem" id="pnlInputFields">
+                    <i-hstack id="detailWrapper" horizontalAlignment="space-between" gap={10} visible={false} wrap="wrap">
+                      <i-hstack id="erc1155Wrapper" width="100%" justifyContent="space-between" visible={false} gap="0.5rem" lineHeight={1.5}>
+                        <i-label caption="ERC1155 Index" font={{ bold: true, size: '1rem' }} />
+                        <i-label id="lbERC1155Index" font={{ size: '1rem' }} />
+                      </i-hstack>
+                      <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
+                        <i-label caption="Contract Address" font={{ bold: true, size: '1rem' }} />
+                        <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
+                          <i-label id="lbContract" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewContract} />
+                          <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyContract} cursor="pointer" />
+                        </i-hstack>
+                      </i-hstack>
+                      <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
+                        <i-label caption="Token Address" font={{ bold: true, size: '1rem' }} />
+                        <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
+                          <i-label id="lbToken" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewToken} />
+                          <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
+                        </i-hstack>
+                      </i-hstack>
+                      <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
+                        <i-label caption="Remaining" font={{ bold: true, size: '1rem' }} />
+                        <i-label id="lblSpotsRemaining" font={{ size: '1rem' }} />
+                      </i-hstack>
+                      <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
+                        <i-label caption="You own" font={{ bold: true, size: '1rem' }} />
+                        <i-label id="lbOwn" font={{ size: '1rem' }} />
+                      </i-hstack>
                     </i-hstack>
+                    <i-button
+                      id="btnDetail"
+                      caption="More Information"
+                      rightIcon={{width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }}
+                      background={{ color: 'transparent'}}
+                      border={{ width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }}
+                      width={300}
+                      maxWidth="100%"
+                      height={36}
+                      margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}
+                      onClick={this.onToggleDetail}
+                      visible={false}
+                    />
                     <i-hstack id='pnlMintFee' width="100%" justifyContent="space-between" visible={false} gap='0.5rem' lineHeight={1.5}>
                       <i-label caption='Price' font={{ bold: true, size: '1rem' }}></i-label>
                       <i-label id='lblMintFee' font={{ size: '1rem' }}></i-label>

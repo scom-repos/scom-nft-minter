@@ -119,6 +119,14 @@ export class State {
     return address;
   }
 
+  viewExplorerByAddress = (chainId: number, address: string) => {
+    let network = this.getNetworkInfo(chainId);
+    if (network && network.explorerAddressUrl) {
+      let url = `${network.explorerAddressUrl}${address}`;
+      window.open(url);
+    }
+  }
+
   getChainId() {
     const rpcWallet = this.getRpcWallet();
     return rpcWallet?.chainId;
