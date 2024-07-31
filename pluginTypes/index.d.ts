@@ -216,6 +216,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 }
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
+    import ScomNetworkPicker from "@scom/scom-network-picker";
     export function getBuilderSchema(): {
         dataSchema: {
             type: string;
@@ -287,7 +288,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: {
                         type: string;
-                        scope: string;
+                        label: string;
+                        elements: {
+                            type: string;
+                            elements: {
+                                type: string;
+                                scope: string;
+                            }[];
+                        }[];
                     }[];
                 }[];
             } | {
@@ -297,7 +305,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: {
                         type: string;
-                        label: string;
                         scope: string;
                     }[];
                 }[];
@@ -398,6 +405,13 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     elements: any[];
                 }[];
             }[];
+        };
+        customControls(): {
+            '#/properties/chainId': {
+                render: () => ScomNetworkPicker;
+                getData: (control: ScomNetworkPicker) => number;
+                setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
         };
     };
 }
