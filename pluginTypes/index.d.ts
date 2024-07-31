@@ -14,8 +14,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     export enum ProductType {
         Buy = "Buy",
         DonateToOwner = "DonateToOwner",
-        DonateToEveryone = "DonateToEveryone",
-        OswapTroll = "OswapTroll"
+        DonateToEveryone = "DonateToEveryone"
     }
     export interface IProductInfo {
         productType: BigNumber;

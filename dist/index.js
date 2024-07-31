@@ -13,7 +13,6 @@ define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], func
         ProductType["Buy"] = "Buy";
         ProductType["DonateToOwner"] = "DonateToOwner";
         ProductType["DonateToEveryone"] = "DonateToEveryone";
-        ProductType["OswapTroll"] = "OswapTroll"; // 721
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
 });
 define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-network-list"], function (require, exports, components_1, eth_wallet_1, scom_network_list_1) {
@@ -1161,7 +1160,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
         }
         get productType() {
-            return this.nftType === 'ERC721' ? index_3.ProductType.OswapTroll : this._data.productType ?? index_3.ProductType.Buy;
+            return this._data.productType ?? index_3.ProductType.Buy;
         }
         set productType(value) {
             this._data.productType = value;
@@ -1204,7 +1203,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         get networks() {
             const nets = this._data.networks ?? data_json_1.default.defaultBuilderData.networks;
-            if (this._data.chainId && this.productType === index_3.ProductType.OswapTroll && !nets.some(v => v.chainId === this._data.chainId)) {
+            if (this._data.chainId && this.nftType === 'ERC721' && !nets.some(v => v.chainId === this._data.chainId)) {
                 nets.push({ chainId: this._data.chainId });
             }
             return nets;
@@ -1574,7 +1573,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 await this.initWallet();
                 this.btnSubmit.enabled = !(0, index_5.isClientWalletConnected)() || !this.state.isRpcWalletConnected();
                 // OswapTroll
-                if (this._type === index_3.ProductType.OswapTroll) {
+                if (this.nftType === 'ERC721') {
                     this.lblTitle.caption = this._data.title;
                     if (!this.nftAddress)
                         return;
@@ -1692,17 +1691,17 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.btnDetail.rightIcon.name = isExpanding ? 'caret-down' : 'caret-up';
         }
         onViewContract() {
-            this.state.viewExplorerByAddress(this.chainId, this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress);
+            this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
         }
         onViewToken() {
-            const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+            const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
             this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
         }
         onCopyContract() {
-            components_4.application.copyToClipboard(this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress);
+            components_4.application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
         }
         onCopyToken() {
-            const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+            const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
             components_4.application.copyToClipboard(token.address || token.symbol);
         }
         showTxStatusModal(status, content, exMessage) {
@@ -1723,7 +1722,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async initApprovalAction() {
             if (!this.approvalModelAction) {
-                this.contractAddress = this.productType === index_3.ProductType.OswapTroll ? this.nftAddress : this.state.getContractAddress('Proxy');
+                this.contractAddress = this.nftType === 'ERC721' ? this.nftAddress : this.state.getContractAddress('Proxy');
                 this.approvalModelAction = await this.state.setApprovalModelAction({
                     sender: this,
                     payAction: async () => {
@@ -1790,7 +1789,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateContractAddress() {
             if (this.approvalModelAction) {
-                if (this.productType === index_3.ProductType.OswapTroll) {
+                if (this.nftType === 'ERC721') {
                     this.contractAddress = this.nftAddress;
                 }
                 else if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
@@ -1819,7 +1818,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.btnSubmit.caption = 'Switch Network';
                 this.btnSubmit.enabled = true;
             }
-            else if (this._type === index_3.ProductType.OswapTroll) {
+            else if (this.nftType === 'ERC721') {
                 this.btnSubmit.caption = this.cap ? 'Mint' : 'Out of stock';
                 this.btnSubmit.enabled = !!this.cap;
             }
@@ -1831,7 +1830,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         onApprove() {
-            if (this._type === index_3.ProductType.OswapTroll) {
+            if (this.nftType === 'ERC721') {
                 const { price, token } = this.oswapTrollInfo;
                 const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
                 const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
@@ -1881,7 +1880,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
         }
         async doSubmitAction() {
-            if (!this._data || (!this.productId && this._type !== index_3.ProductType.OswapTroll))
+            if (!this._data || (!this.productId && this.nftType !== 'ERC721'))
                 return;
             this.updateSubmitButton(true);
             if ((this._type === index_3.ProductType.DonateToOwner || this._type === index_3.ProductType.DonateToEveryone) && !this.tokenInput.token) {
@@ -1894,7 +1893,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             //   this.updateSubmitButton(false);
             //   return;
             // }
-            if (this._type === index_3.ProductType.OswapTroll) {
+            if (this.nftType === 'ERC721') {
                 const oswapTroll = await (0, API_1.fetchOswapTrollNftInfo)(this.state, this.nftAddress);
                 if (!oswapTroll || oswapTroll.cap.lte(0)) {
                     this.showTxStatusModal('error', 'Out of stock');
@@ -1979,7 +1978,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 await clientWallet.switchNetwork(this.chainId);
                 return;
             }
-            if (this._type === index_3.ProductType.OswapTroll) {
+            if (this.nftType === 'ERC721') {
                 const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
                 const tokenAddress = this.state.getExplorerByAddress(this.chainId, this.oswapTrollInfo.token.address);
                 this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);

@@ -10,8 +10,6 @@ export enum ProductType {
   Buy = "Buy",
   DonateToOwner = "DonateToOwner",
   DonateToEveryone = "DonateToEveryone",
-
-  OswapTroll = "OswapTroll" // 721
 }
 
 export interface IProductInfo {

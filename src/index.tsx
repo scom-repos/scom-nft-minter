@@ -174,7 +174,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get productType() {
-    return this.nftType === 'ERC721' ? ProductType.OswapTroll : this._data.productType ?? ProductType.Buy;
+    return this._data.productType ?? ProductType.Buy;
   }
 
   set productType(value: ProductType) {
@@ -230,7 +230,7 @@ export default class ScomNftMinter extends Module {
 
   get networks() {
     const nets = this._data.networks ?? configData.defaultBuilderData.networks;
-    if (this._data.chainId && this.productType === ProductType.OswapTroll && !nets.some(v => v.chainId === this._data.chainId)) {
+    if (this._data.chainId && this.nftType === 'ERC721' && !nets.some(v => v.chainId === this._data.chainId)) {
       nets.push({ chainId: this._data.chainId });
     }
     return nets;
@@ -632,7 +632,7 @@ export default class ScomNftMinter extends Module {
       await this.initWallet();
       this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
       // OswapTroll
-      if (this._type === ProductType.OswapTroll) {
+      if (this.nftType === 'ERC721') {
         this.lblTitle.caption = this._data.title;
         if (!this.nftAddress) return;
         const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
@@ -747,20 +747,20 @@ export default class ScomNftMinter extends Module {
   }
 
   private onViewContract() {
-    this.state.viewExplorerByAddress(this.chainId, this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress)
+    this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721'? this.nftAddress : this.contractAddress)
   }
 
   private onViewToken() {
-    const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+    const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
     this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
   }
 
   private onCopyContract() {
-    application.copyToClipboard(this._type === 'OswapTroll' ? this.nftAddress : this.contractAddress);
+    application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
   }
 
   private onCopyToken() {
-    const token = this._type === 'OswapTroll' ? this.oswapTrollInfo.token : this.productInfo.token;
+    const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
     application.copyToClipboard(token.address || token.symbol);
   }
 
@@ -781,7 +781,7 @@ export default class ScomNftMinter extends Module {
 
   private async initApprovalAction() {
     if (!this.approvalModelAction) {
-      this.contractAddress = this.productType === ProductType.OswapTroll ? this.nftAddress : this.state.getContractAddress('Proxy');
+      this.contractAddress = this.nftType === 'ERC721' ? this.nftAddress : this.state.getContractAddress('Proxy');
       this.approvalModelAction = await this.state.setApprovalModelAction({
         sender: this,
         payAction: async () => {
@@ -848,7 +848,7 @@ export default class ScomNftMinter extends Module {
 
   private updateContractAddress() {
     if (this.approvalModelAction) {
-      if (this.productType === ProductType.OswapTroll) {
+      if (this.nftType === 'ERC721') {
         this.contractAddress = this.nftAddress;
       }
       else if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
@@ -880,7 +880,7 @@ export default class ScomNftMinter extends Module {
       this.btnSubmit.caption = 'Switch Network';
       this.btnSubmit.enabled = true;
     }
-    else if (this._type === ProductType.OswapTroll) {
+    else if (this.nftType === 'ERC721') {
       this.btnSubmit.caption = this.cap ? 'Mint' : 'Out of stock';
       this.btnSubmit.enabled = !!this.cap;
     }
@@ -893,7 +893,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onApprove() {
-    if (this._type === ProductType.OswapTroll) {
+    if (this.nftType === 'ERC721') {
       const {  price, token } = this.oswapTrollInfo;
       const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
       const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
@@ -945,7 +945,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private async doSubmitAction() {
-    if (!this._data || (!this.productId && this._type !== ProductType.OswapTroll)) return;
+    if (!this._data || (!this.productId && this.nftType !== 'ERC721')) return;
     this.updateSubmitButton(true);
     if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenInput.token) {
       this.showTxStatusModal('error', 'Token Required');
@@ -957,7 +957,7 @@ export default class ScomNftMinter extends Module {
     //   this.updateSubmitButton(false);
     //   return;
     // }
-    if (this._type === ProductType.OswapTroll) {
+    if (this.nftType === 'ERC721') {
       const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
       if (!oswapTroll || oswapTroll.cap.lte(0)) {
         this.showTxStatusModal('error', 'Out of stock');
@@ -1042,7 +1042,7 @@ export default class ScomNftMinter extends Module {
 			await clientWallet.switchNetwork(this.chainId);
       return;
 		}
-    if (this._type === ProductType.OswapTroll) {
+    if (this.nftType === 'ERC721') {
       const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
       const tokenAddress = this.state.getExplorerByAddress(this.chainId, this.oswapTrollInfo.token.address);
       this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
@@ -1326,7 +1326,7 @@ export default class ScomNftMinter extends Module {
                     </i-vstack>
                   </i-vstack>
                   <i-vstack id='pnlUnsupportedNetwork' visible={false} horizontalAlignment='center'>
-                    <i-label caption='This network is not supported.' font={{ size: '1.5rem' }}></i-label>
+                    <i-label caption='This network or this token is not supported.' font={{ size: '1.5rem' }}></i-label>
                   </i-vstack>
                   <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem'>
                     <i-label caption='Details here: ' font={{ size: '1rem' }}></i-label>
