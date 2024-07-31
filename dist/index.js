@@ -290,7 +290,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list"], function (require, exports, eth_wallet_3, index_1, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_2, scom_token_list_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, erc1155Index) {
         let productInfoAddress = state.getContractAddress('ProductInfo');
         if (!productInfoAddress)
@@ -327,15 +327,16 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getNFTBalance = getNFTBalance;
-    async function newProduct(state, productType, qty, maxQty, price, maxPrice, token, callback, confirmationCallback) {
-        let productInfoAddress = state.getContractAddress('ProductInfo');
+    async function newProduct(productInfoAddress, productType, qty, // max quantity of this nft can be exist at anytime
+    maxQty, // max quantity for one buy() txn
+    price, maxPrice, //for donation only, no max price when it is 0
+    tokenAddress, tokenDecimals, callback, confirmationCallback) {
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_2.registerSendTxEvents)({
             transactionHash: callback,
             confirmation: confirmationCallback
         });
-        const tokenDecimals = token?.decimals || 18;
         let productTypeCode;
         switch (productType) {
             case index_1.ProductType.Buy:
@@ -355,7 +356,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             maxQuantity: maxQty,
             maxPrice: eth_wallet_3.Utils.toDecimals(maxPrice, tokenDecimals),
             price: eth_wallet_3.Utils.toDecimals(price, tokenDecimals),
-            token: token?.address || ""
+            token: tokenAddress
         });
         let productId;
         if (receipt) {
@@ -368,6 +369,22 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         };
     }
     exports.newProduct = newProduct;
+    async function newDefaultBuyProduct(productInfoAddress, qty, // max quantity of this nft can be exist at anytime
+    maxQty, // max quantity for one buy() txn
+    price, tokenAddress, tokenDecimals, callback, confirmationCallback) {
+        //hard requirement for the contract
+        if (!( //tokenAddress is a valid address &&
+        new eth_wallet_3.BigNumber(tokenDecimals).gt(0) &&
+            new eth_wallet_3.BigNumber(qty).gt(0) &&
+            new eth_wallet_3.BigNumber(maxQty).gt(0))) {
+            return;
+        }
+        if (!new eth_wallet_3.BigNumber(price).gt(0)) {
+            //warn that it will be free to mint
+        }
+        return newProduct(productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
+    }
+    exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
         const amount = new eth_wallet_3.BigNumber(productPrice).isZero() ? new eth_wallet_3.BigNumber(quantity) : new eth_wallet_3.BigNumber(productPrice).times(quantity);
         if (!commissions || !commissions.length) {
@@ -570,8 +587,21 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         try {
             const wallet = eth_wallet_3.Wallet.getClientInstance();
             const trollNft = new oswap_troll_nft_contract_1.Contracts.TrollNFT(wallet, address);
-            const mintFee = await trollNft.protocolFee();
-            const stake = await trollNft.minimumStake();
+            let calls = [
+                {
+                    contract: trollNft,
+                    methodName: 'minimumStake',
+                    params: [],
+                    to: address
+                },
+                {
+                    contract: trollNft,
+                    methodName: 'protocolFee',
+                    params: [],
+                    to: address
+                }
+            ];
+            let [stake, mintFee] = await wallet.doMulticall(calls) || [];
             const receipt = await trollNft.stake(mintFee.plus(stake));
             return receipt;
         }
@@ -819,28 +849,55 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
             properties: {
                 nftType: {
                     type: 'string',
+                    title: 'NFT Type',
                     required: true,
                     enum: [
                         'ERC721',
-                        'ERC1155'
+                        'ERC1155',
+                        'ERC1155NewIndex' // for now it is always productType.buy
                     ]
                 },
                 chainId: {
                     type: 'number',
+                    title: 'Chain',
                     enum: chainIds,
                     required: true
                 },
                 nftAddress: {
                     type: 'string',
+                    title: 'NFT Address',
                     minimum: 1,
                     required: true
                 },
                 erc1155Index: {
                     type: 'integer',
+                    title: 'Index',
+                    tooltip: 'The index of your NFT inside the ERC1155 contract',
+                    minimum: 1,
+                },
+                token: {
+                    type: 'string',
+                    title: 'Token Address',
+                    tooltip: 'token to mint the NFT',
+                },
+                price: {
+                    type: 'number',
+                    tooltip: 'amount of token to mint the NFT',
+                },
+                maxQty: {
+                    type: 'integer',
+                    title: 'Max Quantity',
+                    tooltip: 'Max quantity of this NFT existing',
+                    minimum: 1,
+                },
+                txnMaxQty: {
+                    type: 'integer',
+                    title: 'Max Quantity per Mint',
+                    tooltip: 'Max quantity for each transaction',
                     minimum: 1,
                 },
                 title: {
-                    type: 'string'
+                    type: 'string',
                 },
                 description: {
                     type: 'string',
@@ -884,7 +941,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                 elements: [
                     {
                         type: 'Category',
-                        label: 'General',
+                        label: 'Contract',
                         elements: [
                             {
                                 type: 'VerticalLayout',
@@ -914,11 +971,59 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                             }
                                         }
                                     },
-                                    ...donateElements,
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/requiredQuantity'
-                                    }
+                                        scope: '#/properties/token',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    const: 'ERC1155NewIndex'
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/price',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    const: 'ERC1155NewIndex'
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/maxQty',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    const: 'ERC1155NewIndex'
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/txnMaxQty',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    const: 'ERC1155NewIndex'
+                                                }
+                                            }
+                                        }
+                                    },
+                                    ...donateElements,
                                 ]
                             }
                         ]
@@ -946,6 +1051,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports"], funct
                                         type: 'Control',
                                         scope: '#/properties/link'
                                     },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/requiredQuantity'
+                                    }
                                 ]
                             }
                         ]
@@ -1985,12 +2094,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Contract Address", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-hstack", { gap: "0.25rem", verticalAlignment: "center", maxWidth: "calc(100% - 75px)" },
-                                                    this.$render("i-label", { id: "lbContract", font: { size: '1rem', color: Theme.colors.primary.main, underline: true }, class: index_css_1.linkStyle, onClick: this.onViewContract }),
+                                                    this.$render("i-label", { id: "lbContract", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_1.linkStyle, onClick: this.onViewContract }),
                                                     this.$render("i-icon", { fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyContract, cursor: "pointer" }))),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Token Address", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-hstack", { gap: "0.25rem", verticalAlignment: "center", maxWidth: "calc(100% - 75px)" },
-                                                    this.$render("i-label", { id: "lbToken", font: { size: '1rem', color: Theme.colors.primary.main, underline: true }, class: index_css_1.linkStyle, onClick: this.onViewToken }),
+                                                    this.$render("i-label", { id: "lbToken", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_1.linkStyle, onClick: this.onViewToken }),
                                                     this.$render("i-icon", { fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyToken, cursor: "pointer" }))),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Remaining", font: { bold: true, size: '1rem' } }),

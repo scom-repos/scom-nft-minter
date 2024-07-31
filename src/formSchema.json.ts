@@ -110,28 +110,57 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
         properties: {
             nftType: {
                 type: 'string',
+                title: 'NFT Type',
                 required: true,
                 enum: [
                     'ERC721',
-                    'ERC1155'
+                    'ERC1155',
+                    'ERC1155NewIndex' // for now it is always productType.buy
                 ]
             },
             chainId: {
                 type: 'number',
+                title: 'Chain',
                 enum: chainIds,
                 required: true
             },
             nftAddress:{
                 type: 'string',
+                title: 'NFT Address',
                 minimum: 1,
                 required: true
             },
             erc1155Index: {//for 1155 only
                 type: 'integer',
+                title: 'Index',
+                tooltip: 'The index of your NFT inside the ERC1155 contract',
                 minimum: 1,
             },
+
+            token: {//for 1155 new index only
+                type: 'string',
+                title: 'Token Address',
+                tooltip: 'token to mint the NFT',
+            },
+            price: {//for 1155 new index only
+                type: 'number',
+                tooltip: 'amount of token to mint the NFT',
+            },
+            maxQty: {//for 1155 new index only
+                type: 'integer',
+                title: 'Max Quantity',
+                tooltip: 'Max quantity of this NFT existing',
+                minimum: 1,
+            },
+            txnMaxQty: {//for 1155 new index only
+                type: 'integer',
+                title: 'Max Quantity per Mint',
+                tooltip: 'Max quantity for each transaction',
+                minimum: 1,
+            },
+            
             title: {
-                type: 'string'
+                type: 'string',
             },
             description: {
                 type: 'string',
@@ -175,7 +204,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             elements: [
                 {
                     type: 'Category',
-                    label: 'General',
+                    label: 'Contract',
                     elements: [
                         {
                             type: 'VerticalLayout',
@@ -205,11 +234,59 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                         }
                                     }
                                 },
-                                ...donateElements,
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/requiredQuantity'
-                                }
+                                    scope: '#/properties/token',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155NewIndex'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/price',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155NewIndex'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/maxQty',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155NewIndex'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/txnMaxQty',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155NewIndex'
+                                            }
+                                        }
+                                    }
+                                },
+                                ...donateElements,
                             ]
                         }
                     ]
@@ -237,6 +314,10 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                     type: 'Control',
                                     scope: '#/properties/link'
                                 },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/requiredQuantity'
+                                }
                             ]
                         }
                     ]

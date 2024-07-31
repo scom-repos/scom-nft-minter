@@ -35,7 +35,7 @@ import { getBuilderSchema, getProjectOwnerSchema } from './formSchema.json';
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
   name?: string;
-  nftType?: 'ERC721' | 'ERC1155';
+  nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
   chainId?: number;
   nftAddress?: string;
   productId?: number;

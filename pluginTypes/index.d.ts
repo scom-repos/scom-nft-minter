@@ -151,7 +151,16 @@ declare module "@scom/scom-nft-minter/API.ts" {
         status: BigNumber;
     }>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
-    function newProduct(state: State, productType: ProductType, qty: number, maxQty: number, price: string, maxPrice: string, token?: ITokenObject, callback?: any, confirmationCallback?: any): Promise<{
+    function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
+    maxQty: number, // max quantity for one buy() txn
+    price: string, maxPrice: string, //for donation only, no max price when it is 0
+    tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+        receipt: import("@ijstech/eth-contract").TransactionReceipt;
+        productId: any;
+    }>;
+    function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
+    maxQty: number, // max quantity for one buy() txn
+    price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
@@ -165,7 +174,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, newProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -310,21 +319,47 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             properties: {
                 nftType: {
                     type: string;
+                    title: string;
                     required: boolean;
                     enum: string[];
                 };
                 chainId: {
                     type: string;
+                    title: string;
                     enum: number[];
                     required: boolean;
                 };
                 nftAddress: {
                     type: string;
+                    title: string;
                     minimum: number;
                     required: boolean;
                 };
                 erc1155Index: {
                     type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                };
+                token: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                };
+                price: {
+                    type: string;
+                    tooltip: string;
+                };
+                maxQty: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                };
+                txnMaxQty: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
                     minimum: number;
                 };
                 title: {
@@ -409,7 +444,7 @@ declare module "@scom/scom-nft-minter" {
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
-        nftType?: 'ERC721' | 'ERC1155';
+        nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
         chainId?: number;
         nftAddress?: string;
         productId?: number;

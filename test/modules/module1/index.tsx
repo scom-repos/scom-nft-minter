@@ -158,8 +158,8 @@ export default class Module1 extends Module {
           <i-button caption="Config" onClick={this.onShowConfig} width={160} padding={{ top: 5, bottom: 5 }} margin={{ left: 'auto', right: 20 }} font={{ color: '#fff' }} />
           <i-scom-nft-minter
             id="nftMinter"
-            nftType='ERC721'
-            nftAddress='0x946985e7C43Ed2fc7985e89a49A251D52d824122'
+            nftType='ERC1155NewIndex'
+            nftAddress='0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91'
             productType='OswapTroll'
             chainId={97}
             networks={[
