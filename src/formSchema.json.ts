@@ -1,4 +1,7 @@
+import ScomNetworkPicker from "@scom/scom-network-picker";
+
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
+const networks = chainIds.map(v => { return { chainId: v } });
 
 const theme = {
     backgroundColor: {
@@ -17,6 +20,82 @@ const theme = {
         type: 'string',
         format: 'color'
     }
+}
+
+const themeUISchema = {
+    type: 'Category',
+    label: 'Theme',
+    elements: [
+        {
+            type: 'VerticalLayout',
+            elements: [
+                {
+                    type: 'Group',
+                    label: 'Dark',
+                    elements: [
+                        {
+                            type: 'HorizontalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/dark/properties/backgroundColor'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/dark/properties/fontColor'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'HorizontalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/dark/properties/inputBackgroundColor'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/dark/properties/inputFontColor'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Group',
+                    label: 'Light',
+                    elements: [
+                        {
+                            type: 'HorizontalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/light/properties/backgroundColor'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/light/properties/fontColor'
+                                }
+                            ]
+                        },
+                        {
+                            type: 'HorizontalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/light/properties/inputBackgroundColor'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/light/properties/inputFontColor'
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 }
 
 export function getBuilderSchema() {
@@ -78,27 +157,7 @@ export function getBuilderSchema() {
                         }
                     ]
                 },
-                {
-                    type: 'Category',
-                    label: 'Theme',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    label: 'Dark',
-                                    scope: '#/properties/dark'
-                                },
-                                {
-                                    type: 'Control',
-                                    label: 'Light',
-                                    scope: '#/properties/light'
-                                }
-                            ]
-                        }
-                    ]
-                }
+                themeUISchema
             ]
         }
     }
@@ -124,7 +183,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                 enum: chainIds,
                 required: true
             },
-            nftAddress:{
+            nftAddress: {
                 type: 'string',
                 title: 'NFT Address',
                 minimum: 1,
@@ -322,28 +381,28 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                         }
                     ]
                 },
-                {
-                    type: 'Category',
-                    label: 'Theme',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    label: 'Dark',
-                                    scope: '#/properties/dark'
-                                },
-                                {
-                                    type: 'Control',
-                                    label: 'Light',
-                                    scope: '#/properties/light'
-                                }
-                            ]
-                        }
-                    ]
-                }
+                themeUISchema
             ]
+        },
+        customControls() {
+            return {
+                '#/properties/chainId': {
+                    render: () => {
+                        const networkPicker = new ScomNetworkPicker(undefined, {
+                            type: 'combobox',
+                            networks
+                        });
+                        return networkPicker;
+                    },
+                    getData: (control: ScomNetworkPicker) => {
+                        return control.selectedNetwork?.chainId;
+                    },
+                    setData: async (control: ScomNetworkPicker, value: number) => {
+                        await control.ready();
+                        control.setNetworkByChainId(value);
+                    }
+                }
+            }
         }
     }
 }

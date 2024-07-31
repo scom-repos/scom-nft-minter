@@ -405,7 +405,8 @@ export default class ScomNftMinter extends Module {
       {
         name: 'Settings',
         userInputDataSchema: formSchema.dataSchema,
-        userInputUISchema: formSchema.uiSchema
+        userInputUISchema: formSchema.uiSchema,
+        customControls: formSchema.customControls()
       }
     ];
     return actions;
