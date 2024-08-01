@@ -195,12 +195,12 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                 minimum: 1,
             },
 
-            token: {//for 1155 new index only
+            tokenToMint: {//for 1155 new index only
                 type: 'string',
                 title: 'Token Address',
                 tooltip: 'token to mint the NFT',
             },
-            price: {//for 1155 new index only
+            priceToMint: {//for 1155 new index only
                 type: 'number',
                 tooltip: 'amount of token to mint the NFT',
             },
@@ -294,7 +294,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/token',
+                                    scope: '#/properties/tokenToMint',
                                     rule: {
                                         effect: 'SHOW',
                                         condition: {
@@ -307,7 +307,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/price',
+                                    scope: '#/properties/priceToMint',
                                     rule: {
                                         effect: 'SHOW',
                                         condition: {

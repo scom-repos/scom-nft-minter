@@ -348,6 +348,15 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 productTypeCode = 2;
                 break;
         }
+        console.log({
+            productType: productTypeCode,
+            uri: '',
+            quantity: qty,
+            maxQuantity: maxQty,
+            maxPrice: eth_wallet_3.Utils.toDecimals(maxPrice, tokenDecimals),
+            price: eth_wallet_3.Utils.toDecimals(price, tokenDecimals),
+            token: tokenAddress
+        });
         let receipt = await productInfo.newProduct({
             productType: productTypeCode,
             uri: '',
@@ -381,7 +390,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         if (!new eth_wallet_3.BigNumber(price).gt(0)) {
             //warn that it will be free to mint
         }
-        return newProduct(productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
+        return await newProduct(productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
     }
     exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
@@ -928,12 +937,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     tooltip: 'The index of your NFT inside the ERC1155 contract',
                     minimum: 1,
                 },
-                token: {
+                tokenToMint: {
                     type: 'string',
                     title: 'Token Address',
                     tooltip: 'token to mint the NFT',
                 },
-                price: {
+                priceToMint: {
                     type: 'number',
                     tooltip: 'amount of token to mint the NFT',
                 },
@@ -1026,7 +1035,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                     },
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/token',
+                                        scope: '#/properties/tokenToMint',
                                         rule: {
                                             effect: 'SHOW',
                                             condition: {
@@ -1039,7 +1048,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                     },
                                     {
                                         type: 'Control',
-                                        scope: '#/properties/price',
+                                        scope: '#/properties/priceToMint',
                                         rule: {
                                             effect: 'SHOW',
                                             condition: {
@@ -2189,8 +2198,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const showHeader = this.getAttribute('showHeader', true);
                 const defaultChainId = this.getAttribute('defaultChainId', true);
                 const requiredQuantity = this.getAttribute('requiredQuantity', true);
-                const token = this.getAttribute('token', true);
-                const price = this.getAttribute('price', true);
+                const token = this.getAttribute('tokenToMint', true);
+                const price = this.getAttribute('priceToMint', true);
                 const maxQty = this.getAttribute('maxQty', true);
                 const txnMaxQty = this.getAttribute('txnMaxQty', true);
                 await this.setData({

@@ -38,9 +38,17 @@ interface ScomNftMinterElement extends ControlElement {
   nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
   chainId?: number;
   nftAddress?: string;
+
+  //ERC1155
   productId?: number;
-  title?: string;
   productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
+  //ERC1155NewIndex
+  tokenToMint?: string;
+  priceToMint?: string;
+  maxQty?: number;
+  txnMaxQty?: number;
+
+  title?: string;
   description?: string;
   logoUrl?: string;
   link?: string;
@@ -1227,8 +1235,8 @@ export default class ScomNftMinter extends Module {
       const showHeader = this.getAttribute('showHeader', true);
       const defaultChainId = this.getAttribute('defaultChainId', true);
       const requiredQuantity = this.getAttribute('requiredQuantity', true);
-      const token = this.getAttribute('token', true);
-      const price = this.getAttribute('price', true);
+      const token = this.getAttribute('tokenToMint', true);
+      const price = this.getAttribute('priceToMint', true);
       const maxQty = this.getAttribute('maxQty', true);
       const txnMaxQty = this.getAttribute('txnMaxQty', true);
       await this.setData({

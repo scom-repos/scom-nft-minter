@@ -350,12 +350,12 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     minimum: number;
                 };
-                token: {
+                tokenToMint: {
                     type: string;
                     title: string;
                     tooltip: string;
                 };
-                price: {
+                priceToMint: {
                     type: string;
                     tooltip: string;
                 };
@@ -465,8 +465,12 @@ declare module "@scom/scom-nft-minter" {
         chainId?: number;
         nftAddress?: string;
         productId?: number;
-        title?: string;
         productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
+        tokenToMint?: string;
+        priceToMint?: string;
+        maxQty?: number;
+        txnMaxQty?: number;
+        title?: string;
         description?: string;
         logoUrl?: string;
         link?: string;
