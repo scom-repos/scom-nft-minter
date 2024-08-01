@@ -70,16 +70,6 @@ async function newProduct(
             productTypeCode = 2;
             break;
     }
-    console.log({
-        productType: productTypeCode,
-        uri: '',
-        quantity: qty,
-        maxQuantity: maxQty,
-        maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
-        price: Utils.toDecimals(price, tokenDecimals),
-        token: tokenAddress
-    });
-    
     let receipt = await productInfo.newProduct({
         productType: productTypeCode,
         uri: '',

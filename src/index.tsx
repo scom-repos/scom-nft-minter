@@ -649,7 +649,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private newProduct = async () => {
-    let contract = this.state.getContractAddress('Proxy');
+    let contract = this.state.getContractAddress('ProductInfo');
     const maxQty = this.newMaxQty;
     const txnMaxQty = this.newTxnMaxQty;
     const price = new BigNumber(this.newPrice).toFixed();
@@ -679,7 +679,7 @@ export default class ScomNftMinter extends Module {
         const clientWallet = Wallet.getClientInstance();
         await clientWallet.switchNetwork(this.chainId);
         await delay(3000);
-        contract = this.state.getContractAddress('Proxy');
+        contract = this.state.getContractAddress('ProductInfo');
       }
       try {
         const { address, decimals, symbol } = this.newToken;
@@ -705,7 +705,7 @@ export default class ScomNftMinter extends Module {
           this._data.nftType = 'ERC1155';
         // }
       } catch (error) {
-        this.showTxStatusModal('error', 'Cannot create new product!');
+        this.showTxStatusModal('error', 'Something went wrong creating new product!');
         this.isCancelCreate = true;
         console.log('newProduct', error);
       }

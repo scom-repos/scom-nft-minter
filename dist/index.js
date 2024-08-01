@@ -352,15 +352,6 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 productTypeCode = 2;
                 break;
         }
-        console.log({
-            productType: productTypeCode,
-            uri: '',
-            quantity: qty,
-            maxQuantity: maxQty,
-            maxPrice: eth_wallet_3.Utils.toDecimals(maxPrice, tokenDecimals),
-            price: eth_wallet_3.Utils.toDecimals(price, tokenDecimals),
-            token: tokenAddress
-        });
         let receipt = await productInfo.newProduct({
             productType: productTypeCode,
             uri: '',
@@ -1185,7 +1176,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 catch { }
             };
             this.newProduct = async () => {
-                let contract = this.state.getContractAddress('Proxy');
+                let contract = this.state.getContractAddress('ProductInfo');
                 const maxQty = this.newMaxQty;
                 const txnMaxQty = this.newTxnMaxQty;
                 const price = new eth_wallet_4.BigNumber(this.newPrice).toFixed();
@@ -1215,7 +1206,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         const clientWallet = eth_wallet_4.Wallet.getClientInstance();
                         await clientWallet.switchNetwork(this.chainId);
                         await (0, index_4.delay)(3000);
-                        contract = this.state.getContractAddress('Proxy');
+                        contract = this.state.getContractAddress('ProductInfo');
                     }
                     try {
                         const { address, decimals, symbol } = this.newToken;
@@ -1233,7 +1224,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         // }
                     }
                     catch (error) {
-                        this.showTxStatusModal('error', 'Cannot create new product!');
+                        this.showTxStatusModal('error', 'Something went wrong creating new product!');
                         this.isCancelCreate = true;
                         console.log('newProduct', error);
                     }
