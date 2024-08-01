@@ -34,11 +34,15 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     export interface IEmbedData {
         name?: string;
         title?: string;
-        nftType?: 'ERC721' | 'ERC1155';
+        nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
         chainId?: number;
         nftAddress?: string;
         productType?: ProductType;
         productId?: number;
+        token?: string;
+        price?: number;
+        maxQty?: number;
+        txnMaxQty?: number;
         donateTo?: string;
         logoUrl?: string;
         description?: string;
@@ -338,7 +342,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 nftAddress: {
                     type: string;
                     title: string;
-                    minimum: number;
                     required: boolean;
                 };
                 erc1155Index: {
@@ -454,6 +457,7 @@ declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
+    import { ITokenObject } from '@scom/scom-token-list';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -462,7 +466,7 @@ declare module "@scom/scom-nft-minter" {
         nftAddress?: string;
         productId?: number;
         title?: string;
-        productType?: string;
+        productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
         description?: string;
         logoUrl?: string;
         link?: string;
@@ -527,14 +531,19 @@ declare module "@scom/scom-nft-minter" {
         private detailWrapper;
         private erc1155Wrapper;
         private btnDetail;
+        private newProductId;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
         private get chainId();
         private get rpcWallet();
-        get nftType(): "ERC721" | "ERC1155";
+        get nftType(): "ERC721" | "ERC1155" | "ERC1155NewIndex";
         get nftAddress(): string;
+        get newToken(): ITokenObject;
+        get newPrice(): number;
+        get newMaxQty(): number;
+        get newTxnMaxQty(): number;
         get donateTo(): string;
         get link(): string;
         set link(value: string);
@@ -573,6 +582,7 @@ declare module "@scom/scom-nft-minter" {
             setData: (data: IEmbedData) => Promise<void>;
             getTag: any;
             setTag: any;
+            setupData?: undefined;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
@@ -583,6 +593,7 @@ declare module "@scom/scom-nft-minter" {
             getActions: (category?: string) => any;
             getData: any;
             setData: (data: IEmbedData) => Promise<void>;
+            setupData: (data: IEmbedData) => Promise<void>;
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
@@ -603,11 +614,15 @@ declare module "@scom/scom-nft-minter" {
                 fee: string;
                 name?: string;
                 title?: string;
-                nftType?: "ERC721" | "ERC1155";
+                nftType?: "ERC721" | "ERC1155" | "ERC1155NewIndex";
                 chainId?: number;
                 nftAddress?: string;
                 productType?: ProductType;
                 productId?: number;
+                token?: string;
+                price?: number;
+                maxQty?: number;
+                txnMaxQty?: number;
                 donateTo?: string;
                 logoUrl?: string;
                 description?: string;
@@ -625,6 +640,7 @@ declare module "@scom/scom-nft-minter" {
             setTag: any;
             getProxySelectors?: undefined;
             getActions?: undefined;
+            setupData?: undefined;
         } | {
             name: string;
             target: string;
@@ -634,6 +650,7 @@ declare module "@scom/scom-nft-minter" {
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
+            setupData?: undefined;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
@@ -647,6 +664,7 @@ declare module "@scom/scom-nft-minter" {
         private setTag;
         private updateStyle;
         private updateTheme;
+        private newProduct;
         private initWallet;
         private updateDAppUI;
         private refreshDApp;

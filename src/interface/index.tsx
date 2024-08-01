@@ -32,11 +32,15 @@ export interface IChainSpecificProperties {
 export interface IEmbedData {
   name?: string;
   title?: string;
-  nftType?: 'ERC721' | 'ERC1155';
+  nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
   chainId?: number;
   nftAddress?: string;
   productType?: ProductType;
   productId?: number;
+  token?: string;
+  price?: number;
+  maxQty?: number;
+  txnMaxQty?: number;
   donateTo?: string;
   logoUrl?: string;
   description?: string;
