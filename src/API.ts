@@ -114,7 +114,7 @@ async function newDefaultBuyProduct(
     if (!new BigNumber(price).gt(0)) {
         //warn that it will be free to mint
     }
-    return newProduct(
+    return await newProduct(
         productInfoAddress,
         ProductType.Buy,
         qty,

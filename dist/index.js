@@ -2192,7 +2192,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-label", { id: 'lblRef', font: { size: '0.875rem' }, opacity: 0.5 }),
                                             this.$render("i-label", { id: 'lblAddress', font: { size: '0.875rem' }, overflowWrap: 'anywhere' }))),
                                     this.$render("i-vstack", { id: 'pnlUnsupportedNetwork', visible: false, horizontalAlignment: 'center' },
-                                        this.$render("i-label", { caption: 'This network is not supported.', font: { size: '1.5rem' } })),
+                                        this.$render("i-label", { caption: 'This network or this token is not supported.', font: { size: '1.5rem' } })),
                                     this.$render("i-hstack", { id: 'pnlLink', visible: false, verticalAlignment: 'center', gap: '0.25rem' },
                                         this.$render("i-label", { caption: 'Details here: ', font: { size: '1rem' } }),
                                         this.$render("i-label", { id: 'lblLink', font: { size: '1rem' } }))))),

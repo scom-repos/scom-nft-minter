@@ -89,10 +89,10 @@ export default class Module1 extends Module {
             chainId={97}
             networks={[
               {
-                chainId: 97
+                chainId: 43113
               }
             ]}
-            defaultChainId={97}
+            defaultChainId={43113}
             wallets={[{ name: 'metamask' }]}
           />
         </i-vstack>
