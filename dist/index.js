@@ -326,11 +326,11 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getNFTBalance = getNFTBalance;
-    async function newProduct(productInfoAddress, productType, qty, // max quantity of this nft can be exist at anytime
+    async function newProduct(state, productInfoAddress, productType, qty, // max quantity of this nft can be exist at anytime
     maxQty, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
     tokenAddress, tokenDecimals, callback, confirmationCallback) {
-        const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const wallet = state.getRpcWallet();
         const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_2.registerSendTxEvents)({
             transactionHash: callback,
@@ -377,7 +377,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         };
     }
     exports.newProduct = newProduct;
-    async function newDefaultBuyProduct(productInfoAddress, qty, // max quantity of this nft can be exist at anytime
+    async function newDefaultBuyProduct(state, productInfoAddress, qty, // max quantity of this nft can be exist at anytime
     maxQty, // max quantity for one buy() txn
     price, tokenAddress, tokenDecimals, callback, confirmationCallback) {
         //hard requirement for the contract
@@ -390,7 +390,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         if (!new eth_wallet_3.BigNumber(price).gt(0)) {
             //warn that it will be free to mint
         }
-        return await newProduct(productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
+        return await newProduct(state, productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
     }
     exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
@@ -1228,7 +1228,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         await clientWallet.switchNetwork(this.chainId);
                     }
                     try {
-                        const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, txnMaxQty, price, address, decimals, callback, confirmationCallback);
+                        const result = await (0, API_1.newDefaultBuyProduct)(this.state, contract, maxQty, txnMaxQty, price, address, decimals, callback, confirmationCallback);
                         this.newProductId[key] = result.productId;
                         this._data.productId = result.productId;
                         this._data.nftType = 'ERC1155';

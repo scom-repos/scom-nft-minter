@@ -154,14 +154,14 @@ declare module "@scom/scom-nft-minter/API.ts" {
         status: BigNumber;
     }>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
-    function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
+    function newProduct(state: State, productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
-    function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
+    function newDefaultBuyProduct(state: State, productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
