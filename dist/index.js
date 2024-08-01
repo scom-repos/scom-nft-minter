@@ -1218,20 +1218,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         contract = this.state.getContractAddress('Proxy');
                     }
                     try {
-                        await this.initApprovalAction();
                         const { address, decimals, symbol } = this.newToken;
-                        const newMaxQty = new eth_wallet_4.BigNumber(maxQty).toFixed();
-                        await this.approvalModelAction.checkAllowance(this.newToken, newMaxQty);
-                        if (this.btnApprove.visible) {
-                            this.showTxStatusModal('warning', `Approving ${symbol}`);
-                            this.isApproving = true;
-                            await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
-                        }
-                        else {
-                            const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, txnMaxQty, price, address, decimals, callback, confirmationCallback);
-                            this._data.productId = result.productId;
-                            this._data.nftType = 'ERC1155';
-                        }
+                        // await this.initApprovalAction();
+                        // const newMaxQty = new BigNumber(maxQty).toFixed();
+                        // await this.approvalModelAction.checkAllowance(this.newToken, "150000000000000000000");
+                        // if (this.btnApprove.visible) {
+                        //   this.showTxStatusModal('warning', `Approving ${symbol}`);
+                        //   this.isApproving = true;
+                        //   await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
+                        // } else {
+                        const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, txnMaxQty, price, address, decimals, callback, confirmationCallback);
+                        this._data.productId = result.productId;
+                        this._data.nftType = 'ERC1155';
+                        // }
                     }
                     catch (error) {
                         this.showTxStatusModal('error', 'Cannot create new product!');
@@ -1550,9 +1549,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 await (0, index_4.delay)(2000);
                                 if (this.isCancelCreate)
                                     return;
-                                if (!this.isApproving) {
-                                    await this.newProduct();
-                                }
+                                // if (!this.isApproving) {
+                                await this.newProduct();
+                                // }
                             }
                             return this._data.productId >= 0;
                         }

@@ -500,9 +500,9 @@ export default class ScomNftMinter extends Module {
             while (!this._data.productId && !this.isCancelCreate) {
               await delay(2000);
               if (this.isCancelCreate) return;
-              if (!this.isApproving) {
+              // if (!this.isApproving) {
                 await this.newProduct();
-              }
+              // }
             }
             return this._data.productId >= 0;
           }
@@ -682,15 +682,15 @@ export default class ScomNftMinter extends Module {
         contract = this.state.getContractAddress('Proxy');
       }
       try {
-        await this.initApprovalAction();
         const { address, decimals, symbol } = this.newToken;
-        const newMaxQty = new BigNumber(maxQty).toFixed();
-        await this.approvalModelAction.checkAllowance(this.newToken, "150000000000000000000");
-        if (this.btnApprove.visible) {
-          this.showTxStatusModal('warning', `Approving ${symbol}`);
-          this.isApproving = true;
-          await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
-        } else {
+        // await this.initApprovalAction();
+        // const newMaxQty = new BigNumber(maxQty).toFixed();
+        // await this.approvalModelAction.checkAllowance(this.newToken, "150000000000000000000");
+        // if (this.btnApprove.visible) {
+        //   this.showTxStatusModal('warning', `Approving ${symbol}`);
+        //   this.isApproving = true;
+        //   await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
+        // } else {
           const result = await newDefaultBuyProduct(
             contract,
             maxQty,
@@ -703,7 +703,7 @@ export default class ScomNftMinter extends Module {
           );
           this._data.productId = result.productId;
           this._data.nftType = 'ERC1155';
-        }
+        // }
       } catch (error) {
         this.showTxStatusModal('error', 'Cannot create new product!');
         this.isCancelCreate = true;
