@@ -186,7 +186,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             nftAddress: {
                 type: 'string',
                 title: 'NFT Address',
-                minimum: 1,
                 required: true
             },
             erc1155Index: {//for 1155 only
