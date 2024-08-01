@@ -30,6 +30,10 @@ export async function getProxySelectors(state: State, chainId: number): Promise<
   return selectors;
 }
 
+export const delay = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
   getERC20Amount,
   getTokenBalance,

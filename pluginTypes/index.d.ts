@@ -39,8 +39,8 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         nftAddress?: string;
         productType?: ProductType;
         productId?: number;
-        token?: string;
-        price?: number;
+        tokenToMint?: string;
+        priceToMint?: number;
         maxQty?: number;
         txnMaxQty?: number;
         donateTo?: string;
@@ -127,6 +127,7 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     import { State } from "@scom/scom-nft-minter/store/index.ts";
     export const formatNumber: (value: number | string | BigNumber, decimalFigures?: number) => string;
     export function getProxySelectors(state: State, chainId: number): Promise<string[]>;
+    export const delay: (ms: number) => Promise<unknown>;
     export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
@@ -154,14 +155,14 @@ declare module "@scom/scom-nft-minter/API.ts" {
         status: BigNumber;
     }>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
-    function newProduct(state: State, productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
+    function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
-    function newDefaultBuyProduct(state: State, productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
+    function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
@@ -535,7 +536,7 @@ declare module "@scom/scom-nft-minter" {
         private detailWrapper;
         private erc1155Wrapper;
         private btnDetail;
-        private newProductId;
+        private isCancelCreate;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
@@ -597,7 +598,7 @@ declare module "@scom/scom-nft-minter" {
             getActions: (category?: string) => any;
             getData: any;
             setData: (data: IEmbedData) => Promise<void>;
-            setupData: (data: IEmbedData) => Promise<void>;
+            setupData: (data: IEmbedData) => Promise<boolean>;
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
@@ -623,8 +624,8 @@ declare module "@scom/scom-nft-minter" {
                 nftAddress?: string;
                 productType?: ProductType;
                 productId?: number;
-                token?: string;
-                price?: number;
+                tokenToMint?: string;
+                priceToMint?: number;
                 maxQty?: number;
                 txnMaxQty?: number;
                 donateTo?: string;
