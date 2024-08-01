@@ -40,7 +40,6 @@ async function getNFTBalance(state: State, erc1155Index: number) {
 }
 
 async function newProduct(
-    state: State,
     productInfoAddress: string,
 
     productType: ProductType,
@@ -53,7 +52,7 @@ async function newProduct(
     callback?: any,
     confirmationCallback?: any
 ) {
-    const wallet = state.getRpcWallet();
+    const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
         transactionHash: callback,
@@ -102,7 +101,6 @@ async function newProduct(
 }
 
 async function newDefaultBuyProduct(
-    state: State,
     productInfoAddress: string,
 
     qty: number,// max quantity of this nft can be exist at anytime
@@ -127,7 +125,6 @@ async function newDefaultBuyProduct(
         //warn that it will be free to mint
     }
     return await newProduct(
-        state,
         productInfoAddress,
         ProductType.Buy,
         qty,

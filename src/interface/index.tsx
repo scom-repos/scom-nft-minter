@@ -37,8 +37,8 @@ export interface IEmbedData {
   nftAddress?: string;
   productType?: ProductType;
   productId?: number;
-  token?: string;
-  price?: number;
+  tokenToMint?: string;
+  priceToMint?: number;
   maxQty?: number;
   txnMaxQty?: number;
   donateTo?: string;
