@@ -22,7 +22,7 @@ import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWa
 import { formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newProduct } from './API';
+import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -40,7 +40,7 @@ interface ScomNftMinterElement extends ControlElement {
   nftAddress?: string;
   productId?: number;
   title?: string;
-  productType?: string;
+  productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
   description?: string;
   logoUrl?: string;
   link?: string;
@@ -116,6 +116,7 @@ export default class ScomNftMinter extends Module {
   private detailWrapper: HStack;
   private erc1155Wrapper: HStack;
   private btnDetail: Button;
+  private newProductId: { [key: string]: number } = {};
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
@@ -155,6 +156,23 @@ export default class ScomNftMinter extends Module {
 
   get nftAddress() {
     return this._data.nftAddress;
+  }
+
+  get newToken() {
+    const token = tokenStore.getTokenList(this.chainId).find(v => v.address === this._data.token);
+    return token;
+  }
+
+  get newPrice() {
+    return this._data.price;
+  }
+
+  get newMaxQty() {
+    return this._data.maxQty;
+  }
+
+  get newTxnMaxQty() {
+    return this._data.txnMaxQty;
   }
 
   get donateTo() {
@@ -270,6 +288,10 @@ export default class ScomNftMinter extends Module {
   }
 
   private async onSetupPage() {
+    if (this.nftType === 'ERC1155NewIndex') {
+      this._data.productId = undefined;
+      await this.newProduct();
+    }
     if (this.state.isRpcWalletConnected()) await this.initApprovalAction();
   }
 
@@ -355,6 +377,16 @@ export default class ScomNftMinter extends Module {
                 description,
                 link,
                 requiredQuantity,
+                erc1155Index,
+                nftType,
+                chainId,
+                nftAddress,
+                chainSpecificProperties,
+                defaultChainId,
+                token,
+                price,
+                maxQty,
+                txnMaxQty,
                 ...themeSettings
               } = userInputData;
 
@@ -365,7 +397,17 @@ export default class ScomNftMinter extends Module {
                 logoUrl,
                 description,
                 link,
-                requiredQuantity
+                requiredQuantity,
+                erc1155Index,
+                nftType,
+                chainId,
+                nftAddress,
+                chainSpecificProperties,
+                defaultChainId,
+                token,
+                price,
+                maxQty,
+                txnMaxQty,
               };
 
               Object.assign(this._data, generalSettings);
@@ -442,6 +484,18 @@ export default class ScomNftMinter extends Module {
         setData: async (data: IEmbedData) => {
           const defaultData = configData.defaultBuilderData;
           await this.setData({ ...defaultData, ...data });
+        },
+        setupData: async (data: IEmbedData) => {
+          const defaultData = configData.defaultBuilderData;
+          this._data = { ...defaultData, ...data };
+          if (this.nftType === 'ERC1155NewIndex') {
+            this._data.productId = undefined;
+            await this.resetRpcWallet();
+            let isCreated = await this.newProduct();
+            while (!isCreated) {
+              isCreated = await this.newProduct();
+            }
+          }
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -532,9 +586,6 @@ export default class ScomNftMinter extends Module {
     this._data = data;
     await this.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
-    // if (this.tokenInput.rpcWalletId !== this.rpcWallet.instanceId) {
-    //   this.tokenInput.rpcWalletId = this.rpcWallet.instanceId;
-    // }
     this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
     await this.onSetupPage();
     const commissionFee = this.state.embedderCommissionFee;
@@ -587,22 +638,73 @@ export default class ScomNftMinter extends Module {
     this.updateStyle('--colors-primary-main', this.tag[themeVar]?.buttonBackgroundColor);
   }
 
-  // private newProduct = async (callback?: any, confirmationCallback?: any) => {
-  //   if (
-  //     this._data.productId >= 0
-  //   ) return;
-  //   const result = await newProduct(
-  //     this._data.productType,
-  //     this._data.qty,
-  //     this._data.maxOrderQty,
-  //     this._data.price,
-  //     this._data.maxPrice,
-  //     this._data.token,
-  //     callback,
-  //     confirmationCallback
-  //   );
-  //   this._productId = this._data.productId = result.productId;
-  // }
+  private newProduct = async () => {
+    const contract = this.state.getContractAddress('Proxy');
+    const maxQty = this.newMaxQty;
+    const txnMaxQty = this.newTxnMaxQty;
+    const price = new BigNumber(this.newPrice).toFixed();
+    if (this.nftType === 'ERC1155NewIndex' && contract && this.newToken && new BigNumber(txnMaxQty).gt(0) && new BigNumber(maxQty).gt(0)) {
+      if (this._data.productId >= 0) {
+        this._data.nftType = 'ERC1155';
+        return true;
+      };
+      const { address, decimals } = this.newToken;
+      const data = {
+        contract,
+        maxQty,
+        txnMaxQty,
+        price,
+        address,
+        decimals
+      }
+      const key = JSON.stringify(data);
+      if (this.newProductId[key]) {
+        this._data.productId = this.newProductId[key];
+        this._data.nftType = 'ERC1155';
+        return true;
+      }
+      const callback = (err: Error, receipt?: string) => {
+        if (err) {
+          this.showTxStatusModal('error', err);
+        }
+      }
+      const confirmationCallback = async (receipt: any) => {
+        
+      }
+      if (!isClientWalletConnected()) {
+        if (this.mdWallet) {
+          await application.loadPackage('@scom/scom-wallet-modal', '*');
+          this.mdWallet.networks = this.networks;
+          this.mdWallet.wallets = this.wallets;
+          this.mdWallet.showModal();
+        }
+        return false;
+      }
+      if (!this.state.isRpcWalletConnected()) {
+        const clientWallet = Wallet.getClientInstance();
+        await clientWallet.switchNetwork(this.chainId);
+      }
+      try {
+        const result = await newDefaultBuyProduct(
+          contract,
+          maxQty,
+          txnMaxQty,
+          price,
+          address,
+          decimals,
+          callback,
+          confirmationCallback
+        );
+        this.newProductId[key] = result.productId;
+        this._data.productId = result.productId;
+        this._data.nftType = 'ERC1155';
+      } catch (error) {
+        this.showTxStatusModal('error', 'Cannot create new product!');
+        console.log('newProduct', error);
+      }
+    }
+    return true;
+  }
 
   private async initWallet() {
     try {
@@ -1125,6 +1227,10 @@ export default class ScomNftMinter extends Module {
       const showHeader = this.getAttribute('showHeader', true);
       const defaultChainId = this.getAttribute('defaultChainId', true);
       const requiredQuantity = this.getAttribute('requiredQuantity', true);
+      const token = this.getAttribute('token', true);
+      const price = this.getAttribute('price', true);
+      const maxQty = this.getAttribute('maxQty', true);
+      const txnMaxQty = this.getAttribute('txnMaxQty', true);
       await this.setData({
         nftType,
         chainId,
@@ -1136,6 +1242,10 @@ export default class ScomNftMinter extends Module {
         chainSpecificProperties,
         defaultChainId,
         requiredQuantity,
+        token,
+        price,
+        maxQty,
+        txnMaxQty,
         description,
         logoUrl,
         networks,
