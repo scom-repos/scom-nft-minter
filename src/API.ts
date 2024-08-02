@@ -40,24 +40,24 @@ async function getNFTBalance(state: State, erc1155Index: number) {
 }
 
 async function newProduct(
-    state: State,
+    productInfoAddress: string,
+
     productType: ProductType,
-    qty: number,
-    maxQty: number,
+    qty: number,// max quantity of this nft can be exist at anytime
+    maxQty: number, // max quantity for one buy() txn
     price: string,
-    maxPrice: string,
-    token?: ITokenObject,
+    maxPrice: string, //for donation only, no max price when it is 0
+    tokenAddress: string,
+    tokenDecimals: number,
     callback?: any,
     confirmationCallback?: any
 ) {
-    let productInfoAddress = state.getContractAddress('ProductInfo');
     const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
         transactionHash: callback,
         confirmation: confirmationCallback
     });
-    const tokenDecimals = token?.decimals || 18;
     let productTypeCode: number;
     switch (productType) {
         case ProductType.Buy:
@@ -77,7 +77,7 @@ async function newProduct(
         maxQuantity: maxQty,
         maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
         price: Utils.toDecimals(price, tokenDecimals),
-        token: token?.address || ""
+        token: tokenAddress
     });
     let productId;
     if (receipt) {
@@ -88,6 +88,43 @@ async function newProduct(
         receipt,
         productId
     };
+}
+
+async function newDefaultBuyProduct(
+    productInfoAddress: string,
+
+    qty: number,// max quantity of this nft can be exist at anytime
+    maxQty: number, // max quantity for one buy() txn
+    price: string,
+    tokenAddress: string,
+    tokenDecimals: number,
+    callback?: any,
+    confirmationCallback?: any
+) {
+    //hard requirement for the contract
+    if (
+        !(//tokenAddress is a valid address &&
+        new BigNumber(tokenDecimals).gt(0) &&
+        new BigNumber(qty).gt(0) &&
+        new BigNumber(maxQty).gt(0))
+    ) {
+        return;
+    }
+    
+    if (!new BigNumber(price).gt(0)) {
+        //warn that it will be free to mint
+    }
+    return await newProduct(
+        productInfoAddress,
+        ProductType.Buy,
+        qty,
+        maxQty,
+        price,
+        "0",
+        tokenAddress,
+        tokenDecimals,
+        callback,
+        confirmationCallback);
 }
 
 function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]) {
@@ -288,7 +325,7 @@ async function donate(
 //
 //    ERC721 and oswap troll nft 
 //
-async function fetchUserNftBalance(state: State, address:string) {
+async function fetchUserNftBalance(state: State, address: string) {
     if (!address) return null;
     try {
         const wallet = state.getRpcWallet();
@@ -300,13 +337,26 @@ async function fetchUserNftBalance(state: State, address:string) {
     }
 }
 
-async function mintOswapTrollNft(address:string, callback: (err: Error, receipt?: string) => void) {
+async function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void) {
     if (!address) return null;
     try {
         const wallet = Wallet.getClientInstance();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
-        const mintFee = await trollNft.protocolFee();
-        const stake = await trollNft.minimumStake();
+        let calls: IMulticallContractCall[] = [
+            {
+                contract: trollNft,
+                methodName: 'minimumStake',
+                params: [],
+                to: address
+            },
+            {
+                contract: trollNft,
+                methodName: 'protocolFee',
+                params: [],
+                to: address
+            }
+        ];
+        let [stake, mintFee] = await wallet.doMulticall(calls) || [];
         const receipt = await trollNft.stake(mintFee.plus(stake));
         return receipt;
     } catch (e) {
@@ -315,35 +365,35 @@ async function mintOswapTrollNft(address:string, callback: (err: Error, receipt?
     }
 }
 
-async function fetchOswapTrollNftInfo(state: State, address:string) {
+async function fetchOswapTrollNftInfo(state: State, address: string) {
     if (!address) return null;
     try {
         const wallet = state.getRpcWallet();
         const trollNft = new OswapNftContracts.TrollNFT(wallet, address);
         let calls: IMulticallContractCall[] = [
             {
-              contract: trollNft,
-              methodName: 'minimumStake',
-              params: [],
-              to: address
+                contract: trollNft,
+                methodName: 'minimumStake',
+                params: [],
+                to: address
             },
             {
-              contract: trollNft,
-              methodName: 'cap',
-              params: [],
-              to: address
+                contract: trollNft,
+                methodName: 'cap',
+                params: [],
+                to: address
             },
             {
-              contract: trollNft,
-              methodName: 'totalSupply',
-              params: [],
-              to: address
+                contract: trollNft,
+                methodName: 'totalSupply',
+                params: [],
+                to: address
             },
             {
-              contract: trollNft,
-              methodName: 'protocolFee',
-              params: [],
-              to: address
+                contract: trollNft,
+                methodName: 'protocolFee',
+                params: [],
+                to: address
             },
             {
                 contract: trollNft,
@@ -367,6 +417,7 @@ export {
     getProductInfo,
     getNFTBalance,
     newProduct,
+    newDefaultBuyProduct,
     getProxyTokenAmountIn,
     buyProduct,
     donate,
