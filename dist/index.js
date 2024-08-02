@@ -1533,6 +1533,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this._data = { ...defaultData, ...data };
                         if (this.nftType === 'ERC1155NewIndex') {
                             this._data.productId = undefined;
+                            this.isCancelCreate = false;
                             await this.resetRpcWallet();
                             await this.initWallet();
                             await this.newProduct();
@@ -1619,10 +1620,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.refreshDApp();
             });
             this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
+            const chainId = this._data.chainId;
             const data = {
-                defaultChainId: this._data.chainId || this.defaultChainId,
+                defaultChainId: chainId || this.defaultChainId,
                 wallets: this.wallets,
-                networks: this.networks,
+                networks: chainId ? [{ chainId: chainId }] : this.networks,
                 showHeader: this.showHeader,
                 rpcWalletId: rpcWallet.instanceId
             };
@@ -1905,7 +1907,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.btnApprove.caption = 'Approve';
                         this.btnApprove.rightIcon.visible = false;
                         this.isApproving = false;
-                        this.isCancelCreate = true;
+                        // this.isCancelCreate = true;
                     },
                     onPaying: async (receipt) => {
                         if (receipt) {
@@ -1921,7 +1923,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     onPayingError: async (err) => {
                         this.showTxStatusModal('error', err);
-                        this.isCancelCreate = true;
                     }
                 });
                 this.state.approvalModel.spenderAddress = this.contractAddress;
