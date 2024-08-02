@@ -63,5 +63,28 @@ export default {
                 "name": "metamask"
             }
         ]
+    },
+    "default1155NewIndex": {
+        "chainSpecificProperties": {
+            "97": {
+                "": ""
+            },
+            "43113": {
+                "": ""
+            }
+        },
+        "networks": [
+            {
+                "chainId": 43113
+            },
+            {
+                "chainId": 97
+            }
+        ],
+        "wallets": [
+            {
+                "name": "metamask"
+            }
+        ]
     }
 }

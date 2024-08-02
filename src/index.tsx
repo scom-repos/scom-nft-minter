@@ -696,7 +696,6 @@ export default class ScomNftMinter extends Module {
           const result = await newDefaultBuyProduct(
             contract,
             maxQty,
-            txnMaxQty,
             price,
             address,
             decimals,

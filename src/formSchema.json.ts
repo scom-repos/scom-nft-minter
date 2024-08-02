@@ -2,6 +2,14 @@ import ScomNetworkPicker from "@scom/scom-network-picker";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
+/**
+enum NftType {
+    ERC721='Custom ERC721 token',
+    ERC1155='Custom ERC1155 token (existing index)',
+    ERC1155NewIndex='Custom ERC1155 token (create new index)'
+}  
+ */
+
 
 const theme = {
     backgroundColor: {
@@ -170,11 +178,10 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             nftType: {
                 type: 'string',
                 title: 'NFT Type',
-                required: true,
                 enum: [
                     'ERC721',
                     'ERC1155',
-                    'ERC1155NewIndex' // for now it is always productType.buy
+                    //'ERC1155NewIndex' // for now it is always productType.buy
                 ]
             },
             chainId: {
@@ -185,8 +192,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             },
             nftAddress: {
                 type: 'string',
-                title: 'NFT Address',
-                required: true
+                title: 'Custom NFT Address',
             },
             erc1155Index: {//for 1155 only
                 type: 'integer',
@@ -210,30 +216,14 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                 tooltip: 'Max quantity of this NFT existing',
                 minimum: 1,
             },
+            /*
             txnMaxQty: {//for 1155 new index only
                 type: 'integer',
                 title: 'Max Quantity per Mint',
                 tooltip: 'Max quantity for each transaction',
                 minimum: 1,
             },
-            
-            title: {
-                type: 'string',
-            },
-            description: {
-                type: 'string',
-                format: 'multi'
-            },
-            logoUrl: {
-                type: 'string',
-                title: 'Logo URL'
-            },
-            link: {
-                type: 'string'
-            },
-            requiredQuantity: {
-                type: 'integer',
-            },
+            */
             dark: {
                 type: 'object',
                 properties: theme
@@ -262,7 +252,34 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             elements: [
                 {
                     type: 'Category',
-                    label: 'Contract',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/chainId'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/tokenToMint',
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/priceToMint',
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/maxQty',
+                                },
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'Category',
+                    label: 'Advance',
                     elements: [
                         {
                             type: 'VerticalLayout',
@@ -270,10 +287,6 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 {
                                     type: 'Control',
                                     scope: '#/properties/nftType'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/chainId'
                                 },
                                 {
                                     type: 'Control',
@@ -292,45 +305,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                         }
                                     }
                                 },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/tokenToMint',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155NewIndex'
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/priceToMint',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155NewIndex'
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/maxQty',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155NewIndex'
-                                            }
-                                        }
-                                    }
-                                },
+                                /**
                                 {
                                     type: 'Control',
                                     scope: '#/properties/txnMaxQty',
@@ -344,43 +319,13 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                         }
                                     }
                                 },
-                                ...donateElements,
+                                */
+                                //...donateElements,
                             ]
                         }
                     ]
                 },
-                {
-                    type: 'Category',
-                    label: 'Branding',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/title'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/description'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/logoUrl'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/link'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/requiredQuantity'
-                                }
-                            ]
-                        }
-                    ]
-                },
-                themeUISchema
+                //themeUISchema
             ]
         },
         customControls() {

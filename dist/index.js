@@ -333,7 +333,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     async function newProduct(productInfoAddress, productType, qty, // max quantity of this nft can be exist at anytime
     maxQty, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
-    tokenAddress, tokenDecimals, callback, confirmationCallback) {
+    tokenAddress, //Native token 0x0000000000000000000000000000000000000000
+    tokenDecimals, callback, confirmationCallback) {
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_2.registerSendTxEvents)({
@@ -373,19 +374,20 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     }
     exports.newProduct = newProduct;
     async function newDefaultBuyProduct(productInfoAddress, qty, // max quantity of this nft can be exist at anytime
-    maxQty, // max quantity for one buy() txn
+    //maxQty = qty
+    //maxQty: number, // max quantity for one buy() txn
     price, tokenAddress, tokenDecimals, callback, confirmationCallback) {
         //hard requirement for the contract
         if (!( //tokenAddress is a valid address &&
         new eth_wallet_3.BigNumber(tokenDecimals).gt(0) &&
-            new eth_wallet_3.BigNumber(qty).gt(0) &&
-            new eth_wallet_3.BigNumber(maxQty).gt(0))) {
+            new eth_wallet_3.BigNumber(qty).gt(0))) {
             return;
         }
         if (!new eth_wallet_3.BigNumber(price).gt(0)) {
             //warn that it will be free to mint
         }
-        return await newProduct(productInfoAddress, index_1.ProductType.Buy, qty, maxQty, price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
+        return await newProduct(productInfoAddress, index_1.ProductType.Buy, qty, qty, //maxQty
+        price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
     }
     exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
@@ -734,6 +736,29 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                     "name": "metamask"
                 }
             ]
+        },
+        "default1155NewIndex": {
+            "chainSpecificProperties": {
+                "97": {
+                    "": ""
+                },
+                "43113": {
+                    "": ""
+                }
+            },
+            "networks": [
+                {
+                    "chainId": 43113
+                },
+                {
+                    "chainId": 97
+                }
+            ],
+            "wallets": [
+                {
+                    "name": "metamask"
+                }
+            ]
         }
     };
 });
@@ -743,6 +768,13 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
     exports.getProjectOwnerSchema = exports.getBuilderSchema = void 0;
     const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
     const networks = chainIds.map(v => { return { chainId: v }; });
+    /**
+    enum NftType {
+        ERC721='Custom ERC721 token',
+        ERC1155='Custom ERC1155 token (existing index)',
+        ERC1155NewIndex='Custom ERC1155 token (create new index)'
+    }
+     */
     const theme = {
         backgroundColor: {
             type: 'string',
@@ -908,11 +940,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 nftType: {
                     type: 'string',
                     title: 'NFT Type',
-                    required: true,
                     enum: [
                         'ERC721',
                         'ERC1155',
-                        'ERC1155NewIndex' // for now it is always productType.buy
+                        //'ERC1155NewIndex' // for now it is always productType.buy
                     ]
                 },
                 chainId: {
@@ -923,8 +954,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 },
                 nftAddress: {
                     type: 'string',
-                    title: 'NFT Address',
-                    required: true
+                    title: 'Custom NFT Address',
                 },
                 erc1155Index: {
                     type: 'integer',
@@ -947,29 +977,14 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     tooltip: 'Max quantity of this NFT existing',
                     minimum: 1,
                 },
-                txnMaxQty: {
+                /*
+                txnMaxQty: {//for 1155 new index only
                     type: 'integer',
                     title: 'Max Quantity per Mint',
                     tooltip: 'Max quantity for each transaction',
                     minimum: 1,
                 },
-                title: {
-                    type: 'string',
-                },
-                description: {
-                    type: 'string',
-                    format: 'multi'
-                },
-                logoUrl: {
-                    type: 'string',
-                    title: 'Logo URL'
-                },
-                link: {
-                    type: 'string'
-                },
-                requiredQuantity: {
-                    type: 'integer',
-                },
+                */
                 dark: {
                     type: 'object',
                     properties: theme
@@ -998,7 +1013,34 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 elements: [
                     {
                         type: 'Category',
-                        label: 'Contract',
+                        label: 'General',
+                        elements: [
+                            {
+                                type: 'VerticalLayout',
+                                elements: [
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/chainId'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/tokenToMint',
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/priceToMint',
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/maxQty',
+                                    },
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        type: 'Category',
+                        label: 'Advance',
                         elements: [
                             {
                                 type: 'VerticalLayout',
@@ -1006,10 +1048,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                     {
                                         type: 'Control',
                                         scope: '#/properties/nftType'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/chainId'
                                     },
                                     {
                                         type: 'Control',
@@ -1028,45 +1066,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                             }
                                         }
                                     },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/tokenToMint',
-                                        rule: {
-                                            effect: 'SHOW',
-                                            condition: {
-                                                scope: '#/properties/nftType',
-                                                schema: {
-                                                    const: 'ERC1155NewIndex'
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/priceToMint',
-                                        rule: {
-                                            effect: 'SHOW',
-                                            condition: {
-                                                scope: '#/properties/nftType',
-                                                schema: {
-                                                    const: 'ERC1155NewIndex'
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/maxQty',
-                                        rule: {
-                                            effect: 'SHOW',
-                                            condition: {
-                                                scope: '#/properties/nftType',
-                                                schema: {
-                                                    const: 'ERC1155NewIndex'
-                                                }
-                                            }
-                                        }
-                                    },
+                                    /**
                                     {
                                         type: 'Control',
                                         scope: '#/properties/txnMaxQty',
@@ -1080,43 +1080,13 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                             }
                                         }
                                     },
-                                    ...donateElements,
+                                    */
+                                    //...donateElements,
                                 ]
                             }
                         ]
                     },
-                    {
-                        type: 'Category',
-                        label: 'Branding',
-                        elements: [
-                            {
-                                type: 'VerticalLayout',
-                                elements: [
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/title'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/description'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/logoUrl'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/link'
-                                    },
-                                    {
-                                        type: 'Control',
-                                        scope: '#/properties/requiredQuantity'
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    themeUISchema
+                    //themeUISchema
                 ]
             },
             customControls() {
@@ -1218,7 +1188,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         //   this.isApproving = true;
                         //   await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
                         // } else {
-                        const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, txnMaxQty, price, address, decimals, callback, confirmationCallback);
+                        const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, address, decimals, callback, confirmationCallback);
                         this._data.productId = result.productId;
                         this._data.nftType = 'ERC1155';
                         // }

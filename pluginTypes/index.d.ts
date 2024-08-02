@@ -158,12 +158,12 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
-    tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+    tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
+    tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
     function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
-    maxQty: number, // max quantity for one buy() txn
     price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
@@ -217,6 +217,22 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
         embedderCommissionFee: string;
         defaultBuilderData: {
             defaultChainId: number;
+            networks: {
+                chainId: number;
+            }[];
+            wallets: {
+                name: string;
+            }[];
+        };
+        default1155NewIndex: {
+            chainSpecificProperties: {
+                "97": {
+                    "": string;
+                };
+                "43113": {
+                    "": string;
+                };
+            };
             networks: {
                 chainId: number;
             }[];
@@ -331,7 +347,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 nftType: {
                     type: string;
                     title: string;
-                    required: boolean;
                     enum: string[];
                 };
                 chainId: {
@@ -343,7 +358,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 nftAddress: {
                     type: string;
                     title: string;
-                    required: boolean;
                 };
                 erc1155Index: {
                     type: string;
@@ -365,29 +379,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     tooltip: string;
                     minimum: number;
-                };
-                txnMaxQty: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
-                };
-                title: {
-                    type: string;
-                };
-                description: {
-                    type: string;
-                    format: string;
-                };
-                logoUrl: {
-                    type: string;
-                    title: string;
-                };
-                link: {
-                    type: string;
-                };
-                requiredQuantity: {
-                    type: string;
                 };
                 dark: {
                     type: string;
@@ -440,7 +431,23 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 label: string;
                 elements: {
                     type: string;
-                    elements: any[];
+                    elements: ({
+                        type: string;
+                        scope: string;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    const: string;
+                                };
+                            };
+                        };
+                    })[];
                 }[];
             }[];
         };

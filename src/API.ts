@@ -47,7 +47,7 @@ async function newProduct(
     maxQty: number, // max quantity for one buy() txn
     price: string,
     maxPrice: string, //for donation only, no max price when it is 0
-    tokenAddress: string,
+    tokenAddress: string,//Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number,
     callback?: any,
     confirmationCallback?: any
@@ -94,7 +94,8 @@ async function newDefaultBuyProduct(
     productInfoAddress: string,
 
     qty: number,// max quantity of this nft can be exist at anytime
-    maxQty: number, // max quantity for one buy() txn
+    //maxQty = qty
+    //maxQty: number, // max quantity for one buy() txn
     price: string,
     tokenAddress: string,
     tokenDecimals: number,
@@ -105,8 +106,8 @@ async function newDefaultBuyProduct(
     if (
         !(//tokenAddress is a valid address &&
         new BigNumber(tokenDecimals).gt(0) &&
-        new BigNumber(qty).gt(0) &&
-        new BigNumber(maxQty).gt(0))
+        new BigNumber(qty).gt(0)
+        )
     ) {
         return;
     }
@@ -118,7 +119,7 @@ async function newDefaultBuyProduct(
         productInfoAddress,
         ProductType.Buy,
         qty,
-        maxQty,
+        qty, //maxQty
         price,
         "0",
         tokenAddress,
