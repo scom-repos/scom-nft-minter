@@ -179,6 +179,7 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                 type: 'string',
                 title: 'NFT Type',
                 enum: [
+                    '',
                     'ERC721',
                     'ERC1155',
                     //'ERC1155NewIndex' // for now it is always productType.buy
@@ -264,14 +265,41 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
                                 {
                                     type: 'Control',
                                     scope: '#/properties/tokenToMint',
+                                    rule: {
+                                        effect: 'HIDE',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                enum: ['ERC721', 'ERC1155']
+                                            }
+                                        }
+                                    }
                                 },
                                 {
                                     type: 'Control',
                                     scope: '#/properties/priceToMint',
+                                    rule: {
+                                        effect: 'HIDE',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                enum: ['ERC721', 'ERC1155']
+                                            }
+                                        }
+                                    }
                                 },
                                 {
                                     type: 'Control',
                                     scope: '#/properties/maxQty',
+                                    rule: {
+                                        effect: 'HIDE',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                enum: ['ERC721', 'ERC1155']
+                                            }
+                                        }
+                                    }
                                 },
                             ]
                         }

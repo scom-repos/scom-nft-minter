@@ -35,12 +35,12 @@ import { getBuilderSchema, getProjectOwnerSchema } from './formSchema.json';
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
   name?: string;
-  nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
+  nftType?: 'ERC721' | 'ERC1155' | '';
   chainId?: number;
   nftAddress?: string;
 
   //ERC1155
-  productId?: number;
+  erc1155Index?: number;
   productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
   //ERC1155NewIndex
   tokenToMint?: string;
@@ -196,7 +196,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get productId() {
-    return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
+    return this._data.erc1155Index ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
   }
 
   get productType() {
@@ -492,21 +492,27 @@ export default class ScomNftMinter extends Module {
         setupData: async (data: IEmbedData) => {
           const defaultData = configData.defaultBuilderData;
           this._data = { ...defaultData, ...data };
-          if (this.nftType === 'ERC1155NewIndex') {
-            this._data.productId = undefined;
+          if (!this.nftType) {
+            const contract = this.state.getContractAddress('ProductInfo');
+            const maxQty = this.newMaxQty;
+            if (!contract || !this.newToken || new BigNumber(maxQty).lte(0)) {
+              return false;
+            }
+            this._data.erc1155Index = undefined;
             this.isCancelCreate = false;
             await this.resetRpcWallet();
             await this.initWallet();
             await this.newProduct();
-            while (!this._data.productId && !this.isCancelCreate) {
+            while (!this._data.erc1155Index && !this.isCancelCreate) {
               await delay(2000);
               if (this.isCancelCreate) return;
               // if (!this.isApproving) {
                 await this.newProduct();
               // }
             }
-            return this._data.productId >= 0;
+            return this._data.erc1155Index >= 0;
           }
+          return true;
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -653,10 +659,10 @@ export default class ScomNftMinter extends Module {
   private newProduct = async () => {
     let contract = this.state.getContractAddress('ProductInfo');
     const maxQty = this.newMaxQty;
-    const txnMaxQty = this.newTxnMaxQty;
+    // const txnMaxQty = this.newTxnMaxQty;
     const price = new BigNumber(this.newPrice).toFixed();
-    if (this.nftType === 'ERC1155NewIndex' && contract && this.newToken && new BigNumber(txnMaxQty).gt(0) && new BigNumber(maxQty).gt(0)) {
-      if (this._data.productId >= 0) {
+    if ((!this.nftType) && contract && this.newToken && new BigNumber(maxQty).gt(0)) {
+      if (this._data.erc1155Index >= 0) {
         this._data.nftType = 'ERC1155';
         return;
       };
@@ -702,7 +708,7 @@ export default class ScomNftMinter extends Module {
             callback,
             confirmationCallback
           );
-          this._data.productId = result.productId;
+          this._data.erc1155Index = result.productId;
           this._data.nftType = 'ERC1155';
         // }
       } catch (error) {
@@ -1225,6 +1231,7 @@ export default class ScomNftMinter extends Module {
       const nftType = this.getAttribute('nftType', true);
       const chainId = this.getAttribute('chainId', true);
       const nftAddress = this.getAttribute('nftAddress', true);
+      const erc1155Index = this.getAttribute('erc1155Index', true);
       const productType = this.getAttribute('productType', true);
       const name = this.getAttribute('name', true);
       const title = this.getAttribute('title', true);
@@ -1244,6 +1251,7 @@ export default class ScomNftMinter extends Module {
         nftType,
         chainId,
         nftAddress,
+        erc1155Index,
         link,
         productType,
         name,

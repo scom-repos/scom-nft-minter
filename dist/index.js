@@ -941,6 +941,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     type: 'string',
                     title: 'NFT Type',
                     enum: [
+                        '',
                         'ERC721',
                         'ERC1155',
                         //'ERC1155NewIndex' // for now it is always productType.buy
@@ -1025,14 +1026,41 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                     {
                                         type: 'Control',
                                         scope: '#/properties/tokenToMint',
+                                        rule: {
+                                            effect: 'HIDE',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    enum: ['ERC721', 'ERC1155']
+                                                }
+                                            }
+                                        }
                                     },
                                     {
                                         type: 'Control',
                                         scope: '#/properties/priceToMint',
+                                        rule: {
+                                            effect: 'HIDE',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    enum: ['ERC721', 'ERC1155']
+                                                }
+                                            }
+                                        }
                                     },
                                     {
                                         type: 'Control',
                                         scope: '#/properties/maxQty',
+                                        rule: {
+                                            effect: 'HIDE',
+                                            condition: {
+                                                scope: '#/properties/nftType',
+                                                schema: {
+                                                    enum: ['ERC721', 'ERC1155']
+                                                }
+                                            }
+                                        }
                                     },
                                 ]
                             }
@@ -1148,10 +1176,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.newProduct = async () => {
                 let contract = this.state.getContractAddress('ProductInfo');
                 const maxQty = this.newMaxQty;
-                const txnMaxQty = this.newTxnMaxQty;
+                // const txnMaxQty = this.newTxnMaxQty;
                 const price = new eth_wallet_4.BigNumber(this.newPrice).toFixed();
-                if (this.nftType === 'ERC1155NewIndex' && contract && this.newToken && new eth_wallet_4.BigNumber(txnMaxQty).gt(0) && new eth_wallet_4.BigNumber(maxQty).gt(0)) {
-                    if (this._data.productId >= 0) {
+                if ((!this.nftType) && contract && this.newToken && new eth_wallet_4.BigNumber(maxQty).gt(0)) {
+                    if (this._data.erc1155Index >= 0) {
                         this._data.nftType = 'ERC1155';
                         return;
                     }
@@ -1189,7 +1217,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         //   await this.approvalModelAction.doApproveAction(this.newToken, newMaxQty);
                         // } else {
                         const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, address, decimals, callback, confirmationCallback);
-                        this._data.productId = result.productId;
+                        this._data.erc1155Index = result.productId;
                         this._data.nftType = 'ERC1155';
                         // }
                     }
@@ -1253,7 +1281,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.link = value;
         }
         get productId() {
-            return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
+            return this._data.erc1155Index ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
         }
         get productType() {
             return this._data.productType ?? index_3.ProductType.Buy;
@@ -1501,13 +1529,18 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     setupData: async (data) => {
                         const defaultData = data_json_1.default.defaultBuilderData;
                         this._data = { ...defaultData, ...data };
-                        if (this.nftType === 'ERC1155NewIndex') {
-                            this._data.productId = undefined;
+                        if (!this.nftType) {
+                            const contract = this.state.getContractAddress('ProductInfo');
+                            const maxQty = this.newMaxQty;
+                            if (!contract || !this.newToken || new eth_wallet_4.BigNumber(maxQty).lte(0)) {
+                                return false;
+                            }
+                            this._data.erc1155Index = undefined;
                             this.isCancelCreate = false;
                             await this.resetRpcWallet();
                             await this.initWallet();
                             await this.newProduct();
-                            while (!this._data.productId && !this.isCancelCreate) {
+                            while (!this._data.erc1155Index && !this.isCancelCreate) {
                                 await (0, index_4.delay)(2000);
                                 if (this.isCancelCreate)
                                     return;
@@ -1515,8 +1548,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 await this.newProduct();
                                 // }
                             }
-                            return this._data.productId >= 0;
+                            return this._data.erc1155Index >= 0;
                         }
+                        return true;
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -2154,6 +2188,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const nftType = this.getAttribute('nftType', true);
                 const chainId = this.getAttribute('chainId', true);
                 const nftAddress = this.getAttribute('nftAddress', true);
+                const erc1155Index = this.getAttribute('erc1155Index', true);
                 const productType = this.getAttribute('productType', true);
                 const name = this.getAttribute('name', true);
                 const title = this.getAttribute('title', true);
@@ -2173,6 +2208,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     nftType,
                     chainId,
                     nftAddress,
+                    erc1155Index,
                     link,
                     productType,
                     name,
