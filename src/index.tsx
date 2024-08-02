@@ -494,6 +494,7 @@ export default class ScomNftMinter extends Module {
           this._data = { ...defaultData, ...data };
           if (this.nftType === 'ERC1155NewIndex') {
             this._data.productId = undefined;
+            this.isCancelCreate = false;
             await this.resetRpcWallet();
             await this.initWallet();
             await this.newProduct();
@@ -582,10 +583,11 @@ export default class ScomNftMinter extends Module {
     });
     this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
 
+    const chainId = this._data.chainId;
     const data = {
-      defaultChainId: this._data.chainId || this.defaultChainId,
+      defaultChainId: chainId || this.defaultChainId,
       wallets: this.wallets,
-      networks: this.networks,
+      networks: chainId ? [{ chainId: chainId }] : this.networks,
       showHeader: this.showHeader,
       rpcWalletId: rpcWallet.instanceId
     }
@@ -936,7 +938,7 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.caption = 'Approve';
           this.btnApprove.rightIcon.visible = false;
           this.isApproving = false;
-          this.isCancelCreate = true;
+          // this.isCancelCreate = true;
         },
         onPaying: async (receipt?: string) => {
           if (receipt) {
@@ -951,7 +953,6 @@ export default class ScomNftMinter extends Module {
         },
         onPayingError: async (err: Error) => {
           this.showTxStatusModal('error', err);
-          this.isCancelCreate = true;
         }
       });
       this.state.approvalModel.spenderAddress = this.contractAddress;
