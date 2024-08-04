@@ -83,7 +83,7 @@ export default class Module1 extends Module {
           <i-button caption="Config" onClick={this.onShowConfig} width={160} padding={{ top: 5, bottom: 5 }} margin={{ left: 'auto', right: 20 }} font={{ color: '#fff' }} />
           <i-scom-nft-minter
             id="nftMinter"
-            nftType="ERC1155NewIndex"
+            nftType={''}
             nftAddress="0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
             tokenToMint='0x45eee762aaeA4e5ce317471BDa8782724972Ee19'
             priceToMint='15'

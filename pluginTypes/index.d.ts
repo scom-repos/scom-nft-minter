@@ -38,7 +38,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         chainId?: number;
         nftAddress?: string;
         productType?: ProductType;
-        productId?: number;
+        erc1155Index?: number;
         tokenToMint?: string;
         priceToMint?: number;
         maxQty?: number;
@@ -426,7 +426,30 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: {
+            elements: ({
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: ({
+                        type: string;
+                        scope: string;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    enum: string[];
+                                };
+                            };
+                        };
+                    })[];
+                }[];
+            } | {
                 type: string;
                 label: string;
                 elements: {
@@ -449,7 +472,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                         };
                     })[];
                 }[];
-            }[];
+            })[];
         };
         customControls(): {
             '#/properties/chainId': {
@@ -469,10 +492,10 @@ declare module "@scom/scom-nft-minter" {
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
-        nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
+        nftType?: 'ERC721' | 'ERC1155' | '';
         chainId?: number;
         nftAddress?: string;
-        productId?: number;
+        erc1155Index?: number;
         productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
         tokenToMint?: string;
         priceToMint?: string;
@@ -630,7 +653,7 @@ declare module "@scom/scom-nft-minter" {
                 chainId?: number;
                 nftAddress?: string;
                 productType?: ProductType;
-                productId?: number;
+                erc1155Index?: number;
                 tokenToMint?: string;
                 priceToMint?: number;
                 maxQty?: number;
