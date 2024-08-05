@@ -1,13 +1,16 @@
 import { BigNumber, IMulticallContractCall, Utils, Wallet } from '@ijstech/eth-wallet';
-import { ProductType, ICommissionInfo } from './interface/index';
+import { ProductType, ICommissionInfo, IProductInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
 import { registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
+import getNetworkList from '@scom/scom-network-list';
 
-async function getProductInfo(state: State, erc1155Index: number) {
+const nullAddress= '0x0000000000000000000000000000000000000000'
+
+async function getProductInfo(state: State, erc1155Index: number):Promise<IProductInfo> {
     let productInfoAddress = state.getContractAddress('ProductInfo');
     if (!productInfoAddress) return null;
     try {
@@ -15,6 +18,20 @@ async function getProductInfo(state: State, erc1155Index: number) {
         const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
         const product = await productInfo.products(erc1155Index);
         const chainId = wallet.chainId;
+        if (product.token && product.token === nullAddress) {
+            let net = getNetworkList().find(net=>net.chainId===chainId);
+            console.log("getProductInfo() token is nullAddress");
+            return {
+                ...product,
+                token:{
+                    chainId:wallet.chainId,
+                    address:product.token,
+                    decimals:net.nativeCurrency.decimals,
+                    symbol:net.nativeCurrency.symbol,
+                    name:net.nativeCurrency.symbol,
+                }
+            };
+        }
         const _tokenList = tokenStore.getTokenList(chainId);
         const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
         return {
@@ -52,6 +69,8 @@ async function newProduct(
     callback?: any,
     confirmationCallback?: any
 ) {
+    console.log("newProduct");
+    
     const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
@@ -109,12 +128,15 @@ async function newDefaultBuyProduct(
         new BigNumber(qty).gt(0)
         )
     ) {
+        console.log("newDefaultBuyProduct() error! require tokenDecimals and qty > 0");
         return;
     }
     
     if (!new BigNumber(price).gt(0)) {
         //warn that it will be free to mint
+        console.log("newDefaultBuyProduct() warning! price = 0");
     }
+    console.log("newDefaultBuyProduct end");
     return await newProduct(
         productInfoAddress,
         ProductType.Buy,
@@ -168,7 +190,7 @@ async function buyProduct(
     const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
-        if (token?.address) {
+        if (token?.address && token?.address) {
             registerSendTxEvents({
                 transactionHash: callback,
                 confirmation: confirmationCallback
@@ -415,6 +437,7 @@ async function fetchOswapTrollNftInfo(state: State, address: string) {
 }
 
 export {
+    nullAddress,
     getProductInfo,
     getNFTBalance,
     newProduct,

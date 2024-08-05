@@ -64,7 +64,7 @@ export default {
             }
         ]
     },
-    "default1155NewIndex": {
+    "defaultNew1155": {
         "chainSpecificProperties": {
             "97": {
                 "": ""
@@ -73,18 +73,5 @@ export default {
                 "": ""
             }
         },
-        "networks": [
-            {
-                "chainId": 43113
-            },
-            {
-                "chainId": 97
-            }
-        ],
-        "wallets": [
-            {
-                "name": "metamask"
-            }
-        ]
     }
 }

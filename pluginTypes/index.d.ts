@@ -140,20 +140,11 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
-    import { ProductType, ICommissionInfo } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ProductType, ICommissionInfo, IProductInfo } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    function getProductInfo(state: State, erc1155Index: number): Promise<{
-        token: any;
-        productType: BigNumber;
-        productId: BigNumber;
-        uri: string;
-        quantity: BigNumber;
-        price: BigNumber;
-        maxQuantity: BigNumber;
-        maxPrice: BigNumber;
-        status: BigNumber;
-    }>;
+    const nullAddress = "0x0000000000000000000000000000000000000000";
+    function getProductInfo(state: State, erc1155Index: number): Promise<IProductInfo>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
     function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
@@ -178,7 +169,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { nullAddress, getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -224,7 +215,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                 name: string;
             }[];
         };
-        default1155NewIndex: {
+        defaultNew1155: {
             chainSpecificProperties: {
                 "97": {
                     "": string;
@@ -233,12 +224,6 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                     "": string;
                 };
             };
-            networks: {
-                chainId: number;
-            }[];
-            wallets: {
-                name: string;
-            }[];
         };
     };
     export default _default;
@@ -340,7 +325,101 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             })[];
         };
     };
-    export function getProjectOwnerSchema(isDonation?: boolean): {
+    export function getProjectOwnerSchema1(): {
+        dataSchema: {
+            type: string;
+            properties: {
+                chainId: {
+                    type: string;
+                    title: string;
+                    enum: number[];
+                    required: boolean;
+                };
+                tokenToMint: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                priceToMint: {
+                    type: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                maxQty: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                    required: boolean;
+                };
+                dark: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+                light: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+            };
+        };
+        uiSchema: {
+            type: string;
+            elements: {
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: {
+                        type: string;
+                        scope: string;
+                    }[];
+                }[];
+            }[];
+        };
+        customControls(): {
+            '#/properties/chainId': {
+                render: () => ScomNetworkPicker;
+                getData: (control: ScomNetworkPicker) => number;
+                setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+        };
+    };
+    export function getProjectOwnerSchema2(): {
         dataSchema: {
             type: string;
             properties: {
@@ -348,6 +427,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                     enum: string[];
+                    required: boolean;
                 };
                 chainId: {
                     type: string;
@@ -358,23 +438,9 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 nftAddress: {
                     type: string;
                     title: string;
+                    required: boolean;
                 };
                 erc1155Index: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
-                };
-                tokenToMint: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                };
-                priceToMint: {
-                    type: string;
-                    tooltip: string;
-                };
-                maxQty: {
                     type: string;
                     title: string;
                     tooltip: string;
@@ -426,30 +492,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: ({
-                type: string;
-                label: string;
-                elements: {
-                    type: string;
-                    elements: ({
-                        type: string;
-                        scope: string;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    enum: string[];
-                                };
-                            };
-                        };
-                    })[];
-                }[];
-            } | {
+            elements: {
                 type: string;
                 label: string;
                 elements: {
@@ -472,7 +515,206 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                         };
                     })[];
                 }[];
-            })[];
+            }[];
+        };
+        customControls(): {
+            '#/properties/chainId': {
+                render: () => ScomNetworkPicker;
+                getData: (control: ScomNetworkPicker) => number;
+                setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+        };
+    };
+    export function getProjectOwnerSchema3(isDefault1155New: boolean): {
+        dataSchema: {
+            type: string;
+            properties: {
+                chainId: {
+                    type: string;
+                    title: string;
+                    enum: number[];
+                    required: boolean;
+                };
+                tokenToMint: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                priceToMint: {
+                    type: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                maxQty: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                    required: boolean;
+                };
+                dark: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+                light: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+            };
+        };
+        uiSchema: {
+            type: string;
+            elements: {
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: {
+                        type: string;
+                        scope: string;
+                    }[];
+                }[];
+            }[];
+        };
+        customControls(): {
+            '#/properties/chainId': {
+                render: () => ScomNetworkPicker;
+                getData: (control: ScomNetworkPicker) => number;
+                setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+        };
+    } | {
+        dataSchema: {
+            type: string;
+            properties: {
+                nftType: {
+                    type: string;
+                    title: string;
+                    enum: string[];
+                    required: boolean;
+                };
+                chainId: {
+                    type: string;
+                    title: string;
+                    enum: number[];
+                    required: boolean;
+                };
+                nftAddress: {
+                    type: string;
+                    title: string;
+                    required: boolean;
+                };
+                erc1155Index: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                };
+                dark: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+                light: {
+                    type: string;
+                    properties: {
+                        backgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        fontColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputBackgroundColor: {
+                            type: string;
+                            format: string;
+                        };
+                        inputFontColor: {
+                            type: string;
+                            format: string;
+                        };
+                    };
+                };
+            };
+        };
+        uiSchema: {
+            type: string;
+            elements: {
+                type: string;
+                label: string;
+                elements: {
+                    type: string;
+                    elements: ({
+                        type: string;
+                        scope: string;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    const: string;
+                                };
+                            };
+                        };
+                    })[];
+                }[];
+            }[];
         };
         customControls(): {
             '#/properties/chainId': {
@@ -608,7 +850,7 @@ declare module "@scom/scom-nft-minter" {
         private onSetupPage;
         private getBuilderActions;
         private getProjectOwnerActions;
-        getConfigurators(): ({
+        getConfigurators(type?: 'new1155' | 'customNft'): ({
             name: string;
             target: string;
             getProxySelectors: (chainId: number) => Promise<string[]>;

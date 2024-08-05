@@ -171,7 +171,7 @@ export function getBuilderSchema() {
     }
 }
 
-export function getProjectOwnerSchema(isDonation?: boolean) {
+function getProjectOwnerSchema(isDonation?: boolean) {
     const dataSchema = {
         type: 'object',
         properties: {
@@ -377,4 +377,209 @@ export function getProjectOwnerSchema(isDonation?: boolean) {
             }
         }
     }
+}
+
+//1155NewIndex
+export function getProjectOwnerSchema1() {
+    return {
+        dataSchema: {
+            type: 'object',
+            properties: {
+                chainId: {
+                    type: 'number',
+                    title: 'Chain',
+                    enum: chainIds,
+                    required: true
+                },
+                tokenToMint: {//for 1155 new index only
+                    type: 'string',
+                    title: 'Token Address',
+                    tooltip: 'token to mint the NFT',
+                    required: true
+                },
+                priceToMint: {//for 1155 new index only
+                    type: 'number',
+                    tooltip: 'amount of token to mint the NFT',
+                    required: true
+                },
+                maxQty: {//for 1155 new index only
+                    type: 'integer',
+                    title: 'Max Quantity',
+                    tooltip: 'Max quantity of this NFT existing',
+                    minimum: 1,
+                    required: true
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
+                }
+            }
+        },
+        uiSchema: {
+            type: 'Categorization',
+            elements: [
+                {
+                    type: 'Category',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/chainId'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/tokenToMint',
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/priceToMint',
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/maxQty',
+                                },
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        customControls() {
+            return {
+                '#/properties/chainId': {
+                    render: () => {
+                        const networkPicker = new ScomNetworkPicker(undefined, {
+                            type: 'combobox',
+                            networks
+                        });
+                        return networkPicker;
+                    },
+                    getData: (control: ScomNetworkPicker) => {
+                        return control.selectedNetwork?.chainId;
+                    },
+                    setData: async (control: ScomNetworkPicker, value: number) => {
+                        await control.ready();
+                        control.setNetworkByChainId(value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+//existing custom721 or custom1155
+export function getProjectOwnerSchema2() {
+    return {
+        dataSchema: {
+            type: 'object',
+            properties: {
+                nftType: {
+                    type: 'string',
+                    title: 'NFT Type',
+                    enum: [
+                        'ERC721',
+                        'ERC1155',
+                    ],
+                    required: true
+                },
+                chainId: {
+                    type: 'number',
+                    title: 'Chain',
+                    enum: chainIds,
+                    required: true
+                },
+                nftAddress: {
+                    type: 'string',
+                    title: 'Custom NFT Address',
+                    required: true
+                },
+                erc1155Index: {//for 1155 only
+                    type: 'integer',
+                    title: 'Index',
+                    tooltip: 'The index of your NFT inside the ERC1155 contract',
+                    minimum: 1,
+                },
+                dark: {
+                    type: 'object',
+                    properties: theme
+                },
+                light: {
+                    type: 'object',
+                    properties: theme
+                }
+            }
+        },
+        uiSchema: {
+            type: 'Categorization',
+            elements: [
+                {
+                    type: 'Category',
+                    label: 'General',
+                    elements: [
+                        {
+                            type: 'VerticalLayout',
+                            elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/chainId'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/nftType'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/nftAddress'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/erc1155Index',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155'
+                                            }
+                                        }
+                                    }
+                                },
+                            ]
+                        }
+                    ]
+                },
+            ]
+        },
+        customControls() {
+            return {
+                '#/properties/chainId': {
+                    render: () => {
+                        const networkPicker = new ScomNetworkPicker(undefined, {
+                            type: 'combobox',
+                            networks
+                        });
+                        return networkPicker;
+                    },
+                    getData: (control: ScomNetworkPicker) => {
+                        return control.selectedNetwork?.chainId;
+                    },
+                    setData: async (control: ScomNetworkPicker, value: number) => {
+                        await control.ready();
+                        control.setNetworkByChainId(value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+export function getProjectOwnerSchema3(isDefault1155New:boolean) {
+    return isDefault1155New?getProjectOwnerSchema1():getProjectOwnerSchema2();
 }
