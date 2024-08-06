@@ -3,12 +3,10 @@ import { ProductType, ICommissionInfo, IProductInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
-import { registerSendTxEvents } from './utils/index';
+import { nullAddress, registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
 import getNetworkList from '@scom/scom-network-list';
-
-const nullAddress= '0x0000000000000000000000000000000000000000'
 
 async function getProductInfo(state: State, erc1155Index: number):Promise<IProductInfo> {
     let productInfoAddress = state.getContractAddress('ProductInfo');
@@ -437,7 +435,6 @@ async function fetchOswapTrollNftInfo(state: State, address: string) {
 }
 
 export {
-    nullAddress,
     getProductInfo,
     getNFTBalance,
     newProduct,

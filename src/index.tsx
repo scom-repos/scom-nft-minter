@@ -19,10 +19,10 @@ import {
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents } from './utils/index';
+import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, nullAddress } from './API';
+import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -291,8 +291,8 @@ export default class ScomNftMinter extends Module {
     const token = this.productInfo?.token;
     if (!token) return;
     try {
-      const symbol = token?.symbol || '';
-      this.lblBalance.caption = token ? `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}` : `0 ${symbol}`;
+      const symbol = token.symbol || '';
+      this.lblBalance.caption = `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}`;
     } catch { }
   }
 
@@ -849,7 +849,11 @@ export default class ScomNftMinter extends Module {
         this.pnlAddress.visible = this._type !== ProductType.Buy;
         (!this.lblAddress.isConnected) && await this.lblAddress.ready();
         this.lblAddress.caption = this.contractAddress;
-        this.tokenInput.token = token;
+        this.tokenInput.token = token?.address === nullAddress ? {
+          ...token,
+          isNative: true,
+          address: undefined
+        } : token;
         this.updateTokenBalance();
       }
       else {
@@ -1053,8 +1057,14 @@ export default class ScomNftMinter extends Module {
       const total = amount.plus(amount.times(commissionFee));
       this.lbOrderTotal.caption = `${formatNumber(total)} ${this.productInfo.token?.symbol || ''}`;
     }
-    if (this.productInfo && this.state.isRpcWalletConnected())
-      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+    if (this.productInfo && this.state.isRpcWalletConnected()) {
+      if (this.productInfo.token?.address !== nullAddress) {
+        this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      } else {
+        this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+        this.determineBtnSubmitCaption();
+      }
+    }
   }
 
   private async onAmountChanged() {
@@ -1072,8 +1082,14 @@ export default class ScomNftMinter extends Module {
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
     const token = this.productInfo?.token
     this.lbOrderTotal.caption = `${formatNumber(total)} ${token?.symbol || ''}`;
-    if (token && this.state.isRpcWalletConnected())
-      this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+    if (token && this.state.isRpcWalletConnected() && token?.address !== nullAddress) {
+      if (token?.address !== nullAddress) {
+        this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+      } else {
+        this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+        this.determineBtnSubmitCaption();
+      }
+    }
   }
 
   private async doSubmitAction() {
