@@ -167,7 +167,6 @@ export default class ScomNftMinter extends Module {
   }
 
   get newToken() {
-    console.log("get newToken()", this._data.tokenToMint);
     const token = tokenStore.getTokenList(this.chainId).find(v => v.address === this._data.tokenToMint);
     return token;
   }
@@ -691,11 +690,8 @@ export default class ScomNftMinter extends Module {
         contract = this.state.getContractAddress('ProductInfo');
       }
       try {
-        console.log("newProduct", contract);
         if (!this._data.tokenToMint) throw new Error("tokenToMint is missing");
         if (this._data.tokenToMint === nullAddress) {
-          console.log("tokenToMint is nullAddress");
-
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,

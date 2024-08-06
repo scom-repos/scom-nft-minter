@@ -351,7 +351,6 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     price, maxPrice, //for donation only, no max price when it is 0
     tokenAddress, //Native token 0x0000000000000000000000000000000000000000
     tokenDecimals, callback, confirmationCallback) {
-        console.log("newProduct");
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_2.registerSendTxEvents)({
@@ -485,7 +484,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         productId: productId,
                         quantity,
                         to: wallet.address
-                    });
+                    }, amount);
                 }
                 else {
                     const txData = await productInfo.buyEth.txData({

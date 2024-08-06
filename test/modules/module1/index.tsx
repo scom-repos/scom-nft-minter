@@ -21,7 +21,7 @@ export default class Module1 extends Module {
       networkMap
     }
 
-    this.isNew1155 = false;
+    this.isNew1155 = true;
   }
 
   private getNetworkMap = (infuraId?: string) => {

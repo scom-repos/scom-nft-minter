@@ -18,7 +18,6 @@ async function getProductInfo(state: State, erc1155Index: number):Promise<IProdu
         const chainId = wallet.chainId;
         if (product.token && product.token === nullAddress) {
             let net = getNetworkList().find(net=>net.chainId===chainId);
-            console.log("getProductInfo() token is nullAddress");
             return {
                 ...product,
                 token:{
@@ -67,8 +66,6 @@ async function newProduct(
     callback?: any,
     confirmationCallback?: any
 ) {
-    console.log("newProduct");
-    
     const wallet = Wallet.getClientInstance();
     const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
     registerSendTxEvents({
@@ -134,7 +131,6 @@ async function newDefaultBuyProduct(
         //warn that it will be free to mint
         console.log("newDefaultBuyProduct() warning! price = 0");
     }
-    console.log("newDefaultBuyProduct end");
     return await newProduct(
         productInfoAddress,
         ProductType.Buy,
@@ -231,7 +227,7 @@ async function buyProduct(
                     productId: productId,
                     quantity,
                     to: wallet.address
-                })
+                }, amount)
             }
             else {
                 const txData = await productInfo.buyEth.txData({
