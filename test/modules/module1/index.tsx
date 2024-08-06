@@ -8,11 +8,9 @@ import ScomWidgetTest from '@scom/scom-widget-test';
 @customModule
 export default class Module1 extends Module {
   private nftMinter: ScomNftMinter;
-  private nftMinter2: ScomNftMinter;
-
   private widgetModule: ScomWidgetTest;
-
   private isNew1155:boolean;
+  
   constructor(parent?: Container, options?: any) {
     super(parent, options);
     const multicalls = getMulticallInfoList();

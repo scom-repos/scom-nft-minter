@@ -215,6 +215,25 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                 name: string;
             }[];
         };
+        defaultCustomNft: {
+            chainSpecificProperties: {
+                "97": {
+                    productId: number;
+                    donateTo: string;
+                };
+                "43113": {
+                    productId: number;
+                    donateTo: string;
+                };
+            };
+            defaultChainId: number;
+            networks: {
+                chainId: number;
+            }[];
+            wallets: {
+                name: string;
+            }[];
+        };
         defaultNew1155: {
             chainSpecificProperties: {
                 "97": {

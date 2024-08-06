@@ -757,6 +757,32 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                 }
             ]
         },
+        "defaultCustomNft": {
+            "chainSpecificProperties": {
+                "97": {
+                    "productId": 1,
+                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+                },
+                "43113": {
+                    "productId": 1,
+                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+                }
+            },
+            "defaultChainId": 43113,
+            "networks": [
+                {
+                    "chainId": 43113
+                },
+                {
+                    "chainId": 97
+                }
+            ],
+            "wallets": [
+                {
+                    "name": "metamask"
+                }
+            ]
+        },
         "defaultNew1155": {
             "chainSpecificProperties": {
                 "97": {
@@ -1385,15 +1411,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 catch { }
             };
             this.newProduct = async () => {
-                console.log("newProduct");
                 let contract = this.state.getContractAddress('ProductInfo');
                 const maxQty = this.newMaxQty;
                 // const txnMaxQty = this.newTxnMaxQty;
                 const price = new eth_wallet_4.BigNumber(this.newPrice).toFixed();
                 if ((!this.nftType) && contract && new eth_wallet_4.BigNumber(maxQty).gt(0)) {
-                    console.log("newProduct 2");
                     if (this._data.erc1155Index >= 0) {
-                        console.log("erc1155Index >=0");
                         this._data.nftType = 'ERC1155';
                         return;
                     }
@@ -1406,7 +1429,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     const confirmationCallback = async (receipt) => {
                     };
                     if (!(0, index_5.isClientWalletConnected)()) {
-                        console.log("no wallet connected");
                         if (this.mdWallet) {
                             await components_4.application.loadPackage('@scom/scom-wallet-modal', '*');
                             this.mdWallet.networks = this.networks;
@@ -1416,7 +1438,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return;
                     }
                     if (!this.state.isRpcWalletConnected()) {
-                        console.log("no wallet connected 2");
                         const clientWallet = eth_wallet_4.Wallet.getClientInstance();
                         await clientWallet.switchNetwork(this.chainId);
                         await (0, index_4.delay)(3000);
@@ -1427,7 +1448,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         if (!this._data.tokenToMint)
                             throw new Error("tokenToMint is missing");
                         if (this._data.tokenToMint === API_1.nullAddress) {
-                            console.log("tokenToMint===nullAddress");
+                            console.log("tokenToMint is nullAddress");
                             //pay native token
                             const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, API_1.nullAddress, 18, callback, confirmationCallback);
                             this._data.erc1155Index = result.productId;
@@ -1963,7 +1984,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.lblMintFee.caption = `${(0, index_4.formatNumber)(price)} ${token?.symbol || ''}`;
                     this.lblSpotsRemaining.caption = (0, index_4.formatNumber)(cap, 0);
                     this.cap = cap.toNumber();
-                    this.pnlQty.visible = true;
+                    //this.pnlQty.visible = true;
                     this.edtQty.readOnly = true;
                     this.edtQty.value = '1';
                     this.lbOrderTotal.caption = `${(0, index_4.formatNumber)(price)} ${token?.symbol || ''}`;
@@ -1971,7 +1992,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.determineBtnSubmitCaption();
                     return;
                 }
-                this.edtQty.readOnly = false;
+                //this.edtQty.readOnly = false;
+                this.edtQty.readOnly = true;
                 this.productInfo = await (0, API_1.getProductInfo)(this.state, this.productId);
                 if (this.productInfo) {
                     const token = this.productInfo.token;
@@ -1995,7 +2017,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.lblRef.caption = 'smart contract:';
                         this.updateSpotsRemaining();
                         this.tokenInput.inputReadOnly = true;
-                        this.pnlQty.visible = true;
+                        this.pnlQty.visible = false;
+                        //this.pnlQty.visible = true;
                         this.pnlTokenInput.visible = false;
                         if (this._data.requiredQuantity != null) {
                             let qty = Number(this._data.requiredQuantity);
@@ -2007,7 +2030,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             }
                         }
                         else {
-                            this.edtQty.value = "";
+                            this.edtQty.value = '1';
                         }
                         this.onQtyChanged();
                     }
@@ -2478,13 +2501,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Remaining", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lblSpotsRemaining", font: { size: '1rem' } })),
+                                            this.$render("i-hstack", { id: 'pnlMintFee', width: "100%", justifyContent: "space-between", visible: false, gap: '0.5rem', lineHeight: 1.5 },
+                                                this.$render("i-label", { caption: 'Price', font: { bold: true, size: '1rem' } }),
+                                                this.$render("i-label", { id: 'lblMintFee', font: { size: '1rem' } })),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "You own", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lbOwn", font: { size: '1rem' } }))),
                                         this.$render("i-button", { id: "btnDetail", caption: "More Information", rightIcon: { width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }, background: { color: 'transparent' }, border: { width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }, width: 300, maxWidth: "100%", height: 36, margin: { top: 4, bottom: 16, left: 'auto', right: 'auto' }, onClick: this.onToggleDetail, visible: false }),
-                                        this.$render("i-hstack", { id: 'pnlMintFee', width: "100%", justifyContent: "space-between", visible: false, gap: '0.5rem', lineHeight: 1.5 },
-                                            this.$render("i-label", { caption: 'Price', font: { bold: true, size: '1rem' } }),
-                                            this.$render("i-label", { id: 'lblMintFee', font: { size: '1rem' } })),
                                         this.$render("i-hstack", { id: 'pnlQty', width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5, visible: false },
                                             this.$render("i-label", { caption: 'Quantity', font: { bold: true, size: '1rem' } }),
                                             this.$render("i-panel", { width: "50%" },

@@ -63,6 +63,32 @@ export default {
                 "name": "metamask"
             }
         ]
+    },   
+    "defaultCustomNft": {
+        "chainSpecificProperties": {
+            "97": {
+                "productId": 1,
+                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            },
+            "43113": {
+                "productId": 1,
+                "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
+            }
+        },
+        "defaultChainId": 43113,
+        "networks": [
+            {
+                "chainId": 43113
+            },
+            {
+                "chainId": 97
+            }
+        ],
+        "wallets": [
+            {
+                "name": "metamask"
+            }
+        ]
     },
     "defaultNew1155": {
         "chainSpecificProperties": {

@@ -167,7 +167,7 @@ export default class ScomNftMinter extends Module {
   }
 
   get newToken() {
-    console.log("get newToken()" ,this._data.tokenToMint);
+    console.log("get newToken()", this._data.tokenToMint);
     const token = tokenStore.getTokenList(this.chainId).find(v => v.address === this._data.tokenToMint);
     return token;
   }
@@ -609,7 +609,7 @@ export default class ScomNftMinter extends Module {
     await this.onSetupPage();
     const commissionFee = this.state.embedderCommissionFee;
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
-    this.lbOrderTotalTitle.caption = `Total`;
+    this.lbOrderTotalTitle.caption = `You are going to pay`;
     this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
     this.updateContractAddress();
     await this.refreshDApp();
@@ -658,17 +658,12 @@ export default class ScomNftMinter extends Module {
   }
 
   private newProduct = async () => {
-    console.log("newProduct");
-    
     let contract = this.state.getContractAddress('ProductInfo');
     const maxQty = this.newMaxQty;
     // const txnMaxQty = this.newTxnMaxQty;
     const price = new BigNumber(this.newPrice).toFixed();
     if ((!this.nftType) && contract && new BigNumber(maxQty).gt(0)) {
-    console.log("newProduct 2");
       if (this._data.erc1155Index >= 0) {
-        console.log("erc1155Index >=0");
-
         this._data.nftType = 'ERC1155';
         return;
       };
@@ -681,31 +676,26 @@ export default class ScomNftMinter extends Module {
 
       }
       if (!isClientWalletConnected()) {
-        console.log("no wallet connected");
-        
         if (this.mdWallet) {
           await application.loadPackage('@scom/scom-wallet-modal', '*');
           this.mdWallet.networks = this.networks;
           this.mdWallet.wallets = this.wallets;
           this.mdWallet.showModal();
         }
-        
         return;
       }
       if (!this.state.isRpcWalletConnected()) {
-        console.log("no wallet connected 2");
-
         const clientWallet = Wallet.getClientInstance();
         await clientWallet.switchNetwork(this.chainId);
         await delay(3000);
         contract = this.state.getContractAddress('ProductInfo');
       }
       try {
-        console.log("newProduct",contract);
+        console.log("newProduct", contract);
         if (!this._data.tokenToMint) throw new Error("tokenToMint is missing");
-        if (this._data.tokenToMint===nullAddress) {
-          console.log("tokenToMint===nullAddress");
-          
+        if (this._data.tokenToMint === nullAddress) {
+          console.log("tokenToMint is nullAddress");
+
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,
@@ -795,7 +785,7 @@ export default class ScomNftMinter extends Module {
         this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
         this.lblSpotsRemaining.caption = formatNumber(cap, 0);
         this.cap = cap.toNumber();
-        this.pnlQty.visible = true;
+        //this.pnlQty.visible = true;
         this.edtQty.readOnly = true;
         this.edtQty.value = '1';
         this.lbOrderTotal.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
@@ -803,7 +793,8 @@ export default class ScomNftMinter extends Module {
         this.determineBtnSubmitCaption();
         return;
       }
-      this.edtQty.readOnly = false;
+      //this.edtQty.readOnly = false;
+      this.edtQty.readOnly = true;
       this.productInfo = await getProductInfo(this.state, this.productId);
       if (this.productInfo) {
         const token = this.productInfo.token;
@@ -827,7 +818,8 @@ export default class ScomNftMinter extends Module {
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
           this.tokenInput.inputReadOnly = true;
-          this.pnlQty.visible = true;
+          this.pnlQty.visible = false;
+          //this.pnlQty.visible = true;
           this.pnlTokenInput.visible = false;
           if (this._data.requiredQuantity != null) {
             let qty = Number(this._data.requiredQuantity);
@@ -837,7 +829,7 @@ export default class ScomNftMinter extends Module {
               this.edtQty.value = qty;
             }
           } else {
-            this.edtQty.value = "";
+            this.edtQty.value = '1';
           }
           this.onQtyChanged();
         } else {
@@ -989,7 +981,7 @@ export default class ScomNftMinter extends Module {
   private updateContractAddress() {
     if (this.approvalModelAction) {
       //if (this.nftType === 'ERC721') {
-        this.contractAddress = this.nftAddress;
+      this.contractAddress = this.nftAddress;
       //}
       //else {//if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
       //  this.contractAddress = this.state.getContractAddress('ProductInfo');
@@ -1342,6 +1334,10 @@ export default class ScomNftMinter extends Module {
                         <i-label caption="Remaining" font={{ bold: true, size: '1rem' }} />
                         <i-label id="lblSpotsRemaining" font={{ size: '1rem' }} />
                       </i-hstack>
+                      <i-hstack id='pnlMintFee' width="100%" justifyContent="space-between" visible={false} gap='0.5rem' lineHeight={1.5}>
+                        <i-label caption='Price' font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label id='lblMintFee' font={{ size: '1rem' }}></i-label>
+                      </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
                         <i-label caption="You own" font={{ bold: true, size: '1rem' }} />
                         <i-label id="lbOwn" font={{ size: '1rem' }} />
@@ -1360,10 +1356,6 @@ export default class ScomNftMinter extends Module {
                       onClick={this.onToggleDetail}
                       visible={false}
                     />
-                    <i-hstack id='pnlMintFee' width="100%" justifyContent="space-between" visible={false} gap='0.5rem' lineHeight={1.5}>
-                      <i-label caption='Price' font={{ bold: true, size: '1rem' }}></i-label>
-                      <i-label id='lblMintFee' font={{ size: '1rem' }}></i-label>
-                    </i-hstack>
                     <i-hstack id='pnlQty'
                       width="100%"
                       justifyContent="space-between"
