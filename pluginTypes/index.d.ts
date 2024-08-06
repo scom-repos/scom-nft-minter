@@ -117,6 +117,7 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
 declare module "@scom/scom-nft-minter/utils/token.ts" {
     import { BigNumber, IWallet, ISendTxEventsOptions } from "@ijstech/eth-wallet";
     import { ITokenObject } from "@scom/scom-token-list";
+    export const nullAddress = "0x0000000000000000000000000000000000000000";
     export const getERC20Amount: (wallet: IWallet, tokenAddress: string, decimals: number) => Promise<BigNumber>;
     export const getTokenBalance: (wallet: IWallet, token: ITokenObject) => Promise<BigNumber>;
     export const registerSendTxEvents: (sendTxEventHandlers: ISendTxEventsOptions) => void;
@@ -128,7 +129,7 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     export const formatNumber: (value: number | string | BigNumber, decimalFigures?: number) => string;
     export function getProxySelectors(state: State, chainId: number): Promise<string[]>;
     export const delay: (ms: number) => Promise<unknown>;
-    export { getERC20Amount, getTokenBalance, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
+    export { getERC20Amount, getTokenBalance, nullAddress, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
 declare module "@scom/scom-nft-minter/index.css.ts" {
@@ -143,7 +144,6 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { ProductType, ICommissionInfo, IProductInfo } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    const nullAddress = "0x0000000000000000000000000000000000000000";
     function getProductInfo(state: State, erc1155Index: number): Promise<IProductInfo>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
     function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
@@ -169,7 +169,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { nullAddress, getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
