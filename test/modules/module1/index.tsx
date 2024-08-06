@@ -10,7 +10,7 @@ export default class Module1 extends Module {
   private nftMinter: ScomNftMinter;
   private widgetModule: ScomWidgetTest;
   private isNew1155:boolean;
-  
+
   constructor(parent?: Container, options?: any) {
     super(parent, options);
     const multicalls = getMulticallInfoList();
@@ -85,7 +85,7 @@ export default class Module1 extends Module {
           margin={{ top: '1rem', left: '1rem', right: '1rem' }}
           gap="1rem"
         >
-          <i-button caption="Config 1155 new index" onClick={this.onShowConfig} width={160} padding={{ top: 5, bottom: 5 }} margin={{ left: 'auto', right: 20 }} font={{ color: '#fff' }} />
+          <i-button caption="Config" onClick={this.onShowConfig} width={160} padding={{ top: 5, bottom: 5 }} margin={{ left: 'auto', right: 20 }} font={{ color: '#fff' }} />
           <i-scom-nft-minter
             id="nftMinter"
             nftAddress="0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"

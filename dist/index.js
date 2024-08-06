@@ -442,7 +442,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_3.BigNumber(0);
         let receipt;
         try {
-            if (token?.address && token?.address) {
+            if (token?.address && token?.address !== nullAddress) {
                 (0, index_2.registerSendTxEvents)({
                     transactionHash: callback,
                     confirmation: confirmationCallback
@@ -1885,7 +1885,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const commissionFee = this.state.embedderCommissionFee;
             if (!this.lbOrderTotalTitle.isConnected)
                 await this.lbOrderTotalTitle.ready();
-            this.lbOrderTotalTitle.caption = `Total`;
+            this.lbOrderTotalTitle.caption = `You are going to pay`;
             this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_4.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
             await this.refreshDApp();

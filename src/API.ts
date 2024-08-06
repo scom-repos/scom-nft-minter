@@ -190,7 +190,7 @@ async function buyProduct(
     const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
-        if (token?.address && token?.address) {
+        if (token?.address && token?.address !== nullAddress) {
             registerSendTxEvents({
                 transactionHash: callback,
                 confirmation: confirmationCallback
