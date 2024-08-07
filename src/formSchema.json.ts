@@ -379,18 +379,18 @@ export function getProjectOwnerSchema1() {
                     enum: chainIds,
                     required: true
                 },
-                tokenToMint: {//for 1155 new index only
+                tokenToMint: {
                     type: 'string',
                     title: 'Token Address',
                     tooltip: 'Token to mint the NFT',
                     required: true
                 },
-                priceToMint: {//for 1155 new index only
+                priceToMint: {
                     type: 'number',
                     tooltip: 'Amount of token to mint the NFT',
                     required: true
                 },
-                maxQty: {//for 1155 new index only
+                maxQty: {
                     type: 'integer',
                     title: 'Max Quantity',
                     tooltip: 'Max quantity of this NFT existing',

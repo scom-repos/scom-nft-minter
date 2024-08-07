@@ -754,42 +754,18 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
                 }
             ]
         },
-        "defaultCustomNft": {
-            "chainSpecificProperties": {
-                "97": {
-                    "productId": 1,
-                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-                },
-                "43113": {
-                    "productId": 1,
-                    "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-                }
-            },
-            "defaultChainId": 43113,
-            "networks": [
-                {
-                    "chainId": 43113
-                },
-                {
-                    "chainId": 97
-                }
-            ],
-            "wallets": [
-                {
-                    "name": "metamask"
-                }
-            ]
+        "defaultExistingNft": {
+            "chainId": 97,
+            "nftType": "ERC1155",
+            "nftAddress": "0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91",
+            "erc1155Index": 1
         },
-        "defaultNew1155": {
-            "chainSpecificProperties": {
-                "97": {
-                    "": ""
-                },
-                "43113": {
-                    "": ""
-                }
-            },
-        }
+        "defaultCreate1155Index": {},
+        "defaultOswapTroll": {
+            "chainId": 97,
+            "nftType": "ERC721",
+            "nftAddress": "0x946985e7C43Ed2fc7985e89a49A251D52d824122",
+        },
     };
 });
 define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom/scom-network-picker", "@scom/scom-token-input", "@scom/scom-token-list", "@scom/scom-nft-minter/utils/index.ts"], function (require, exports, scom_network_picker_1, scom_token_input_1, scom_token_list_2, utils_1) {
@@ -1788,6 +1764,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         getConfigurators(type) {
             let isNew1155 = (type && type === 'new1155');
+            const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = data_json_1.default;
+            const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
             let self = this;
             return [
                 {
@@ -1802,7 +1780,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
-                        await this.setData(data);
+                        await this.setData({ ...defaultBuilderData, ...defaultData, ...data });
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)
@@ -1820,7 +1798,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     setupData: async (data) => {
                         const defaultData = data_json_1.default.defaultBuilderData;
-                        this._data = { ...defaultData, ...data };
+                        this._data = { ...defaultBuilderData, ...defaultData, ...data };
                         if (!this.nftType) {
                             const contract = this.state.getContractAddress('ProductInfo');
                             const maxQty = this.newMaxQty;

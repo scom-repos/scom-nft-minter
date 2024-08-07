@@ -64,10 +64,18 @@ export default {
             }
         ]
     },   
-    "defaultExistingNft": { 
-
+    "defaultExistingNft": { //existing custom721 or custom1155
+        "chainId": 97,
+        "nftType":"ERC1155",
+        "nftAddress":"0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91",
+        "erc1155Index":1
     },
     "defaultCreate1155Index": {
-        
-    }
+
+    },
+    "defaultOswapTroll": { //existing custom721 or custom1155
+        "chainId": 97,
+        "nftType":"ERC721",
+        "nftAddress":"0x946985e7C43Ed2fc7985e89a49A251D52d824122",
+    },
 }

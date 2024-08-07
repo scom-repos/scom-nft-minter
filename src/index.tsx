@@ -461,6 +461,8 @@ export default class ScomNftMinter extends Module {
 
   getConfigurators(type?: 'new1155' | 'customNft') {
     let isNew1155 = (type && type === 'new1155');
+    const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
+    const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
 
     let self = this;
     return [
@@ -476,7 +478,7 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          await this.setData(data);
+          await this.setData({...defaultBuilderData, ...defaultData, ...data });
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -494,7 +496,7 @@ export default class ScomNftMinter extends Module {
         },
         setupData: async (data: IEmbedData) => {
           const defaultData = configData.defaultBuilderData;
-          this._data = { ...defaultData, ...data };
+          this._data = { ...defaultBuilderData, ...defaultData, ...data};
           if (!this.nftType) {
             const contract = this.state.getContractAddress('ProductInfo');
             const maxQty = this.newMaxQty;
