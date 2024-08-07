@@ -250,6 +250,7 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     import ScomNetworkPicker from "@scom/scom-network-picker";
+    import ScomTokenInput from "@scom/scom-token-input";
     export function getBuilderSchema(): {
         dataSchema: {
             type: string;
@@ -423,10 +424,18 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 label: string;
                 elements: {
                     type: string;
-                    elements: {
+                    elements: ({
+                        type: string;
+                        elements: {
+                            type: string;
+                            scope: string;
+                        }[];
+                        scope?: undefined;
+                    } | {
                         type: string;
                         scope: string;
-                    }[];
+                        elements?: undefined;
+                    })[];
                 }[];
             }[];
         };
@@ -435,6 +444,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomNetworkPicker;
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+            '#/properties/tokenToMint': {
+                render: () => ScomTokenInput;
+                getData: (control: ScomTokenInput) => string;
+                setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
     };
@@ -623,10 +637,18 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 label: string;
                 elements: {
                     type: string;
-                    elements: {
+                    elements: ({
+                        type: string;
+                        elements: {
+                            type: string;
+                            scope: string;
+                        }[];
+                        scope?: undefined;
+                    } | {
                         type: string;
                         scope: string;
-                    }[];
+                        elements?: undefined;
+                    })[];
                 }[];
             }[];
         };
@@ -635,6 +657,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomNetworkPicker;
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+            '#/properties/tokenToMint': {
+                render: () => ScomTokenInput;
+                getData: (control: ScomTokenInput) => string;
+                setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
     } | {

@@ -167,7 +167,8 @@ export default class ScomNftMinter extends Module {
   }
 
   get newToken() {
-    const token = tokenStore.getTokenList(this.chainId).find(v => v.address === this._data.tokenToMint);
+    const address = this._data.tokenToMint?.toLowerCase();
+    const token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === address);
     return token;
   }
 
@@ -691,7 +692,7 @@ export default class ScomNftMinter extends Module {
       }
       try {
         if (!this._data.tokenToMint) throw new Error("tokenToMint is missing");
-        if (this._data.tokenToMint === nullAddress) {
+        if (this._data.tokenToMint === nullAddress || !this._data.tokenToMint.startsWith('0x')) {
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,
@@ -764,7 +765,7 @@ export default class ScomNftMinter extends Module {
           this.pnlInputFields.visible = false;
           return;
         };
-        const nftBalance = await fetchUserNftBalance(this.state, this.nftAddress);
+        const nftBalance = isClientWalletConnected() ? await fetchUserNftBalance(this.state, this.nftAddress) : 0;
         const { price, cap, tokenAddress } = oswapTroll;
         const token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
         this.pnlInputFields.visible = true;
@@ -799,13 +800,13 @@ export default class ScomNftMinter extends Module {
         const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
         (!this.lblRef.isConnected) && await this.lblRef.ready();
         if (this._type === ProductType.Buy) {
-          const nftBalance = await getNFTBalance(this.state, this.productId);
+          const nftBalance = isClientWalletConnected() ? await getNFTBalance(this.state, this.productId) : 0;
           this.detailWrapper.visible = true;
           this.onToggleDetail();
           this.btnDetail.visible = true;
           this.erc1155Wrapper.visible = true;
           this.lbERC1155Index.caption = `${this.productId}`;
-          this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress);
+          this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
           this.lbToken.caption = token.address ? FormatUtils.truncateWalletAddress(token.address) : token.symbol;
           this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
@@ -844,7 +845,7 @@ export default class ScomNftMinter extends Module {
         this.tokenInput.value = "";
         this.pnlAddress.visible = this._type !== ProductType.Buy;
         (!this.lblAddress.isConnected) && await this.lblAddress.ready();
-        this.lblAddress.caption = this.contractAddress;
+        this.lblAddress.caption = this.contractAddress || this.nftAddress;
         this.tokenInput.token = token?.address === nullAddress ? {
           ...token,
           isNative: true,
@@ -1060,6 +1061,8 @@ export default class ScomNftMinter extends Module {
         this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
         this.determineBtnSubmitCaption();
       }
+    } else {
+      this.determineBtnSubmitCaption();
     }
   }
 
@@ -1085,6 +1088,8 @@ export default class ScomNftMinter extends Module {
         this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
         this.determineBtnSubmitCaption();
       }
+    } else {
+      this.determineBtnSubmitCaption();
     }
   }
 
