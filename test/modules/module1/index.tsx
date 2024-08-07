@@ -4,6 +4,7 @@ import { INetwork } from '@ijstech/eth-wallet';
 import getNetworkList from '@scom/scom-network-list';
 import ScomNftMinter from '@scom/scom-nft-minter';
 import ScomWidgetTest from '@scom/scom-widget-test';
+import { nullAddress } from '@ijstech/eth-contract';
 
 @customModule
 export default class Module1 extends Module {
@@ -90,6 +91,7 @@ export default class Module1 extends Module {
             id="nftMinter"
             nftType={'ERC1155'}
             nftAddress="0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
+            tokenToMint={nullAddress} //BNB
             erc1155Index={9}
             chainId={97}
             networks={[
