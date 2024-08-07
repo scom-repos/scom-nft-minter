@@ -4,11 +4,13 @@ import { INetwork } from '@ijstech/eth-wallet';
 import getNetworkList from '@scom/scom-network-list';
 import ScomNftMinter from '@scom/scom-nft-minter';
 import ScomWidgetTest from '@scom/scom-widget-test';
+import { nullAddress } from '@ijstech/eth-contract';
 
 @customModule
 export default class Module1 extends Module {
   private nftMinter: ScomNftMinter;
   private widgetModule: ScomWidgetTest;
+  private isNew1155:boolean;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -19,6 +21,8 @@ export default class Module1 extends Module {
       multicalls,
       networkMap
     }
+
+    this.isNew1155 = false;
   }
 
   private getNetworkMap = (infuraId?: string) => {
@@ -47,7 +51,8 @@ export default class Module1 extends Module {
   }
 
   private async onShowConfig() {
-    const editor = this.nftMinter.getConfigurators().find(v => v.target === 'Editor');
+    const widgetType = this.isNew1155?'new1155':'customNft';
+    const editor = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
     const widgetData = await editor.getData();
     if (!this.widgetModule) {
       this.widgetModule = await ScomWidgetTest.create({
@@ -56,7 +61,8 @@ export default class Module1 extends Module {
           editor.setData(data);
           editor.setTag(tag);
           this.widgetModule.closeModal();
-        }
+        },
+        widgetType,
       });
     }
     this.widgetModule.openModal({
@@ -83,13 +89,10 @@ export default class Module1 extends Module {
           <i-button caption="Config" onClick={this.onShowConfig} width={160} padding={{ top: 5, bottom: 5 }} margin={{ left: 'auto', right: 20 }} font={{ color: '#fff' }} />
           <i-scom-nft-minter
             id="nftMinter"
-            nftType="ERC1155NewIndex"
+            nftType={'ERC1155'}
             nftAddress="0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
-            tokenToMint='0x45eee762aaeA4e5ce317471BDa8782724972Ee19'
-            priceToMint='15'
-            maxQty={10000}
-            txnMaxQty={5}
-            productType="Buy"
+            tokenToMint={nullAddress} //BNB
+            erc1155Index={9}
             chainId={97}
             networks={[
               {

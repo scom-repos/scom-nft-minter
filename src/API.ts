@@ -1,13 +1,14 @@
 import { BigNumber, IMulticallContractCall, Utils, Wallet } from '@ijstech/eth-wallet';
-import { ProductType, ICommissionInfo } from './interface/index';
+import { ProductType, ICommissionInfo, IProductInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
-import { registerSendTxEvents } from './utils/index';
+import { nullAddress, registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
+import getNetworkList from '@scom/scom-network-list';
 
-async function getProductInfo(state: State, erc1155Index: number) {
+async function getProductInfo(state: State, erc1155Index: number):Promise<IProductInfo> {
     let productInfoAddress = state.getContractAddress('ProductInfo');
     if (!productInfoAddress) return null;
     try {
@@ -15,6 +16,19 @@ async function getProductInfo(state: State, erc1155Index: number) {
         const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
         const product = await productInfo.products(erc1155Index);
         const chainId = wallet.chainId;
+        if (product.token && product.token === nullAddress) {
+            let net = getNetworkList().find(net=>net.chainId===chainId);
+            return {
+                ...product,
+                token:{
+                    chainId:wallet.chainId,
+                    address:product.token,
+                    decimals:net.nativeCurrency.decimals,
+                    symbol:net.nativeCurrency.symbol,
+                    name:net.nativeCurrency.symbol,
+                }
+            };
+        }
         const _tokenList = tokenStore.getTokenList(chainId);
         const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
         return {
@@ -47,7 +61,7 @@ async function newProduct(
     maxQty: number, // max quantity for one buy() txn
     price: string,
     maxPrice: string, //for donation only, no max price when it is 0
-    tokenAddress: string,
+    tokenAddress: string,//Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number,
     callback?: any,
     confirmationCallback?: any
@@ -94,7 +108,8 @@ async function newDefaultBuyProduct(
     productInfoAddress: string,
 
     qty: number,// max quantity of this nft can be exist at anytime
-    maxQty: number, // max quantity for one buy() txn
+    //maxQty = qty
+    //maxQty: number, // max quantity for one buy() txn
     price: string,
     tokenAddress: string,
     tokenDecimals: number,
@@ -105,20 +120,22 @@ async function newDefaultBuyProduct(
     if (
         !(//tokenAddress is a valid address &&
         new BigNumber(tokenDecimals).gt(0) &&
-        new BigNumber(qty).gt(0) &&
-        new BigNumber(maxQty).gt(0))
+        new BigNumber(qty).gt(0)
+        )
     ) {
+        console.log("newDefaultBuyProduct() error! require tokenDecimals and qty > 0");
         return;
     }
     
     if (!new BigNumber(price).gt(0)) {
         //warn that it will be free to mint
+        console.log("newDefaultBuyProduct() warning! price = 0");
     }
     return await newProduct(
         productInfoAddress,
         ProductType.Buy,
         qty,
-        maxQty,
+        qty, //maxQty
         price,
         "0",
         tokenAddress,
@@ -167,7 +184,7 @@ async function buyProduct(
     const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
-        if (token?.address) {
+        if (token?.address && token?.address !== nullAddress) {
             registerSendTxEvents({
                 transactionHash: callback,
                 confirmation: confirmationCallback
@@ -210,7 +227,7 @@ async function buyProduct(
                     productId: productId,
                     quantity,
                     to: wallet.address
-                })
+                }, amount)
             }
             else {
                 const txData = await productInfo.buyEth.txData({

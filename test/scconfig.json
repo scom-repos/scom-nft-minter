@@ -15,6 +15,7 @@
     "@scom/scom-commission-fee-setup": "*",
     "@scom/scom-network-picker": "*",
     "@scom/scom-token-list": "*",
+    "@scom/scom-token-input": "*",
     "@scom/scom-network-list": "*",
     "@scom/scom-product-contract": "*",
     "@scom/scom-commission-proxy-contract": "*"

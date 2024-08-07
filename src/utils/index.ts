@@ -37,5 +37,6 @@ export const delay = (ms: number) => {
 export {
   getERC20Amount,
   getTokenBalance,
+  nullAddress,
   registerSendTxEvents
 } from './token';

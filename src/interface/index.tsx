@@ -36,7 +36,7 @@ export interface IEmbedData {
   chainId?: number;
   nftAddress?: string;
   productType?: ProductType;
-  productId?: number;
+  erc1155Index?: number;
   tokenToMint?: string;
   priceToMint?: number;
   maxQty?: number;
