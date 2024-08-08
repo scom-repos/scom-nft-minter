@@ -863,6 +863,7 @@ declare module "@scom/scom-nft-minter" {
         networks: INetworkConfig[];
         showHeader?: boolean;
         requiredQuantity?: number;
+        onMintedNFT?: () => void;
     }
     global {
         namespace JSX {
@@ -919,6 +920,7 @@ declare module "@scom/scom-nft-minter" {
         private erc1155Wrapper;
         private btnDetail;
         private isCancelCreate;
+        onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
