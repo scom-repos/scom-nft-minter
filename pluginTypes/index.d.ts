@@ -40,6 +40,8 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         productType?: ProductType;
         erc1155Index?: number;
         tokenToMint?: string;
+        isCustomMintToken?: boolean;
+        customMintToken?: string;
         priceToMint?: number;
         maxQty?: number;
         txnMaxQty?: number;
@@ -120,6 +122,7 @@ declare module "@scom/scom-nft-minter/utils/token.ts" {
     export const nullAddress = "0x0000000000000000000000000000000000000000";
     export const getERC20Amount: (wallet: IWallet, tokenAddress: string, decimals: number) => Promise<BigNumber>;
     export const getTokenBalance: (wallet: IWallet, token: ITokenObject) => Promise<BigNumber>;
+    export const getTokenInfo: (address: string, chainId: number) => Promise<ITokenObject>;
     export const registerSendTxEvents: (sendTxEventHandlers: ISendTxEventsOptions) => void;
 }
 /// <amd-module name="@scom/scom-nft-minter/utils/index.ts" />
@@ -129,7 +132,7 @@ declare module "@scom/scom-nft-minter/utils/index.ts" {
     export const formatNumber: (value: number | string | BigNumber, decimalFigures?: number) => string;
     export function getProxySelectors(state: State, chainId: number): Promise<string[]>;
     export const delay: (ms: number) => Promise<unknown>;
-    export { getERC20Amount, getTokenBalance, nullAddress, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
+    export { getERC20Amount, getTokenBalance, getTokenInfo, nullAddress, registerSendTxEvents } from "@scom/scom-nft-minter/utils/token.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter/index.css.ts" />
 declare module "@scom/scom-nft-minter/index.css.ts" {
@@ -137,6 +140,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const inputStyle: string;
     export const tokenSelectionStyle: string;
     export const linkStyle: string;
+    export const formInputStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
@@ -344,6 +348,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
+                isCustomMintToken: {
+                    type: string;
+                    title: string;
+                };
+                customMintToken: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
                 priceToMint: {
                     type: string;
                     tooltip: string;
@@ -409,14 +423,42 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
-                        elements: {
+                        elements: ({
                             type: string;
                             scope: string;
-                        }[];
+                            rule?: undefined;
+                        } | {
+                            type: string;
+                            scope: string;
+                            rule: {
+                                effect: string;
+                                condition: {
+                                    scope: string;
+                                    schema: {
+                                        const: boolean;
+                                    };
+                                };
+                            };
+                        })[];
                         scope?: undefined;
+                        rule?: undefined;
                     } | {
                         type: string;
                         scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    const: boolean;
+                                };
+                            };
+                        };
                         elements?: undefined;
                     })[];
                 }[];
@@ -430,7 +472,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
             '#/properties/tokenToMint': {
                 render: () => ScomTokenInput;
-                getData: (control: ScomTokenInput) => string;
+                getData: (control: ScomTokenInput) => any;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
@@ -557,6 +599,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
+                isCustomMintToken: {
+                    type: string;
+                    title: string;
+                };
+                customMintToken: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
                 priceToMint: {
                     type: string;
                     tooltip: string;
@@ -622,14 +674,42 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
-                        elements: {
+                        elements: ({
                             type: string;
                             scope: string;
-                        }[];
+                            rule?: undefined;
+                        } | {
+                            type: string;
+                            scope: string;
+                            rule: {
+                                effect: string;
+                                condition: {
+                                    scope: string;
+                                    schema: {
+                                        const: boolean;
+                                    };
+                                };
+                            };
+                        })[];
                         scope?: undefined;
+                        rule?: undefined;
                     } | {
                         type: string;
                         scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        rule: {
+                            effect: string;
+                            condition: {
+                                scope: string;
+                                schema: {
+                                    const: boolean;
+                                };
+                            };
+                        };
                         elements?: undefined;
                     })[];
                 }[];
@@ -643,7 +723,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
             '#/properties/tokenToMint': {
                 render: () => ScomTokenInput;
-                getData: (control: ScomTokenInput) => string;
+                getData: (control: ScomTokenInput) => any;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
@@ -759,7 +839,6 @@ declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-    import { ITokenObject } from '@scom/scom-token-list';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -769,6 +848,8 @@ declare module "@scom/scom-nft-minter" {
         erc1155Index?: number;
         productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
         tokenToMint?: string;
+        isCustomMintToken?: boolean;
+        customMintToken?: string;
         priceToMint?: string;
         maxQty?: number;
         txnMaxQty?: number;
@@ -846,7 +927,6 @@ declare module "@scom/scom-nft-minter" {
         private get rpcWallet();
         get nftType(): "ERC721" | "ERC1155" | "ERC1155NewIndex";
         get nftAddress(): string;
-        get newToken(): ITokenObject;
         get newPrice(): number;
         get newMaxQty(): number;
         get newTxnMaxQty(): number;
@@ -926,6 +1006,8 @@ declare module "@scom/scom-nft-minter" {
                 productType?: ProductType;
                 erc1155Index?: number;
                 tokenToMint?: string;
+                isCustomMintToken?: boolean;
+                customMintToken?: string;
                 priceToMint?: number;
                 maxQty?: number;
                 txnMaxQty?: number;

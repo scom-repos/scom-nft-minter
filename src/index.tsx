@@ -19,7 +19,7 @@ import {
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress } from './utils/index';
+import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
 import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
@@ -44,6 +44,8 @@ interface ScomNftMinterElement extends ControlElement {
   productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
   //ERC1155NewIndex
   tokenToMint?: string;
+  isCustomMintToken?: boolean;
+  customMintToken?: string;
   priceToMint?: string;
   maxQty?: number;
   txnMaxQty?: number;
@@ -164,12 +166,6 @@ export default class ScomNftMinter extends Module {
 
   get nftAddress() {
     return this._data.nftAddress;
-  }
-
-  get newToken() {
-    const address = this._data.tokenToMint?.toLowerCase();
-    const token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === address);
-    return token;
   }
 
   get newPrice() {
@@ -388,8 +384,10 @@ export default class ScomNftMinter extends Module {
                 nftAddress,
                 chainSpecificProperties,
                 defaultChainId,
-                token,
-                price,
+                tokenToMint,
+                isCustomMintToken,
+                customMintToken,
+                priceToMint,
                 maxQty,
                 txnMaxQty,
                 ...themeSettings
@@ -409,8 +407,10 @@ export default class ScomNftMinter extends Module {
                 nftAddress,
                 chainSpecificProperties,
                 defaultChainId,
-                token,
-                price,
+                tokenToMint,
+                isCustomMintToken,
+                customMintToken,
+                priceToMint,
                 maxQty,
                 txnMaxQty,
               };
@@ -478,7 +478,7 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          await this.setData({...defaultBuilderData, ...defaultData, ...data });
+          await this.setData({ ...defaultBuilderData, ...defaultData, ...data });
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)
@@ -496,7 +496,7 @@ export default class ScomNftMinter extends Module {
         },
         setupData: async (data: IEmbedData) => {
           const defaultData = configData.defaultBuilderData;
-          this._data = { ...defaultBuilderData, ...defaultData, ...data};
+          this._data = { ...defaultBuilderData, ...defaultData, ...data };
           if (!this.nftType) {
             const contract = this.state.getContractAddress('ProductInfo');
             const maxQty = this.newMaxQty;
@@ -693,8 +693,10 @@ export default class ScomNftMinter extends Module {
         contract = this.state.getContractAddress('ProductInfo');
       }
       try {
-        if (!this._data.tokenToMint) throw new Error("tokenToMint is missing");
-        if (this._data.tokenToMint === nullAddress || !this._data.tokenToMint.startsWith('0x')) {
+        const { isCustomMintToken, tokenToMint, customMintToken } = this._data;
+        if ((isCustomMintToken && !customMintToken) || (!isCustomMintToken && !tokenToMint)) throw new Error("tokenToMint is missing");
+        const tokenAddress = isCustomMintToken ? customMintToken : tokenToMint;
+        if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,
@@ -706,19 +708,31 @@ export default class ScomNftMinter extends Module {
             confirmationCallback
           );
           this._data.erc1155Index = result.productId;
+          this._data.nftAddress = contract;
           this._data.nftType = 'ERC1155';
         } else { //pay erc20
-          const { address, decimals, symbol } = this.newToken;
+          let token: ITokenObject;
+          if (isCustomMintToken) {
+            token = await getTokenInfo(tokenAddress, this.chainId);
+          } else {
+            token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
+          }
+          if (!token) {
+            this.showTxStatusModal('error', 'Invalid token!');
+            this.isCancelCreate = true;
+            return;
+          }
           const result = await newDefaultBuyProduct(
             contract,
             maxQty,
             price,
-            address,
-            decimals,
+            tokenAddress,
+            token.decimals ?? 18,
             callback,
             confirmationCallback
           );
           this._data.erc1155Index = result.productId;
+          this._data.nftAddress = contract;
           this._data.nftType = 'ERC1155';
         }
       } catch (error) {
@@ -879,7 +893,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onViewContract() {
-    this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress)
+    this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress))
   }
 
   private onViewToken() {
@@ -888,7 +902,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onCopyContract() {
-    application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
+    application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress));
   }
 
   private onCopyToken() {
@@ -1277,6 +1291,8 @@ export default class ScomNftMinter extends Module {
       const defaultChainId = this.getAttribute('defaultChainId', true);
       const requiredQuantity = this.getAttribute('requiredQuantity', true);
       const tokenToMint = this.getAttribute('tokenToMint', true);
+      const isCustomMintToken = this.getAttribute('isCustomMintToken', true);
+      const customMintToken = this.getAttribute('customMintToken', true);
       const priceToMint = this.getAttribute('priceToMint', true);
       const maxQty = this.getAttribute('maxQty', true);
       const txnMaxQty = this.getAttribute('txnMaxQty', true);
@@ -1293,6 +1309,8 @@ export default class ScomNftMinter extends Module {
         defaultChainId,
         requiredQuantity,
         tokenToMint,
+        isCustomMintToken,
+        customMintToken,
         priceToMint,
         maxQty,
         txnMaxQty,
