@@ -38,6 +38,8 @@ export interface IEmbedData {
   productType?: ProductType;
   erc1155Index?: number;
   tokenToMint?: string;
+  isCustomMintToken?: boolean;
+  customMintToken?: string;
   priceToMint?: number;
   maxQty?: number;
   txnMaxQty?: number;
