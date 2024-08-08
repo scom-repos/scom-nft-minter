@@ -2,6 +2,8 @@ import ScomNetworkPicker from "@scom/scom-network-picker";
 import ScomTokenInput from "@scom/scom-token-input";
 import { ChainNativeTokenByChainId, DefaultERC20Tokens } from "@scom/scom-token-list";
 import { nullAddress } from "./utils";
+import { Checkbox, Input } from "@ijstech/components";
+import { formInputStyle } from "./index.css";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
@@ -360,9 +362,7 @@ function getProjectOwnerSchema(isDonation?: boolean) {
             ]
         },
         customControls() {
-            let networkPicker: ScomNetworkPicker;
-            let tokenInput: ScomTokenInput;
-            return getCustomControls(networkPicker, tokenInput);
+            return getCustomControls();
         }
     }
 }
@@ -382,6 +382,16 @@ export function getProjectOwnerSchema1() {
                 tokenToMint: {
                     type: 'string',
                     title: 'Token Address',
+                    tooltip: 'Token to mint the NFT',
+                    required: true
+                },
+                isCustomMintToken: {
+                    type: 'boolean',
+                    title: ' '
+                },
+                customMintToken: {
+                    type: 'string',
+                    title: 'Custom Token Address',
                     tooltip: 'Token to mint the NFT',
                     required: true
                 },
@@ -427,8 +437,34 @@ export function getProjectOwnerSchema1() {
                                         {
                                             type: 'Control',
                                             scope: '#/properties/tokenToMint',
+                                            rule: {
+                                                effect: 'HIDE',
+                                                condition: {
+                                                    scope: '#/properties/isCustomMintToken',
+                                                    schema: {
+                                                        const: true
+                                                    }
+                                                }
+                                            }
                                         }
                                     ]
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/isCustomMintToken'
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/customMintToken',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/isCustomMintToken',
+                                            schema: {
+                                                const: true
+                                            }
+                                        }
+                                    }
                                 },
                                 {
                                     type: 'Control',
@@ -445,9 +481,7 @@ export function getProjectOwnerSchema1() {
             ]
         },
         customControls() {
-            let networkPicker: ScomNetworkPicker;
-            let tokenInput: ScomTokenInput;
-            return getCustomControls(networkPicker, tokenInput);
+            return getCustomControls(true);
         }
     }
 }
@@ -562,8 +596,13 @@ export function getProjectOwnerSchema3(isDefault1155New: boolean) {
     return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2();
 }
 
-const getCustomControls = (networkPicker: ScomNetworkPicker, tokenInput: ScomTokenInput) => {
-    return {
+const getCustomControls = (isCustomToken?: boolean) => {
+    let networkPicker: ScomNetworkPicker;
+    let tokenInput: ScomTokenInput;
+    let checkboxCustomToken: Checkbox;
+    let customTokenInput: Input;
+
+    const controls = {
         '#/properties/chainId': {
             render: () => {
                 networkPicker = new ScomNetworkPicker(undefined, {
@@ -609,7 +648,8 @@ const getCustomControls = (networkPicker: ScomNetworkPicker, tokenInput: ScomTok
                 return tokenInput;
             },
             getData: (control: ScomTokenInput) => {
-                return control.token?.address || control.token?.symbol;
+                const value = (control.token?.address || control.token?.symbol);
+                return isCustomToken && checkboxCustomToken?.checked ? (customTokenInput.value || value) : value;
             },
             setData: async (control: ScomTokenInput, value: string, rowData: any) => {
                 await control.ready();
@@ -639,4 +679,41 @@ const getCustomControls = (networkPicker: ScomNetworkPicker, tokenInput: ScomTok
             }
         }
     }
+
+    if (isCustomToken) {
+        controls['#/properties/isCustomMintToken'] = {
+            render: () => {
+                checkboxCustomToken = new Checkbox(undefined, { caption: 'Is custom token?', margin: { top: '0.35rem' } });
+                return checkboxCustomToken;
+            },
+            getData: (control: Checkbox) => {
+                return control.checked;
+            },
+            setData: async (control: Checkbox, value: boolean) => {
+                await control.ready();
+                control.checked = value;
+                if (control.onChanged) (control as any).onChanged();
+            }
+        };
+        controls['#/properties/customMintToken'] = {
+            render: () => {
+                customTokenInput = new Input(undefined, {
+                    inputType: 'text',
+                    height: '42px',
+                    width: '100%'
+                });
+                customTokenInput.classList.add(formInputStyle);
+                return customTokenInput;
+            },
+            getData: (control: Input) => {
+                return checkboxCustomToken.checked ? control.value : ((tokenInput.token?.address || tokenInput.token?.symbol) || control.value);
+            },
+            setData: async (control: Input, value: string) => {
+                await control.ready();
+                control.value = value;
+            }
+        };
+    }
+
+    return controls;
 }

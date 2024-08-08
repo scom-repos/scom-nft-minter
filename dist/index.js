@@ -140,7 +140,7 @@ define("@scom/scom-nft-minter/store/index.ts", ["require", "exports", "@ijstech/
 define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/eth-wallet"], function (require, exports, eth_wallet_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.registerSendTxEvents = exports.getTokenBalance = exports.getERC20Amount = exports.nullAddress = void 0;
+    exports.registerSendTxEvents = exports.getTokenInfo = exports.getTokenBalance = exports.getERC20Amount = exports.nullAddress = void 0;
     exports.nullAddress = '0x0000000000000000000000000000000000000000';
     const getERC20Amount = async (wallet, tokenAddress, decimals) => {
         try {
@@ -165,6 +165,27 @@ define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/
         return balance;
     };
     exports.getTokenBalance = getTokenBalance;
+    const getTokenInfo = async (address, chainId) => {
+        let token;
+        const wallet = eth_wallet_2.Wallet.getClientInstance();
+        wallet.chainId = chainId;
+        const isValidAddress = wallet.isAddress(address);
+        if (isValidAddress) {
+            const tokenAddress = wallet.toChecksumAddress(address);
+            const tokenInfo = await wallet.tokenInfo(tokenAddress);
+            if (tokenInfo?.symbol) {
+                token = {
+                    chainId,
+                    address: tokenAddress,
+                    name: tokenInfo.name,
+                    decimals: tokenInfo.decimals,
+                    symbol: tokenInfo.symbol
+                };
+            }
+        }
+        return token;
+    };
+    exports.getTokenInfo = getTokenInfo;
     const registerSendTxEvents = (sendTxEventHandlers) => {
         const wallet = eth_wallet_2.Wallet.getClientInstance();
         wallet.registerSendTxEvents({
@@ -185,7 +206,7 @@ define("@scom/scom-nft-minter/utils/token.ts", ["require", "exports", "@ijstech/
 define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/scom-product-contract", "@ijstech/components", "@scom/scom-nft-minter/utils/token.ts"], function (require, exports, scom_product_contract_1, components_2, token_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.registerSendTxEvents = exports.nullAddress = exports.getTokenBalance = exports.getERC20Amount = exports.delay = exports.getProxySelectors = exports.formatNumber = void 0;
+    exports.registerSendTxEvents = exports.nullAddress = exports.getTokenInfo = exports.getTokenBalance = exports.getERC20Amount = exports.delay = exports.getProxySelectors = exports.formatNumber = void 0;
     const formatNumber = (value, decimalFigures) => {
         if (typeof value === 'object') {
             value = value.toFixed();
@@ -220,13 +241,14 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/sco
     exports.delay = delay;
     Object.defineProperty(exports, "getERC20Amount", { enumerable: true, get: function () { return token_1.getERC20Amount; } });
     Object.defineProperty(exports, "getTokenBalance", { enumerable: true, get: function () { return token_1.getTokenBalance; } });
+    Object.defineProperty(exports, "getTokenInfo", { enumerable: true, get: function () { return token_1.getTokenInfo; } });
     Object.defineProperty(exports, "nullAddress", { enumerable: true, get: function () { return token_1.nullAddress; } });
     Object.defineProperty(exports, "registerSendTxEvents", { enumerable: true, get: function () { return token_1.registerSendTxEvents; } });
 });
 define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.linkStyle = exports.tokenSelectionStyle = exports.inputStyle = exports.markdownStyle = void 0;
+    exports.formInputStyle = exports.linkStyle = exports.tokenSelectionStyle = exports.inputStyle = exports.markdownStyle = void 0;
     const Theme = components_3.Styles.Theme.ThemeVars;
     exports.markdownStyle = components_3.Styles.style({
         color: Theme.text.primary,
@@ -289,6 +311,21 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
                 whiteSpace: 'nowrap',
                 width: '100%',
             },
+        }
+    });
+    exports.formInputStyle = components_3.Styles.style({
+        width: '100% !important',
+        $nest: {
+            '& > input': {
+                width: '100% !important',
+                maxWidth: '100%',
+                padding: '0.5rem 1rem',
+                color: Theme.input.fontColor,
+                backgroundColor: Theme.input.background,
+                borderColor: Theme.input.background,
+                borderRadius: '0.625rem',
+                outline: 'none'
+            }
         }
     });
 });
@@ -768,7 +805,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         },
     };
 });
-define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom/scom-network-picker", "@scom/scom-token-input", "@scom/scom-token-list", "@scom/scom-nft-minter/utils/index.ts"], function (require, exports, scom_network_picker_1, scom_token_input_1, scom_token_list_2, utils_1) {
+define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom/scom-network-picker", "@scom/scom-token-input", "@scom/scom-token-list", "@scom/scom-nft-minter/utils/index.ts", "@ijstech/components", "@scom/scom-nft-minter/index.css.ts"], function (require, exports, scom_network_picker_1, scom_token_input_1, scom_token_list_2, utils_1, components_4, index_css_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getProjectOwnerSchema3 = exports.getProjectOwnerSchema2 = exports.getProjectOwnerSchema1 = exports.getBuilderSchema = void 0;
@@ -1124,9 +1161,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 ]
             },
             customControls() {
-                let networkPicker;
-                let tokenInput;
-                return getCustomControls(networkPicker, tokenInput);
+                return getCustomControls();
             }
         };
     }
@@ -1145,6 +1180,16 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     tokenToMint: {
                         type: 'string',
                         title: 'Token Address',
+                        tooltip: 'Token to mint the NFT',
+                        required: true
+                    },
+                    isCustomMintToken: {
+                        type: 'boolean',
+                        title: ' '
+                    },
+                    customMintToken: {
+                        type: 'string',
+                        title: 'Custom Token Address',
                         tooltip: 'Token to mint the NFT',
                         required: true
                     },
@@ -1190,8 +1235,34 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                             {
                                                 type: 'Control',
                                                 scope: '#/properties/tokenToMint',
+                                                rule: {
+                                                    effect: 'HIDE',
+                                                    condition: {
+                                                        scope: '#/properties/isCustomMintToken',
+                                                        schema: {
+                                                            const: true
+                                                        }
+                                                    }
+                                                }
                                             }
                                         ]
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/isCustomMintToken'
+                                    },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/customMintToken',
+                                        rule: {
+                                            effect: 'SHOW',
+                                            condition: {
+                                                scope: '#/properties/isCustomMintToken',
+                                                schema: {
+                                                    const: true
+                                                }
+                                            }
+                                        }
                                     },
                                     {
                                         type: 'Control',
@@ -1208,9 +1279,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 ]
             },
             customControls() {
-                let networkPicker;
-                let tokenInput;
-                return getCustomControls(networkPicker, tokenInput);
+                return getCustomControls(true);
             }
         };
     }
@@ -1325,8 +1394,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
         return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2();
     }
     exports.getProjectOwnerSchema3 = getProjectOwnerSchema3;
-    const getCustomControls = (networkPicker, tokenInput) => {
-        return {
+    const getCustomControls = (isCustomToken) => {
+        let networkPicker;
+        let tokenInput;
+        let checkboxCustomToken;
+        let customTokenInput;
+        const controls = {
             '#/properties/chainId': {
                 render: () => {
                     networkPicker = new scom_network_picker_1.default(undefined, {
@@ -1373,7 +1446,8 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     return tokenInput;
                 },
                 getData: (control) => {
-                    return control.token?.address || control.token?.symbol;
+                    const value = (control.token?.address || control.token?.symbol);
+                    return isCustomToken && checkboxCustomToken?.checked ? (customTokenInput.value || value) : value;
                 },
                 setData: async (control, value, rowData) => {
                     await control.ready();
@@ -1404,13 +1478,49 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 }
             }
         };
+        if (isCustomToken) {
+            controls['#/properties/isCustomMintToken'] = {
+                render: () => {
+                    checkboxCustomToken = new components_4.Checkbox(undefined, { caption: 'Is custom token?', margin: { top: '0.35rem' } });
+                    return checkboxCustomToken;
+                },
+                getData: (control) => {
+                    return control.checked;
+                },
+                setData: async (control, value) => {
+                    await control.ready();
+                    control.checked = value;
+                    if (control.onChanged)
+                        control.onChanged();
+                }
+            };
+            controls['#/properties/customMintToken'] = {
+                render: () => {
+                    customTokenInput = new components_4.Input(undefined, {
+                        inputType: 'text',
+                        height: '42px',
+                        width: '100%'
+                    });
+                    customTokenInput.classList.add(index_css_1.formInputStyle);
+                    return customTokenInput;
+                },
+                getData: (control) => {
+                    return checkboxCustomToken.checked ? control.value : ((tokenInput.token?.address || tokenInput.token?.symbol) || control.value);
+                },
+                setData: async (control, value) => {
+                    await control.ready();
+                    control.value = value;
+                }
+            };
+        }
+        return controls;
     };
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-token-list", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_4, eth_wallet_4, index_3, index_4, index_5, index_css_1, API_1, data_json_1, scom_commission_fee_setup_1, scom_token_list_3, formSchema_json_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/API.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-commission-fee-setup", "@scom/scom-token-list", "@scom/scom-nft-minter/formSchema.json.ts"], function (require, exports, components_5, eth_wallet_4, index_3, index_4, index_5, index_css_2, API_1, data_json_1, scom_commission_fee_setup_1, scom_token_list_3, formSchema_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const Theme = components_4.Styles.Theme.ThemeVars;
-    let ScomNftMinter = class ScomNftMinter extends components_4.Module {
+    const Theme = components_5.Styles.Theme.ThemeVars;
+    let ScomNftMinter = class ScomNftMinter extends components_5.Module {
         constructor(parent, options) {
             super(parent, options);
             this._data = {
@@ -1458,7 +1568,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     };
                     if (!(0, index_5.isClientWalletConnected)()) {
                         if (this.mdWallet) {
-                            await components_4.application.loadPackage('@scom/scom-wallet-modal', '*');
+                            await components_5.application.loadPackage('@scom/scom-wallet-modal', '*');
                             this.mdWallet.networks = this.networks;
                             this.mdWallet.wallets = this.wallets;
                             this.mdWallet.showModal();
@@ -1472,18 +1582,33 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         contract = this.state.getContractAddress('ProductInfo');
                     }
                     try {
-                        if (!this._data.tokenToMint)
+                        const { isCustomMintToken, tokenToMint, customMintToken } = this._data;
+                        if ((isCustomMintToken && !customMintToken) || (!isCustomMintToken && !tokenToMint))
                             throw new Error("tokenToMint is missing");
-                        if (this._data.tokenToMint === index_4.nullAddress || !this._data.tokenToMint.startsWith('0x')) {
+                        const tokenAddress = isCustomMintToken ? customMintToken : tokenToMint;
+                        if (tokenAddress === index_4.nullAddress || !tokenAddress.startsWith('0x')) {
                             //pay native token
                             const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, index_4.nullAddress, 18, callback, confirmationCallback);
                             this._data.erc1155Index = result.productId;
+                            this._data.nftAddress = contract;
                             this._data.nftType = 'ERC1155';
                         }
                         else { //pay erc20
-                            const { address, decimals, symbol } = this.newToken;
-                            const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, address, decimals, callback, confirmationCallback);
+                            let token;
+                            if (isCustomMintToken) {
+                                token = await (0, index_4.getTokenInfo)(tokenAddress, this.chainId);
+                            }
+                            else {
+                                token = scom_token_list_3.tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
+                            }
+                            if (!token) {
+                                this.showTxStatusModal('error', 'Invalid token!');
+                                this.isCancelCreate = true;
+                                return;
+                            }
+                            const result = await (0, API_1.newDefaultBuyProduct)(contract, maxQty, price, tokenAddress, token.decimals ?? 18, callback, confirmationCallback);
                             this._data.erc1155Index = result.productId;
+                            this._data.nftAddress = contract;
                             this._data.nftType = 'ERC1155';
                         }
                     }
@@ -1523,11 +1648,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         get nftAddress() {
             return this._data.nftAddress;
-        }
-        get newToken() {
-            const address = this._data.tokenToMint?.toLowerCase();
-            const token = scom_token_list_3.tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === address);
-            return token;
         }
         get newPrice() {
             return this._data.priceToMint;
@@ -1653,16 +1773,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     },
                     customUI: {
                         render: (data, onConfirm) => {
-                            const vstack = new components_4.VStack();
+                            const vstack = new components_5.VStack();
                             const config = new scom_commission_fee_setup_1.default(null, {
                                 commissions: self._data.commissions,
                                 fee: this.state.embedderCommissionFee,
                                 networks: self._data.networks
                             });
-                            const hstack = new components_4.HStack(null, {
+                            const hstack = new components_5.HStack(null, {
                                 verticalAlignment: 'center',
                             });
-                            const button = new components_4.Button(hstack, {
+                            const button = new components_5.Button(hstack, {
                                 caption: 'Confirm',
                                 width: '100%',
                                 height: 40,
@@ -1694,7 +1814,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 oldData = JSON.parse(JSON.stringify(this._data));
-                                const { name, title, productType, logoUrl, description, link, requiredQuantity, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, token, price, maxQty, txnMaxQty, ...themeSettings } = userInputData;
+                                const { name, title, productType, logoUrl, description, link, requiredQuantity, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, tokenToMint, isCustomMintToken, customMintToken, priceToMint, maxQty, txnMaxQty, ...themeSettings } = userInputData;
                                 const generalSettings = {
                                     name,
                                     title,
@@ -1709,8 +1829,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     nftAddress,
                                     chainSpecificProperties,
                                     defaultChainId,
-                                    token,
-                                    price,
+                                    tokenToMint,
+                                    isCustomMintToken,
+                                    customMintToken,
+                                    priceToMint,
                                     maxQty,
                                     txnMaxQty,
                                 };
@@ -2004,8 +2126,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.onToggleDetail();
                     this.btnDetail.visible = true;
                     this.erc1155Wrapper.visible = false;
-                    this.lbContract.caption = components_4.FormatUtils.truncateWalletAddress(this.nftAddress);
-                    this.lbToken.caption = components_4.FormatUtils.truncateWalletAddress(tokenAddress);
+                    this.lbContract.caption = components_5.FormatUtils.truncateWalletAddress(this.nftAddress);
+                    this.lbToken.caption = components_5.FormatUtils.truncateWalletAddress(tokenAddress);
                     this.lbOwn.caption = (0, index_4.formatNumber)(nftBalance || 0, 0);
                     this.pnlMintFee.visible = true;
                     this.oswapTrollInfo = { token, price };
@@ -2036,8 +2158,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.btnDetail.visible = true;
                         this.erc1155Wrapper.visible = true;
                         this.lbERC1155Index.caption = `${this.productId}`;
-                        this.lbContract.caption = components_4.FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
-                        this.lbToken.caption = token.address ? components_4.FormatUtils.truncateWalletAddress(token.address) : token.symbol;
+                        this.lbContract.caption = components_5.FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
+                        this.lbToken.caption = token.address ? components_5.FormatUtils.truncateWalletAddress(token.address) : token.symbol;
                         this.lbOwn.caption = (0, index_4.formatNumber)(nftBalance, 0);
                         this.pnlMintFee.visible = true;
                         this.lblMintFee.caption = `${price ? (0, index_4.formatNumber)(price) : ""} ${token?.symbol || ""}`;
@@ -2108,18 +2230,18 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.btnDetail.rightIcon.name = isExpanding ? 'caret-down' : 'caret-up';
         }
         onViewContract() {
-            this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
+            this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress));
         }
         onViewToken() {
             const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
             this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
         }
         onCopyContract() {
-            components_4.application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : this.contractAddress);
+            components_5.application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress));
         }
         onCopyToken() {
             const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
-            components_4.application.copyToClipboard(token.address || token.symbol);
+            components_5.application.copyToClipboard(token.address || token.symbol);
         }
         showTxStatusModal(status, content, exMessage) {
             if (!this.txStatusModal)
@@ -2406,7 +2528,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async onSubmit() {
             if (!(0, index_5.isClientWalletConnected)()) {
                 if (this.mdWallet) {
-                    await components_4.application.loadPackage('@scom/scom-wallet-modal', '*');
+                    await components_5.application.loadPackage('@scom/scom-wallet-modal', '*');
                     this.mdWallet.networks = this.networks;
                     this.mdWallet.wallets = this.wallets;
                     this.mdWallet.showModal();
@@ -2496,6 +2618,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const defaultChainId = this.getAttribute('defaultChainId', true);
                 const requiredQuantity = this.getAttribute('requiredQuantity', true);
                 const tokenToMint = this.getAttribute('tokenToMint', true);
+                const isCustomMintToken = this.getAttribute('isCustomMintToken', true);
+                const customMintToken = this.getAttribute('customMintToken', true);
                 const priceToMint = this.getAttribute('priceToMint', true);
                 const maxQty = this.getAttribute('maxQty', true);
                 const txnMaxQty = this.getAttribute('txnMaxQty', true);
@@ -2512,6 +2636,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     defaultChainId,
                     requiredQuantity,
                     tokenToMint,
+                    isCustomMintToken,
+                    customMintToken,
                     priceToMint,
                     maxQty,
                     txnMaxQty,
@@ -2534,7 +2660,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     this.$render("i-vstack", { class: "text-center", gap: "0.5rem" },
                                         this.$render("i-image", { id: 'imgLogo', height: 100, border: { radius: 4 } }),
                                         this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
-                                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_1.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
+                                        this.$render("i-markdown", { id: 'markdownViewer', class: index_css_2.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                                     this.$render("i-vstack", { gap: "0.5rem", id: "pnlInputFields" },
                                         this.$render("i-hstack", { id: "detailWrapper", horizontalAlignment: "space-between", gap: 10, visible: false, wrap: "wrap" },
                                             this.$render("i-hstack", { id: "erc1155Wrapper", width: "100%", justifyContent: "space-between", visible: false, gap: "0.5rem", lineHeight: 1.5 },
@@ -2543,12 +2669,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Contract Address", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-hstack", { gap: "0.25rem", verticalAlignment: "center", maxWidth: "calc(100% - 75px)" },
-                                                    this.$render("i-label", { id: "lbContract", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_1.linkStyle, onClick: this.onViewContract }),
+                                                    this.$render("i-label", { id: "lbContract", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_2.linkStyle, onClick: this.onViewContract }),
                                                     this.$render("i-icon", { fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyContract, cursor: "pointer" }))),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Token Address", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-hstack", { gap: "0.25rem", verticalAlignment: "center", maxWidth: "calc(100% - 75px)" },
-                                                    this.$render("i-label", { id: "lbToken", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_1.linkStyle, onClick: this.onViewToken }),
+                                                    this.$render("i-label", { id: "lbToken", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_2.linkStyle, onClick: this.onViewToken }),
                                                     this.$render("i-icon", { fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyToken, cursor: "pointer" }))),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Remaining", font: { bold: true, size: '1rem' } }),
@@ -2563,7 +2689,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-hstack", { id: 'pnlQty', width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5, visible: false },
                                             this.$render("i-label", { caption: 'Quantity', font: { bold: true, size: '1rem' } }),
                                             this.$render("i-panel", { width: "50%" },
-                                                this.$render("i-input", { id: 'edtQty', height: 35, width: "100%", onChanged: this.onQtyChanged.bind(this), class: index_css_1.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } }))),
+                                                this.$render("i-input", { id: 'edtQty', height: 35, width: "100%", onChanged: this.onQtyChanged.bind(this), class: index_css_2.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } }))),
                                         this.$render("i-hstack", { width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5 },
                                             this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { bold: true, size: '1rem' } }),
@@ -2576,7 +2702,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                     this.$render("i-label", { caption: 'Balance:', font: { size: '1rem' } }),
                                                     this.$render("i-label", { id: 'lblBalance', font: { size: '1rem' }, caption: "0.00" }))),
                                             this.$render("i-stack", { direction: "horizontal", overflow: "hidden", background: { color: Theme.input.background }, font: { color: Theme.input.fontColor }, height: 56, width: "50%", margin: { left: 'auto', right: 'auto' }, alignItems: "center", border: { radius: 16, width: '2px', style: 'solid', color: 'transparent' } },
-                                                this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_1.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
+                                                this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_2.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
                                                         maxHeight: '50vh'
                                                     }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged }))),
                                         this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: 'center', gap: "8px", width: "100%", margin: { top: '0.5rem' } },
@@ -2595,8 +2721,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
     };
     ScomNftMinter = __decorate([
-        components_4.customModule,
-        (0, components_4.customElements)('i-scom-nft-minter')
+        components_5.customModule,
+        (0, components_5.customElements)('i-scom-nft-minter')
     ], ScomNftMinter);
     exports.default = ScomNftMinter;
 });
