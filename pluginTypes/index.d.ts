@@ -348,10 +348,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
-                isCustomMintToken: {
-                    type: string;
-                    title: string;
-                };
                 customMintToken: {
                     type: string;
                     title: string;
@@ -423,29 +419,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
-                        elements: ({
+                        elements: {
                             type: string;
                             scope: string;
-                            rule?: undefined;
-                        } | {
-                            type: string;
-                            scope: string;
-                            rule: {
-                                effect: string;
-                                condition: {
-                                    scope: string;
-                                    schema: {
-                                        const: boolean;
-                                    };
-                                };
-                            };
-                        })[];
+                        }[];
                         scope?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
                         rule?: undefined;
                     } | {
                         type: string;
@@ -455,11 +433,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                             condition: {
                                 scope: string;
                                 schema: {
-                                    const: boolean;
+                                    const: string;
                                 };
                             };
                         };
                         elements?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
                     })[];
                 }[];
             }[];
@@ -472,7 +455,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
             '#/properties/tokenToMint': {
                 render: () => ScomTokenInput;
-                getData: (control: ScomTokenInput) => any;
+                getData: (control: ScomTokenInput) => string;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
@@ -599,10 +582,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
-                isCustomMintToken: {
-                    type: string;
-                    title: string;
-                };
                 customMintToken: {
                     type: string;
                     title: string;
@@ -674,29 +653,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
-                        elements: ({
+                        elements: {
                             type: string;
                             scope: string;
-                            rule?: undefined;
-                        } | {
-                            type: string;
-                            scope: string;
-                            rule: {
-                                effect: string;
-                                condition: {
-                                    scope: string;
-                                    schema: {
-                                        const: boolean;
-                                    };
-                                };
-                            };
-                        })[];
+                        }[];
                         scope?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
                         rule?: undefined;
                     } | {
                         type: string;
@@ -706,11 +667,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                             condition: {
                                 scope: string;
                                 schema: {
-                                    const: boolean;
+                                    const: string;
                                 };
                             };
                         };
                         elements?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
                     })[];
                 }[];
             }[];
@@ -723,7 +689,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
             '#/properties/tokenToMint': {
                 render: () => ScomTokenInput;
-                getData: (control: ScomTokenInput) => any;
+                getData: (control: ScomTokenInput) => string;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
             };
         };
@@ -848,7 +814,6 @@ declare module "@scom/scom-nft-minter" {
         erc1155Index?: number;
         productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
         tokenToMint?: string;
-        isCustomMintToken?: boolean;
         customMintToken?: string;
         priceToMint?: string;
         maxQty?: number;
