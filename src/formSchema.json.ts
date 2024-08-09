@@ -1,9 +1,9 @@
 import ScomNetworkPicker from "@scom/scom-network-picker";
-import ScomTokenInput from "@scom/scom-token-input";
-import { ChainNativeTokenByChainId, DefaultERC20Tokens } from "@scom/scom-token-list";
-import { nullAddress } from "./utils";
-import { Checkbox, Input } from "@ijstech/components";
+import ScomTokenInput, { CUSTOM_TOKEN } from "@scom/scom-token-input";
+import { Input } from "@ijstech/components";
 import { formInputStyle } from "./index.css";
+import { ITokenObject } from "@scom/scom-token-list";
+import { nullAddress } from "./utils";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
@@ -209,7 +209,7 @@ function getProjectOwnerSchema(isDonation?: boolean) {
 
             tokenToMint: {//for 1155 new index only
                 type: 'string',
-                title: 'Token Address',
+                title: 'Currency',
                 tooltip: 'Token to mint the NFT',
             },
             priceToMint: {//for 1155 new index only
@@ -218,7 +218,7 @@ function getProjectOwnerSchema(isDonation?: boolean) {
             },
             maxQty: {//for 1155 new index only
                 type: 'integer',
-                title: 'Max Quantity',
+                title: 'Max Subscription Allowed',
                 tooltip: 'Max quantity of this NFT existing',
                 minimum: 1,
             },
@@ -381,18 +381,14 @@ export function getProjectOwnerSchema1() {
                 },
                 tokenToMint: {
                     type: 'string',
-                    title: 'Token Address',
+                    title: 'Currency',
                     tooltip: 'Token to mint the NFT',
                     required: true
                 },
-                isCustomMintToken: {
-                    type: 'boolean',
-                    title: ' '
-                },
                 customMintToken: {
                     type: 'string',
-                    title: 'Custom Token Address',
-                    tooltip: 'Token to mint the NFT',
+                    title: 'Currency Address',
+                    tooltip: 'Token address to mint the NFT',
                     required: true
                 },
                 priceToMint: {
@@ -402,7 +398,7 @@ export function getProjectOwnerSchema1() {
                 },
                 maxQty: {
                     type: 'integer',
-                    title: 'Max Quantity',
+                    title: 'Max Subscription Allowed',
                     tooltip: 'Max quantity of this NFT existing',
                     minimum: 1,
                     required: true
@@ -436,32 +432,19 @@ export function getProjectOwnerSchema1() {
                                         },
                                         {
                                             type: 'Control',
-                                            scope: '#/properties/tokenToMint',
-                                            rule: {
-                                                effect: 'HIDE',
-                                                condition: {
-                                                    scope: '#/properties/isCustomMintToken',
-                                                    schema: {
-                                                        const: true
-                                                    }
-                                                }
-                                            }
+                                            scope: '#/properties/tokenToMint'
                                         }
                                     ]
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/isCustomMintToken'
-                                },
-                                {
-                                    type: 'Control',
                                     scope: '#/properties/customMintToken',
                                     rule: {
-                                        effect: 'SHOW',
+                                        effect: 'ENABLE',
                                         condition: {
-                                            scope: '#/properties/isCustomMintToken',
+                                            scope: '#/properties/tokenToMint',
                                             schema: {
-                                                const: true
+                                                const: CUSTOM_TOKEN.address
                                             }
                                         }
                                     }
@@ -599,7 +582,6 @@ export function getProjectOwnerSchema3(isDefault1155New: boolean) {
 const getCustomControls = (isCustomToken?: boolean) => {
     let networkPicker: ScomNetworkPicker;
     let tokenInput: ScomTokenInput;
-    let checkboxCustomToken: Checkbox;
     let customTokenInput: Input;
 
     const controls = {
@@ -613,6 +595,10 @@ const getCustomControls = (isCustomToken?: boolean) => {
                         if (tokenInput && chainId !== tokenInput.chainId) {
                             tokenInput.chainId = chainId;
                             tokenInput.token = undefined;
+                            if (isCustomToken && customTokenInput) {
+                                customTokenInput.value = '';
+                                customTokenInput.enabled = false;
+                            }
                         }
                     }
                 });
@@ -629,8 +615,13 @@ const getCustomControls = (isCustomToken?: boolean) => {
                     tokenInput.chainId = value;
                     if (noChainId && tokenInput.address) {
                         tokenInput.address = tokenInput.address;
+                        tokenInput.onSelectToken(tokenInput.token);
                     } else {
                         tokenInput.token = undefined;
+                        if (isCustomToken) {
+                            customTokenInput.value = '';
+                            customTokenInput.enabled = false;
+                        }
                     }
                 }
             }
@@ -643,58 +634,53 @@ const getCustomControls = (isCustomToken?: boolean) => {
                     isBalanceShown: false,
                     isBtnMaxShown: false,
                     isInputShown: false,
+                    isCustomTokenShown: true,
                     supportValidAddress: true
                 });
+                if (isCustomToken) {
+                    tokenInput.onSelectToken = (token: ITokenObject) => {
+                        if (!token) {
+                            customTokenInput.value = '';
+                        } else {
+                            const { address } = token;
+                            const isCustomToken = address?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+                            if (!isCustomToken) {
+                                customTokenInput.value = address ?? nullAddress;
+                                if (customTokenInput.value) (customTokenInput as any).onChanged();
+                            } else {
+                                customTokenInput.value = '';
+                            }
+                        }
+                        if (isCustomToken && tokenInput.onChanged) {
+                            tokenInput.onChanged(tokenInput.token);
+                        }
+                    }
+                }
                 return tokenInput;
             },
             getData: (control: ScomTokenInput) => {
                 const value = (control.token?.address || control.token?.symbol);
-                return isCustomToken && checkboxCustomToken?.checked ? (customTokenInput.value || value) : value;
+                return value;
             },
             setData: async (control: ScomTokenInput, value: string, rowData: any) => {
                 await control.ready();
-                control.chainId = rowData.chainId;
-                if (!control.chainId && value) {
-                    let chainId: number;
-                    let address = value.toLowerCase();
-                    if (value.startsWith('0x') && value !== nullAddress) {
-                        for (const network of networks) {
-                            const token = DefaultERC20Tokens[network.chainId]?.find(v => v.address?.toLowerCase() === address);
-                            if (token) {
-                                chainId = network.chainId;
-                                break;
-                            }
-                        }
-                    } else {
-                        for (const network of networks) {
-                            if (ChainNativeTokenByChainId[network.chainId]?.symbol?.toLowerCase() === address) {
-                                chainId = network.chainId;
-                                break;
-                            }
-                        }
-                    }
-                    control.chainId = chainId;
-                }
+                control.chainId = rowData?.chainId;
                 control.address = value;
+                if (isCustomToken && control.onChanged) {
+                    control.onChanged(control.token);
+                }
+                if (customTokenInput) {
+                    const isCustomToken = value?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+                    if (!isCustomToken) {
+                        customTokenInput.value = value ?? nullAddress;
+                        if (customTokenInput.value) (customTokenInput as any).onChanged();
+                    }
+                }
             }
         }
     }
 
     if (isCustomToken) {
-        controls['#/properties/isCustomMintToken'] = {
-            render: () => {
-                checkboxCustomToken = new Checkbox(undefined, { caption: 'Is custom token?', margin: { top: '0.35rem' } });
-                return checkboxCustomToken;
-            },
-            getData: (control: Checkbox) => {
-                return control.checked;
-            },
-            setData: async (control: Checkbox, value: boolean) => {
-                await control.ready();
-                control.checked = value;
-                if (control.onChanged) (control as any).onChanged();
-            }
-        };
         controls['#/properties/customMintToken'] = {
             render: () => {
                 customTokenInput = new Input(undefined, {
@@ -706,11 +692,17 @@ const getCustomControls = (isCustomToken?: boolean) => {
                 return customTokenInput;
             },
             getData: (control: Input) => {
-                return checkboxCustomToken.checked ? control.value : ((tokenInput.token?.address || tokenInput.token?.symbol) || control.value);
+                return control.value;
             },
             setData: async (control: Input, value: string) => {
                 await control.ready();
                 control.value = value;
+                if (!value && tokenInput?.token) {
+                    const isCustomToken = tokenInput.address?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+                    if (!isCustomToken) {
+                        control.value = tokenInput.address ?? nullAddress;
+                    }
+                }
             }
         };
     }

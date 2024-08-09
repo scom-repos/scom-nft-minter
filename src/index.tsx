@@ -28,7 +28,7 @@ import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
-import ScomTokenInput from '@scom/scom-token-input';
+import ScomTokenInput, { CUSTOM_TOKEN } from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import { getBuilderSchema, getProjectOwnerSchema3 as getProjectOwnerSchema } from './formSchema.json';
 
@@ -44,7 +44,6 @@ interface ScomNftMinterElement extends ControlElement {
   productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
   //ERC1155NewIndex
   tokenToMint?: string;
-  isCustomMintToken?: boolean;
   customMintToken?: string;
   priceToMint?: string;
   maxQty?: number;
@@ -385,7 +384,6 @@ export default class ScomNftMinter extends Module {
                 chainSpecificProperties,
                 defaultChainId,
                 tokenToMint,
-                isCustomMintToken,
                 customMintToken,
                 priceToMint,
                 maxQty,
@@ -408,7 +406,6 @@ export default class ScomNftMinter extends Module {
                 chainSpecificProperties,
                 defaultChainId,
                 tokenToMint,
-                isCustomMintToken,
                 customMintToken,
                 priceToMint,
                 maxQty,
@@ -693,9 +690,10 @@ export default class ScomNftMinter extends Module {
         contract = this.state.getContractAddress('ProductInfo');
       }
       try {
-        const { isCustomMintToken, tokenToMint, customMintToken } = this._data;
-        if ((isCustomMintToken && !customMintToken) || (!isCustomMintToken && !tokenToMint)) throw new Error("tokenToMint is missing");
-        const tokenAddress = isCustomMintToken ? customMintToken : tokenToMint;
+        const { tokenToMint, customMintToken } = this._data;
+        const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+        if (!tokenToMint || (isCustomToken && !customMintToken)) throw new Error("tokenToMint is missing");
+        const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
         if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
           //pay native token
           const result = await newDefaultBuyProduct(
@@ -712,7 +710,7 @@ export default class ScomNftMinter extends Module {
           this._data.nftType = 'ERC1155';
         } else { //pay erc20
           let token: ITokenObject;
-          if (isCustomMintToken) {
+          if (isCustomToken) {
             token = await getTokenInfo(tokenAddress, this.chainId);
           } else {
             token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
@@ -1291,7 +1289,6 @@ export default class ScomNftMinter extends Module {
       const defaultChainId = this.getAttribute('defaultChainId', true);
       const requiredQuantity = this.getAttribute('requiredQuantity', true);
       const tokenToMint = this.getAttribute('tokenToMint', true);
-      const isCustomMintToken = this.getAttribute('isCustomMintToken', true);
       const customMintToken = this.getAttribute('customMintToken', true);
       const priceToMint = this.getAttribute('priceToMint', true);
       const maxQty = this.getAttribute('maxQty', true);
@@ -1309,7 +1306,6 @@ export default class ScomNftMinter extends Module {
         defaultChainId,
         requiredQuantity,
         tokenToMint,
-        isCustomMintToken,
         customMintToken,
         priceToMint,
         maxQty,
