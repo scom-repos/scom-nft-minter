@@ -2692,7 +2692,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                 this.$render("i-label", { caption: "Token Address", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-hstack", { gap: "0.25rem", verticalAlignment: "center", maxWidth: "calc(100% - 75px)" },
                                                     this.$render("i-label", { id: "lbToken", font: { size: '1rem', color: Theme.colors.primary.main }, textDecoration: "underline", class: index_css_2.linkStyle, onClick: this.onViewToken }),
-                                                    this.$render("i-icon", { fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyToken, cursor: "pointer" }))),
+                                                    this.$render("i-icon", { id: "iconCopyToken", fill: Theme.text.primary, name: "copy", width: 16, height: 16, onClick: this.onCopyToken, cursor: "pointer" }))),
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "Remaining", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lblSpotsRemaining", font: { size: '1rem' } })),

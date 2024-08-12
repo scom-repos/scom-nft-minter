@@ -1386,7 +1386,7 @@ export default class ScomNftMinter extends Module {
                         <i-label caption="Token Address" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbToken" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewToken} />
-                          <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
+                          <i-icon id="iconCopyToken" fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
                         </i-hstack>
                       </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
