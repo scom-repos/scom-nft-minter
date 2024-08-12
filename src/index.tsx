@@ -59,6 +59,7 @@ interface ScomNftMinterElement extends ControlElement {
   networks: INetworkConfig[];
   showHeader?: boolean;
   requiredQuantity?: number;
+  onMintedNFT?: () => void;
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -127,6 +128,7 @@ export default class ScomNftMinter extends Module {
   private erc1155Wrapper: HStack;
   private btnDetail: Button;
   private isCancelCreate: boolean;
+  public onMintedNFT: () => void;
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
@@ -1252,6 +1254,7 @@ export default class ScomNftMinter extends Module {
       const nftBalance = await fetchUserNftBalance(this.state, this.nftAddress);
       this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
       this.updateSubmitButton(false);
+      if (this.onMintedNFT) this.onMintedNFT();
     }
     registerSendTxEvents({
       transactionHash: txHashCallback,
@@ -1284,6 +1287,7 @@ export default class ScomNftMinter extends Module {
           const nftBalance = await getNFTBalance(this.state, this.productId);
           this.lbOwn.caption = nftBalance;
           this.updateSpotsRemaining();
+          if (this.onMintedNFT) this.onMintedNFT();
         }
       );
     }
@@ -1291,6 +1295,7 @@ export default class ScomNftMinter extends Module {
 
   async init() {
     super.init();
+    this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
       const link = this.getAttribute('link', true);

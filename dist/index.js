@@ -2580,6 +2580,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const nftBalance = await (0, API_1.fetchUserNftBalance)(this.state, this.nftAddress);
                 this.lbOwn.caption = (0, index_4.formatNumber)(nftBalance || 0, 0);
                 this.updateSubmitButton(false);
+                if (this.onMintedNFT)
+                    this.onMintedNFT();
             };
             (0, index_4.registerSendTxEvents)({
                 transactionHash: txHashCallback,
@@ -2608,11 +2610,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     const nftBalance = await (0, API_1.getNFTBalance)(this.state, this.productId);
                     this.lbOwn.caption = nftBalance;
                     this.updateSpotsRemaining();
+                    if (this.onMintedNFT)
+                        this.onMintedNFT();
                 });
             }
         }
         async init() {
             super.init();
+            this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {
                 const link = this.getAttribute('link', true);
