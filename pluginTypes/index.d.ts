@@ -849,6 +849,7 @@ declare module "@scom/scom-nft-minter" {
         private lblSpotsRemaining;
         private lbContract;
         private lbToken;
+        private iconCopyToken;
         private lbOwn;
         private lbERC1155Index;
         private pnlTokenInput;
@@ -1023,6 +1024,7 @@ declare module "@scom/scom-nft-minter" {
         private initWallet;
         private updateDAppUI;
         private refreshDApp;
+        private updateTokenAddress;
         private updateSpotsRemaining;
         private onToggleDetail;
         private onViewContract;
