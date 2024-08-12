@@ -85,6 +85,7 @@ export default class ScomNftMinter extends Module {
   private lblSpotsRemaining: Label;
   private lbContract: Label;
   private lbToken: Label;
+  private iconCopyToken: Icon;
   private lbOwn: Label;
   private lbERC1155Index: Label;
   private pnlTokenInput: VStack;
@@ -789,7 +790,7 @@ export default class ScomNftMinter extends Module {
         this.btnDetail.visible = true;
         this.erc1155Wrapper.visible = false;
         this.lbContract.caption = FormatUtils.truncateWalletAddress(this.nftAddress);
-        this.lbToken.caption = FormatUtils.truncateWalletAddress(tokenAddress);
+        this.updateTokenAddress(tokenAddress);
         this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
         this.pnlMintFee.visible = true;
         this.oswapTrollInfo = { token, price };
@@ -821,7 +822,7 @@ export default class ScomNftMinter extends Module {
           this.erc1155Wrapper.visible = true;
           this.lbERC1155Index.caption = `${this.productId}`;
           this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
-          this.lbToken.caption = token.address ? FormatUtils.truncateWalletAddress(token.address) : token.symbol;
+          this.updateTokenAddress(token.address);
           this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}`;
@@ -873,6 +874,26 @@ export default class ScomNftMinter extends Module {
       }
       this.determineBtnSubmitCaption();
     });
+  }
+
+  private updateTokenAddress(address: string) {
+    const isNativeToken = !address || address === nullAddress || !address.startsWith('0x');
+    if (isNativeToken) {
+      const network = this.state.getNetworkInfo(this.chainId);
+      this.lbToken.caption = `${network?.chainName || ''} Native Token`;
+      this.lbToken.textDecoration = 'none';
+      this.lbToken.font = { size: '1rem', color: Theme.text.primary };
+      this.lbToken.style.textAlign = 'right';
+      this.lbToken.classList.remove(linkStyle);
+      this.lbToken.onClick = () => { };
+    } else {
+      this.lbToken.caption = FormatUtils.truncateWalletAddress(address);
+      this.lbToken.textDecoration = 'underline';
+      this.lbToken.font = { size: '1rem', color: Theme.colors.primary.main };
+      this.lbToken.classList.add(linkStyle);
+      this.lbToken.onClick = () => this.onCopyToken();
+    }
+    this.iconCopyToken.visible = !isNativeToken;
   }
 
   private updateSpotsRemaining() {

@@ -2121,7 +2121,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.btnDetail.visible = true;
                     this.erc1155Wrapper.visible = false;
                     this.lbContract.caption = components_5.FormatUtils.truncateWalletAddress(this.nftAddress);
-                    this.lbToken.caption = components_5.FormatUtils.truncateWalletAddress(tokenAddress);
+                    this.updateTokenAddress(tokenAddress);
                     this.lbOwn.caption = (0, index_4.formatNumber)(nftBalance || 0, 0);
                     this.pnlMintFee.visible = true;
                     this.oswapTrollInfo = { token, price };
@@ -2153,7 +2153,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.erc1155Wrapper.visible = true;
                         this.lbERC1155Index.caption = `${this.productId}`;
                         this.lbContract.caption = components_5.FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
-                        this.lbToken.caption = token.address ? components_5.FormatUtils.truncateWalletAddress(token.address) : token.symbol;
+                        this.updateTokenAddress(token.address);
                         this.lbOwn.caption = (0, index_4.formatNumber)(nftBalance, 0);
                         this.pnlMintFee.visible = true;
                         this.lblMintFee.caption = `${price ? (0, index_4.formatNumber)(price) : ""} ${token?.symbol || ""}`;
@@ -2208,6 +2208,26 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 this.determineBtnSubmitCaption();
             });
+        }
+        updateTokenAddress(address) {
+            const isNativeToken = !address || address === index_4.nullAddress || !address.startsWith('0x');
+            if (isNativeToken) {
+                const network = this.state.getNetworkInfo(this.chainId);
+                this.lbToken.caption = `${network?.chainName || ''} Native Token`;
+                this.lbToken.textDecoration = 'none';
+                this.lbToken.font = { size: '1rem', color: Theme.text.primary };
+                this.lbToken.style.textAlign = 'right';
+                this.lbToken.classList.remove(index_css_2.linkStyle);
+                this.lbToken.onClick = () => { };
+            }
+            else {
+                this.lbToken.caption = components_5.FormatUtils.truncateWalletAddress(address);
+                this.lbToken.textDecoration = 'underline';
+                this.lbToken.font = { size: '1rem', color: Theme.colors.primary.main };
+                this.lbToken.classList.add(index_css_2.linkStyle);
+                this.lbToken.onClick = () => this.onCopyToken();
+            }
+            this.iconCopyToken.visible = !isNativeToken;
         }
         updateSpotsRemaining() {
             if (this.productId >= 0) {
