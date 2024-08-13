@@ -26,7 +26,7 @@ import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFT
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-import { ITokenObject, tokenStore } from '@scom/scom-token-list';
+import { ChainNativeTokenByChainId, ITokenObject, tokenStore } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput, { CUSTOM_TOKEN } from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
@@ -695,9 +695,20 @@ export default class ScomNftMinter extends Module {
       try {
         const { tokenToMint, customMintToken } = this._data;
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
-        if (!tokenToMint || (isCustomToken && !customMintToken)) throw new Error("tokenToMint is missing");
+        if (!tokenToMint || (isCustomToken && !customMintToken)) {
+          this.showTxStatusModal('error', 'TokenToMint is missing!');
+          this.isCancelCreate = true;
+          return;
+        }
         const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
         if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
+          const address = tokenAddress.toLowerCase();
+          const nativeToken = ChainNativeTokenByChainId[this.chainId];
+          if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
+            this.showTxStatusModal('error', 'Invalid token!');
+            this.isCancelCreate = true;
+            return;
+          }
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,
