@@ -26,7 +26,7 @@ import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFT
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-import { ITokenObject, tokenStore } from '@scom/scom-token-list';
+import { ChainNativeTokenByChainId, ITokenObject, tokenStore } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput, { CUSTOM_TOKEN } from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
@@ -86,6 +86,7 @@ export default class ScomNftMinter extends Module {
   private lblSpotsRemaining: Label;
   private lbContract: Label;
   private lbToken: Label;
+  private iconCopyToken: Icon;
   private lbOwn: Label;
   private lbERC1155Index: Label;
   private pnlTokenInput: VStack;
@@ -694,9 +695,20 @@ export default class ScomNftMinter extends Module {
       try {
         const { tokenToMint, customMintToken } = this._data;
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
-        if (!tokenToMint || (isCustomToken && !customMintToken)) throw new Error("tokenToMint is missing");
+        if (!tokenToMint || (isCustomToken && !customMintToken)) {
+          this.showTxStatusModal('error', 'TokenToMint is missing!');
+          this.isCancelCreate = true;
+          return;
+        }
         const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
         if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
+          const address = tokenAddress.toLowerCase();
+          const nativeToken = ChainNativeTokenByChainId[this.chainId];
+          if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
+            this.showTxStatusModal('error', 'Invalid token!');
+            this.isCancelCreate = true;
+            return;
+          }
           //pay native token
           const result = await newDefaultBuyProduct(
             contract,
@@ -791,7 +803,7 @@ export default class ScomNftMinter extends Module {
         this.btnDetail.visible = true;
         this.erc1155Wrapper.visible = false;
         this.lbContract.caption = FormatUtils.truncateWalletAddress(this.nftAddress);
-        this.lbToken.caption = FormatUtils.truncateWalletAddress(tokenAddress);
+        this.updateTokenAddress(tokenAddress);
         this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
         this.pnlMintFee.visible = true;
         this.oswapTrollInfo = { token, price };
@@ -823,7 +835,7 @@ export default class ScomNftMinter extends Module {
           this.erc1155Wrapper.visible = true;
           this.lbERC1155Index.caption = `${this.productId}`;
           this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
-          this.lbToken.caption = token.address ? FormatUtils.truncateWalletAddress(token.address) : token.symbol;
+          this.updateTokenAddress(token.address);
           this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}`;
@@ -875,6 +887,26 @@ export default class ScomNftMinter extends Module {
       }
       this.determineBtnSubmitCaption();
     });
+  }
+
+  private updateTokenAddress(address: string) {
+    const isNativeToken = !address || address === nullAddress || !address.startsWith('0x');
+    if (isNativeToken) {
+      const network = this.state.getNetworkInfo(this.chainId);
+      this.lbToken.caption = `${network?.chainName || ''} Native Token`;
+      this.lbToken.textDecoration = 'none';
+      this.lbToken.font = { size: '1rem', color: Theme.text.primary };
+      this.lbToken.style.textAlign = 'right';
+      this.lbToken.classList.remove(linkStyle);
+      this.lbToken.onClick = () => { };
+    } else {
+      this.lbToken.caption = FormatUtils.truncateWalletAddress(address);
+      this.lbToken.textDecoration = 'underline';
+      this.lbToken.font = { size: '1rem', color: Theme.colors.primary.main };
+      this.lbToken.classList.add(linkStyle);
+      this.lbToken.onClick = () => this.onCopyToken();
+    }
+    this.iconCopyToken.visible = !isNativeToken;
   }
 
   private updateSpotsRemaining() {
@@ -1365,7 +1397,7 @@ export default class ScomNftMinter extends Module {
                         <i-label caption="Token Address" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbToken" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewToken} />
-                          <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
+                          <i-icon id="iconCopyToken" fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
                         </i-hstack>
                       </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>

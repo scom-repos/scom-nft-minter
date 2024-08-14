@@ -1,6 +1,8 @@
 import { application } from "@ijstech/components";
 import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork, Wallet } from "@ijstech/eth-wallet";
 import getNetworkList from "@scom/scom-network-list";
+
+export * from "./tokens/index";
 export interface IContractDetailInfo {
   address: string;
 }

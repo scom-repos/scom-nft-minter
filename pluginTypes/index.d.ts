@@ -67,9 +67,126 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         chainId: number;
     }
 }
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" {
+    export const Tokens_Avalanche: ({
+        name: string;
+        symbol: string;
+        address: string;
+        decimals: number;
+        isCommon: boolean;
+    } | {
+        chainId: number;
+        address?: string;
+        name: string;
+        decimals: number;
+        symbol: string;
+        status?: boolean;
+        logoURI?: string;
+        isCommon?: boolean;
+        balance?: string | number;
+        isNative?: boolean;
+        isWETH?: boolean;
+        isNew?: boolean;
+    })[];
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts" {
+    export const Tokens_BSC: ({
+        name: string;
+        symbol: string;
+        address: string;
+        decimals: number;
+        isCommon: boolean;
+    } | {
+        chainId: number;
+        address?: string;
+        name: string;
+        decimals: number;
+        symbol: string;
+        status?: boolean;
+        logoURI?: string;
+        isCommon?: boolean;
+        balance?: string | number;
+        isNative?: boolean;
+        isWETH?: boolean;
+        isNew?: boolean;
+    })[];
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/index.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/mainnet/index.ts" {
+    export { Tokens_Avalanche } from "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts";
+    export { Tokens_BSC } from "@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts";
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts" {
+    export const Tokens_BSC_Testnet: ({
+        name: string;
+        address: string;
+        symbol: string;
+        decimals: number;
+        isCommon: boolean;
+    } | {
+        chainId: number;
+        address?: string;
+        name: string;
+        decimals: number;
+        symbol: string;
+        status?: boolean;
+        logoURI?: string;
+        isCommon?: boolean;
+        balance?: string | number;
+        isNative?: boolean;
+        isWETH?: boolean;
+        isNew?: boolean;
+    })[];
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" {
+    export const Tokens_Fuji: ({
+        name: string;
+        address: string;
+        symbol: string;
+        decimals: number;
+        isCommon: boolean;
+    } | {
+        name: string;
+        address: string;
+        symbol: string;
+        decimals: number;
+        isCommon?: undefined;
+    } | {
+        chainId: number;
+        address?: string;
+        name: string;
+        decimals: number;
+        symbol: string;
+        status?: boolean;
+        logoURI?: string;
+        isCommon?: boolean;
+        balance?: string | number;
+        isNative?: boolean;
+        isWETH?: boolean;
+        isNew?: boolean;
+    })[];
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/testnet/index.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/testnet/index.ts" {
+    export { Tokens_BSC_Testnet } from "@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts";
+    export { Tokens_Fuji } from "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts";
+}
+/// <amd-module name="@scom/scom-nft-minter/store/tokens/index.ts" />
+declare module "@scom/scom-nft-minter/store/tokens/index.ts" {
+    import { ITokenObject } from "@scom/scom-token-list";
+    const SupportedERC20Tokens: {
+        [chainId: number]: ITokenObject[];
+    };
+    export { SupportedERC20Tokens };
+}
 /// <amd-module name="@scom/scom-nft-minter/store/index.ts" />
 declare module "@scom/scom-nft-minter/store/index.ts" {
     import { ERC20ApprovalModel, IERC20ApprovalEventOptions, INetwork } from "@ijstech/eth-wallet";
+    export * from "@scom/scom-nft-minter/store/tokens/index.ts";
     export interface IContractDetailInfo {
         address: string;
     }
@@ -849,6 +966,7 @@ declare module "@scom/scom-nft-minter" {
         private lblSpotsRemaining;
         private lbContract;
         private lbToken;
+        private iconCopyToken;
         private lbOwn;
         private lbERC1155Index;
         private pnlTokenInput;
@@ -1023,6 +1141,7 @@ declare module "@scom/scom-nft-minter" {
         private initWallet;
         private updateDAppUI;
         private refreshDApp;
+        private updateTokenAddress;
         private updateSpotsRemaining;
         private onToggleDetail;
         private onViewContract;

@@ -3,17 +3,15 @@ import ScomTokenInput, { CUSTOM_TOKEN } from "@scom/scom-token-input";
 import { Input } from "@ijstech/components";
 import { formInputStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
-import { nullAddress } from "./utils";
+import { nullAddress } from "./utils/index";
+import { SupportedERC20Tokens } from "./store/index";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
-/**
-enum NftType {
-    ERC721='Custom ERC721 token',
-    ERC1155='Custom ERC1155 token (existing index)',
-    ERC1155NewIndex='Custom ERC1155 token (create new index)'
-}  
- */
+
+const getSupportedTokens = (chainId: number) => {
+    return SupportedERC20Tokens[chainId] || [];
+}
 
 
 const theme = {
@@ -595,6 +593,7 @@ const getCustomControls = (isCustomToken?: boolean) => {
                         if (tokenInput && chainId !== tokenInput.chainId) {
                             tokenInput.chainId = chainId;
                             tokenInput.token = undefined;
+                            tokenInput.tokenDataListProp = getSupportedTokens(chainId);
                             if (isCustomToken && customTokenInput) {
                                 customTokenInput.value = '';
                                 customTokenInput.enabled = false;
@@ -613,6 +612,7 @@ const getCustomControls = (isCustomToken?: boolean) => {
                 if (tokenInput && value !== tokenInput.chainId) {
                     const noChainId = !tokenInput.chainId;
                     tokenInput.chainId = value;
+                    tokenInput.tokenDataListProp = getSupportedTokens(value);
                     if (noChainId && tokenInput.address) {
                         tokenInput.address = tokenInput.address;
                         tokenInput.onSelectToken(tokenInput.token);
@@ -630,13 +630,16 @@ const getCustomControls = (isCustomToken?: boolean) => {
             render: () => {
                 tokenInput = new ScomTokenInput(undefined, {
                     type: 'combobox',
-                    chainId: networkPicker?.selectedNetwork?.chainId,
                     isBalanceShown: false,
                     isBtnMaxShown: false,
                     isInputShown: false,
                     isCustomTokenShown: true,
                     supportValidAddress: true
                 });
+                const chainId = networkPicker?.selectedNetwork?.chainId;
+                tokenInput.chainId = chainId;
+                tokenInput.tokenDataListProp = getSupportedTokens(chainId);
+
                 if (isCustomToken) {
                     tokenInput.onSelectToken = (token: ITokenObject) => {
                         if (!token) {
@@ -645,7 +648,7 @@ const getCustomControls = (isCustomToken?: boolean) => {
                             const { address } = token;
                             const isCustomToken = address?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
                             if (!isCustomToken) {
-                                customTokenInput.value = address ?? nullAddress;
+                                customTokenInput.value = (address && address !== nullAddress) ? address : 'Native Token';
                                 if (customTokenInput.value) (customTokenInput as any).onChanged();
                             } else {
                                 customTokenInput.value = '';
@@ -672,7 +675,7 @@ const getCustomControls = (isCustomToken?: boolean) => {
                 if (customTokenInput) {
                     const isCustomToken = value?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
                     if (!isCustomToken) {
-                        customTokenInput.value = value ?? nullAddress;
+                        customTokenInput.value = (value && value !== nullAddress) ? value : 'Native Token';
                         if (customTokenInput.value) (customTokenInput as any).onChanged();
                     }
                 }
@@ -698,9 +701,10 @@ const getCustomControls = (isCustomToken?: boolean) => {
                 await control.ready();
                 control.value = value;
                 if (!value && tokenInput?.token) {
-                    const isCustomToken = tokenInput.address?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+                    const address = tokenInput.address;
+                    const isCustomToken = address?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
                     if (!isCustomToken) {
-                        control.value = tokenInput.address ?? nullAddress;
+                        control.value = (address && address !== nullAddress) ? address : 'Native Token';
                     }
                 }
             }
