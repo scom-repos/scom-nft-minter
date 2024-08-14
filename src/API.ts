@@ -339,6 +339,20 @@ async function donate(
     }
     return receipt;
 }
+
+async function updateProductUri(state: State, productInfoAddress:string, productId:number | BigNumber, uri:string) {
+    let wallet = state.getRpcWallet();
+    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const receipt = await productInfo.updateProductUri({uri,productId});
+    return receipt;
+}
+
+async function updateProductPrice(state: State, productInfoAddress:string, productId:number | BigNumber, price:number | BigNumber, tokenDecimals:number) {
+    let wallet = state.getRpcWallet();
+    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const receipt = await productInfo.updateProductPrice({price:BigNumber(price).shiftedBy(tokenDecimals),productId});
+    return receipt;
+}
 //
 //    ERC721 and oswap troll nft 
 //
@@ -438,6 +452,9 @@ export {
     getProxyTokenAmountIn,
     buyProduct,
     donate,
+    updateProductUri,
+    updateProductPrice,
+
     fetchOswapTrollNftInfo,
     fetchUserNftBalance,
     mintOswapTrollNft
