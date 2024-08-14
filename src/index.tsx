@@ -447,7 +447,11 @@ export default class ScomNftMinter extends Module {
 
   private getProjectOwnerActions(isDefault1155New: boolean) {
     //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-    const formSchema = getProjectOwnerSchema(isDefault1155New);
+    const formSchema = getProjectOwnerSchema(isDefault1155New, this.state, {
+      refreshUI: this.refreshDApp,
+      connectWallet: this.connectWallet,
+      showTxStatusModal: this.showTxStatusModal
+    });
     const actions: any[] = [
       {
         name: 'Settings',
@@ -678,12 +682,7 @@ export default class ScomNftMinter extends Module {
 
       }
       if (!isClientWalletConnected()) {
-        if (this.mdWallet) {
-          await application.loadPackage('@scom/scom-wallet-modal', '*');
-          this.mdWallet.networks = this.networks;
-          this.mdWallet.wallets = this.wallets;
-          this.mdWallet.showModal();
-        }
+        this.connectWallet();
         return;
       }
       if (!this.state.isRpcWalletConnected()) {
@@ -755,6 +754,15 @@ export default class ScomNftMinter extends Module {
     }
   }
 
+  private connectWallet = async () => {
+    if (this.mdWallet) {
+      await application.loadPackage('@scom/scom-wallet-modal', '*');
+      this.mdWallet.networks = this.networks;
+      this.mdWallet.wallets = this.wallets;
+      this.mdWallet.showModal();
+    }
+  }
+
   private async initWallet() {
     try {
       await Wallet.getClientInstance().init();
@@ -795,7 +803,10 @@ export default class ScomNftMinter extends Module {
         };
         const nftBalance = isClientWalletConnected() ? await fetchUserNftBalance(this.state, this.nftAddress) : 0;
         const { price, cap, tokenAddress } = oswapTroll;
-        const token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
+        let token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
+        if (!token) {
+          token = await getTokenInfo(tokenAddress, this.chainId);
+        }
         this.pnlInputFields.visible = true;
         this.pnlUnsupportedNetwork.visible = false;
         this.detailWrapper.visible = true;
@@ -942,7 +953,7 @@ export default class ScomNftMinter extends Module {
     application.copyToClipboard(token.address || token.symbol);
   }
 
-  private showTxStatusModal(status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) {
+  private showTxStatusModal = (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => {
     if (!this.txStatusModal) return;
     let params: any = { status };
     if (status === 'success') {
@@ -1226,12 +1237,7 @@ export default class ScomNftMinter extends Module {
 
   private async onSubmit() {
     if (!isClientWalletConnected()) {
-      if (this.mdWallet) {
-        await application.loadPackage('@scom/scom-wallet-modal', '*');
-        this.mdWallet.networks = this.networks;
-        this.mdWallet.wallets = this.wallets;
-        this.mdWallet.showModal();
-      }
+      this.connectWallet();
       return;
     }
     if (!this.state.isRpcWalletConnected()) {
