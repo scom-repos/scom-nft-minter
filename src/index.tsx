@@ -2,7 +2,6 @@ import {
   Module,
   customModule,
   customElements,
-  GridLayout,
   Markdown,
   Image,
   Label,
@@ -16,6 +15,7 @@ import {
   Icon,
   application,
   FormatUtils,
+  Form
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
@@ -127,7 +127,8 @@ export default class ScomNftMinter extends Module {
   private detailWrapper: HStack;
   private erc1155Wrapper: HStack;
   private btnDetail: Button;
-  private isCancelCreate: boolean;
+  private isConfigNewIndex: boolean;
+  private isOnChangeUpdated: boolean;
   public onMintedNFT: () => void;
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
@@ -469,6 +470,8 @@ export default class ScomNftMinter extends Module {
     let isNew1155 = (type && type === 'new1155');
     const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
     const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
+    this.isConfigNewIndex = isNew1155;
+    this.isOnChangeUpdated = false;
 
     let self = this;
     return [
@@ -510,16 +513,10 @@ export default class ScomNftMinter extends Module {
               return false;
             }
             this._data.erc1155Index = undefined;
-            this.isCancelCreate = false;
             await this.resetRpcWallet();
             await this.initWallet();
             await this.newProduct();
-            while (!this._data.erc1155Index && !this.isCancelCreate) {
-              await delay(2000);
-              if (this.isCancelCreate) return;
-              await this.newProduct();
-            }
-            return this._data.erc1155Index >= 0;
+            return this._data.erc1155Index > 0;
           }
           return true;
         },
@@ -588,10 +585,12 @@ export default class ScomNftMinter extends Module {
     this.removeRpcWalletEvents();
     const rpcWalletId = await this.state.initRpcWallet(this._data.chainId || this.defaultChainId);
     const rpcWallet = this.rpcWallet;
+    this.updateFormConfig();
     const chainChangedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.ChainChanged, async (chainId: number) => {
       this.onChainChanged();
     });
     const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
+      this.updateFormConfig(true);
       this.onSetupPage();
       this.updateContractAddress();
       this.refreshDApp();
@@ -665,6 +664,36 @@ export default class ScomNftMinter extends Module {
     this.updateStyle('--colors-primary-main', this.tag[themeVar]?.buttonBackgroundColor);
   }
 
+  private async updateFormConfig(isEvent?: boolean) {
+    if (this.isConfigNewIndex) {
+      try {
+        const wrapper = this.parentElement?.parentElement?.parentElement;
+        if (!wrapper) return;
+        const form = wrapper.querySelector('i-form') as Form;
+        if (!form) return;
+        const btnConfirm = form.lastElementChild?.lastElementChild as Button;
+        if (btnConfirm) {
+          const updateButton = async () => {
+            const data = await form.getFormData();
+            const validation = form.validate(data, form.jsonSchema, { changing: false });
+            btnConfirm.caption = !isClientWalletConnected() && validation.valid ? 'Connect Wallet' : 'Confirm';
+          }
+          if (isEvent) {
+            updateButton();
+          } else if (!this.isOnChangeUpdated) {
+            this.isOnChangeUpdated = true;
+            const onFormChange = form.formOptions.onChange;
+            form.formOptions.onChange = async () => {
+              onFormChange();
+              updateButton();
+            }
+            updateButton();
+          }
+        }
+      } catch { }
+    }
+  }
+
   private newProduct = async () => {
     let contract = this.state.getContractAddress('ProductInfo');
     const maxQty = this.newMaxQty;
@@ -689,7 +718,13 @@ export default class ScomNftMinter extends Module {
       }
       if (!this.state.isRpcWalletConnected()) {
         const clientWallet = Wallet.getClientInstance();
-        await clientWallet.switchNetwork(this.chainId);
+        let isConnected = false;
+        try {
+          isConnected = await clientWallet.switchNetwork(this.chainId);
+        } catch {
+          return;
+        }
+        if (!isConnected) return;
         await delay(3000);
         contract = this.state.getContractAddress('ProductInfo');
       }
@@ -698,7 +733,6 @@ export default class ScomNftMinter extends Module {
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
         if (!tokenToMint || (isCustomToken && !customMintToken)) {
           this.showTxStatusModal('error', 'TokenToMint is missing!');
-          this.isCancelCreate = true;
           return;
         }
         const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
@@ -707,7 +741,6 @@ export default class ScomNftMinter extends Module {
           const nativeToken = ChainNativeTokenByChainId[this.chainId];
           if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
             this.showTxStatusModal('error', 'Invalid token!');
-            this.isCancelCreate = true;
             return;
           }
           //pay native token
@@ -733,7 +766,6 @@ export default class ScomNftMinter extends Module {
           }
           if (!token) {
             this.showTxStatusModal('error', 'Invalid token!');
-            this.isCancelCreate = true;
             return;
           }
           const result = await newDefaultBuyProduct(
@@ -752,7 +784,6 @@ export default class ScomNftMinter extends Module {
         }
       } catch (error) {
         this.showTxStatusModal('error', 'Something went wrong creating new product!');
-        this.isCancelCreate = true;
         console.log('newProduct', error);
       }
     }
@@ -792,6 +823,7 @@ export default class ScomNftMinter extends Module {
     setTimeout(async () => {
       this._type = this.productType;
       await this.updateDAppUI(this._data);
+      this.determineBtnSubmitCaption();
       if (this.nftType !== 'ERC721' && (!this.productId || this.productId === 0)) return;
       await this.initWallet();
       this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
@@ -1021,7 +1053,6 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.caption = 'Approve';
           this.btnApprove.rightIcon.visible = false;
           this.isApproving = false;
-          // this.isCancelCreate = true;
         },
         onPaying: async (receipt?: string) => {
           if (receipt) {
@@ -1407,7 +1438,7 @@ export default class ScomNftMinter extends Module {
                         <i-label caption="Token Address" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbToken" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewToken} />
-                          <i-icon id="iconCopyToken" fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
+                          <i-icon id="iconCopyToken" visible={false} fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
                         </i-hstack>
                       </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>

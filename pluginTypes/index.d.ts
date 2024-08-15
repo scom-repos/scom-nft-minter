@@ -1110,7 +1110,8 @@ declare module "@scom/scom-nft-minter" {
         private detailWrapper;
         private erc1155Wrapper;
         private btnDetail;
-        private isCancelCreate;
+        private isConfigNewIndex;
+        private isOnChangeUpdated;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
@@ -1246,6 +1247,7 @@ declare module "@scom/scom-nft-minter" {
         private setTag;
         private updateStyle;
         private updateTheme;
+        private updateFormConfig;
         private newProduct;
         private connectWallet;
         private initWallet;
