@@ -79,6 +79,7 @@ async function newProduct(
     maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string,//Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number,
+    uri: string,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -102,7 +103,7 @@ async function newProduct(
     }
     let receipt = await productInfo.newProduct({
         productType: productTypeCode,
-        uri: '',
+        uri: uri || '',
         quantity: qty,
         maxQuantity: maxQty,
         maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
@@ -129,6 +130,7 @@ async function newDefaultBuyProduct(
     price: string,
     tokenAddress: string,
     tokenDecimals: number,
+    uri: string,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -156,6 +158,7 @@ async function newDefaultBuyProduct(
         "0",
         tokenAddress,
         tokenDecimals,
+        uri,
         callback,
         confirmationCallback);
 }

@@ -541,7 +541,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     maxQty, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
     tokenAddress, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals, callback, confirmationCallback) {
+    tokenDecimals, uri, callback, confirmationCallback) {
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
         (0, index_5.registerSendTxEvents)({
@@ -562,7 +562,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
         let receipt = await productInfo.newProduct({
             productType: productTypeCode,
-            uri: '',
+            uri: uri || '',
             quantity: qty,
             maxQuantity: maxQty,
             maxPrice: eth_wallet_3.Utils.toDecimals(maxPrice, tokenDecimals),
@@ -583,7 +583,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     async function newDefaultBuyProduct(productInfoAddress, qty, // max quantity of this nft can be exist at anytime
     //maxQty = qty
     //maxQty: number, // max quantity for one buy() txn
-    price, tokenAddress, tokenDecimals, callback, confirmationCallback) {
+    price, tokenAddress, tokenDecimals, uri, callback, confirmationCallback) {
         //hard requirement for the contract
         if (!( //tokenAddress is a valid address &&
         new eth_wallet_3.BigNumber(tokenDecimals).gt(0) &&
@@ -596,7 +596,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             console.log("newDefaultBuyProduct() warning! price = 0");
         }
         return await newProduct(productInfoAddress, index_4.ProductType.Buy, qty, qty, //maxQty
-        price, "0", tokenAddress, tokenDecimals, callback, confirmationCallback);
+        price, "0", tokenAddress, tokenDecimals, uri, callback, confirmationCallback);
     }
     exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
@@ -1536,6 +1536,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         minimum: 1,
                         required: true
                     },
+                    uri: {
+                        type: 'string',
+                        title: 'URI',
+                    },
                     dark: {
                         type: 'object',
                         properties: theme
@@ -1590,6 +1594,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                         type: 'Control',
                                         scope: '#/properties/maxQty',
                                     },
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/uri',
+                                    }
                                 ]
                             }
                         ]
@@ -1986,7 +1994,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         contract = this.state.getContractAddress('ProductInfo');
                     }
                     try {
-                        const { tokenToMint, customMintToken } = this._data;
+                        const { tokenToMint, customMintToken, uri } = this._data;
                         const isCustomToken = tokenToMint?.toLowerCase() === scom_token_input_2.CUSTOM_TOKEN.address.toLowerCase();
                         if (!tokenToMint || (isCustomToken && !customMintToken)) {
                             this.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -2003,7 +2011,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 return;
                             }
                             //pay native token
-                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, index_11.nullAddress, 18, callback, confirmationCallback);
+                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, index_11.nullAddress, 18, uri, callback, confirmationCallback);
                             this._data.erc1155Index = result.productId;
                             this._data.nftAddress = contract;
                             this._data.nftType = 'ERC1155';
@@ -2021,7 +2029,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.isCancelCreate = true;
                                 return;
                             }
-                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, tokenAddress, token.decimals ?? 18, callback, confirmationCallback);
+                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, tokenAddress, token.decimals ?? 18, uri, callback, confirmationCallback);
                             this._data.erc1155Index = result.productId;
                             this._data.nftAddress = contract;
                             this._data.nftType = 'ERC1155';
@@ -2253,7 +2261,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 oldData = JSON.parse(JSON.stringify(this._data));
-                                const { name, title, productType, logoUrl, description, link, requiredQuantity, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, tokenToMint, customMintToken, priceToMint, maxQty, txnMaxQty, ...themeSettings } = userInputData;
+                                const { name, title, productType, logoUrl, description, link, requiredQuantity, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, tokenToMint, customMintToken, priceToMint, maxQty, txnMaxQty, uri, ...themeSettings } = userInputData;
                                 const generalSettings = {
                                     name,
                                     title,
@@ -2273,6 +2281,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     priceToMint,
                                     maxQty,
                                     txnMaxQty,
+                                    uri
                                 };
                                 Object.assign(this._data, generalSettings);
                                 await this.resetRpcWallet();

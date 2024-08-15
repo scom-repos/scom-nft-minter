@@ -391,6 +391,7 @@ export default class ScomNftMinter extends Module {
                 priceToMint,
                 maxQty,
                 txnMaxQty,
+                uri,
                 ...themeSettings
               } = userInputData;
 
@@ -413,6 +414,7 @@ export default class ScomNftMinter extends Module {
                 priceToMint,
                 maxQty,
                 txnMaxQty,
+                uri
               };
 
               Object.assign(this._data, generalSettings);
@@ -692,7 +694,7 @@ export default class ScomNftMinter extends Module {
         contract = this.state.getContractAddress('ProductInfo');
       }
       try {
-        const { tokenToMint, customMintToken } = this._data;
+        const { tokenToMint, customMintToken, uri } = this._data;
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
         if (!tokenToMint || (isCustomToken && !customMintToken)) {
           this.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -715,6 +717,7 @@ export default class ScomNftMinter extends Module {
             price,
             nullAddress,
             18,
+            uri,
             callback,
             confirmationCallback
           );
@@ -739,6 +742,7 @@ export default class ScomNftMinter extends Module {
             price,
             tokenAddress,
             token.decimals ?? 18,
+            uri,
             callback,
             confirmationCallback
           );

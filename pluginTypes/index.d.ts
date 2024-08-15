@@ -45,6 +45,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         priceToMint?: number;
         maxQty?: number;
         txnMaxQty?: number;
+        uri?: string;
         donateTo?: string;
         logoUrl?: string;
         description?: string;
@@ -272,12 +273,12 @@ declare module "@scom/scom-nft-minter/API.ts" {
     maxQty: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+    tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
     function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
-    price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
@@ -538,6 +539,10 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     minimum: number;
                     required: boolean;
                 };
+                uri: {
+                    type: string;
+                    title: string;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -797,6 +802,10 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     minimum: number;
                     required: boolean;
+                };
+                uri: {
+                    type: string;
+                    title: string;
                 };
                 dark: {
                     type: string;
@@ -1195,6 +1204,7 @@ declare module "@scom/scom-nft-minter" {
                 priceToMint?: number;
                 maxQty?: number;
                 txnMaxQty?: number;
+                uri?: string;
                 donateTo?: string;
                 logoUrl?: string;
                 description?: string;
