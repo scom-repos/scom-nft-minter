@@ -4,7 +4,8 @@ import { Input } from "@ijstech/components";
 import { formInputStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
-import { SupportedERC20Tokens } from "./store/index";
+import { State, SupportedERC20Tokens } from "./store/index";
+import { ScomNftMinterFieldUpdate } from "./component";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
@@ -211,6 +212,7 @@ function getProjectOwnerSchema(isDonation?: boolean) {
                 tooltip: 'Token to mint the NFT',
             },
             priceToMint: {//for 1155 new index only
+                title: 'Subscription Price',
                 type: 'number',
                 tooltip: 'Amount of token to mint the NFT',
             },
@@ -391,6 +393,7 @@ export function getProjectOwnerSchema1() {
                 },
                 priceToMint: {
                     type: 'number',
+                    title: 'Subscription Price',
                     tooltip: 'Amount of token to mint the NFT',
                     required: true
                 },
@@ -400,6 +403,11 @@ export function getProjectOwnerSchema1() {
                     tooltip: 'Max quantity of this NFT existing',
                     minimum: 1,
                     required: true
+                },
+                uri: {
+                    type: 'string',
+                    title: 'URI',
+                    tooltip: 'Usually an link of a image to represent the NFT',
                 },
                 paymentModel: {
                     type: 'string',
@@ -474,6 +482,10 @@ export function getProjectOwnerSchema1() {
                                     type: 'Control',
                                     scope: '#/properties/maxQty',
                                 },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/uri',
+                                }
                             ]
                         }
                     ]
@@ -487,7 +499,7 @@ export function getProjectOwnerSchema1() {
 }
 
 //existing custom721 or custom1155
-export function getProjectOwnerSchema2() {
+export function getProjectOwnerSchema2(state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
     return {
         dataSchema: {
             type: 'object',
@@ -517,6 +529,14 @@ export function getProjectOwnerSchema2() {
                     title: 'Index',
                     tooltip: 'The index of your NFT inside the ERC1155 contract',
                     minimum: 1,
+                },
+                newPrice: {
+                    type: 'number',
+                    title: 'Update Price To',
+                },
+                newUri: {
+                    type: 'string',
+                    title: 'Update URI To',
                 },
                 dark: {
                     type: 'object',
@@ -563,6 +583,32 @@ export function getProjectOwnerSchema2() {
                                         }
                                     }
                                 },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/newPrice',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155'
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/newUri',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/nftType',
+                                            schema: {
+                                                const: 'ERC1155'
+                                            }
+                                        }
+                                    }
+                                },
                             ]
                         }
                     ]
@@ -586,14 +632,54 @@ export function getProjectOwnerSchema2() {
                         await control.ready();
                         control.setNetworkByChainId(value);
                     }
+                },
+                '#/properties/newPrice': {
+                    render: () => {
+                        const fieldUpdate = new ScomNftMinterFieldUpdate(undefined, {
+                            refreshUI: () => functions.refreshUI(),
+                            connectWallet: () => functions.connectWallet(),
+                            showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error) => functions.showTxStatusModal(status, content),
+                            state,
+                            value: ''
+                        });
+                        return fieldUpdate;
+                    },
+                    getData: (control: ScomNftMinterFieldUpdate) => {
+                        if (control.value == 0) return 0;
+                        return control.value ? Number(control.value) : '';
+                    },
+                    setData: async (control: ScomNftMinterFieldUpdate, value: number) => {
+                        await control.ready();
+                        control.value = '';
+                    }
+                },
+                '#/properties/newUri': {
+                    render: () => {
+                        const fieldUpdate = new ScomNftMinterFieldUpdate(undefined, {
+                            isUri: true,
+                            refreshUI: () => functions.refreshUI(),
+                            connectWallet: () => functions.connectWallet(),
+                            showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error) => functions.showTxStatusModal(status, content),
+                            state,
+                            value: ''
+                        });
+                        return fieldUpdate;
+                    },
+                    getData: (control: ScomNftMinterFieldUpdate) => {
+                        return control.value;
+                    },
+                    setData: async (control: ScomNftMinterFieldUpdate, value: number) => {
+                        await control.ready();
+                        control.value = '';
+                    }
                 }
             }
         }
     }
 }
 
-export function getProjectOwnerSchema3(isDefault1155New: boolean) {
-    return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2();
+export function getProjectOwnerSchema3(isDefault1155New: boolean, state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+    return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, functions);
 }
 
 const getCustomControls = (isCustomToken?: boolean) => {

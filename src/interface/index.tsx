@@ -49,6 +49,7 @@ export interface IEmbedData {
   maxQty?: number;
   paymentModel?: PaymentModel;
   txnMaxQty?: number;
+  uri?: string;
   donateTo?: string;
   logoUrl?: string;
   description?: string;

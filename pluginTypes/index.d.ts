@@ -50,6 +50,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         maxQty?: number;
         paymentModel?: PaymentModel;
         txnMaxQty?: number;
+        uri?: string;
         donateTo?: string;
         logoUrl?: string;
         description?: string;
@@ -75,9 +76,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
 /// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
 declare module "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" {
     export const Tokens_Avalanche: ({
+        address: string;
         name: string;
         symbol: string;
-        address: string;
         decimals: number;
         isCommon: boolean;
     } | {
@@ -153,13 +154,6 @@ declare module "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" {
         address: string;
         symbol: string;
         decimals: number;
-        isCommon: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
     } | {
         chainId: number;
         address?: string;
@@ -271,23 +265,26 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
     function getProductInfo(state: State, erc1155Index: number): Promise<IProductInfo>;
+    function getProductOwner(state: State, erc1155Index: number): Promise<string>;
     function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
     function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
     maxQty: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+    tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
     function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
-    price: string, tokenAddress: string, tokenDecimals: number, callback?: any, confirmationCallback?: any): Promise<{
+    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    function updateProductUri(productInfoAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function updateProductPrice(productInfoAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
     function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
@@ -295,7 +292,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -356,10 +353,62 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
     };
     export default _default;
 }
+/// <amd-module name="@scom/scom-nft-minter/component/fieldUpdate.tsx" />
+declare module "@scom/scom-nft-minter/component/fieldUpdate.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    interface ScomNftMinterFieldUpdateElement extends ControlElement {
+        refreshUI: () => void;
+        connectWallet: () => void;
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error) => void;
+        state: State;
+        value: string;
+        isUri?: boolean;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-nft-minter-field-update']: ScomNftMinterFieldUpdateElement;
+            }
+        }
+    }
+    export class ScomNftMinterFieldUpdate extends Module {
+        private state;
+        private inputField;
+        private btnUpdate;
+        private isUri;
+        refreshUI: () => void;
+        connectWallet: () => void;
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
+        private rpcWalletEvents;
+        static create(options?: ScomNftMinterFieldUpdateElement, parent?: Container): Promise<ScomNftMinterFieldUpdate>;
+        constructor(parent?: Container, options?: ScomNftMinterFieldUpdateElement);
+        get value(): string | number;
+        set value(val: string | number);
+        private get rpcWallet();
+        private resetRpcWallet;
+        private removeRpcWalletEvents;
+        onHide(): void;
+        private onUpdate;
+        private onInputChanged;
+        private updateEnabledInput;
+        private updateButton;
+        private getData;
+        init(): void;
+        render(): any;
+    }
+}
+/// <amd-module name="@scom/scom-nft-minter/component/index.ts" />
+declare module "@scom/scom-nft-minter/component/index.ts" {
+    import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/fieldUpdate.tsx";
+    export { ScomNftMinterFieldUpdate };
+}
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     import ScomNetworkPicker from "@scom/scom-network-picker";
     import ScomTokenInput from "@scom/scom-token-input";
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/index.ts";
     export function getBuilderSchema(): {
         dataSchema: {
             type: string;
@@ -478,6 +527,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 };
                 priceToMint: {
                     type: string;
+                    title: string;
                     tooltip: string;
                     required: boolean;
                 };
@@ -487,6 +537,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     minimum: number;
                     required: boolean;
+                };
+                uri: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
                 };
                 paymentModel: {
                     type: string;
@@ -591,7 +646,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
         };
     };
-    export function getProjectOwnerSchema2(): {
+    export function getProjectOwnerSchema2(state: State, functions: {
+        connectWallet: any;
+        showTxStatusModal: any;
+        refreshUI: any;
+    }): {
         dataSchema: {
             type: string;
             properties: {
@@ -617,6 +676,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     tooltip: string;
                     minimum: number;
+                };
+                newPrice: {
+                    type: string;
+                    title: string;
+                };
+                newUri: {
+                    type: string;
+                    title: string;
                 };
                 dark: {
                     type: string;
@@ -695,9 +762,23 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
             };
+            '#/properties/newPrice': {
+                render: () => ScomNftMinterFieldUpdate;
+                getData: (control: ScomNftMinterFieldUpdate) => number | "";
+                setData: (control: ScomNftMinterFieldUpdate, value: number) => Promise<void>;
+            };
+            '#/properties/newUri': {
+                render: () => ScomNftMinterFieldUpdate;
+                getData: (control: ScomNftMinterFieldUpdate) => string | number;
+                setData: (control: ScomNftMinterFieldUpdate, value: number) => Promise<void>;
+            };
         };
     };
-    export function getProjectOwnerSchema3(isDefault1155New: boolean): {
+    export function getProjectOwnerSchema3(isDefault1155New: boolean, state: State, functions: {
+        connectWallet: any;
+        showTxStatusModal: any;
+        refreshUI: any;
+    }): {
         dataSchema: {
             type: string;
             properties: {
@@ -721,6 +802,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 };
                 priceToMint: {
                     type: string;
+                    title: string;
                     tooltip: string;
                     required: boolean;
                 };
@@ -730,6 +812,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     minimum: number;
                     required: boolean;
+                };
+                uri: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
                 };
                 paymentModel: {
                     type: string;
@@ -860,6 +947,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     minimum: number;
                 };
+                newPrice: {
+                    type: string;
+                    title: string;
+                };
+                newUri: {
+                    type: string;
+                    title: string;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -936,6 +1031,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomNetworkPicker;
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+            '#/properties/newPrice': {
+                render: () => ScomNftMinterFieldUpdate;
+                getData: (control: ScomNftMinterFieldUpdate) => number | "";
+                setData: (control: ScomNftMinterFieldUpdate, value: number) => Promise<void>;
+            };
+            '#/properties/newUri': {
+                render: () => ScomNftMinterFieldUpdate;
+                getData: (control: ScomNftMinterFieldUpdate) => string | number;
+                setData: (control: ScomNftMinterFieldUpdate, value: number) => Promise<void>;
             };
         };
     };
@@ -1025,7 +1130,8 @@ declare module "@scom/scom-nft-minter" {
         private detailWrapper;
         private erc1155Wrapper;
         private btnDetail;
-        private isCancelCreate;
+        private isConfigNewIndex;
+        private isOnChangeUpdated;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
@@ -1120,6 +1226,7 @@ declare module "@scom/scom-nft-minter" {
                 maxQty?: number;
                 paymentModel?: import("@scom/scom-nft-minter/interface/index.tsx").PaymentModel;
                 txnMaxQty?: number;
+                uri?: string;
                 donateTo?: string;
                 logoUrl?: string;
                 description?: string;
@@ -1161,7 +1268,9 @@ declare module "@scom/scom-nft-minter" {
         private setTag;
         private updateStyle;
         private updateTheme;
+        private updateFormConfig;
         private newProduct;
+        private connectWallet;
         private initWallet;
         private updateDAppUI;
         private refreshDApp;

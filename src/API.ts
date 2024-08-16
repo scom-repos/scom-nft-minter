@@ -3,7 +3,7 @@ import { ProductType, ICommissionInfo, IProductInfo } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
-import { nullAddress, registerSendTxEvents } from './utils/index';
+import { getTokenInfo, nullAddress, registerSendTxEvents } from './utils/index';
 import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
 import getNetworkList from '@scom/scom-network-list';
@@ -30,11 +30,27 @@ async function getProductInfo(state: State, erc1155Index: number):Promise<IProdu
             };
         }
         const _tokenList = tokenStore.getTokenList(chainId);
-        const token: any = _tokenList.find(token => product?.token && token?.address && token.address.toLowerCase() === product.token.toLowerCase());
+        let token: ITokenObject = _tokenList.find(token => product.token && token.address && token.address.toLowerCase() === product.token.toLowerCase());
+        if (!token && product.token) {
+            token = await getTokenInfo(product.token, chainId);
+        }
         return {
             ...product,
             token
         };
+    } catch {
+        return null;
+    }
+}
+
+async function getProductOwner(state: State, erc1155Index: number) {
+    let productInfoAddress = state.getContractAddress('ProductInfo');
+    if (!productInfoAddress) return null;
+    try {
+        const wallet = state.getRpcWallet();
+        const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+        const owner = await productInfo.productOwner(erc1155Index);
+        return owner;
     } catch {
         return null;
     }
@@ -63,6 +79,7 @@ async function newProduct(
     maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string,//Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number,
+    uri: string,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -86,7 +103,7 @@ async function newProduct(
     }
     let receipt = await productInfo.newProduct({
         productType: productTypeCode,
-        uri: '',
+        uri: uri || '',
         quantity: qty,
         maxQuantity: maxQty,
         maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
@@ -113,6 +130,7 @@ async function newDefaultBuyProduct(
     price: string,
     tokenAddress: string,
     tokenDecimals: number,
+    uri: string,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -140,6 +158,7 @@ async function newDefaultBuyProduct(
         "0",
         tokenAddress,
         tokenDecimals,
+        uri,
         callback,
         confirmationCallback);
 }
@@ -339,6 +358,20 @@ async function donate(
     }
     return receipt;
 }
+
+async function updateProductUri(productInfoAddress: string, productId: number | BigNumber, uri: string) {
+    let wallet = Wallet.getClientInstance();
+    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const receipt = await productInfo.updateProductUri({uri,productId});
+    return receipt;
+}
+
+async function updateProductPrice(productInfoAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number) {
+    let wallet = Wallet.getClientInstance();
+    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const receipt = await productInfo.updateProductPrice({price:BigNumber(price).shiftedBy(tokenDecimals),productId});
+    return receipt;
+}
 //
 //    ERC721 and oswap troll nft 
 //
@@ -438,6 +471,10 @@ export {
     getProxyTokenAmountIn,
     buyProduct,
     donate,
+    getProductOwner,
+    updateProductUri,
+    updateProductPrice,
+
     fetchOswapTrollNftInfo,
     fetchUserNftBalance,
     mintOswapTrollNft
