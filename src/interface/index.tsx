@@ -43,6 +43,7 @@ export interface IEmbedData {
   priceToMint?: number;
   maxQty?: number;
   txnMaxQty?: number;
+  uri?: string;
   donateTo?: string;
   logoUrl?: string;
   description?: string;
