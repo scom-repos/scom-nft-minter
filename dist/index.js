@@ -83,13 +83,6 @@ define("@scom/scom-nft-minter/store/tokens/testnet/bsc-testnet.ts", ["require", 
             "isCommon": true
         },
         {
-            "name": "OpenSwap",
-            "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
-            "symbol": "OSWAP",
-            "decimals": 18,
-            "isCommon": true
-        },
-        {
             ...scom_token_list_3.ChainNativeTokenByChainId[97]
         }
     ];
@@ -99,13 +92,6 @@ define("@scom/scom-nft-minter/store/tokens/testnet/fuji.ts", ["require", "export
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Tokens_Fuji = void 0;
     exports.Tokens_Fuji = [
-        {
-            "name": "OpenSwap",
-            "address": "0x78d9D80E67bC80A11efbf84B7c8A65Da51a8EF3C",
-            "symbol": "OSWAP",
-            "decimals": 18,
-            "isCommon": true
-        },
         {
             "name": "Tether USD",
             "address": "0xb9C31Ea1D475c25E58a1bE1a46221db55E5A7C6e",

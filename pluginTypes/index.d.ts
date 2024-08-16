@@ -149,13 +149,6 @@ declare module "@scom/scom-nft-minter/store/tokens/testnet/fuji.ts" {
         address: string;
         symbol: string;
         decimals: number;
-        isCommon: boolean;
-    } | {
-        name: string;
-        address: string;
-        symbol: string;
-        decimals: number;
-        isCommon?: undefined;
     } | {
         chainId: number;
         address?: string;
