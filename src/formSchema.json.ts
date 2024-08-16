@@ -402,6 +402,10 @@ export function getProjectOwnerSchema1() {
                     minimum: 1,
                     required: true
                 },
+                uri: {
+                    type: 'string',
+                    title: 'URI',
+                },
                 dark: {
                     type: 'object',
                     properties: theme
@@ -456,6 +460,10 @@ export function getProjectOwnerSchema1() {
                                     type: 'Control',
                                     scope: '#/properties/maxQty',
                                 },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/uri',
+                                }
                             ]
                         }
                     ]

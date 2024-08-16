@@ -1,16 +1,30 @@
-import { Module, customModule, Container, application } from '@ijstech/components';
+import { Module, customModule, Container, application, ComboBox, IComboItem, HStack, Styles } from '@ijstech/components';
 import { getMulticallInfoList } from '@scom/scom-multicall';
 import { INetwork } from '@ijstech/eth-wallet';
 import getNetworkList from '@scom/scom-network-list';
 import ScomNftMinter from '@scom/scom-nft-minter';
 import ScomWidgetTest from '@scom/scom-widget-test';
 import { nullAddress } from '@ijstech/eth-contract';
+const Theme = Styles.Theme.ThemeVars;
+
+type WidgetType = 'new1155' | 'customNft';
+const configs = [
+  {
+    label: 'New 1155 Index',
+    value: 'new1155'
+  },
+  {
+    label: 'Existing NFT',
+    value: 'customNft'
+  }
+]
 
 @customModule
 export default class Module1 extends Module {
   private nftMinter: ScomNftMinter;
   private widgetModule: ScomWidgetTest;
-  private isNew1155:boolean;
+  private pnlPreview: Module;
+  private cbbType: ComboBox;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -21,8 +35,6 @@ export default class Module1 extends Module {
       multicalls,
       networkMap
     }
-
-    this.isNew1155 = false;
   }
 
   private getNetworkMap = (infuraId?: string) => {
@@ -50,29 +62,68 @@ export default class Module1 extends Module {
     return networkMap;
   }
 
+  private onCloseConfig() {
+    this.pnlPreview.closeModal();
+  }
+
   private async onShowConfig() {
-    const widgetType = this.isNew1155?'new1155':'customNft';
+    let widgetType: WidgetType = 'new1155';
     const editor = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
-    const widgetData = await editor.getData();
+    const widgetData = editor.getData();
+    if (!this.pnlPreview) {
+      const onTypeChanged = async () => {
+        const item = this.cbbType.selectedItem as IComboItem;
+        if (item.value === widgetType) return;
+        widgetType = item.value as WidgetType;
+        const config = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
+        const data = config.getData();
+        this.widgetModule.widgetType = widgetType;
+        this.widgetModule.show(data);
+      }
+      this.pnlPreview = await Module.create();
+      this.pnlPreview.appendChild(
+        <i-hstack gap={8} justifyContent="space-between" margin={{ top: 10, bottom: 10 }} padding={{ left: 10, right: 10 }}>
+          <i-hstack gap={48} verticalAlignment="center">
+            <i-label caption="Config" font={{ bold: true }} />
+            <i-hstack gap={16} verticalAlignment="center">
+              <i-label caption="Type" font={{ bold: true, color: Theme.colors.info.main }} />
+              <i-combo-box
+                id="cbbType"
+                selectedItem={configs[0]}
+                items={configs}
+                onChanged={onTypeChanged}
+              />
+            </i-hstack>
+          </i-hstack>
+          <i-icon name="times" width={20} height={20} fill="#f50057" cursor="pointer" onClick={() => this.onCloseConfig()} />
+        </i-hstack>
+      )
+    }
     if (!this.widgetModule) {
       this.widgetModule = await ScomWidgetTest.create({
         widgetName: 'scom-nft-minter',
         onConfirm: (data: any, tag: any) => {
           editor.setData(data);
           editor.setTag(tag);
-          this.widgetModule.closeModal();
+          this.onCloseConfig();
         },
-        widgetType,
+        widgetType
       });
+      const header = this.widgetModule.firstElementChild.firstElementChild as HStack;
+      if (header) {
+        header.visible = false;
+      }
+      this.pnlPreview.appendChild(this.widgetModule);
     }
-    this.widgetModule.openModal({
+
+    this.widgetModule.show(widgetData);
+    this.pnlPreview.openModal({
       width: '90%',
       maxWidth: '90rem',
       padding: { top: 0, bottom: 0, left: 0, right: 0 },
       closeOnBackdropClick: true,
       closeIcon: null
     });
-    this.widgetModule.show(widgetData);
   }
 
   async init() {
