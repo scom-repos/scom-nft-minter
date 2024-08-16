@@ -212,6 +212,7 @@ function getProjectOwnerSchema(isDonation?: boolean) {
                 tooltip: 'Token to mint the NFT',
             },
             priceToMint: {//for 1155 new index only
+                title: 'Subscription Price',
                 type: 'number',
                 tooltip: 'Amount of token to mint the NFT',
             },
@@ -392,6 +393,7 @@ export function getProjectOwnerSchema1() {
                 },
                 priceToMint: {
                     type: 'number',
+                    title: 'Subscription Price',
                     tooltip: 'Amount of token to mint the NFT',
                     required: true
                 },
@@ -405,6 +407,7 @@ export function getProjectOwnerSchema1() {
                 uri: {
                     type: 'string',
                     title: 'URI',
+                    tooltip: 'Usually an link of a image to represent the NFT',
                 },
                 dark: {
                     type: 'object',

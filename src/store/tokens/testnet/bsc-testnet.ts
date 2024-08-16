@@ -9,13 +9,6 @@ export const Tokens_BSC_Testnet = [
     "isCommon": true
   },
   {
-    "name": "OpenSwap",
-    "address": "0x45eee762aaeA4e5ce317471BDa8782724972Ee19",
-    "symbol": "OSWAP",
-    "decimals": 18,
-    "isCommon": true
-  },
-  {
     ...ChainNativeTokenByChainId[97]
   }
 ]

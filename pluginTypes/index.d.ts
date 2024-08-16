@@ -71,9 +71,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
 /// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
 declare module "@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" {
     export const Tokens_Avalanche: ({
+        address: string;
         name: string;
         symbol: string;
-        address: string;
         decimals: number;
         isCommon: boolean;
     } | {
@@ -529,6 +529,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 };
                 priceToMint: {
                     type: string;
+                    title: string;
                     tooltip: string;
                     required: boolean;
                 };
@@ -542,6 +543,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 uri: {
                     type: string;
                     title: string;
+                    tooltip: string;
                 };
                 dark: {
                     type: string;
@@ -793,6 +795,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 };
                 priceToMint: {
                     type: string;
+                    title: string;
                     tooltip: string;
                     required: boolean;
                 };
@@ -806,6 +809,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 uri: {
                     type: string;
                     title: string;
+                    tooltip: string;
                 };
                 dark: {
                     type: string;

@@ -35,13 +35,6 @@ define("@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts", ["require", "e
     exports.Tokens_Avalanche = void 0;
     exports.Tokens_Avalanche = [
         {
-            "name": "OpenSwap",
-            "symbol": "OSWAP",
-            "address": "0xb32aC3C79A94aC1eb258f3C830bBDbc676483c93",
-            "decimals": 18,
-            "isCommon": true
-        },
-        {
             "address": "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
             "name": "Tether USD",
             "symbol": "USDT.e",
@@ -58,13 +51,6 @@ define("@scom/scom-nft-minter/store/tokens/mainnet/bsc.ts", ["require", "exports
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Tokens_BSC = void 0;
     exports.Tokens_BSC = [
-        {
-            "name": "OpenSwap",
-            "symbol": "OSWAP",
-            "address": "0xb32aC3C79A94aC1eb258f3C830bBDbc676483c93",
-            "decimals": 18,
-            "isCommon": true
-        },
         {
             "name": "Binance Pegged USDT",
             "symbol": "USDT",
@@ -1347,6 +1333,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     tooltip: 'Token to mint the NFT',
                 },
                 priceToMint: {
+                    title: 'Subscription Price',
                     type: 'number',
                     tooltip: 'Amount of token to mint the NFT',
                 },
@@ -1526,6 +1513,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     },
                     priceToMint: {
                         type: 'number',
+                        title: 'Subscription Price',
                         tooltip: 'Amount of token to mint the NFT',
                         required: true
                     },
@@ -1539,6 +1527,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     uri: {
                         type: 'string',
                         title: 'URI',
+                        tooltip: 'Usually an link of a image to represent the NFT',
                     },
                     dark: {
                         type: 'object',
