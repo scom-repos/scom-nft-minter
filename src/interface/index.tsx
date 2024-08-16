@@ -12,6 +12,11 @@ export enum ProductType {
   DonateToEveryone = "DonateToEveryone",
 }
 
+export enum PaymentModel {
+  OneTimePurchase = "OneTimePurchase",
+  Subscription = "Subscription"
+}
+
 export interface IProductInfo {
   productType: BigNumber;
   productId: BigNumber;
@@ -42,6 +47,7 @@ export interface IEmbedData {
   customMintToken?: string;
   priceToMint?: number;
   maxQty?: number;
+  paymentModel?: PaymentModel;
   txnMaxQty?: number;
   donateTo?: string;
   logoUrl?: string;

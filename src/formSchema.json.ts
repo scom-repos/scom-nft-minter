@@ -401,6 +401,21 @@ export function getProjectOwnerSchema1() {
                     minimum: 1,
                     required: true
                 },
+                paymentModel: {
+                    type: 'string',
+                    title: 'Payment Model',
+                    oneOf: [
+                        {
+                            title: 'One-Time Purchase',
+                            const: 'OneTimePurchase'
+                        },
+                        {
+                            title: 'Subscription',
+                            const: 'Subscription'
+                        }
+                    ],
+                    required: true
+                },
                 dark: {
                     type: 'object',
                     properties: theme
@@ -421,6 +436,10 @@ export function getProjectOwnerSchema1() {
                         {
                             type: 'VerticalLayout',
                             elements: [
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/paymentModel',
+                                },
                                 {
                                     type: 'HorizontalLayout',
                                     elements: [

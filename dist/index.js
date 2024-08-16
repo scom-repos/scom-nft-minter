@@ -21,13 +21,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ProductType = void 0;
+    exports.PaymentModel = exports.ProductType = void 0;
     var ProductType;
     (function (ProductType) {
         ProductType["Buy"] = "Buy";
         ProductType["DonateToOwner"] = "DonateToOwner";
         ProductType["DonateToEveryone"] = "DonateToEveryone";
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
+    var PaymentModel;
+    (function (PaymentModel) {
+        PaymentModel["OneTimePurchase"] = "OneTimePurchase";
+        PaymentModel["Subscription"] = "Subscription";
+    })(PaymentModel = exports.PaymentModel || (exports.PaymentModel = {}));
 });
 define("@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts", ["require", "exports", "@scom/scom-token-list"], function (require, exports, scom_token_list_1) {
     "use strict";
@@ -1333,6 +1338,21 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         minimum: 1,
                         required: true
                     },
+                    paymentModel: {
+                        type: 'string',
+                        title: 'Payment Model',
+                        oneOf: [
+                            {
+                                title: 'One-Time Purchase',
+                                const: 'OneTimePurchase'
+                            },
+                            {
+                                title: 'Subscription',
+                                const: 'Subscription'
+                            }
+                        ],
+                        required: true
+                    },
                     dark: {
                         type: 'object',
                         properties: theme
@@ -1353,6 +1373,10 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                             {
                                 type: 'VerticalLayout',
                                 elements: [
+                                    {
+                                        type: 'Control',
+                                        scope: '#/properties/paymentModel',
+                                    },
                                     {
                                         type: 'HorizontalLayout',
                                         elements: [

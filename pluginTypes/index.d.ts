@@ -16,6 +16,10 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         DonateToOwner = "DonateToOwner",
         DonateToEveryone = "DonateToEveryone"
     }
+    export enum PaymentModel {
+        OneTimePurchase = "OneTimePurchase",
+        Subscription = "Subscription"
+    }
     export interface IProductInfo {
         productType: BigNumber;
         productId: BigNumber;
@@ -44,6 +48,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         customMintToken?: string;
         priceToMint?: number;
         maxQty?: number;
+        paymentModel?: PaymentModel;
         txnMaxQty?: number;
         donateTo?: string;
         logoUrl?: string;
@@ -483,6 +488,15 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     minimum: number;
                     required: boolean;
                 };
+                paymentModel: {
+                    type: string;
+                    title: string;
+                    oneOf: {
+                        title: string;
+                        const: string;
+                    }[];
+                    required: boolean;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -536,6 +550,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
+                        scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
+                    } | {
+                        type: string;
                         elements: {
                             type: string;
                             scope: string;
@@ -555,11 +574,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                             };
                         };
                         elements?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
-                        rule?: undefined;
                     })[];
                 }[];
             }[];
@@ -717,6 +731,15 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     minimum: number;
                     required: boolean;
                 };
+                paymentModel: {
+                    type: string;
+                    title: string;
+                    oneOf: {
+                        title: string;
+                        const: string;
+                    }[];
+                    required: boolean;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -770,6 +793,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     elements: ({
                         type: string;
+                        scope: string;
+                        elements?: undefined;
+                        rule?: undefined;
+                    } | {
+                        type: string;
                         elements: {
                             type: string;
                             scope: string;
@@ -789,11 +817,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                             };
                         };
                         elements?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
-                        rule?: undefined;
                     })[];
                 }[];
             }[];
@@ -1095,6 +1118,7 @@ declare module "@scom/scom-nft-minter" {
                 customMintToken?: string;
                 priceToMint?: number;
                 maxQty?: number;
+                paymentModel?: import("@scom/scom-nft-minter/interface/index.tsx").PaymentModel;
                 txnMaxQty?: number;
                 donateTo?: string;
                 logoUrl?: string;
