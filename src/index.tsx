@@ -868,7 +868,7 @@ export default class ScomNftMinter extends Module {
       this._type = this.productType;
       await this.updateDAppUI(this._data);
       this.determineBtnSubmitCaption();
-      if (this.nftType === 'ERC1155' && !this.productId) return;
+      if (this.nftType !== 'ERC721' && !this.productId) return;
       await this.initWallet();
       this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
       // OswapTroll
@@ -1232,7 +1232,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private async doSubmitAction() {
-    if (!this._data || (!this.productId && this.nftType === 'ERC1155')) return;
+    if (!this._data || (!this.productId && this.nftType !== 'ERC721')) return;
     this.updateSubmitButton(true);
     if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenInput.token) {
       this.showTxStatusModal('error', 'Token Required');

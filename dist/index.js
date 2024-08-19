@@ -2606,7 +2606,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this._type = this.productType;
                 await this.updateDAppUI(this._data);
                 this.determineBtnSubmitCaption();
-                if (this.nftType === 'ERC1155' && !this.productId)
+                if (this.nftType !== 'ERC721' && !this.productId)
                     return;
                 await this.initWallet();
                 this.btnSubmit.enabled = !(0, index_13.isClientWalletConnected)() || !this.state.isRpcWalletConnected();
@@ -2953,7 +2953,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         async doSubmitAction() {
-            if (!this._data || (!this.productId && this.nftType === 'ERC1155'))
+            if (!this._data || (!this.productId && this.nftType !== 'ERC721'))
                 return;
             this.updateSubmitButton(true);
             if ((this._type === index_11.ProductType.DonateToOwner || this._type === index_11.ProductType.DonateToEveryone) && !this.tokenInput.token) {
