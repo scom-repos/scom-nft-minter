@@ -446,7 +446,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -527,6 +527,25 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getNFTBalance = getNFTBalance;
+    async function getProductId(state, nftAddress, nftId) {
+        let productId;
+        try {
+            const wallet = state.getRpcWallet();
+            if (nftId != null) {
+                const oneTimePurchaseNFT = new scom_product_contract_2.Contracts.OneTimePurchaseNFT(wallet, nftAddress);
+                productId = (await oneTimePurchaseNFT.productIdByTokenId(nftId)).toNumber();
+            }
+            else {
+                const subscriptionNFT = new scom_product_contract_2.Contracts.SubscriptionNFT(wallet, nftAddress);
+                productId = (await subscriptionNFT.productId()).toNumber();
+            }
+        }
+        catch {
+            console.log("product id not found");
+        }
+        return productId;
+    }
+    exports.getProductId = getProductId;
     async function newProduct(productMarketplaceAddress, productType, quantity, // max quantity of this nft can be exist at anytime
     maxQuantity, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
@@ -572,9 +591,12 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             let event = productMarketplace.parseNewProductEvent(receipt)[0];
             productId = event?.productId.toNumber();
         }
+        const product = await productMarketplace.products(productId);
         return {
             receipt,
-            productId
+            productId,
+            nftAddress: product.nft,
+            nftId: product.nftId?.toNumber()
         };
     }
     exports.newProduct = newProduct;
@@ -2099,7 +2121,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._data.link = value;
         }
         get productId() {
-            return this._data.erc1155Index ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
+            return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
         }
         get productType() {
             return this._data.productType ?? index_11.ProductType.Buy;
@@ -2468,6 +2490,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.lbOrderTotalTitle.caption = `You are going to pay`;
             this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_5.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
+            if (!this.productId && this.nftAddress) {
+                let productId = await (0, API_2.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
+                if (productId)
+                    this._data.productId = productId;
+            }
             await this.refreshDApp();
         }
         getTag() {
@@ -2548,10 +2575,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             else {
                 result = await (0, API_2.newDefaultBuyProduct)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, callback, confirmationCallback);
-                this._data.erc1155Index = result.productId;
                 this._data.nftType = 'ERC1155';
+                this._data.erc1155Index = result.nftId;
             }
-            this._data.nftAddress = productMarketplaceAddress;
+            this._data.productId = result.productId;
+            this._data.nftAddress = result.nftAddress;
         }
         async initWallet() {
             try {
@@ -2578,12 +2606,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this._type = this.productType;
                 await this.updateDAppUI(this._data);
                 this.determineBtnSubmitCaption();
-                if (this.nftType !== 'ERC721' && (!this.productId || this.productId === 0))
+                if (this.nftType === 'ERC1155' && !this.productId)
                     return;
                 await this.initWallet();
                 this.btnSubmit.enabled = !(0, index_13.isClientWalletConnected)() || !this.state.isRpcWalletConnected();
                 // OswapTroll
-                if (this.nftType === 'ERC721') {
+                if (this.nftType === 'ERC721' && !this.productId) {
                     this.lblTitle.caption = this._data.title;
                     if (!this.nftAddress)
                         return;
@@ -2637,7 +2665,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.onToggleDetail();
                         this.btnDetail.visible = true;
                         this.erc1155Wrapper.visible = true;
-                        this.lbERC1155Index.caption = `${this.productId}`;
+                        this.lbERC1155Index.caption = `${this.productInfo.nftId?.toNumber() || ''}`;
                         this.lbContract.caption = components_6.FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
                         this.updateTokenAddress(token.address);
                         this.lbOwn.caption = (0, index_12.formatNumber)(nftBalance, 0);
@@ -2925,7 +2953,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         async doSubmitAction() {
-            if (!this._data || (!this.productId && this.nftType !== 'ERC721'))
+            if (!this._data || (!this.productId && this.nftType === 'ERC1155'))
                 return;
             this.updateSubmitButton(true);
             if ((this._type === index_11.ProductType.DonateToOwner || this._type === index_11.ProductType.DonateToEveryone) && !this.tokenInput.token) {
@@ -2938,7 +2966,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             //   this.updateSubmitButton(false);
             //   return;
             // }
-            if (this.nftType === 'ERC721') {
+            if (this.nftType === 'ERC721' && !this.productId) {
                 const oswapTroll = await (0, API_2.fetchOswapTrollNftInfo)(this.state, this.nftAddress);
                 if (!oswapTroll || oswapTroll.cap.lte(0)) {
                     this.showTxStatusModal('error', 'Out of stock');
@@ -3054,7 +3082,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             await (0, API_2.mintOswapTrollNft)(this.nftAddress, txHashCallback);
         }
         async buyToken(quantity) {
-            if (this.productId === undefined || this.productId === null)
+            if (!this.productId)
                 return;
             const callback = (error, receipt) => {
                 if (error) {

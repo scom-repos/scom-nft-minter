@@ -40,6 +40,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         donateTo: string;
     }
     export interface IEmbedData {
+        productId?: number;
         name?: string;
         title?: string;
         nftType?: 'ERC721' | 'ERC1155';
@@ -274,6 +275,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProductInfo(state: State, productId: number): Promise<IProductInfo>;
     function getProductOwner(state: State, productId: number): Promise<string>;
     function getNFTBalance(state: State, productId: number): Promise<string>;
+    function getProductId(state: State, nftAddress: string, nftId?: number): Promise<number>;
     function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
     maxQuantity: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
@@ -281,15 +283,21 @@ declare module "@scom/scom-nft-minter/API.ts" {
     tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
+        nftAddress: string;
+        nftId: number;
     }>;
     function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
+        nftAddress: string;
+        nftId: number;
     }>;
     function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
+        nftAddress: string;
+        nftId: number;
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
@@ -303,7 +311,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, getProductId, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -1193,6 +1201,7 @@ declare module "@scom/scom-nft-minter" {
             bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
             getData: () => {
                 fee: string;
+                productId?: number;
                 name?: string;
                 title?: string;
                 nftType?: "ERC721" | "ERC1155";

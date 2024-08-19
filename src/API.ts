@@ -80,6 +80,23 @@ async function getNFTBalance(state: State, productId: number) {
     }
 }
 
+async function getProductId(state: State, nftAddress: string, nftId?: number) {
+    let productId: number;
+    try {
+        const wallet = state.getRpcWallet();
+        if (nftId != null) {
+            const oneTimePurchaseNFT = new ProductContracts.OneTimePurchaseNFT(wallet, nftAddress);
+            productId = (await oneTimePurchaseNFT.productIdByTokenId(nftId)).toNumber();
+        } else {
+            const subscriptionNFT = new ProductContracts.SubscriptionNFT(wallet, nftAddress);
+            productId = (await subscriptionNFT.productId()).toNumber();
+        }
+    } catch {
+        console.log("product id not found");
+    }
+    return productId;
+}
+
 async function newProduct(
     productMarketplaceAddress: string,
 
@@ -136,9 +153,12 @@ async function newProduct(
         let event = productMarketplace.parseNewProductEvent(receipt)[0];
         productId = event?.productId.toNumber();
     }
+    const product = await productMarketplace.products(productId);
     return {
         receipt,
-        productId
+        productId,
+        nftAddress: product.nft,
+        nftId: product.nftId?.toNumber()
     };
 }
 
@@ -511,6 +531,7 @@ async function fetchOswapTrollNftInfo(state: State, address: string) {
 export {
     getProductInfo,
     getNFTBalance,
+    getProductId,
     newProduct,
     createSubscriptionNFT,
     newDefaultBuyProduct,

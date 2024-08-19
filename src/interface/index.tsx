@@ -39,6 +39,7 @@ export interface IChainSpecificProperties {
 }
 
 export interface IEmbedData {
+  productId?: number;
   name?: string;
   title?: string;
   nftType?: 'ERC721' | 'ERC1155';
