@@ -589,40 +589,33 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: {
+            elements: ({
                 type: string;
-                label: string;
+                scope: string;
+                elements?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
                 elements: {
                     type: string;
-                    elements: ({
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        elements: {
-                            type: string;
-                            scope: string;
-                        }[];
-                        scope?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    const: string;
-                                };
-                            };
-                        };
-                        elements?: undefined;
-                    })[];
+                    scope: string;
                 }[];
-            }[];
+                scope?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                rule: {
+                    effect: string;
+                    condition: {
+                        scope: string;
+                        schema: {
+                            const: string;
+                        };
+                    };
+                };
+                elements?: undefined;
+            })[];
         };
         customControls(): {
             '#/properties/chainId': {
@@ -722,30 +715,23 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: {
+            elements: ({
                 type: string;
-                label: string;
-                elements: {
-                    type: string;
-                    elements: ({
-                        type: string;
+                scope: string;
+                rule?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                rule: {
+                    effect: string;
+                    condition: {
                         scope: string;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    const: string;
-                                };
-                            };
+                        schema: {
+                            const: string;
                         };
-                    })[];
-                }[];
-            }[];
+                    };
+                };
+            })[];
         };
         customControls(): {
             '#/properties/chainId': {
@@ -864,40 +850,33 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: {
+            elements: ({
                 type: string;
-                label: string;
+                scope: string;
+                elements?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
                 elements: {
                     type: string;
-                    elements: ({
-                        type: string;
-                        scope: string;
-                        elements?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        elements: {
-                            type: string;
-                            scope: string;
-                        }[];
-                        scope?: undefined;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    const: string;
-                                };
-                            };
-                        };
-                        elements?: undefined;
-                    })[];
+                    scope: string;
                 }[];
-            }[];
+                scope?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                rule: {
+                    effect: string;
+                    condition: {
+                        scope: string;
+                        schema: {
+                            const: string;
+                        };
+                    };
+                };
+                elements?: undefined;
+            })[];
         };
         customControls(): {
             '#/properties/chainId': {
@@ -992,30 +971,23 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
         uiSchema: {
             type: string;
-            elements: {
+            elements: ({
                 type: string;
-                label: string;
-                elements: {
-                    type: string;
-                    elements: ({
-                        type: string;
+                scope: string;
+                rule?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                rule: {
+                    effect: string;
+                    condition: {
                         scope: string;
-                        rule?: undefined;
-                    } | {
-                        type: string;
-                        scope: string;
-                        rule: {
-                            effect: string;
-                            condition: {
-                                scope: string;
-                                schema: {
-                                    const: string;
-                                };
-                            };
+                        schema: {
+                            const: string;
                         };
-                    })[];
-                }[];
-            }[];
+                    };
+                };
+            })[];
         };
         customControls(): {
             '#/properties/chainId': {

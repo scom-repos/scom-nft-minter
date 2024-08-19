@@ -5,7 +5,7 @@ import { formInputStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
-import { ScomNftMinterFieldUpdate } from "./component";
+import { ScomNftMinterFieldUpdate } from "./component/index";
 
 const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
 const networks = chainIds.map(v => { return { chainId: v } });
@@ -435,60 +435,49 @@ export function getProjectOwnerSchema1() {
             }
         },
         uiSchema: {
-            type: 'Categorization',
+            type: 'VerticalLayout',
             elements: [
                 {
-                    type: 'Category',
-                    label: 'General',
+                    type: 'Control',
+                    scope: '#/properties/paymentModel',
+                },
+                {
+                    type: 'HorizontalLayout',
                     elements: [
                         {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/paymentModel',
-                                },
-                                {
-                                    type: 'HorizontalLayout',
-                                    elements: [
-                                        {
-                                            type: 'Control',
-                                            scope: '#/properties/chainId'
-                                        },
-                                        {
-                                            type: 'Control',
-                                            scope: '#/properties/tokenToMint'
-                                        }
-                                    ]
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/customMintToken',
-                                    rule: {
-                                        effect: 'ENABLE',
-                                        condition: {
-                                            scope: '#/properties/tokenToMint',
-                                            schema: {
-                                                const: CUSTOM_TOKEN.address
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/priceToMint',
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/maxQty',
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/uri',
-                                }
-                            ]
+                            type: 'Control',
+                            scope: '#/properties/chainId'
+                        },
+                        {
+                            type: 'Control',
+                            scope: '#/properties/tokenToMint'
                         }
                     ]
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/customMintToken',
+                    rule: {
+                        effect: 'ENABLE',
+                        condition: {
+                            scope: '#/properties/tokenToMint',
+                            schema: {
+                                const: CUSTOM_TOKEN.address
+                            }
+                        }
+                    }
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/priceToMint',
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/maxQty',
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/uri',
                 }
             ]
         },
@@ -549,70 +538,59 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
             }
         },
         uiSchema: {
-            type: 'Categorization',
+            type: 'VerticalLayout',
             elements: [
                 {
-                    type: 'Category',
-                    label: 'General',
-                    elements: [
-                        {
-                            type: 'VerticalLayout',
-                            elements: [
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/chainId'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/nftType'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/nftAddress'
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/erc1155Index',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155'
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/newPrice',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155'
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    type: 'Control',
-                                    scope: '#/properties/newUri',
-                                    rule: {
-                                        effect: 'SHOW',
-                                        condition: {
-                                            scope: '#/properties/nftType',
-                                            schema: {
-                                                const: 'ERC1155'
-                                            }
-                                        }
-                                    }
-                                },
-                            ]
-                        }
-                    ]
+                    type: 'Control',
+                    scope: '#/properties/chainId'
                 },
+                {
+                    type: 'Control',
+                    scope: '#/properties/nftType'
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/nftAddress'
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/erc1155Index',
+                    rule: {
+                        effect: 'SHOW',
+                        condition: {
+                            scope: '#/properties/nftType',
+                            schema: {
+                                const: 'ERC1155'
+                            }
+                        }
+                    }
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/newPrice',
+                    rule: {
+                        effect: 'SHOW',
+                        condition: {
+                            scope: '#/properties/nftType',
+                            schema: {
+                                const: 'ERC1155'
+                            }
+                        }
+                    }
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/newUri',
+                    rule: {
+                        effect: 'SHOW',
+                        condition: {
+                            scope: '#/properties/nftType',
+                            schema: {
+                                const: 'ERC1155'
+                            }
+                        }
+                    }
+                }
             ]
         },
         customControls() {
