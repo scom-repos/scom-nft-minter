@@ -2407,9 +2407,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             await this.newProduct();
                             return this._data.erc1155Index > 0;
                         }
-                        else if (this.nftType === 'ERC1155') {
+                        else {
                             await this.resetRpcWallet();
                             await this.initWallet();
+                            if (this.nftType === 'ERC721' && this._data.erc1155Index)
+                                this._data.erc1155Index = undefined;
                             let productId = await (0, API_2.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
                             if (productId) {
                                 this._data.productId = productId;

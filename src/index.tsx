@@ -534,9 +534,10 @@ export default class ScomNftMinter extends Module {
             await this.initWallet();
             await this.newProduct();
             return this._data.erc1155Index > 0;
-          } else if (this.nftType === 'ERC1155') {
+          } else {
             await this.resetRpcWallet();
             await this.initWallet();
+            if (this.nftType === 'ERC721' && this._data.erc1155Index) this._data.erc1155Index = undefined;
             let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
             if (productId) {
               this._data.productId = productId;
