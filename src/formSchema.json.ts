@@ -424,6 +424,12 @@ export function getProjectOwnerSchema1() {
                     ],
                     required: true
                 },
+                duration: {
+                    type: 'integer',
+                    title: 'Duration (Days)',
+                    tooltip: 'The period of time in which a subscription remains in effect',
+                    minimum: 1,
+                },
                 dark: {
                     type: 'object',
                     properties: theme
@@ -437,10 +443,6 @@ export function getProjectOwnerSchema1() {
         uiSchema: {
             type: 'VerticalLayout',
             elements: [
-                {
-                    type: 'Control',
-                    scope: '#/properties/paymentModel',
-                },
                 {
                     type: 'HorizontalLayout',
                     elements: [
@@ -463,6 +465,23 @@ export function getProjectOwnerSchema1() {
                             scope: '#/properties/tokenToMint',
                             schema: {
                                 const: CUSTOM_TOKEN.address
+                            }
+                        }
+                    }
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/paymentModel',
+                },
+                {
+                    type: 'Control',
+                    scope: '#/properties/duration',
+                    rule: {
+                        effect: 'SHOW',
+                        condition: {
+                            scope: '#/properties/paymentModel',
+                            schema: {
+                                const: 'Subscription'
                             }
                         }
                     }

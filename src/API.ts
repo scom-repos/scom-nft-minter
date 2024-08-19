@@ -131,7 +131,7 @@ async function newProduct(
         nftName: nftName,
         nftSymbol: nftSymbol
     });
-    let productId;
+    let productId: number;
     if (receipt) {
         let event = productMarketplace.parseNewProductEvent(receipt)[0];
         productId = event?.productId.toNumber();
@@ -140,6 +140,35 @@ async function newProduct(
         receipt,
         productId
     };
+}
+
+async function createSubscriptionNFT(
+    productMarketplaceAddress: string,
+    quantity: number,
+    price: string,
+    tokenAddress: string,
+    tokenDecimals: number,
+    uri: string,
+    priceDuration: number = 0,
+    callback?: any,
+    confirmationCallback?: any
+) {
+    return await newProduct(
+        productMarketplaceAddress,
+        ProductType.Subscription,
+        quantity,
+        quantity,
+        price,
+        "0",
+        tokenAddress,
+        tokenDecimals,
+        uri,
+        '',
+        '',
+        priceDuration,
+        callback,
+        confirmationCallback
+    );
 }
 
 async function newDefaultBuyProduct(
@@ -483,6 +512,7 @@ export {
     getProductInfo,
     getNFTBalance,
     newProduct,
+    createSubscriptionNFT,
     newDefaultBuyProduct,
     getProxyTokenAmountIn,
     buyProduct,

@@ -17,12 +17,12 @@ import {
   FormatUtils,
   Form
 } from '@ijstech/components';
-import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
+import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
+import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -692,6 +692,49 @@ export default class ScomNftMinter extends Module {
     }
   }
 
+  private async _createProduct(
+    productMarketplaceAddress: string,
+    quantity: number,
+    price: string,
+    uri: string,
+    token?: ITokenObject,
+    callback?: any,
+    confirmationCallback?: any
+  ) {
+    let result: {
+      receipt: TransactionReceipt;
+      productId: number;
+    };
+    if (this._data.paymentModel === PaymentModel.Subscription) {
+      result = await createSubscriptionNFT(
+        productMarketplaceAddress,
+        quantity,
+        price,
+        token?.address || nullAddress,
+        token?.decimals || 18,
+        uri,
+        this._data.priceDuration,
+        callback,
+        confirmationCallback
+      );
+      this._data.nftType = 'ERC721';
+    } else {
+      result = await newDefaultBuyProduct(
+        productMarketplaceAddress,
+        quantity,
+        price,
+        token?.address || nullAddress,
+        token?.decimals || 18,
+        uri,
+        callback,
+        confirmationCallback
+      );
+      this._data.erc1155Index = result.productId;
+      this._data.nftType = 'ERC1155';
+    }
+    this._data.nftAddress = productMarketplaceAddress;
+  }
+
   private newProduct = async () => {
     let contract = this.state.getContractAddress('ProductMarketplace');
     const maxQty = this.newMaxQty;
@@ -731,7 +774,7 @@ export default class ScomNftMinter extends Module {
         return;
       }
       try {
-        const { tokenToMint, customMintToken, uri } = this._data;
+        const { tokenToMint, customMintToken, uri, priceDuration } = this._data;
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
         if (!tokenToMint || (isCustomToken && !customMintToken)) {
           this.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -746,19 +789,15 @@ export default class ScomNftMinter extends Module {
             return;
           }
           //pay native token
-          const result = await newDefaultBuyProduct(
+          await this._createProduct(
             contract,
             maxQty,
             price,
-            nullAddress,
-            18,
             uri,
+            null,
             callback,
             confirmationCallback
           );
-          this._data.erc1155Index = result.productId;
-          this._data.nftAddress = contract;
-          this._data.nftType = 'ERC1155';
         } else { //pay erc20
           let token: ITokenObject;
           if (isCustomToken) {
@@ -770,19 +809,15 @@ export default class ScomNftMinter extends Module {
             this.showTxStatusModal('error', 'Invalid token!');
             return;
           }
-          const result = await newDefaultBuyProduct(
+          await this._createProduct(
             contract,
             maxQty,
             price,
-            tokenAddress,
-            token.decimals ?? 18,
             uri,
+            token,
             callback,
             confirmationCallback
           );
-          this._data.erc1155Index = result.productId;
-          this._data.nftAddress = contract;
-          this._data.nftType = 'ERC1155';
         }
       } catch (error) {
         this.showTxStatusModal('error', 'Something went wrong creating new product!');

@@ -446,7 +446,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -578,6 +578,10 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         };
     }
     exports.newProduct = newProduct;
+    async function createSubscriptionNFT(productMarketplaceAddress, quantity, price, tokenAddress, tokenDecimals, uri, priceDuration = 0, callback, confirmationCallback) {
+        return await newProduct(productMarketplaceAddress, index_4.ProductType.Subscription, quantity, quantity, price, "0", tokenAddress, tokenDecimals, uri, '', '', priceDuration, callback, confirmationCallback);
+    }
+    exports.createSubscriptionNFT = createSubscriptionNFT;
     async function newDefaultBuyProduct(productMarketplaceAddress, qty, // max quantity of this nft can be exist at anytime
     //maxQty = qty
     //maxQty: number, // max quantity for one buy() txn
@@ -1517,6 +1521,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         ],
                         required: true
                     },
+                    duration: {
+                        type: 'integer',
+                        title: 'Duration (Days)',
+                        tooltip: 'The period of time in which a subscription remains in effect',
+                        minimum: 1,
+                    },
                     dark: {
                         type: 'object',
                         properties: theme
@@ -1530,10 +1540,6 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
             uiSchema: {
                 type: 'VerticalLayout',
                 elements: [
-                    {
-                        type: 'Control',
-                        scope: '#/properties/paymentModel',
-                    },
                     {
                         type: 'HorizontalLayout',
                         elements: [
@@ -1556,6 +1562,23 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                 scope: '#/properties/tokenToMint',
                                 schema: {
                                     const: scom_token_input_1.CUSTOM_TOKEN.address
+                                }
+                            }
+                        }
+                    },
+                    {
+                        type: 'Control',
+                        scope: '#/properties/paymentModel',
+                    },
+                    {
+                        type: 'Control',
+                        scope: '#/properties/duration',
+                        rule: {
+                            effect: 'SHOW',
+                            condition: {
+                                scope: '#/properties/paymentModel',
+                                schema: {
+                                    const: 'Subscription'
                                 }
                             }
                         }
@@ -1965,7 +1988,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return;
                     }
                     try {
-                        const { tokenToMint, customMintToken, uri } = this._data;
+                        const { tokenToMint, customMintToken, uri, priceDuration } = this._data;
                         const isCustomToken = tokenToMint?.toLowerCase() === scom_token_input_2.CUSTOM_TOKEN.address.toLowerCase();
                         if (!tokenToMint || (isCustomToken && !customMintToken)) {
                             this.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -1980,10 +2003,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 return;
                             }
                             //pay native token
-                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, index_12.nullAddress, 18, uri, callback, confirmationCallback);
-                            this._data.erc1155Index = result.productId;
-                            this._data.nftAddress = contract;
-                            this._data.nftType = 'ERC1155';
+                            await this._createProduct(contract, maxQty, price, uri, null, callback, confirmationCallback);
                         }
                         else { //pay erc20
                             let token;
@@ -1997,10 +2017,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.showTxStatusModal('error', 'Invalid token!');
                                 return;
                             }
-                            const result = await (0, API_2.newDefaultBuyProduct)(contract, maxQty, price, tokenAddress, token.decimals ?? 18, uri, callback, confirmationCallback);
-                            this._data.erc1155Index = result.productId;
-                            this._data.nftAddress = contract;
-                            this._data.nftType = 'ERC1155';
+                            await this._createProduct(contract, maxQty, price, uri, token, callback, confirmationCallback);
                         }
                     }
                     catch (error) {
@@ -2522,6 +2539,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 catch { }
             }
+        }
+        async _createProduct(productMarketplaceAddress, quantity, price, uri, token, callback, confirmationCallback) {
+            let result;
+            if (this._data.paymentModel === index_11.PaymentModel.Subscription) {
+                result = await (0, API_2.createSubscriptionNFT)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, this._data.priceDuration, callback, confirmationCallback);
+                this._data.nftType = 'ERC721';
+            }
+            else {
+                result = await (0, API_2.newDefaultBuyProduct)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, callback, confirmationCallback);
+                this._data.erc1155Index = result.productId;
+                this._data.nftType = 'ERC1155';
+            }
+            this._data.nftAddress = productMarketplaceAddress;
         }
         async initWallet() {
             try {

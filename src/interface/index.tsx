@@ -41,7 +41,7 @@ export interface IChainSpecificProperties {
 export interface IEmbedData {
   name?: string;
   title?: string;
-  nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
+  nftType?: 'ERC721' | 'ERC1155';
   chainId?: number;
   nftAddress?: string;
   productType?: ProductType;
@@ -52,6 +52,7 @@ export interface IEmbedData {
   priceToMint?: number;
   maxQty?: number;
   paymentModel?: PaymentModel;
+  priceDuration?: number;
   txnMaxQty?: number;
   uri?: string;
   donateTo?: string;

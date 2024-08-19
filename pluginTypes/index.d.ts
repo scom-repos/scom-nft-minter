@@ -42,7 +42,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     export interface IEmbedData {
         name?: string;
         title?: string;
-        nftType?: 'ERC721' | 'ERC1155' | 'ERC1155NewIndex';
+        nftType?: 'ERC721' | 'ERC1155';
         chainId?: number;
         nftAddress?: string;
         productType?: ProductType;
@@ -53,6 +53,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         priceToMint?: number;
         maxQty?: number;
         paymentModel?: PaymentModel;
+        priceDuration?: number;
         txnMaxQty?: number;
         uri?: string;
         donateTo?: string;
@@ -278,12 +279,16 @@ declare module "@scom/scom-nft-minter/API.ts" {
     tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
-        productId: any;
+        productId: number;
+    }>;
+    function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
+        receipt: import("@ijstech/eth-contract").TransactionReceipt;
+        productId: number;
     }>;
     function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
-        productId: any;
+        productId: number;
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
@@ -297,7 +302,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, newProduct, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -543,6 +548,12 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     }[];
                     required: boolean;
                 };
+                duration: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -591,11 +602,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
-                scope: string;
-                elements?: undefined;
-                rule?: undefined;
-            } | {
-                type: string;
                 elements: {
                     type: string;
                     scope: string;
@@ -615,6 +621,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     };
                 };
                 elements?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                elements?: undefined;
+                rule?: undefined;
             })[];
         };
         customControls(): {
@@ -804,6 +815,12 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     }[];
                     required: boolean;
                 };
+                duration: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    minimum: number;
+                };
                 dark: {
                     type: string;
                     properties: {
@@ -852,11 +869,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
-                scope: string;
-                elements?: undefined;
-                rule?: undefined;
-            } | {
-                type: string;
                 elements: {
                     type: string;
                     scope: string;
@@ -876,6 +888,11 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     };
                 };
                 elements?: undefined;
+            } | {
+                type: string;
+                scope: string;
+                elements?: undefined;
+                rule?: undefined;
             })[];
         };
         customControls(): {
@@ -1011,7 +1028,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
@@ -1102,7 +1119,7 @@ declare module "@scom/scom-nft-minter" {
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
         private get chainId();
         private get rpcWallet();
-        get nftType(): "ERC721" | "ERC1155" | "ERC1155NewIndex";
+        get nftType(): "ERC721" | "ERC1155";
         get nftAddress(): string;
         get newPrice(): number;
         get newMaxQty(): number;
@@ -1177,7 +1194,7 @@ declare module "@scom/scom-nft-minter" {
                 fee: string;
                 name?: string;
                 title?: string;
-                nftType?: "ERC721" | "ERC1155" | "ERC1155NewIndex";
+                nftType?: "ERC721" | "ERC1155";
                 chainId?: number;
                 nftAddress?: string;
                 productType?: ProductType;
@@ -1187,7 +1204,8 @@ declare module "@scom/scom-nft-minter" {
                 customMintToken?: string;
                 priceToMint?: number;
                 maxQty?: number;
-                paymentModel?: import("@scom/scom-nft-minter/interface/index.tsx").PaymentModel;
+                paymentModel?: PaymentModel;
+                priceDuration?: number;
                 txnMaxQty?: number;
                 uri?: string;
                 donateTo?: string;
@@ -1232,6 +1250,7 @@ declare module "@scom/scom-nft-minter" {
         private updateStyle;
         private updateTheme;
         private updateFormConfig;
+        private _createProduct;
         private newProduct;
         private connectWallet;
         private initWallet;
