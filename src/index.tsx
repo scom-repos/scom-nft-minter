@@ -507,9 +507,7 @@ export default class ScomNftMinter extends Module {
           const defaultData = configData.defaultBuilderData;
           this._data = { ...defaultBuilderData, ...defaultData, ...data };
           if (!this.nftType) {
-            const contract = this.state.getContractAddress('ProductMarketplace');
-            const maxQty = this.newMaxQty;
-            if (!contract || new BigNumber(maxQty).lte(0)) {
+            if (new BigNumber(this.newMaxQty).lte(0)) {
               return false;
             }
             this._data.erc1155Index = undefined;
@@ -667,9 +665,9 @@ export default class ScomNftMinter extends Module {
   private async updateFormConfig(isEvent?: boolean) {
     if (this.isConfigNewIndex) {
       try {
-        const wrapper = this.parentElement?.parentElement?.parentElement;
+        const wrapper = this.parentElement?.parentElement;
         if (!wrapper) return;
-        const form = wrapper.querySelector('i-form') as Form;
+        const form = (wrapper.querySelector('i-form') || wrapper.parentElement?.querySelector('i-form')) as Form;
         if (!form) return;
         const btnConfirm = form.lastElementChild?.lastElementChild as Button;
         if (btnConfirm) {
@@ -699,7 +697,7 @@ export default class ScomNftMinter extends Module {
     const maxQty = this.newMaxQty;
     // const txnMaxQty = this.newTxnMaxQty;
     const price = new BigNumber(this.newPrice).toFixed();
-    if ((!this.nftType) && contract && new BigNumber(maxQty).gt(0)) {
+    if ((!this.nftType) && new BigNumber(maxQty).gt(0)) {
       if (this._data.erc1155Index >= 0) {
         this._data.nftType = 'ERC1155';
         return;
@@ -727,6 +725,10 @@ export default class ScomNftMinter extends Module {
         if (!isConnected) return;
         await delay(3000);
         contract = this.state.getContractAddress('ProductMarketplace');
+      }
+      if (!contract) {
+        this.showTxStatusModal('error', 'This network is not supported!');
+        return;
       }
       try {
         const { tokenToMint, customMintToken, uri } = this._data;
