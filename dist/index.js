@@ -915,13 +915,13 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         "contractInfo": {
             "43113": {
                 "ProductMarketplace": {
-                    "address": "0x61ae6893e10d2b527f9568c369c1dc95696af792"
+                    "address": "0x61ae6893E10d2B527f9568c369C1dc95696AF792"
                 },
                 "OneTimePurchaseNFT": {
-                    "address": "0xdb301a9ef98843376c835afb41608d6a319e138d"
+                    "address": "0xDB301a9Ef98843376C835aFB41608d6A319e138D"
                 },
                 "SubscriptionNFTFactory": {
-                    "address": "0xdc152515a9ee063f2ce07b2c519d9a11935d2c3b"
+                    "address": "0xdC152515a9Ee063f2ce07B2c519D9a11935D2C3B"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
