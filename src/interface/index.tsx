@@ -8,6 +8,7 @@ export interface ICommissionInfo {
 }
 export enum ProductType {
   Buy = "Buy",
+  Subscription = "Subscription",
   DonateToOwner = "DonateToOwner",
   DonateToEveryone = "DonateToEveryone",
 }
@@ -27,6 +28,9 @@ export interface IProductInfo {
   maxPrice: BigNumber;
   token: ITokenObject;
   status: BigNumber;
+  nft: string;
+  nftId: BigNumber;
+  priceDuration: BigNumber;
 }
 
 export interface IChainSpecificProperties {

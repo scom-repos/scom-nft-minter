@@ -13,6 +13,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     }
     export enum ProductType {
         Buy = "Buy",
+        Subscription = "Subscription",
         DonateToOwner = "DonateToOwner",
         DonateToEveryone = "DonateToEveryone"
     }
@@ -30,6 +31,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         maxPrice: BigNumber;
         token: ITokenObject;
         status: BigNumber;
+        nft: string;
+        nftId: BigNumber;
+        priceDuration: BigNumber;
     }
     export interface IChainSpecificProperties {
         productId: number;
@@ -189,10 +193,11 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export interface IContractDetailInfo {
         address: string;
     }
-    export type ContractType = 'ProductInfo' | 'Proxy' | 'Product1155';
+    export type ContractType = 'ProductMarketplace' | 'OneTimePurchaseNFT' | 'SubscriptionNFTFactory' | 'Proxy';
     export interface IContractInfo {
-        ProductNFT: IContractDetailInfo;
-        ProductInfo: IContractDetailInfo;
+        ProductMarketplace: IContractDetailInfo;
+        OneTimePurchaseNFT: IContractDetailInfo;
+        SubscriptionNFTFactory: IContractDetailInfo;
         Proxy: IContractDetailInfo;
     }
     interface IExtendedNetwork extends INetwork {
@@ -264,18 +269,18 @@ declare module "@scom/scom-nft-minter/API.ts" {
     import { ProductType, ICommissionInfo, IProductInfo } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    function getProductInfo(state: State, erc1155Index: number): Promise<IProductInfo>;
-    function getProductOwner(state: State, erc1155Index: number): Promise<string>;
-    function getNFTBalance(state: State, erc1155Index: number): Promise<string>;
-    function newProduct(productInfoAddress: string, productType: ProductType, qty: number, // max quantity of this nft can be exist at anytime
-    maxQty: number, // max quantity for one buy() txn
+    function getProductInfo(state: State, productId: number): Promise<IProductInfo>;
+    function getProductOwner(state: State, productId: number): Promise<string>;
+    function getNFTBalance(state: State, productId: number): Promise<string>;
+    function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
+    maxQuantity: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
+    tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
     }>;
-    function newDefaultBuyProduct(productInfoAddress: string, qty: number, // max quantity of this nft can be exist at anytime
+    function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: any;
@@ -283,8 +288,8 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function updateProductUri(productInfoAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function updateProductPrice(productInfoAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
     function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
@@ -300,30 +305,16 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
         infuraId: string;
         contractInfo: {
             "43113": {
-                ProductNFT: {
+                ProductMarketplace: {
                     address: string;
                 };
-                ProductInfo: {
+                OneTimePurchaseNFT: {
                     address: string;
                 };
-                Proxy: {
-                    address: string;
-                };
-                Product1155: {
-                    address: string;
-                };
-            };
-            "97": {
-                ProductNFT: {
-                    address: string;
-                };
-                ProductInfo: {
+                SubscriptionNFTFactory: {
                     address: string;
                 };
                 Proxy: {
-                    address: string;
-                };
-                Product1155: {
                     address: string;
                 };
             };

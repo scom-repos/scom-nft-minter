@@ -15,13 +15,12 @@ export async function getProxySelectors(state: State, chainId: number): Promise<
   const wallet = state.getRpcWallet();
   await wallet.init();
   if (wallet.chainId != chainId) await wallet.switchNetwork(chainId);
-  let productInfoAddress = state.getContractAddress('ProductInfo');
-  let contract = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-  let permittedProxyFunctions: (keyof ProductContracts.ProductInfo)[] = [
+  let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+  let contract = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+  let permittedProxyFunctions: (keyof ProductContracts.ProductMarketplace)[] = [
     "buy",
-    "buyEth",
     "donate",
-    "donateEth"
+    "subscribe"
   ];
   let selectors = permittedProxyFunctions
     .map(e => e + "(" + contract._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")")

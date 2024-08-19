@@ -2,53 +2,22 @@ export default {
     "infuraId": "adc596bf88b648e2a8902bc9093930c5",
     "contractInfo": {
         "43113": {
-            "ProductNFT": {
-                "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
+            "ProductMarketplace": {
+                "address": "0x05a024cb5800f7f88c4e1a9359658187c47e3396"
             },
-            "ProductInfo": {
-                "address": "0x23066A700753c57dCb609CE45e06ac5a7BfDb64d"
+            "OneTimePurchaseNFT": {
+                "address": "0x1b71c44adb9331d1f647a9e6e4358c19247847b1"
+            },
+            "SubscriptionNFTFactory": {
+                "address": "0x5067cf395f1cdffd9964962dfd15c96861ba8f3d"
             },
             "Proxy": {
                 "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
             },
-            "Product1155": {
-                "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
-            }
-        },
-        "97": {
-            "ProductNFT": {
-                "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
-            },
-            "ProductInfo": {
-                "address": "0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
-            },
-            "Proxy": {
-                "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
-            },
-            "Product1155": {
-                "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
-            }
         }
     },
     "embedderCommissionFee": "0",
     "defaultBuilderData": {
-        // "name": "Donation Dapp",
-        // "title": "Title",
-        // "productType": "DonateToEveryone",
-        // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        // "link": "",
-        // "hideDescription": true,
-        // "logoUrl": "https://placehold.co/600x400?text=No+Image",
-        // "chainSpecificProperties": {
-        //     "97": {
-        //         "productId": 1,
-        //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-        //     },
-        //     "43113": {
-        //         "productId": 1,
-        //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-        //     }
-        // },
         "defaultChainId": 43113,
         "networks": [
             {

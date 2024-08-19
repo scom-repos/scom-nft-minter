@@ -8,13 +8,13 @@ import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
 import getNetworkList from '@scom/scom-network-list';
 
-async function getProductInfo(state: State, erc1155Index: number):Promise<IProductInfo> {
-    let productInfoAddress = state.getContractAddress('ProductInfo');
-    if (!productInfoAddress) return null;
+async function getProductInfo(state: State, productId: number):Promise<IProductInfo> {
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    if (!productMarketplaceAddress) return null;
     try {
         const wallet = state.getRpcWallet();
-        const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-        const product = await productInfo.products(erc1155Index);
+        const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const product = await productMarketplace.products(productId);
         const chainId = wallet.chainId;
         if (product.token && product.token === nullAddress) {
             let net = getNetworkList().find(net=>net.chainId===chainId);
@@ -43,26 +43,37 @@ async function getProductInfo(state: State, erc1155Index: number):Promise<IProdu
     }
 }
 
-async function getProductOwner(state: State, erc1155Index: number) {
-    let productInfoAddress = state.getContractAddress('ProductInfo');
-    if (!productInfoAddress) return null;
+async function getProductOwner(state: State, productId: number) {
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    if (!productMarketplaceAddress) return null;
     try {
         const wallet = state.getRpcWallet();
-        const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-        const owner = await productInfo.productOwner(erc1155Index);
+        const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const owner = await productMarketplace.productOwner(productId);
         return owner;
     } catch {
         return null;
     }
 }
 
-async function getNFTBalance(state: State, erc1155Index: number) {
-    let product1155Address = state.getContractAddress('Product1155');
-    if (!product1155Address) return null;
+async function getNFTBalance(state: State, productId: number) {
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    if (!productMarketplaceAddress) return null;
     try {
         const wallet = state.getRpcWallet();
-        const product1155 = new ProductContracts.Product1155(wallet, product1155Address);
-        const nftBalance = await product1155.balanceOf({ account: wallet.address, id: erc1155Index });
+        const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const product = await productMarketplace.products(productId);
+        let nftBalance: BigNumber;
+        if (product.productType.eq(1)) {
+            // Subscription
+            const subscriptionNFT = new ProductContracts.SubscriptionNFT(wallet, product.nft);
+            nftBalance = await subscriptionNFT.balanceOf(wallet.address);
+        } else {
+            let oneTimePurchaseNFTAddress = state.getContractAddress('OneTimePurchaseNFT');
+            if (!oneTimePurchaseNFTAddress) return null;
+            const oneTimePurchaseNFT = new ProductContracts.OneTimePurchaseNFT(wallet, oneTimePurchaseNFTAddress);
+            nftBalance = await oneTimePurchaseNFT.balanceOf({ account: wallet.address, id: product.nftId });
+        }
         return nftBalance.toFixed();
     } catch {
         return null;
@@ -70,21 +81,25 @@ async function getNFTBalance(state: State, erc1155Index: number) {
 }
 
 async function newProduct(
-    productInfoAddress: string,
+    productMarketplaceAddress: string,
 
     productType: ProductType,
-    qty: number,// max quantity of this nft can be exist at anytime
-    maxQty: number, // max quantity for one buy() txn
+    quantity: number,// max quantity of this nft can be exist at anytime
+    maxQuantity: number, // max quantity for one buy() txn
     price: string,
     maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string,//Native token 0x0000000000000000000000000000000000000000
     tokenDecimals: number,
     uri: string,
+    //For Subscription
+    nftName: string = '',
+    nftSymbol: string = '',
+    priceDuration: number = 0,
     callback?: any,
     confirmationCallback?: any
 ) {
     const wallet = Wallet.getClientInstance();
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
     registerSendTxEvents({
         transactionHash: callback,
         confirmation: confirmationCallback
@@ -94,25 +109,31 @@ async function newProduct(
         case ProductType.Buy:
             productTypeCode = 0;
             break;
-        case ProductType.DonateToOwner:
+        case ProductType.Subscription:
             productTypeCode = 1;
             break;
-        case ProductType.DonateToEveryone:
+        case ProductType.DonateToOwner:
             productTypeCode = 2;
             break;
+        case ProductType.DonateToEveryone:
+            productTypeCode = 3;
+            break;
     }
-    let receipt = await productInfo.newProduct({
+    let receipt = await productMarketplace.newProduct({
         productType: productTypeCode,
         uri: uri || '',
-        quantity: qty,
-        maxQuantity: maxQty,
+        quantity: quantity,
+        maxQuantity: maxQuantity,
         maxPrice: Utils.toDecimals(maxPrice, tokenDecimals),
         price: Utils.toDecimals(price, tokenDecimals),
-        token: tokenAddress
+        token: tokenAddress,
+        priceDuration: priceDuration,
+        nftName: nftName,
+        nftSymbol: nftSymbol
     });
     let productId;
     if (receipt) {
-        let event = productInfo.parseNewProductEvent(receipt)[0];
+        let event = productMarketplace.parseNewProductEvent(receipt)[0];
         productId = event?.productId.toNumber();
     }
     return {
@@ -122,7 +143,7 @@ async function newProduct(
 }
 
 async function newDefaultBuyProduct(
-    productInfoAddress: string,
+    productMarketplaceAddress: string,
 
     qty: number,// max quantity of this nft can be exist at anytime
     //maxQty = qty
@@ -150,7 +171,7 @@ async function newDefaultBuyProduct(
         console.log("newDefaultBuyProduct() warning! price = 0");
     }
     return await newProduct(
-        productInfoAddress,
+        productMarketplaceAddress,
         ProductType.Buy,
         qty,
         qty, //maxQty
@@ -159,6 +180,9 @@ async function newDefaultBuyProduct(
         tokenAddress,
         tokenDecimals,
         uri,
+        '',
+        '',
+        0,
         callback,
         confirmationCallback);
 }
@@ -188,11 +212,11 @@ async function buyProduct(
     confirmationCallback?: any
 ) {
     let proxyAddress = state.getContractAddress('Proxy');
-    let productInfoAddress = state.getContractAddress('ProductInfo');
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
     const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-    const product = await productInfo.products(productId);
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    const product = await productMarketplace.products(productId);
     const amount = product.price.times(quantity);
     const _commissions = (commissions || []).filter(v => v.chainId === state.getChainId()).map(v => {
         return {
@@ -203,24 +227,22 @@ async function buyProduct(
     const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
+        registerSendTxEvents({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
         if (token?.address && token?.address !== nullAddress) {
-            registerSendTxEvents({
-                transactionHash: callback,
-                confirmation: confirmationCallback
-            });
             if (commissionsAmount.isZero()) {
-                receipt = await productInfo.buy({
+                receipt = await productMarketplace.buy({
                     productId: productId,
                     quantity: quantity,
-                    amountIn: amount,
                     to: wallet.address
                 })
             }
             else {
-                const txData = await productInfo.buy.txData({
+                const txData = await productMarketplace.buy.txData({
                     productId: productId,
                     quantity: quantity,
-                    amountIn: amount,
                     to: wallet.address
                 });
                 const tokensIn =
@@ -231,31 +253,27 @@ async function buyProduct(
                     commissions: _commissions
                 };
                 receipt = await proxy.tokenIn({
-                    target: productInfoAddress,
+                    target: productMarketplaceAddress,
                     tokensIn,
                     data: txData
                 });
             }
         } else {
-            registerSendTxEvents({
-                transactionHash: callback,
-                confirmation: confirmationCallback
-            });
             if (commissionsAmount.isZero()) {
-                receipt = await productInfo.buyEth({
+                receipt = await productMarketplace.buy({
                     productId: productId,
                     quantity,
                     to: wallet.address
                 }, amount)
             }
             else {
-                const txData = await productInfo.buyEth.txData({
+                const txData = await productMarketplace.buy.txData({
                     productId: productId,
                     quantity,
                     to: wallet.address
                 }, amount);
                 receipt = await proxy.ethIn({
-                    target: productInfoAddress,
+                    target: productMarketplaceAddress,
                     commissions: _commissions,
                     data: txData
                 }, amount.plus(commissionsAmount));
@@ -279,10 +297,10 @@ async function donate(
     confirmationCallback?: any
 ) {
     let proxyAddress = state.getContractAddress('Proxy');
-    let productInfoAddress = state.getContractAddress('ProductInfo');
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
     const wallet = Wallet.getClientInstance();
     const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
     const tokenDecimals = token?.decimals || 18;
     const amount = Utils.toDecimals(amountIn, tokenDecimals);
     const _commissions = (commissions || []).map(v => {
@@ -294,13 +312,13 @@ async function donate(
     const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
+        registerSendTxEvents({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
         if (token?.address) {
-            registerSendTxEvents({
-                transactionHash: callback,
-                confirmation: confirmationCallback
-            });
             if (commissionsAmount.isZero()) {
-                receipt = await productInfo.donate({
+                receipt = await productMarketplace.donate({
                     donor: wallet.address,
                     donee: donateTo,
                     productId: productId,
@@ -308,7 +326,7 @@ async function donate(
                 });
             }
             else {
-                const txData = await productInfo.donate.txData({
+                const txData = await productMarketplace.donate.txData({
                     donor: wallet.address,
                     donee: donateTo,
                     productId: productId,
@@ -322,31 +340,29 @@ async function donate(
                     commissions: _commissions
                 };
                 receipt = await proxy.tokenIn({
-                    target: productInfoAddress,
+                    target: productMarketplaceAddress,
                     tokensIn,
                     data: txData
                 });
             }
         } else {
-            registerSendTxEvents({
-                transactionHash: callback,
-                confirmation: confirmationCallback
-            });
             if (commissionsAmount.isZero()) {
-                receipt = await productInfo.donateEth({
+                receipt = await productMarketplace.donate({
                     donor: wallet.address,
                     donee: donateTo,
-                    productId: productId
-                });
+                    productId: productId,
+                    amountIn: 0
+                }, { value: amount });
             }
             else {
-                const txData = await productInfo.donateEth.txData({
+                const txData = await productMarketplace.donate.txData({
                     donor: wallet.address,
                     donee: donateTo,
-                    productId: productId
-                }, amount);
+                    productId: productId,
+                    amountIn: 0
+                }, { value: amount });
                 receipt = await proxy.ethIn({
-                    target: productInfoAddress,
+                    target: productMarketplaceAddress,
                     commissions: _commissions,
                     data: txData
                 }, amount.plus(commissionsAmount));
@@ -359,17 +375,17 @@ async function donate(
     return receipt;
 }
 
-async function updateProductUri(productInfoAddress: string, productId: number | BigNumber, uri: string) {
+async function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string) {
     let wallet = Wallet.getClientInstance();
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-    const receipt = await productInfo.updateProductUri({uri,productId});
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    const receipt = await productMarketplace.updateProductUri({ productId, uri });
     return receipt;
 }
 
-async function updateProductPrice(productInfoAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number) {
+async function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number) {
     let wallet = Wallet.getClientInstance();
-    const productInfo = new ProductContracts.ProductInfo(wallet, productInfoAddress);
-    const receipt = await productInfo.updateProductPrice({price:BigNumber(price).shiftedBy(tokenDecimals),productId});
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    const receipt = await productMarketplace.updateProductPrice({ productId, price:BigNumber(price).shiftedBy(tokenDecimals) });
     return receipt;
 }
 //
@@ -379,7 +395,7 @@ async function fetchUserNftBalance(state: State, address: string) {
     if (!address) return null;
     try {
         const wallet = state.getRpcWallet();
-        const erc721 = new ProductContracts.ERC721(wallet, address);
+        const erc721 = new OswapNftContracts.ERC721(wallet, address);
         const nftBalance = await erc721.balanceOf(wallet.address);
         return nftBalance.toFixed();
     } catch {

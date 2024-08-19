@@ -507,7 +507,7 @@ export default class ScomNftMinter extends Module {
           const defaultData = configData.defaultBuilderData;
           this._data = { ...defaultBuilderData, ...defaultData, ...data };
           if (!this.nftType) {
-            const contract = this.state.getContractAddress('ProductInfo');
+            const contract = this.state.getContractAddress('ProductMarketplace');
             const maxQty = this.newMaxQty;
             if (!contract || new BigNumber(maxQty).lte(0)) {
               return false;
@@ -695,7 +695,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private newProduct = async () => {
-    let contract = this.state.getContractAddress('ProductInfo');
+    let contract = this.state.getContractAddress('ProductMarketplace');
     const maxQty = this.newMaxQty;
     // const txnMaxQty = this.newTxnMaxQty;
     const price = new BigNumber(this.newPrice).toFixed();
@@ -726,7 +726,7 @@ export default class ScomNftMinter extends Module {
         }
         if (!isConnected) return;
         await delay(3000);
-        contract = this.state.getContractAddress('ProductInfo');
+        contract = this.state.getContractAddress('ProductMarketplace');
       }
       try {
         const { tokenToMint, customMintToken, uri } = this._data;

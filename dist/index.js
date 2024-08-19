@@ -25,6 +25,7 @@ define("@scom/scom-nft-minter/interface/index.tsx", ["require", "exports"], func
     var ProductType;
     (function (ProductType) {
         ProductType["Buy"] = "Buy";
+        ProductType["Subscription"] = "Subscription";
         ProductType["DonateToOwner"] = "DonateToOwner";
         ProductType["DonateToEveryone"] = "DonateToEveryone";
     })(ProductType = exports.ProductType || (exports.ProductType = {}));
@@ -333,13 +334,12 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/sco
         await wallet.init();
         if (wallet.chainId != chainId)
             await wallet.switchNetwork(chainId);
-        let productInfoAddress = state.getContractAddress('ProductInfo');
-        let contract = new scom_product_contract_1.Contracts.ProductInfo(wallet, productInfoAddress);
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        let contract = new scom_product_contract_1.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         let permittedProxyFunctions = [
             "buy",
-            "buyEth",
             "donate",
-            "donateEth"
+            "subscribe"
         ];
         let selectors = permittedProxyFunctions
             .map(e => e + "(" + contract._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")")
@@ -447,14 +447,14 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.newProduct = exports.getNFTBalance = exports.getProductInfo = void 0;
-    async function getProductInfo(state, erc1155Index) {
-        let productInfoAddress = state.getContractAddress('ProductInfo');
-        if (!productInfoAddress)
+    async function getProductInfo(state, productId) {
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        if (!productMarketplaceAddress)
             return null;
         try {
             const wallet = state.getRpcWallet();
-            const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-            const product = await productInfo.products(erc1155Index);
+            const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+            const product = await productMarketplace.products(productId);
             const chainId = wallet.chainId;
             if (product.token && product.token === index_5.nullAddress) {
                 let net = (0, scom_network_list_2.default)().find(net => net.chainId === chainId);
@@ -484,14 +484,14 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getProductInfo = getProductInfo;
-    async function getProductOwner(state, erc1155Index) {
-        let productInfoAddress = state.getContractAddress('ProductInfo');
-        if (!productInfoAddress)
+    async function getProductOwner(state, productId) {
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        if (!productMarketplaceAddress)
             return null;
         try {
             const wallet = state.getRpcWallet();
-            const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-            const owner = await productInfo.productOwner(erc1155Index);
+            const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+            const owner = await productMarketplace.productOwner(productId);
             return owner;
         }
         catch {
@@ -499,14 +499,27 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getProductOwner = getProductOwner;
-    async function getNFTBalance(state, erc1155Index) {
-        let product1155Address = state.getContractAddress('Product1155');
-        if (!product1155Address)
+    async function getNFTBalance(state, productId) {
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        if (!productMarketplaceAddress)
             return null;
         try {
             const wallet = state.getRpcWallet();
-            const product1155 = new scom_product_contract_2.Contracts.Product1155(wallet, product1155Address);
-            const nftBalance = await product1155.balanceOf({ account: wallet.address, id: erc1155Index });
+            const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+            const product = await productMarketplace.products(productId);
+            let nftBalance;
+            if (product.productType.eq(1)) {
+                // Subscription
+                const subscriptionNFT = new scom_product_contract_2.Contracts.SubscriptionNFT(wallet, product.nft);
+                nftBalance = await subscriptionNFT.balanceOf(wallet.address);
+            }
+            else {
+                let oneTimePurchaseNFTAddress = state.getContractAddress('OneTimePurchaseNFT');
+                if (!oneTimePurchaseNFTAddress)
+                    return null;
+                const oneTimePurchaseNFT = new scom_product_contract_2.Contracts.OneTimePurchaseNFT(wallet, oneTimePurchaseNFTAddress);
+                nftBalance = await oneTimePurchaseNFT.balanceOf({ account: wallet.address, id: product.nftId });
+            }
             return nftBalance.toFixed();
         }
         catch {
@@ -514,13 +527,15 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
     }
     exports.getNFTBalance = getNFTBalance;
-    async function newProduct(productInfoAddress, productType, qty, // max quantity of this nft can be exist at anytime
-    maxQty, // max quantity for one buy() txn
+    async function newProduct(productMarketplaceAddress, productType, quantity, // max quantity of this nft can be exist at anytime
+    maxQuantity, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
     tokenAddress, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals, uri, callback, confirmationCallback) {
+    tokenDecimals, uri, 
+    //For Subscription
+    nftName = '', nftSymbol = '', priceDuration = 0, callback, confirmationCallback) {
         const wallet = eth_wallet_3.Wallet.getClientInstance();
-        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         (0, index_5.registerSendTxEvents)({
             transactionHash: callback,
             confirmation: confirmationCallback
@@ -530,25 +545,31 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             case index_4.ProductType.Buy:
                 productTypeCode = 0;
                 break;
-            case index_4.ProductType.DonateToOwner:
+            case index_4.ProductType.Subscription:
                 productTypeCode = 1;
                 break;
-            case index_4.ProductType.DonateToEveryone:
+            case index_4.ProductType.DonateToOwner:
                 productTypeCode = 2;
                 break;
+            case index_4.ProductType.DonateToEveryone:
+                productTypeCode = 3;
+                break;
         }
-        let receipt = await productInfo.newProduct({
+        let receipt = await productMarketplace.newProduct({
             productType: productTypeCode,
             uri: uri || '',
-            quantity: qty,
-            maxQuantity: maxQty,
+            quantity: quantity,
+            maxQuantity: maxQuantity,
             maxPrice: eth_wallet_3.Utils.toDecimals(maxPrice, tokenDecimals),
             price: eth_wallet_3.Utils.toDecimals(price, tokenDecimals),
-            token: tokenAddress
+            token: tokenAddress,
+            priceDuration: priceDuration,
+            nftName: nftName,
+            nftSymbol: nftSymbol
         });
         let productId;
         if (receipt) {
-            let event = productInfo.parseNewProductEvent(receipt)[0];
+            let event = productMarketplace.parseNewProductEvent(receipt)[0];
             productId = event?.productId.toNumber();
         }
         return {
@@ -557,7 +578,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         };
     }
     exports.newProduct = newProduct;
-    async function newDefaultBuyProduct(productInfoAddress, qty, // max quantity of this nft can be exist at anytime
+    async function newDefaultBuyProduct(productMarketplaceAddress, qty, // max quantity of this nft can be exist at anytime
     //maxQty = qty
     //maxQty: number, // max quantity for one buy() txn
     price, tokenAddress, tokenDecimals, uri, callback, confirmationCallback) {
@@ -572,8 +593,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             //warn that it will be free to mint
             console.log("newDefaultBuyProduct() warning! price = 0");
         }
-        return await newProduct(productInfoAddress, index_4.ProductType.Buy, qty, qty, //maxQty
-        price, "0", tokenAddress, tokenDecimals, uri, callback, confirmationCallback);
+        return await newProduct(productMarketplaceAddress, index_4.ProductType.Buy, qty, qty, //maxQty
+        price, "0", tokenAddress, tokenDecimals, uri, '', '', 0, callback, confirmationCallback);
     }
     exports.newDefaultBuyProduct = newDefaultBuyProduct;
     function getProxyTokenAmountIn(productPrice, quantity, commissions) {
@@ -593,11 +614,11 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     exports.getProxyTokenAmountIn = getProxyTokenAmountIn;
     async function buyProduct(state, productId, quantity, commissions, token, callback, confirmationCallback) {
         let proxyAddress = state.getContractAddress('Proxy');
-        let productInfoAddress = state.getContractAddress('ProductInfo');
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-        const product = await productInfo.products(productId);
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const product = await productMarketplace.products(productId);
         const amount = product.price.times(quantity);
         const _commissions = (commissions || []).filter(v => v.chainId === state.getChainId()).map(v => {
             return {
@@ -608,24 +629,22 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_3.BigNumber(0);
         let receipt;
         try {
+            (0, index_5.registerSendTxEvents)({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
             if (token?.address && token?.address !== index_5.nullAddress) {
-                (0, index_5.registerSendTxEvents)({
-                    transactionHash: callback,
-                    confirmation: confirmationCallback
-                });
                 if (commissionsAmount.isZero()) {
-                    receipt = await productInfo.buy({
+                    receipt = await productMarketplace.buy({
                         productId: productId,
                         quantity: quantity,
-                        amountIn: amount,
                         to: wallet.address
                     });
                 }
                 else {
-                    const txData = await productInfo.buy.txData({
+                    const txData = await productMarketplace.buy.txData({
                         productId: productId,
                         quantity: quantity,
-                        amountIn: amount,
                         to: wallet.address
                     });
                     const tokensIn = {
@@ -635,32 +654,28 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         commissions: _commissions
                     };
                     receipt = await proxy.tokenIn({
-                        target: productInfoAddress,
+                        target: productMarketplaceAddress,
                         tokensIn,
                         data: txData
                     });
                 }
             }
             else {
-                (0, index_5.registerSendTxEvents)({
-                    transactionHash: callback,
-                    confirmation: confirmationCallback
-                });
                 if (commissionsAmount.isZero()) {
-                    receipt = await productInfo.buyEth({
+                    receipt = await productMarketplace.buy({
                         productId: productId,
                         quantity,
                         to: wallet.address
                     }, amount);
                 }
                 else {
-                    const txData = await productInfo.buyEth.txData({
+                    const txData = await productMarketplace.buy.txData({
                         productId: productId,
                         quantity,
                         to: wallet.address
                     }, amount);
                     receipt = await proxy.ethIn({
-                        target: productInfoAddress,
+                        target: productMarketplaceAddress,
                         commissions: _commissions,
                         data: txData
                     }, amount.plus(commissionsAmount));
@@ -675,10 +690,10 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
     exports.buyProduct = buyProduct;
     async function donate(state, productId, donateTo, amountIn, commissions, token, callback, confirmationCallback) {
         let proxyAddress = state.getContractAddress('Proxy');
-        let productInfoAddress = state.getContractAddress('ProductInfo');
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
-        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         const tokenDecimals = token?.decimals || 18;
         const amount = eth_wallet_3.Utils.toDecimals(amountIn, tokenDecimals);
         const _commissions = (commissions || []).map(v => {
@@ -690,13 +705,13 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_3.BigNumber(0);
         let receipt;
         try {
+            (0, index_5.registerSendTxEvents)({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
             if (token?.address) {
-                (0, index_5.registerSendTxEvents)({
-                    transactionHash: callback,
-                    confirmation: confirmationCallback
-                });
                 if (commissionsAmount.isZero()) {
-                    receipt = await productInfo.donate({
+                    receipt = await productMarketplace.donate({
                         donor: wallet.address,
                         donee: donateTo,
                         productId: productId,
@@ -704,7 +719,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     });
                 }
                 else {
-                    const txData = await productInfo.donate.txData({
+                    const txData = await productMarketplace.donate.txData({
                         donor: wallet.address,
                         donee: donateTo,
                         productId: productId,
@@ -717,32 +732,30 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         commissions: _commissions
                     };
                     receipt = await proxy.tokenIn({
-                        target: productInfoAddress,
+                        target: productMarketplaceAddress,
                         tokensIn,
                         data: txData
                     });
                 }
             }
             else {
-                (0, index_5.registerSendTxEvents)({
-                    transactionHash: callback,
-                    confirmation: confirmationCallback
-                });
                 if (commissionsAmount.isZero()) {
-                    receipt = await productInfo.donateEth({
+                    receipt = await productMarketplace.donate({
                         donor: wallet.address,
                         donee: donateTo,
-                        productId: productId
-                    });
+                        productId: productId,
+                        amountIn: 0
+                    }, { value: amount });
                 }
                 else {
-                    const txData = await productInfo.donateEth.txData({
+                    const txData = await productMarketplace.donate.txData({
                         donor: wallet.address,
                         donee: donateTo,
-                        productId: productId
-                    }, amount);
+                        productId: productId,
+                        amountIn: 0
+                    }, { value: amount });
                     receipt = await proxy.ethIn({
-                        target: productInfoAddress,
+                        target: productMarketplaceAddress,
                         commissions: _commissions,
                         data: txData
                     }, amount.plus(commissionsAmount));
@@ -755,17 +768,17 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function updateProductUri(productInfoAddress, productId, uri) {
+    async function updateProductUri(productMarketplaceAddress, productId, uri) {
         let wallet = eth_wallet_3.Wallet.getClientInstance();
-        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-        const receipt = await productInfo.updateProductUri({ uri, productId });
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const receipt = await productMarketplace.updateProductUri({ productId, uri });
         return receipt;
     }
     exports.updateProductUri = updateProductUri;
-    async function updateProductPrice(productInfoAddress, productId, price, tokenDecimals) {
+    async function updateProductPrice(productMarketplaceAddress, productId, price, tokenDecimals) {
         let wallet = eth_wallet_3.Wallet.getClientInstance();
-        const productInfo = new scom_product_contract_2.Contracts.ProductInfo(wallet, productInfoAddress);
-        const receipt = await productInfo.updateProductPrice({ price: (0, eth_wallet_3.BigNumber)(price).shiftedBy(tokenDecimals), productId });
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const receipt = await productMarketplace.updateProductPrice({ productId, price: (0, eth_wallet_3.BigNumber)(price).shiftedBy(tokenDecimals) });
         return receipt;
     }
     exports.updateProductPrice = updateProductPrice;
@@ -777,7 +790,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             return null;
         try {
             const wallet = state.getRpcWallet();
-            const erc721 = new scom_product_contract_2.Contracts.ERC721(wallet, address);
+            const erc721 = new oswap_troll_nft_contract_1.Contracts.ERC721(wallet, address);
             const nftBalance = await erc721.balanceOf(wallet.address);
             return nftBalance.toFixed();
         }
@@ -875,53 +888,22 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports"], function (r
         "infuraId": "adc596bf88b648e2a8902bc9093930c5",
         "contractInfo": {
             "43113": {
-                "ProductNFT": {
-                    "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
+                "ProductMarketplace": {
+                    "address": "0x05a024cb5800f7f88c4e1a9359658187c47e3396"
                 },
-                "ProductInfo": {
-                    "address": "0x23066A700753c57dCb609CE45e06ac5a7BfDb64d"
+                "OneTimePurchaseNFT": {
+                    "address": "0x1b71c44adb9331d1f647a9e6e4358c19247847b1"
+                },
+                "SubscriptionNFTFactory": {
+                    "address": "0x5067cf395f1cdffd9964962dfd15c96861ba8f3d"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
                 },
-                "Product1155": {
-                    "address": "0xB50fb7AFfef05021a215Af71548305a8D1ABf582"
-                }
-            },
-            "97": {
-                "ProductNFT": {
-                    "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
-                },
-                "ProductInfo": {
-                    "address": "0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
-                },
-                "Proxy": {
-                    "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
-                },
-                "Product1155": {
-                    "address": "0xd638ce7b39e38C410E672eb409cb4813FD844771"
-                }
             }
         },
         "embedderCommissionFee": "0",
         "defaultBuilderData": {
-            // "name": "Donation Dapp",
-            // "title": "Title",
-            // "productType": "DonateToEveryone",
-            // "description": "#### Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            // "link": "",
-            // "hideDescription": true,
-            // "logoUrl": "https://placehold.co/600x400?text=No+Image",
-            // "chainSpecificProperties": {
-            //     "97": {
-            //         "productId": 1,
-            //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-            //     },
-            //     "43113": {
-            //         "productId": 1,
-            //         "donateTo": "0xCE001a607402Bba038F404106CA6682fBb1108F6"
-            //     }
-            // },
             "defaultChainId": 43113,
             "networks": [
                 {
@@ -1965,7 +1947,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 catch { }
             };
             this.newProduct = async () => {
-                let contract = this.state.getContractAddress('ProductInfo');
+                let contract = this.state.getContractAddress('ProductMarketplace');
                 const maxQty = this.newMaxQty;
                 // const txnMaxQty = this.newTxnMaxQty;
                 const price = new eth_wallet_5.BigNumber(this.newPrice).toFixed();
@@ -1998,7 +1980,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         if (!isConnected)
                             return;
                         await (0, index_11.delay)(3000);
-                        contract = this.state.getContractAddress('ProductInfo');
+                        contract = this.state.getContractAddress('ProductMarketplace');
                     }
                     try {
                         const { tokenToMint, customMintToken, uri } = this._data;
@@ -2378,7 +2360,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         const defaultData = data_json_1.default.defaultBuilderData;
                         this._data = { ...defaultBuilderData, ...defaultData, ...data };
                         if (!this.nftType) {
-                            const contract = this.state.getContractAddress('ProductInfo');
+                            const contract = this.state.getContractAddress('ProductMarketplace');
                             const maxQty = this.newMaxQty;
                             if (!contract || new eth_wallet_5.BigNumber(maxQty).lte(0)) {
                                 return false;
