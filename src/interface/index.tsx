@@ -52,6 +52,7 @@ export interface IEmbedData {
   priceToMint?: number;
   maxQty?: number;
   paymentModel?: PaymentModel;
+  durationInDays?: number;
   priceDuration?: number;
   txnMaxQty?: number;
   uri?: string;

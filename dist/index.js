@@ -1521,7 +1521,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         ],
                         required: true
                     },
-                    duration: {
+                    durationInDays: {
                         type: 'integer',
                         title: 'Duration (Days)',
                         tooltip: 'The period of time in which a subscription remains in effect',
@@ -1572,7 +1572,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     },
                     {
                         type: 'Control',
-                        scope: '#/properties/duration',
+                        scope: '#/properties/durationInDays',
                         rule: {
                             effect: 'SHOW',
                             condition: {
@@ -2543,7 +2543,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async _createProduct(productMarketplaceAddress, quantity, price, uri, token, callback, confirmationCallback) {
             let result;
             if (this._data.paymentModel === index_11.PaymentModel.Subscription) {
-                result = await (0, API_2.createSubscriptionNFT)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, this._data.priceDuration, callback, confirmationCallback);
+                result = await (0, API_2.createSubscriptionNFT)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, this._data.durationInDays * 86400 || 0, callback, confirmationCallback);
                 this._data.nftType = 'ERC721';
             }
             else {

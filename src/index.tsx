@@ -713,7 +713,7 @@ export default class ScomNftMinter extends Module {
         token?.address || nullAddress,
         token?.decimals || 18,
         uri,
-        this._data.priceDuration,
+        this._data.durationInDays * 86400 || 0,
         callback,
         confirmationCallback
       );

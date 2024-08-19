@@ -424,7 +424,7 @@ export function getProjectOwnerSchema1() {
                     ],
                     required: true
                 },
-                duration: {
+                durationInDays: {
                     type: 'integer',
                     title: 'Duration (Days)',
                     tooltip: 'The period of time in which a subscription remains in effect',
@@ -475,7 +475,7 @@ export function getProjectOwnerSchema1() {
                 },
                 {
                     type: 'Control',
-                    scope: '#/properties/duration',
+                    scope: '#/properties/durationInDays',
                     rule: {
                         effect: 'SHOW',
                         condition: {

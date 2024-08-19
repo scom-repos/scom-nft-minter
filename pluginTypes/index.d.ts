@@ -53,6 +53,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         priceToMint?: number;
         maxQty?: number;
         paymentModel?: PaymentModel;
+        durationInDays?: number;
         priceDuration?: number;
         txnMaxQty?: number;
         uri?: string;
@@ -548,7 +549,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     }[];
                     required: boolean;
                 };
-                duration: {
+                durationInDays: {
                     type: string;
                     title: string;
                     tooltip: string;
@@ -815,7 +816,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     }[];
                     required: boolean;
                 };
-                duration: {
+                durationInDays: {
                     type: string;
                     title: string;
                     tooltip: string;
@@ -1205,6 +1206,7 @@ declare module "@scom/scom-nft-minter" {
                 priceToMint?: number;
                 maxQty?: number;
                 paymentModel?: PaymentModel;
+                durationInDays?: number;
                 priceDuration?: number;
                 txnMaxQty?: number;
                 uri?: string;
