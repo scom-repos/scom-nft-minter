@@ -2606,7 +2606,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this._type = this.productType;
                 await this.updateDAppUI(this._data);
                 this.determineBtnSubmitCaption();
-                if (this.nftType !== 'ERC721' && !this.productId)
+                if (!this.nftType)
                     return;
                 await this.initWallet();
                 this.btnSubmit.enabled = !(0, index_13.isClientWalletConnected)() || !this.state.isRpcWalletConnected();

@@ -868,7 +868,7 @@ export default class ScomNftMinter extends Module {
       this._type = this.productType;
       await this.updateDAppUI(this._data);
       this.determineBtnSubmitCaption();
-      if (this.nftType !== 'ERC721' && !this.productId) return;
+      if (!this.nftType) return;
       await this.initWallet();
       this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
       // OswapTroll
