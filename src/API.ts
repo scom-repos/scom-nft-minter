@@ -157,8 +157,7 @@ async function newProduct(
     return {
         receipt,
         productId,
-        nftAddress: product.nft,
-        nftId: product.nftId?.toNumber()
+        product
     };
 }
 

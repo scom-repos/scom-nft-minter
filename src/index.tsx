@@ -279,6 +279,25 @@ export default class ScomNftMinter extends Module {
     this._data.defaultChainId = value;
   }
 
+  private getProductTypeByCode(code: number) {
+    let productType: ProductType;
+    switch (code) {
+      case 0:
+        productType = ProductType.Buy;
+        break;
+      case 1:
+        productType = ProductType.Subscription;
+        break;
+      case 2:
+        productType = ProductType.DonateToOwner;
+        break;
+      case 3:
+        productType = ProductType.DonateToEveryone;
+        break;
+    }
+    return productType;
+  }
+
   private onChainChanged = async () => {
     this.tokenInput.chainId = this.state.getChainId();
     this.onSetupPage();
@@ -515,6 +534,17 @@ export default class ScomNftMinter extends Module {
             await this.initWallet();
             await this.newProduct();
             return this._data.erc1155Index > 0;
+          } else if (this.nftType === 'ERC1155') {
+            await this.resetRpcWallet();
+            await this.initWallet();
+            let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
+            if (productId) {
+              this._data.productId = productId;
+              this.productInfo = await getProductInfo(this.state, this.productId);
+              this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
+              this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+              this._data.tokenToMint = this.productInfo.token.address;
+            }
           }
           return true;
         },
@@ -708,8 +738,7 @@ export default class ScomNftMinter extends Module {
     let result: {
       receipt: TransactionReceipt;
       productId: number;
-      nftAddress: string;
-      nftId?: number;
+      product: any;
     };
     if (this._data.paymentModel === PaymentModel.Subscription) {
       result = await createSubscriptionNFT(
@@ -736,10 +765,13 @@ export default class ScomNftMinter extends Module {
         confirmationCallback
       );
       this._data.nftType = 'ERC1155';
-      this._data.erc1155Index = result.nftId;
+      this._data.erc1155Index = result.product.nftId.toNumber();
     }
     this._data.productId = result.productId;
-    this._data.nftAddress = result.nftAddress;
+    this._data.nftAddress = result.product.nft;
+    this._data.productType = this.getProductTypeByCode(result.product.productType.toNumber());
+    this._data.priceToMint = Utils.fromDecimals(result.product.price).toNumber();
+    this._data.tokenToMint = result.product.token;
   }
 
   private newProduct = async () => {
@@ -1391,6 +1423,7 @@ export default class ScomNftMinter extends Module {
 
   async init() {
     super.init();
+    this._createProduct = this._createProduct.bind(this);
     this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {

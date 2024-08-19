@@ -595,8 +595,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return {
             receipt,
             productId,
-            nftAddress: product.nft,
-            nftId: product.nftId?.toNumber()
+            product
         };
     }
     exports.newProduct = newProduct;
@@ -2187,6 +2186,24 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         set defaultChainId(value) {
             this._data.defaultChainId = value;
         }
+        getProductTypeByCode(code) {
+            let productType;
+            switch (code) {
+                case 0:
+                    productType = index_11.ProductType.Buy;
+                    break;
+                case 1:
+                    productType = index_11.ProductType.Subscription;
+                    break;
+                case 2:
+                    productType = index_11.ProductType.DonateToOwner;
+                    break;
+                case 3:
+                    productType = index_11.ProductType.DonateToEveryone;
+                    break;
+            }
+            return productType;
+        }
         async onSetupPage() {
             if (this.state.isRpcWalletConnected())
                 await this.initApprovalAction();
@@ -2390,6 +2407,18 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             await this.newProduct();
                             return this._data.erc1155Index > 0;
                         }
+                        else if (this.nftType === 'ERC1155') {
+                            await this.resetRpcWallet();
+                            await this.initWallet();
+                            let productId = await (0, API_2.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
+                            if (productId) {
+                                this._data.productId = productId;
+                                this.productInfo = await (0, API_2.getProductInfo)(this.state, this.productId);
+                                this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
+                                this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+                                this._data.tokenToMint = this.productInfo.token.address;
+                            }
+                        }
                         return true;
                     },
                     getTag: this.getTag.bind(this),
@@ -2576,10 +2605,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else {
                 result = await (0, API_2.newDefaultBuyProduct)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, callback, confirmationCallback);
                 this._data.nftType = 'ERC1155';
-                this._data.erc1155Index = result.nftId;
+                this._data.erc1155Index = result.product.nftId.toNumber();
             }
             this._data.productId = result.productId;
-            this._data.nftAddress = result.nftAddress;
+            this._data.nftAddress = result.product.nft;
+            this._data.productType = this.getProductTypeByCode(result.product.productType.toNumber());
+            this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(result.product.price).toNumber();
+            this._data.tokenToMint = result.product.token;
         }
         async initWallet() {
             try {
@@ -3109,6 +3141,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async init() {
             super.init();
+            this._createProduct = this._createProduct.bind(this);
             this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
             const lazyLoad = this.getAttribute('lazyLoad', true, false);
             if (!lazyLoad) {

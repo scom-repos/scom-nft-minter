@@ -283,21 +283,57 @@ declare module "@scom/scom-nft-minter/API.ts" {
     tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
-        nftAddress: string;
-        nftId: number;
+        product: {
+            productType: BigNumber;
+            productId: BigNumber;
+            uri: string;
+            quantity: BigNumber;
+            price: BigNumber;
+            maxQuantity: BigNumber;
+            maxPrice: BigNumber;
+            token: string;
+            status: BigNumber;
+            nft: string;
+            nftId: BigNumber;
+            priceDuration: BigNumber;
+        };
     }>;
     function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
-        nftAddress: string;
-        nftId: number;
+        product: {
+            productType: BigNumber;
+            productId: BigNumber;
+            uri: string;
+            quantity: BigNumber;
+            price: BigNumber;
+            maxQuantity: BigNumber;
+            maxPrice: BigNumber;
+            token: string;
+            status: BigNumber;
+            nft: string;
+            nftId: BigNumber;
+            priceDuration: BigNumber;
+        };
     }>;
     function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
     price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
         receipt: import("@ijstech/eth-contract").TransactionReceipt;
         productId: number;
-        nftAddress: string;
-        nftId: number;
+        product: {
+            productType: BigNumber;
+            productId: BigNumber;
+            uri: string;
+            quantity: BigNumber;
+            price: BigNumber;
+            maxQuantity: BigNumber;
+            maxPrice: BigNumber;
+            token: string;
+            status: BigNumber;
+            nft: string;
+            nftId: BigNumber;
+            priceDuration: BigNumber;
+        };
     }>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
@@ -1157,6 +1193,7 @@ declare module "@scom/scom-nft-minter" {
         set showHeader(value: boolean);
         get defaultChainId(): number;
         set defaultChainId(value: number);
+        private getProductTypeByCode;
         private onChainChanged;
         private updateTokenBalance;
         private onSetupPage;
