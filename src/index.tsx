@@ -22,7 +22,7 @@ import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWa
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductId, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -532,8 +532,7 @@ export default class ScomNftMinter extends Module {
             this._data.erc1155Index = undefined;
             await this.resetRpcWallet();
             await this.initWallet();
-            await this.newProduct();
-            return this._data.erc1155Index > 0;
+            return await this.newProduct();
           } else {
             await this.resetRpcWallet();
             await this.initWallet();
@@ -739,13 +738,8 @@ export default class ScomNftMinter extends Module {
     callback?: any,
     confirmationCallback?: any
   ) {
-    let result: {
-      receipt: TransactionReceipt;
-      productId: number;
-      product: any;
-    };
     if (this._data.paymentModel === PaymentModel.Subscription) {
-      result = await createSubscriptionNFT(
+      await createSubscriptionNFT(
         productMarketplaceAddress,
         quantity,
         price,
@@ -756,9 +750,8 @@ export default class ScomNftMinter extends Module {
         callback,
         confirmationCallback
       );
-      this._data.nftType = 'ERC721';
     } else {
-      result = await newDefaultBuyProduct(
+      await newDefaultBuyProduct(
         productMarketplaceAddress,
         quantity,
         price,
@@ -768,105 +761,116 @@ export default class ScomNftMinter extends Module {
         callback,
         confirmationCallback
       );
-      this._data.nftType = 'ERC1155';
-      this._data.erc1155Index = result.product.nftId.toNumber();
     }
-    this._data.productId = result.productId;
-    this._data.nftAddress = result.product.nft;
-    this._data.productType = this.getProductTypeByCode(result.product.productType.toNumber());
-    this._data.priceToMint = Utils.fromDecimals(result.product.price).toNumber();
-    this._data.tokenToMint = result.product.token;
   }
 
   private newProduct = async () => {
-    let contract = this.state.getContractAddress('ProductMarketplace');
-    const maxQty = this.newMaxQty;
-    // const txnMaxQty = this.newTxnMaxQty;
-    const price = new BigNumber(this.newPrice).toFixed();
-    if ((!this.nftType) && new BigNumber(maxQty).gt(0)) {
-      if (this._data.erc1155Index >= 0) {
-        this._data.nftType = 'ERC1155';
-        return;
-      };
-      const callback = (err: Error, receipt?: string) => {
-        if (err) {
-          this.showTxStatusModal('error', err);
+    return new Promise<boolean>(async (resolve, reject) => {
+      let contract = this.state.getContractAddress('ProductMarketplace');
+      const maxQty = this.newMaxQty;
+      // const txnMaxQty = this.newTxnMaxQty;
+      const price = new BigNumber(this.newPrice).toFixed();
+      if ((!this.nftType) && new BigNumber(maxQty).gt(0)) {
+        if (this._data.erc1155Index >= 0) {
+          this._data.nftType = 'ERC1155';
+          return resolve(true);
+        };
+        const callback = (err: Error, receipt?: string) => {
+          if (err) {
+            this.showTxStatusModal('error', err);
+          }
         }
-      }
-      const confirmationCallback = async (receipt: any) => {
-
-      }
-      if (!isClientWalletConnected()) {
-        this.connectWallet();
-        return;
-      }
-      if (!this.state.isRpcWalletConnected()) {
-        const clientWallet = Wallet.getClientInstance();
-        let isConnected = false;
+        const confirmationCallback = async (receipt: any) => {
+          let productId: number = getProductIdFromEvent(contract, receipt);
+          this._data.productId = productId;
+          this._data.nftType = this._data.paymentModel === PaymentModel.Subscription ? 'ERC721' : 'ERC1155';
+          this.productInfo = await getProductInfo(this.state, this.productId);
+          if (this._data.nftType === 'ERC1155') {
+            this._data.erc1155Index = this.productInfo.nftId.toNumber();
+          }
+          this._data.nftAddress = this.productInfo.nft;
+          this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
+          this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+          this._data.tokenToMint = this.productInfo.token.address;
+          return resolve(true);
+        }
+        if (!isClientWalletConnected()) {
+          this.connectWallet();
+          return resolve(false);
+        }
+        if (!this.state.isRpcWalletConnected()) {
+          const clientWallet = Wallet.getClientInstance();
+          let isConnected = false;
+          try {
+            isConnected = await clientWallet.switchNetwork(this.chainId);
+          } catch {
+            return resolve(false);
+          }
+          if (!isConnected) return resolve(false);
+          await delay(3000);
+          contract = this.state.getContractAddress('ProductMarketplace');
+        }
+        if (!contract) {
+          this.showTxStatusModal('error', 'This network is not supported!');
+          return resolve(false);
+        }
         try {
-          isConnected = await clientWallet.switchNetwork(this.chainId);
-        } catch {
-          return;
-        }
-        if (!isConnected) return;
-        await delay(3000);
-        contract = this.state.getContractAddress('ProductMarketplace');
-      }
-      if (!contract) {
-        this.showTxStatusModal('error', 'This network is not supported!');
-        return;
-      }
-      try {
-        const { tokenToMint, customMintToken, uri } = this._data;
-        const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
-        if (!tokenToMint || (isCustomToken && !customMintToken)) {
-          this.showTxStatusModal('error', 'TokenToMint is missing!');
-          return;
-        }
-        const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
-        if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
-          const address = tokenAddress.toLowerCase();
-          const nativeToken = ChainNativeTokenByChainId[this.chainId];
-          if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
-            this.showTxStatusModal('error', 'Invalid token!');
-            return;
+          const { tokenToMint, customMintToken, uri, paymentModel, durationInDays } = this._data;
+          const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
+          if (!tokenToMint || (isCustomToken && !customMintToken)) {
+            this.showTxStatusModal('error', 'TokenToMint is missing!');
+            return resolve(false);
           }
-          //pay native token
-          await this._createProduct(
-            contract,
-            maxQty,
-            price,
-            uri,
-            null,
-            callback,
-            confirmationCallback
-          );
-        } else { //pay erc20
-          let token: ITokenObject;
-          if (isCustomToken) {
-            token = await getTokenInfo(tokenAddress, this.chainId);
-          } else {
-            token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
+          if (paymentModel === PaymentModel.Subscription && !durationInDays) {
+            this.showTxStatusModal('error', 'Duration is missing!');
+            return resolve(false);
           }
-          if (!token) {
-            this.showTxStatusModal('error', 'Invalid token!');
-            return;
+          const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
+          if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
+            const address = tokenAddress.toLowerCase();
+            const nativeToken = ChainNativeTokenByChainId[this.chainId];
+            if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
+              this.showTxStatusModal('error', 'Invalid token!');
+              return resolve(false);
+            }
+            //pay native token
+            await this._createProduct(
+              contract,
+              maxQty,
+              price,
+              uri,
+              null,
+              callback,
+              confirmationCallback
+            );
+          } else { //pay erc20
+            let token: ITokenObject;
+            if (isCustomToken) {
+              token = await getTokenInfo(tokenAddress, this.chainId);
+            } else {
+              token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
+            }
+            if (!token) {
+              this.showTxStatusModal('error', 'Invalid token!');
+              return resolve(false);
+            }
+            await this._createProduct(
+              contract,
+              maxQty,
+              price,
+              uri,
+              token,
+              callback,
+              confirmationCallback
+            );
           }
-          await this._createProduct(
-            contract,
-            maxQty,
-            price,
-            uri,
-            token,
-            callback,
-            confirmationCallback
-          );
+        } catch (error) {
+          this.showTxStatusModal('error', 'Something went wrong creating new product!');
+          console.log('newProduct', error);
+          resolve(false);
         }
-      } catch (error) {
-        this.showTxStatusModal('error', 'Something went wrong creating new product!');
-        console.log('newProduct', error);
       }
-    }
+    });
   }
 
   private connectWallet = async () => {

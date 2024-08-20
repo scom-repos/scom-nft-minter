@@ -276,65 +276,15 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProductOwner(state: State, productId: number): Promise<string>;
     function getNFTBalance(state: State, productId: number): Promise<string>;
     function getProductId(state: State, nftAddress: string, nftId?: number): Promise<number>;
+    function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any): number;
     function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
     maxQuantity: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
     tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
-        receipt: import("@ijstech/eth-contract").TransactionReceipt;
-        productId: number;
-        product: {
-            productType: BigNumber;
-            productId: BigNumber;
-            uri: string;
-            quantity: BigNumber;
-            price: BigNumber;
-            maxQuantity: BigNumber;
-            maxPrice: BigNumber;
-            token: string;
-            status: BigNumber;
-            nft: string;
-            nftId: BigNumber;
-            priceDuration: BigNumber;
-        };
-    }>;
-    function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<{
-        receipt: import("@ijstech/eth-contract").TransactionReceipt;
-        productId: number;
-        product: {
-            productType: BigNumber;
-            productId: BigNumber;
-            uri: string;
-            quantity: BigNumber;
-            price: BigNumber;
-            maxQuantity: BigNumber;
-            maxPrice: BigNumber;
-            token: string;
-            status: BigNumber;
-            nft: string;
-            nftId: BigNumber;
-            priceDuration: BigNumber;
-        };
-    }>;
+    tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
-    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<{
-        receipt: import("@ijstech/eth-contract").TransactionReceipt;
-        productId: number;
-        product: {
-            productType: BigNumber;
-            productId: BigNumber;
-            uri: string;
-            quantity: BigNumber;
-            price: BigNumber;
-            maxQuantity: BigNumber;
-            maxPrice: BigNumber;
-            token: string;
-            status: BigNumber;
-            nft: string;
-            nftId: BigNumber;
-            priceDuration: BigNumber;
-        };
-    }>;
+    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
@@ -347,7 +297,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, getProductId, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {

@@ -446,7 +446,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -546,6 +546,19 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return productId;
     }
     exports.getProductId = getProductId;
+    function getProductIdFromEvent(productMarketplaceAddress, receipt) {
+        let productId;
+        try {
+            const wallet = eth_wallet_3.Wallet.getClientInstance();
+            const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+            let event = productMarketplace.parseNewProductEvent(receipt)[0];
+            productId = event?.productId.toNumber();
+        }
+        catch {
+        }
+        return productId;
+    }
+    exports.getProductIdFromEvent = getProductIdFromEvent;
     async function newProduct(productMarketplaceAddress, productType, quantity, // max quantity of this nft can be exist at anytime
     maxQuantity, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
@@ -586,17 +599,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             nftName: nftName,
             nftSymbol: nftSymbol
         });
-        let productId;
-        if (receipt) {
-            let event = productMarketplace.parseNewProductEvent(receipt)[0];
-            productId = event?.productId.toNumber();
-        }
-        const product = await productMarketplace.products(productId);
-        return {
-            receipt,
-            productId,
-            product
-        };
+        return receipt;
     }
     exports.newProduct = newProduct;
     async function createSubscriptionNFT(productMarketplaceAddress, quantity, price, tokenAddress, tokenDecimals, uri, priceDuration = 0, callback, confirmationCallback) {
@@ -1974,83 +1977,102 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 catch { }
             };
             this.newProduct = async () => {
-                let contract = this.state.getContractAddress('ProductMarketplace');
-                const maxQty = this.newMaxQty;
-                // const txnMaxQty = this.newTxnMaxQty;
-                const price = new eth_wallet_5.BigNumber(this.newPrice).toFixed();
-                if ((!this.nftType) && new eth_wallet_5.BigNumber(maxQty).gt(0)) {
-                    if (this._data.erc1155Index >= 0) {
-                        this._data.nftType = 'ERC1155';
-                        return;
-                    }
-                    ;
-                    const callback = (err, receipt) => {
-                        if (err) {
-                            this.showTxStatusModal('error', err);
+                return new Promise(async (resolve, reject) => {
+                    let contract = this.state.getContractAddress('ProductMarketplace');
+                    const maxQty = this.newMaxQty;
+                    // const txnMaxQty = this.newTxnMaxQty;
+                    const price = new eth_wallet_5.BigNumber(this.newPrice).toFixed();
+                    if ((!this.nftType) && new eth_wallet_5.BigNumber(maxQty).gt(0)) {
+                        if (this._data.erc1155Index >= 0) {
+                            this._data.nftType = 'ERC1155';
+                            return resolve(true);
                         }
-                    };
-                    const confirmationCallback = async (receipt) => {
-                    };
-                    if (!(0, index_13.isClientWalletConnected)()) {
-                        this.connectWallet();
-                        return;
-                    }
-                    if (!this.state.isRpcWalletConnected()) {
-                        const clientWallet = eth_wallet_5.Wallet.getClientInstance();
-                        let isConnected = false;
+                        ;
+                        const callback = (err, receipt) => {
+                            if (err) {
+                                this.showTxStatusModal('error', err);
+                            }
+                        };
+                        const confirmationCallback = async (receipt) => {
+                            let productId = (0, API_2.getProductIdFromEvent)(contract, receipt);
+                            this._data.productId = productId;
+                            this._data.nftType = this._data.paymentModel === index_11.PaymentModel.Subscription ? 'ERC721' : 'ERC1155';
+                            this.productInfo = await (0, API_2.getProductInfo)(this.state, this.productId);
+                            if (this._data.nftType === 'ERC1155') {
+                                this._data.erc1155Index = this.productInfo.nftId.toNumber();
+                            }
+                            this._data.nftAddress = this.productInfo.nft;
+                            this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
+                            this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+                            this._data.tokenToMint = this.productInfo.token.address;
+                            return resolve(true);
+                        };
+                        if (!(0, index_13.isClientWalletConnected)()) {
+                            this.connectWallet();
+                            return resolve(false);
+                        }
+                        if (!this.state.isRpcWalletConnected()) {
+                            const clientWallet = eth_wallet_5.Wallet.getClientInstance();
+                            let isConnected = false;
+                            try {
+                                isConnected = await clientWallet.switchNetwork(this.chainId);
+                            }
+                            catch {
+                                return resolve(false);
+                            }
+                            if (!isConnected)
+                                return resolve(false);
+                            await (0, index_12.delay)(3000);
+                            contract = this.state.getContractAddress('ProductMarketplace');
+                        }
+                        if (!contract) {
+                            this.showTxStatusModal('error', 'This network is not supported!');
+                            return resolve(false);
+                        }
                         try {
-                            isConnected = await clientWallet.switchNetwork(this.chainId);
-                        }
-                        catch {
-                            return;
-                        }
-                        if (!isConnected)
-                            return;
-                        await (0, index_12.delay)(3000);
-                        contract = this.state.getContractAddress('ProductMarketplace');
-                    }
-                    if (!contract) {
-                        this.showTxStatusModal('error', 'This network is not supported!');
-                        return;
-                    }
-                    try {
-                        const { tokenToMint, customMintToken, uri } = this._data;
-                        const isCustomToken = tokenToMint?.toLowerCase() === scom_token_input_2.CUSTOM_TOKEN.address.toLowerCase();
-                        if (!tokenToMint || (isCustomToken && !customMintToken)) {
-                            this.showTxStatusModal('error', 'TokenToMint is missing!');
-                            return;
-                        }
-                        const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
-                        if (tokenAddress === index_12.nullAddress || !tokenAddress.startsWith('0x')) {
-                            const address = tokenAddress.toLowerCase();
-                            const nativeToken = scom_token_list_6.ChainNativeTokenByChainId[this.chainId];
-                            if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
-                                this.showTxStatusModal('error', 'Invalid token!');
-                                return;
+                            const { tokenToMint, customMintToken, uri, paymentModel, durationInDays } = this._data;
+                            const isCustomToken = tokenToMint?.toLowerCase() === scom_token_input_2.CUSTOM_TOKEN.address.toLowerCase();
+                            if (!tokenToMint || (isCustomToken && !customMintToken)) {
+                                this.showTxStatusModal('error', 'TokenToMint is missing!');
+                                return resolve(false);
                             }
-                            //pay native token
-                            await this._createProduct(contract, maxQty, price, uri, null, callback, confirmationCallback);
+                            if (paymentModel === index_11.PaymentModel.Subscription && !durationInDays) {
+                                this.showTxStatusModal('error', 'Duration is missing!');
+                                return resolve(false);
+                            }
+                            const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
+                            if (tokenAddress === index_12.nullAddress || !tokenAddress.startsWith('0x')) {
+                                const address = tokenAddress.toLowerCase();
+                                const nativeToken = scom_token_list_6.ChainNativeTokenByChainId[this.chainId];
+                                if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
+                                    this.showTxStatusModal('error', 'Invalid token!');
+                                    return resolve(false);
+                                }
+                                //pay native token
+                                await this._createProduct(contract, maxQty, price, uri, null, callback, confirmationCallback);
+                            }
+                            else { //pay erc20
+                                let token;
+                                if (isCustomToken) {
+                                    token = await (0, index_12.getTokenInfo)(tokenAddress, this.chainId);
+                                }
+                                else {
+                                    token = scom_token_list_6.tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
+                                }
+                                if (!token) {
+                                    this.showTxStatusModal('error', 'Invalid token!');
+                                    return resolve(false);
+                                }
+                                await this._createProduct(contract, maxQty, price, uri, token, callback, confirmationCallback);
+                            }
                         }
-                        else { //pay erc20
-                            let token;
-                            if (isCustomToken) {
-                                token = await (0, index_12.getTokenInfo)(tokenAddress, this.chainId);
-                            }
-                            else {
-                                token = scom_token_list_6.tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
-                            }
-                            if (!token) {
-                                this.showTxStatusModal('error', 'Invalid token!');
-                                return;
-                            }
-                            await this._createProduct(contract, maxQty, price, uri, token, callback, confirmationCallback);
+                        catch (error) {
+                            this.showTxStatusModal('error', 'Something went wrong creating new product!');
+                            console.log('newProduct', error);
+                            resolve(false);
                         }
                     }
-                    catch (error) {
-                        this.showTxStatusModal('error', 'Something went wrong creating new product!');
-                        console.log('newProduct', error);
-                    }
-                }
+                });
             };
             this.connectWallet = async () => {
                 if (this.mdWallet) {
@@ -2409,8 +2431,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this._data.erc1155Index = undefined;
                             await this.resetRpcWallet();
                             await this.initWallet();
-                            await this.newProduct();
-                            return this._data.erc1155Index > 0;
+                            return await this.newProduct();
                         }
                         else {
                             await this.resetRpcWallet();
@@ -2607,21 +2628,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         async _createProduct(productMarketplaceAddress, quantity, price, uri, token, callback, confirmationCallback) {
-            let result;
             if (this._data.paymentModel === index_11.PaymentModel.Subscription) {
-                result = await (0, API_2.createSubscriptionNFT)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, this._data.durationInDays * 86400 || 0, callback, confirmationCallback);
-                this._data.nftType = 'ERC721';
+                await (0, API_2.createSubscriptionNFT)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, this._data.durationInDays * 86400 || 0, callback, confirmationCallback);
             }
             else {
-                result = await (0, API_2.newDefaultBuyProduct)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, callback, confirmationCallback);
-                this._data.nftType = 'ERC1155';
-                this._data.erc1155Index = result.product.nftId.toNumber();
+                await (0, API_2.newDefaultBuyProduct)(productMarketplaceAddress, quantity, price, token?.address || index_12.nullAddress, token?.decimals || 18, uri, callback, confirmationCallback);
             }
-            this._data.productId = result.productId;
-            this._data.nftAddress = result.product.nft;
-            this._data.productType = this.getProductTypeByCode(result.product.productType.toNumber());
-            this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(result.product.price).toNumber();
-            this._data.tokenToMint = result.product.token;
         }
         async initWallet() {
             try {

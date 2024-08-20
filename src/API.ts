@@ -97,6 +97,18 @@ async function getProductId(state: State, nftAddress: string, nftId?: number) {
     return productId;
 }
 
+function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any) {
+    let productId: number;
+    try {
+        const wallet = Wallet.getClientInstance();
+        const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        let event = productMarketplace.parseNewProductEvent(receipt)[0];
+        productId = event?.productId.toNumber();
+    } catch {
+    }
+    return productId;
+}
+
 async function newProduct(
     productMarketplaceAddress: string,
 
@@ -148,17 +160,7 @@ async function newProduct(
         nftName: nftName,
         nftSymbol: nftSymbol
     });
-    let productId: number;
-    if (receipt) {
-        let event = productMarketplace.parseNewProductEvent(receipt)[0];
-        productId = event?.productId.toNumber();
-    }
-    const product = await productMarketplace.products(productId);
-    return {
-        receipt,
-        productId,
-        product
-    };
+    return receipt;
 }
 
 async function createSubscriptionNFT(
@@ -531,6 +533,7 @@ export {
     getProductInfo,
     getNFTBalance,
     getProductId,
+    getProductIdFromEvent,
     newProduct,
     createSubscriptionNFT,
     newDefaultBuyProduct,
