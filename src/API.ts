@@ -425,6 +425,45 @@ async function donate(
     return receipt;
 }
 
+async function subscribe(
+    state: State,
+    productId: number,
+    startTime: number,
+    callback?: any,
+    confirmationCallback?: any
+) {
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    const wallet = Wallet.getClientInstance();
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    const product = await productMarketplace.products(productId);
+    const duration = product.priceDuration;
+    let receipt;
+    try {
+        registerSendTxEvents({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
+        if (product.token === nullAddress) {
+            receipt = await productMarketplace.subscribe({
+                to: wallet.address,
+                productId: productId,
+                startTime: startTime,
+                duration: duration
+            }, product.price)
+        } else {
+            receipt = await productMarketplace.subscribe({
+                to: wallet.address,
+                productId: productId,
+                startTime: startTime,
+                duration: duration
+            })
+        }
+    } catch (err) {
+        console.error(err);
+    }
+    return receipt;
+}
+
 async function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string) {
     let wallet = Wallet.getClientInstance();
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
@@ -540,6 +579,7 @@ export {
     getProxyTokenAmountIn,
     buyProduct,
     donate,
+    subscribe,
     getProductOwner,
     updateProductUri,
     updateProductPrice,

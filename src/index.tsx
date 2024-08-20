@@ -15,14 +15,17 @@ import {
   Icon,
   application,
   FormatUtils,
-  Form
+  Form,
+  StackLayout,
+  Datepicker,
+  moment
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -41,7 +44,7 @@ interface ScomNftMinterElement extends ControlElement {
 
   //ERC1155
   erc1155Index?: number;
-  productType?: 'Buy' | 'DonateToOwner' | 'DonateToEveryone';
+  productType?: 'Buy' | 'Subscription' | 'DonateToOwner' | 'DonateToEveryone';
   //ERC1155NewIndex
   tokenToMint?: string;
   customMintToken?: string;
@@ -92,6 +95,9 @@ export default class ScomNftMinter extends Module {
   private pnlTokenInput: VStack;
   private pnlQty: HStack;
   private edtQty: Input;
+  private pnlSubscriptionPeriod: StackLayout;
+  private edtStartDate: Datepicker;
+  private lblEndDate: Label;
   private lblBalance: Label;
   private btnSubmit: Button;
   private btnApprove: Button;
@@ -655,6 +661,7 @@ export default class ScomNftMinter extends Module {
       let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
       if (productId) this._data.productId = productId;
     }
+    this.edtStartDate.value = undefined;
     await this.refreshDApp();
   }
 
@@ -720,7 +727,7 @@ export default class ScomNftMinter extends Module {
             this.isOnChangeUpdated = true;
             const onFormChange = form.formOptions.onChange;
             form.formOptions.onChange = async () => {
-              onFormChange();
+              if (onFormChange) onFormChange();
               updateButton();
             }
             updateButton();
@@ -943,6 +950,7 @@ export default class ScomNftMinter extends Module {
         this.lblSpotsRemaining.caption = formatNumber(cap, 0);
         this.cap = cap.toNumber();
         //this.pnlQty.visible = true;
+        this.pnlSubscriptionPeriod.visible = false;
         this.edtQty.readOnly = true;
         this.edtQty.value = '1';
         this.lbOrderTotal.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
@@ -960,23 +968,29 @@ export default class ScomNftMinter extends Module {
         this.pnlUnsupportedNetwork.visible = false;
         const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
         (!this.lblRef.isConnected) && await this.lblRef.ready();
-        if (this._type === ProductType.Buy) {
+        if (this._type === ProductType.Buy || this._type === ProductType.Subscription) {
           const nftBalance = isClientWalletConnected() ? await getNFTBalance(this.state, this.productId) : 0;
           this.detailWrapper.visible = true;
           this.onToggleDetail();
           this.btnDetail.visible = true;
-          this.erc1155Wrapper.visible = true;
+          this.erc1155Wrapper.visible = this.nftType === 'ERC1155';
           this.lbERC1155Index.caption = `${this.productInfo.nftId?.toNumber() || ''}`;
           this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
           this.updateTokenAddress(token.address);
           this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
-          this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}`;
+          const duration = this._type === ProductType.Subscription ? ` for ${Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400)} days` : '';
+          this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}${duration}`;
           this.lblTitle.caption = this._data.title;
           this.lblRef.caption = 'smart contract:';
           this.updateSpotsRemaining();
           this.tokenInput.inputReadOnly = true;
           this.pnlQty.visible = false;
+          this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
+          if (this._type === ProductType.Subscription && !this.edtStartDate.value) {
+            this.edtStartDate.value = moment();
+            this.onStartDateChanaged();
+          }
           //this.pnlQty.visible = true;
           this.pnlTokenInput.visible = false;
           if (this.productInfo.uri) {
@@ -1011,7 +1025,7 @@ export default class ScomNftMinter extends Module {
           this.lbOrderTotal.caption = "0";
         }
         this.tokenInput.value = "";
-        this.pnlAddress.visible = this._type !== ProductType.Buy;
+        this.pnlAddress.visible = this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone;
         (!this.lblAddress.isConnected) && await this.lblAddress.ready();
         this.lblAddress.caption = this.contractAddress || this.nftAddress;
         this.tokenInput.token = token?.address === nullAddress ? {
@@ -1200,12 +1214,15 @@ export default class ScomNftMinter extends Module {
       this.btnSubmit.caption = 'Switch Network';
       this.btnSubmit.enabled = true;
     }
-    else if (this.nftType === 'ERC721') {
+    else if (this.nftType === 'ERC721' && !this.productId) {
       this.btnSubmit.caption = this.cap ? 'Mint' : 'Out of stock';
       this.btnSubmit.enabled = !!this.cap;
     }
     else if (this._type === ProductType.Buy) {
       this.btnSubmit.caption = 'Mint';
+    }
+    else if (this._type === ProductType.Subscription) {
+      this.btnSubmit.caption = 'Subscribe';
     }
     else {
       this.btnSubmit.caption = 'Submit';
@@ -1288,11 +1305,6 @@ export default class ScomNftMinter extends Module {
       this.updateSubmitButton(false);
       return;
     }
-    // if (this._type === ProductType.Buy && chainId !== this._data.chainId) {
-    //   this.showTxStatusModal('error', 'Unsupported Network');
-    //   this.updateSubmitButton(false);
-    //   return;
-    // }
     if (this.nftType === 'ERC721' && !this.productId) {
       const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
       if (!oswapTroll || oswapTroll.cap.lte(0)) {
@@ -1346,6 +1358,13 @@ export default class ScomNftMinter extends Module {
         return;
       }
       await this.buyToken(requireQty);
+    } else if (this._type === ProductType.Subscription) {
+      if (!this.edtStartDate.value) {
+        this.showTxStatusModal('error', 'Start Date Required');
+        this.updateSubmitButton(false);
+        return;
+      }
+      await this.buyToken();
     } else {
       if (!this.tokenInput.value) {
         this.showTxStatusModal('error', 'Amount Required');
@@ -1357,7 +1376,7 @@ export default class ScomNftMinter extends Module {
         this.updateSubmitButton(false);
         return;
       }
-      await this.buyToken(1);
+      await this.buyToken();
     }
     this.updateSubmitButton(false);
     if (this.txStatusModal) this.txStatusModal.closeModal();
@@ -1409,7 +1428,7 @@ export default class ScomNftMinter extends Module {
     await mintOswapTrollNft(this.nftAddress, txHashCallback);
   }
 
-  private async buyToken(quantity: number) {
+  private async buyToken(quantity?: number) {
     if (!this.productId) return;
     const callback = (error: Error, receipt?: string) => {
       if (error) {
@@ -1424,6 +1443,18 @@ export default class ScomNftMinter extends Module {
         }
       );
     }
+    else if (this.productType === ProductType.Subscription) {
+      const startTime = this.edtStartDate.value.unix();
+      await subscribe(this.state, this.productId, startTime, callback,
+        async () => {
+          await this.updateTokenBalance();
+          this.productInfo = await getProductInfo(this.state, this.productId);
+          const nftBalance = await getNFTBalance(this.state, this.productId);
+          this.lbOwn.caption = nftBalance;
+          this.updateSpotsRemaining();
+          if (this.onMintedNFT) this.onMintedNFT();
+        })
+    }
     else if (this.productType == ProductType.Buy) {
       await buyProduct(this.state, this.productId, quantity, this._data.commissions, token, callback,
         async () => {
@@ -1436,6 +1467,13 @@ export default class ScomNftMinter extends Module {
         }
       );
     }
+  }
+
+  private onStartDateChanaged() {
+    const dateFormat = 'YYYY-MM-DD';
+    const startDate = moment(this.edtStartDate.value.format(dateFormat), dateFormat);
+    const duration = this.productInfo.priceDuration.toNumber();
+    this.lblEndDate.caption = startDate.add(duration, 'seconds').format('DD/MM/YYYY');
   }
 
   async init() {
@@ -1593,6 +1631,27 @@ export default class ScomNftMinter extends Module {
                         </i-input>
                       </i-panel>
                     </i-hstack>
+                    <i-stack id="pnlSubscriptionPeriod" direction="vertical" width="100%" gap="0.5rem" visible={false}>
+                      <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
+                        <i-label caption="Starts" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-panel width="50%">
+                          <i-datepicker
+                            id='edtStartDate'
+                            height={36}
+                            width="100%"
+                            type="date"
+                            placeholder="dd/mm/yyyy"
+                            background={{ color: Theme.colors.secondary.dark }}
+                            border={{ radius: "0.375rem" }}
+                            onChanged={this.onStartDateChanaged}
+                          ></i-datepicker>
+                        </i-panel>
+                      </i-stack>
+                      <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
+                        <i-label caption="Ends" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label id="lblEndDate" font={{ size: '1rem' }} />
+                      </i-stack>
+                    </i-stack>
                     <i-hstack
                       width="100%"
                       justifyContent="space-between"
