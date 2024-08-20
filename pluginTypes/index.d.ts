@@ -647,14 +647,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
-                elements: {
-                    type: string;
-                    scope: string;
-                }[];
-                scope?: undefined;
-                rule?: undefined;
-            } | {
-                type: string;
                 scope: string;
                 rule: {
                     effect: string;
@@ -669,7 +661,28 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             } | {
                 type: string;
                 scope: string;
+                rule?: undefined;
                 elements?: undefined;
+            } | {
+                type: string;
+                elements: ({
+                    type: string;
+                    scope: string;
+                    rule?: undefined;
+                } | {
+                    type: string;
+                    scope: string;
+                    rule: {
+                        effect: string;
+                        condition: {
+                            scope: string;
+                            schema: {
+                                const: string;
+                            };
+                        };
+                    };
+                })[];
+                scope?: undefined;
                 rule?: undefined;
             })[];
         };
@@ -914,14 +927,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
-                elements: {
-                    type: string;
-                    scope: string;
-                }[];
-                scope?: undefined;
-                rule?: undefined;
-            } | {
-                type: string;
                 scope: string;
                 rule: {
                     effect: string;
@@ -936,7 +941,28 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             } | {
                 type: string;
                 scope: string;
+                rule?: undefined;
                 elements?: undefined;
+            } | {
+                type: string;
+                elements: ({
+                    type: string;
+                    scope: string;
+                    rule?: undefined;
+                } | {
+                    type: string;
+                    scope: string;
+                    rule: {
+                        effect: string;
+                        condition: {
+                            scope: string;
+                            schema: {
+                                const: string;
+                            };
+                        };
+                    };
+                })[];
+                scope?: undefined;
                 rule?: undefined;
             })[];
         };
