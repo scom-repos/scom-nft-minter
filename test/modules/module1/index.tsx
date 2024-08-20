@@ -78,7 +78,7 @@ export default class Module1 extends Module {
         const config = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
         const data = config.getData();
         this.widgetModule.widgetType = widgetType;
-        this.widgetModule.show(data);
+        this.widgetModule.show(widgetType === 'new1155' ? undefined : data);
       }
       this.pnlPreview = await Module.create();
       this.pnlPreview.appendChild(
@@ -89,7 +89,7 @@ export default class Module1 extends Module {
               <i-label caption="Type" font={{ bold: true, color: Theme.colors.info.main }} />
               <i-combo-box
                 id="cbbType"
-                selectedItem={configs[0]}
+                selectedItem={configs.find(v => v.value === widgetType)}
                 items={configs}
                 onChanged={onTypeChanged}
               />
@@ -116,7 +116,7 @@ export default class Module1 extends Module {
       this.pnlPreview.appendChild(this.widgetModule);
     }
 
-    this.widgetModule.show(widgetData);
+    this.widgetModule.show(widgetType === 'new1155' ? undefined : widgetData);
     this.pnlPreview.openModal({
       width: '90%',
       maxWidth: '90rem',
@@ -141,16 +141,16 @@ export default class Module1 extends Module {
           <i-scom-nft-minter
             id="nftMinter"
             nftType={'ERC1155'}
-            nftAddress="0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91"
-            tokenToMint={nullAddress} //BNB
-            erc1155Index={9}
-            chainId={97}
+            nftAddress="0xDB301a9Ef98843376C835aFB41608d6A319e138D"
+            tokenToMint={nullAddress} //Native token
+            erc1155Index={1}
+            chainId={43113}
             networks={[
               {
-                chainId: 97
+                chainId: 43113
               }
             ]}
-            defaultChainId={97}
+            defaultChainId={43113}
             wallets={[{ name: 'metamask' }]}
           />
         </i-vstack>

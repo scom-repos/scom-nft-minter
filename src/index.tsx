@@ -105,6 +105,7 @@ export default class ScomNftMinter extends Module {
   private iconOrderTotal: Icon;
   private pnlInputFields: VStack;
   private pnlUnsupportedNetwork: VStack;
+  private imgUri: Image;
   private containerDapp: ScomDappContainer;
   private mdWallet: ScomWalletModal;
 
@@ -488,7 +489,7 @@ export default class ScomNftMinter extends Module {
   getConfigurators(type?: 'new1155' | 'customNft') {
     let isNew1155 = (type && type === 'new1155');
     const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
-    const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
+    const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft as IEmbedData;
     this.isConfigNewIndex = isNew1155;
     this.isOnChangeUpdated = false;
 
@@ -519,12 +520,10 @@ export default class ScomNftMinter extends Module {
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
-          const defaultData = configData.defaultBuilderData;
-          await this.setData({ ...defaultData, ...data });
+          await this.setData({ ...defaultBuilderData, ...defaultData, ...data });
         },
         setupData: async (data: IEmbedData) => {
-          const defaultData = configData.defaultBuilderData;
-          this._data = { ...defaultBuilderData, ...defaultData, ...data };
+          this._data = { ...defaultBuilderData, ...data };
           if (!this.nftType) {
             if (new BigNumber(this.newMaxQty).lte(0)) {
               return false;
@@ -636,7 +635,7 @@ export default class ScomNftMinter extends Module {
       showHeader: this.showHeader,
       rpcWalletId: rpcWallet.instanceId
     }
-    if (this.containerDapp?.setData) this.containerDapp.setData(data);
+    if (this.containerDapp?.setData) await this.containerDapp.setData(data);
   }
 
   private async setData(data: IEmbedData) {
@@ -651,6 +650,7 @@ export default class ScomNftMinter extends Module {
     this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
     this.updateContractAddress();
     if (!this.productId && this.nftAddress) {
+      await this.initWallet();
       let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
       if (productId) this._data.productId = productId;
     }
@@ -946,6 +946,7 @@ export default class ScomNftMinter extends Module {
         this.edtQty.value = '1';
         this.lbOrderTotal.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
         this.pnlTokenInput.visible = false;
+        this.imgUri.visible = false;
         this.determineBtnSubmitCaption();
         return;
       }
@@ -977,6 +978,12 @@ export default class ScomNftMinter extends Module {
           this.pnlQty.visible = false;
           //this.pnlQty.visible = true;
           this.pnlTokenInput.visible = false;
+          if (this.productInfo.uri) {
+            this.imgUri.visible = true;
+            this.imgUri.url = this.productInfo.uri;
+          } else {
+            this.imgUri.visible = false;
+          }
           if (this._data.requiredQuantity != null) {
             let qty = Number(this._data.requiredQuantity);
             if (nftBalance) {
@@ -998,6 +1005,7 @@ export default class ScomNftMinter extends Module {
           this.tokenInput.inputReadOnly = false;
           this.pnlQty.visible = false;
           this.pnlTokenInput.visible = true;
+          this.imgUri.visible = false;
           this.edtQty.value = "";
           this.lbOrderTotal.caption = "0";
         }
@@ -1507,6 +1515,14 @@ export default class ScomNftMinter extends Module {
                     ></i-markdown>
                   </i-vstack>
                   <i-vstack gap="0.5rem" id="pnlInputFields">
+                    <i-image
+                      visible={false}
+                      id="imgUri"
+                      width={280}
+                      maxWidth="100%"
+                      height="auto"
+                      margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}
+                    />
                     <i-hstack id="detailWrapper" horizontalAlignment="space-between" gap={10} visible={false} wrap="wrap">
                       <i-hstack id="erc1155Wrapper" width="100%" justifyContent="space-between" visible={false} gap="0.5rem" lineHeight={1.5}>
                         <i-label caption="ERC1155 Index" font={{ bold: true, size: '1rem' }} />
@@ -1545,7 +1561,7 @@ export default class ScomNftMinter extends Module {
                       rightIcon={{ width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }}
                       background={{ color: 'transparent' }}
                       border={{ width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }}
-                      width={300}
+                      width={280}
                       maxWidth="100%"
                       height={36}
                       margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}

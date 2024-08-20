@@ -1,3 +1,5 @@
+import { nullAddress } from "./utils/index";
+
 export default {
     "infuraId": "adc596bf88b648e2a8902bc9093930c5",
     "contractInfo": {
@@ -32,19 +34,20 @@ export default {
                 "name": "metamask"
             }
         ]
-    },   
+    },
     "defaultExistingNft": { //existing custom721 or custom1155
-        "chainId": 97,
-        "nftType":"ERC1155",
-        "nftAddress":"0xa5CDA5D7F379145b97B47aD1c2d78f827C053D91",
-        "erc1155Index":1
+        "chainId": 43113,
+        "nftType": "ERC1155",
+        "nftAddress": "0xDB301a9Ef98843376C835aFB41608d6A319e138D",
+        "erc1155Index": 1
     },
     "defaultCreate1155Index": {
-
+        "chainId": 43113,
+        "tokenToMint": nullAddress
     },
     "defaultOswapTroll": { //existing custom721 or custom1155
-        "chainId": 97,
-        "nftType":"ERC721",
-        "nftAddress":"0x946985e7C43Ed2fc7985e89a49A251D52d824122",
+        "chainId": 43113,
+        "nftType": "ERC721",
+        "nftAddress": "0x390118aa8bde8c63f159a0d032dbdc8bed83ef42",
     },
 }

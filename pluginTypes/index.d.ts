@@ -335,7 +335,10 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
             nftAddress: string;
             erc1155Index: number;
         };
-        defaultCreate1155Index: {};
+        defaultCreate1155Index: {
+            chainId: number;
+            tokenToMint: string;
+        };
         defaultOswapTroll: {
             chainId: number;
             nftType: string;
@@ -1114,6 +1117,7 @@ declare module "@scom/scom-nft-minter" {
         private iconOrderTotal;
         private pnlInputFields;
         private pnlUnsupportedNetwork;
+        private imgUri;
         private containerDapp;
         private mdWallet;
         private productInfo;
