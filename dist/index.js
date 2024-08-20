@@ -2436,7 +2436,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         else {
                             await this.resetRpcWallet();
                             await this.initWallet();
-                            if (this.nftType === 'ERC721' && this._data.erc1155Index)
+                            if (this.nftType === 'ERC721' && this._data.erc1155Index != null)
                                 this._data.erc1155Index = undefined;
                             let productId = await (0, API_2.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
                             if (productId) {
@@ -2550,7 +2550,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.lbOrderTotalTitle.caption = `You are going to pay`;
             this.iconOrderTotal.tooltip.content = `A commission fee of ${new eth_wallet_5.BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
             this.updateContractAddress();
-            if (!this.productId && this.nftAddress) {
+            if (this.nftType === 'ERC721' && this._data.erc1155Index != null)
+                this._data.erc1155Index = undefined;
+            if (!this.productId && this.nftAddress && (this.nftType === 'ERC721' || this._data.erc1155Index)) {
                 await this.initWallet();
                 let productId = await (0, API_2.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
                 if (productId)

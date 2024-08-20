@@ -535,7 +535,7 @@ export default class ScomNftMinter extends Module {
           } else {
             await this.resetRpcWallet();
             await this.initWallet();
-            if (this.nftType === 'ERC721' && this._data.erc1155Index) this._data.erc1155Index = undefined;
+            if (this.nftType === 'ERC721' && this._data.erc1155Index != null) this._data.erc1155Index = undefined;
             let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
             if (productId) {
               this._data.productId = productId;
@@ -649,7 +649,8 @@ export default class ScomNftMinter extends Module {
     this.lbOrderTotalTitle.caption = `You are going to pay`;
     this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
     this.updateContractAddress();
-    if (!this.productId && this.nftAddress) {
+    if (this.nftType === 'ERC721' && this._data.erc1155Index != null) this._data.erc1155Index = undefined;
+    if (!this.productId && this.nftAddress && (this.nftType === 'ERC721' || this._data.erc1155Index)) {
       await this.initWallet();
       let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
       if (productId) this._data.productId = productId;
