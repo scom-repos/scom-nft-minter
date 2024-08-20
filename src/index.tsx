@@ -545,6 +545,9 @@ export default class ScomNftMinter extends Module {
               this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
               this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
               this._data.tokenToMint = this.productInfo.token.address;
+              if (this._data.productType === ProductType.Subscription) {
+                this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+              }
             }
           }
           return true;
@@ -814,7 +817,7 @@ export default class ScomNftMinter extends Module {
         return;
       }
       try {
-        const { tokenToMint, customMintToken, uri, priceDuration } = this._data;
+        const { tokenToMint, customMintToken, uri } = this._data;
         const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
         if (!tokenToMint || (isCustomToken && !customMintToken)) {
           this.showTxStatusModal('error', 'TokenToMint is missing!');

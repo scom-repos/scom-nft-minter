@@ -2014,7 +2014,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return;
                     }
                     try {
-                        const { tokenToMint, customMintToken, uri, priceDuration } = this._data;
+                        const { tokenToMint, customMintToken, uri } = this._data;
                         const isCustomToken = tokenToMint?.toLowerCase() === scom_token_input_2.CUSTOM_TOKEN.address.toLowerCase();
                         if (!tokenToMint || (isCustomToken && !customMintToken)) {
                             this.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -2424,6 +2424,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
                                 this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
                                 this._data.tokenToMint = this.productInfo.token.address;
+                                if (this._data.productType === index_11.ProductType.Subscription) {
+                                    this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                                }
                             }
                         }
                         return true;
