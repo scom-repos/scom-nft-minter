@@ -474,21 +474,26 @@ export function getProjectOwnerSchema1() {
                     scope: '#/properties/paymentModel',
                 },
                 {
-                    type: 'Control',
-                    scope: '#/properties/durationInDays',
-                    rule: {
-                        effect: 'SHOW',
-                        condition: {
-                            scope: '#/properties/paymentModel',
-                            schema: {
-                                const: 'Subscription'
+                    type: 'HorizontalLayout',
+                    elements: [
+                        {
+                            type: 'Control',
+                            scope: '#/properties/priceToMint',
+                        },
+                        {
+                            type: 'Control',
+                            scope: '#/properties/durationInDays',
+                            rule: {
+                                effect: 'SHOW',
+                                condition: {
+                                    scope: '#/properties/paymentModel',
+                                    schema: {
+                                        const: 'Subscription'
+                                    }
+                                }
                             }
-                        }
-                    }
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/priceToMint',
+                        },
+                    ]
                 },
                 {
                     type: 'Control',
