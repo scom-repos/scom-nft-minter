@@ -7,7 +7,7 @@ import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
 import { ScomNftMinterFieldUpdate } from "./component/index";
 
-const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
+const chainIds = [43113];
 const networks = chainIds.map(v => { return { chainId: v } });
 
 const getSupportedTokens = (chainId: number) => {
@@ -209,17 +209,17 @@ function getProjectOwnerSchema(isDonation?: boolean) {
             tokenToMint: {//for 1155 new index only
                 type: 'string',
                 title: 'Currency',
-                tooltip: 'Token to mint the NFT',
+                tooltip: 'Token to pay for the subscription',
             },
             priceToMint: {//for 1155 new index only
-                title: 'Subscription Price',
+                title: 'Price',
                 type: 'number',
-                tooltip: 'Amount of token to mint the NFT',
+                tooltip: 'Amount of token to pay for the subscription',
             },
             maxQty: {//for 1155 new index only
                 type: 'integer',
                 title: 'Max Subscription Allowed',
-                tooltip: 'Max quantity of this NFT existing',
+                tooltip: 'Max quantity of this subscription existing',
                 minimum: 1,
             },
             /*
@@ -382,25 +382,25 @@ export function getProjectOwnerSchema1() {
                 tokenToMint: {
                     type: 'string',
                     title: 'Currency',
-                    tooltip: 'Token to mint the NFT',
+                    tooltip: 'Token to pay for the subscription',
                     required: true
                 },
                 customMintToken: {
                     type: 'string',
                     title: 'Currency Address',
-                    tooltip: 'Token address to mint the NFT',
+                    tooltip: 'Token address to pay for the subscription',
                     required: true
                 },
                 priceToMint: {
                     type: 'number',
                     title: 'Subscription Price',
-                    tooltip: 'Amount of token to mint the NFT',
+                    tooltip: 'Amount of token to pay for the subscription',
                     required: true
                 },
                 maxQty: {
                     type: 'integer',
                     title: 'Max Subscription Allowed',
-                    tooltip: 'Max quantity of this NFT existing',
+                    tooltip: 'Max quantity of this subscription existing',
                     minimum: 1,
                     required: true
                 },

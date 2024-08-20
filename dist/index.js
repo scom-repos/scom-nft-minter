@@ -1132,7 +1132,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getProjectOwnerSchema3 = exports.getProjectOwnerSchema2 = exports.getProjectOwnerSchema1 = exports.getBuilderSchema = void 0;
-    const chainIds = [1, 56, 137, 250, 97, 80001, 43113, 43114];
+    const chainIds = [43113];
     const networks = chainIds.map(v => { return { chainId: v }; });
     const getSupportedTokens = (chainId) => {
         return index_9.SupportedERC20Tokens[chainId] || [];
@@ -1328,17 +1328,17 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                 tokenToMint: {
                     type: 'string',
                     title: 'Currency',
-                    tooltip: 'Token to mint the NFT',
+                    tooltip: 'Token to pay for the subscription',
                 },
                 priceToMint: {
-                    title: 'Subscription Price',
+                    title: 'Price',
                     type: 'number',
-                    tooltip: 'Amount of token to mint the NFT',
+                    tooltip: 'Amount of token to pay for the subscription',
                 },
                 maxQty: {
                     type: 'integer',
                     title: 'Max Subscription Allowed',
-                    tooltip: 'Max quantity of this NFT existing',
+                    tooltip: 'Max quantity of this subscription existing',
                     minimum: 1,
                 },
                 /*
@@ -1500,25 +1500,25 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     tokenToMint: {
                         type: 'string',
                         title: 'Currency',
-                        tooltip: 'Token to mint the NFT',
+                        tooltip: 'Token to pay for the subscription',
                         required: true
                     },
                     customMintToken: {
                         type: 'string',
                         title: 'Currency Address',
-                        tooltip: 'Token address to mint the NFT',
+                        tooltip: 'Token address to pay for the subscription',
                         required: true
                     },
                     priceToMint: {
                         type: 'number',
                         title: 'Subscription Price',
-                        tooltip: 'Amount of token to mint the NFT',
+                        tooltip: 'Amount of token to pay for the subscription',
                         required: true
                     },
                     maxQty: {
                         type: 'integer',
                         title: 'Max Subscription Allowed',
-                        tooltip: 'Max quantity of this NFT existing',
+                        tooltip: 'Max quantity of this subscription existing',
                         minimum: 1,
                         required: true
                     },
