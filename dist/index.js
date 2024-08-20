@@ -2871,14 +2871,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.state.viewExplorerByAddress(this.chainId, this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress));
         }
         onViewToken() {
-            const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
+            const token = this.nftType === 'ERC721' && !this.productId ? this.oswapTrollInfo.token : this.productInfo.token;
             this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
         }
         onCopyContract() {
             components_6.application.copyToClipboard(this.nftType === 'ERC721' ? this.nftAddress : (this.contractAddress || this.nftAddress));
         }
         onCopyToken() {
-            const token = this.nftType === 'ERC721' ? this.oswapTrollInfo.token : this.productInfo.token;
+            const token = this.nftType === 'ERC721' && !this.productId ? this.oswapTrollInfo.token : this.productInfo.token;
             components_6.application.copyToClipboard(token.address || token.symbol);
         }
         async initApprovalAction() {
@@ -2996,7 +2996,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         async onApprove() {
-            if (this.nftType === 'ERC721') {
+            if (this.nftType === 'ERC721' && !this.productId) {
                 const { price, token } = this.oswapTrollInfo;
                 const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
                 const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
@@ -3162,7 +3162,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 await clientWallet.switchNetwork(this.chainId);
                 return;
             }
-            if (this.nftType === 'ERC721') {
+            if (this.nftType === 'ERC721' && !this.productId) {
                 const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
                 const tokenAddress = this.state.getExplorerByAddress(this.chainId, this.oswapTrollInfo.token.address);
                 this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
