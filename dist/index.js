@@ -1119,7 +1119,7 @@ define("@scom/scom-nft-minter/component/fieldUpdate.tsx", ["require", "exports",
         render() {
             return (this.$render("i-hstack", { gap: "0.5rem", verticalAlignment: "center", wrap: "wrap" },
                 this.$render("i-input", { id: "inputField", width: "100%", minWidth: "140px", maxWidth: "calc(100% - 148px)", height: "42px", class: index_css_1.formInputStyle, onChanged: this.onInputChanged }),
-                this.$render("i-button", { id: "btnUpdate", width: 140, height: 42, padding: { left: '1rem', right: '1rem' }, margin: { left: 'auto' }, background: { color: Theme.colors.primary.main }, font: { color: Theme.colors.primary.contrastText }, border: { radius: '0.5rem' }, enabled: false, caption: "Update", onClick: this.onUpdate })));
+                this.$render("i-button", { id: "btnUpdate", width: 140, height: 42, padding: { left: '0.5rem', right: '0.5rem' }, margin: { left: 'auto' }, background: { color: Theme.colors.primary.main }, font: { color: Theme.colors.primary.contrastText }, border: { radius: '0.5rem' }, enabled: false, caption: "Update", onClick: this.onUpdate })));
         }
     };
     ScomNftMinterFieldUpdate = __decorate([

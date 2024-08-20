@@ -224,7 +224,7 @@ export class ScomNftMinterFieldUpdate extends Module {
           id="btnUpdate"
           width={140}
           height={42}
-          padding={{ left: '1rem', right: '1rem' }}
+          padding={{ left: '0.5rem', right: '0.5rem' }}
           margin={{ left: 'auto' }}
           background={{ color: Theme.colors.primary.main }}
           font={{ color: Theme.colors.primary.contrastText }}
