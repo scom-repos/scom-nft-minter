@@ -287,7 +287,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function subscribe(state: State, productId: number, startTime: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function subscribe(state: State, productId: number, startTime: number, duration: number, callback?: any, confirmationCallback?: any): Promise<any>;
     function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
@@ -1106,6 +1106,7 @@ declare module "@scom/scom-nft-minter" {
         private pnlSubscriptionPeriod;
         private edtStartDate;
         private edtDuration;
+        private comboDurationUnit;
         private lblEndDate;
         private lblBalance;
         private btnSubmit;
@@ -1306,9 +1307,12 @@ declare module "@scom/scom-nft-minter" {
         private onSubmit;
         private mintNft;
         private buyToken;
+        private getDurationInDays;
         private _updateEndDate;
+        private _updateTotalAmount;
         private onStartDateChanged;
         private onDurationChanged;
+        private onDurationUnitChanged;
         init(): Promise<void>;
         render(): any;
     }

@@ -429,6 +429,7 @@ async function subscribe(
     state: State,
     productId: number,
     startTime: number,
+    duration: number,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -436,7 +437,6 @@ async function subscribe(
     const wallet = Wallet.getClientInstance();
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
     const product = await productMarketplace.products(productId);
-    const duration = product.priceDuration;
     let receipt;
     try {
         registerSendTxEvents({

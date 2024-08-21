@@ -796,12 +796,11 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function subscribe(state, productId, startTime, callback, confirmationCallback) {
+    async function subscribe(state, productId, startTime, duration, callback, confirmationCallback) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         const product = await productMarketplace.products(productId);
-        const duration = product.priceDuration;
         let receipt;
         try {
             (0, index_5.registerSendTxEvents)({
@@ -1985,6 +1984,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_6.Styles.Theme.ThemeVars;
+    const DurationUnits = [
+        {
+            label: 'Day(s)',
+            value: 'days'
+        },
+        {
+            label: 'Month(s)',
+            value: 'months'
+        },
+        {
+            label: 'Year(s)',
+            value: 'years'
+        }
+    ];
     let ScomNftMinter = class ScomNftMinter extends components_6.Module {
         constructor(parent, options) {
             super(parent, options);
@@ -2594,6 +2607,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             this.edtStartDate.value = undefined;
             this.edtDuration.value = '';
+            this.comboDurationUnit.selectedItem = DurationUnits[0];
             await this.refreshDApp();
         }
         getTag() {
@@ -3128,6 +3142,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.updateSubmitButton(false);
                     return;
                 }
+                if (!this.edtDuration.value) {
+                    this.showTxStatusModal('error', 'Duration Required');
+                    this.updateSubmitButton(false);
+                    return;
+                }
                 await this.buyToken();
             }
             else {
@@ -3208,7 +3227,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             else if (this.productType === index_12.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
-                await (0, API_2.subscribe)(this.state, this.productId, startTime, callback, async () => {
+                const days = this.getDurationInDays();
+                await (0, API_2.subscribe)(this.state, this.productId, startTime, days * 86400, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_2.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_2.getNFTBalance)(this.state, this.productId);
@@ -3230,6 +3250,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 });
             }
         }
+        getDurationInDays() {
+            const unit = (this.comboDurationUnit.selectedItem?.value || DurationUnits[0].value);
+            const duration = Number(this.edtDuration.value) || 0;
+            if (unit === 'days') {
+                return duration;
+            }
+            else {
+                const dateFormat = 'YYYY-MM-DD';
+                const startDate = this.edtStartDate.value ? (0, components_6.moment)(this.edtStartDate.value.format(dateFormat), dateFormat) : (0, components_6.moment)();
+                const endDate = (0, components_6.moment)(startDate).add(duration, unit);
+                const diff = endDate.diff(startDate, 'days');
+                return diff;
+            }
+        }
         _updateEndDate() {
             const dateFormat = 'YYYY-MM-DD';
             if (!this.edtStartDate.value) {
@@ -3237,20 +3271,30 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 return;
             }
             const startDate = (0, components_6.moment)(this.edtStartDate.value.format(dateFormat), dateFormat);
-            const days = Number(this.edtDuration.value) || 0;
-            this.lblEndDate.caption = startDate.add(days, 'days').format('DD/MM/YYYY');
+            const unit = (this.comboDurationUnit.selectedItem?.value || DurationUnits[0].value);
+            const duration = Number(this.edtDuration.value) || 0;
+            this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
+        }
+        _updateTotalAmount() {
+            const duration = Number(this.edtDuration.value) || 0;
+            if (!duration)
+                this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
+            const price = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+            const pricePerDay = price.div(this.productInfo.priceDuration.div(86400));
+            const days = this.getDurationInDays();
+            const amount = pricePerDay.times(days).toNumber();
+            this.lbOrderTotal.caption = `${(0, index_13.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
             this._updateEndDate();
         }
         onDurationChanged() {
             this._updateEndDate();
-            const days = Number(this.edtDuration.value) || 0;
-            if (!days)
-                this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
-            const price = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-            const amount = price.times(days * 86400).div(this.productInfo.priceDuration);
-            this.lbOrderTotal.caption = `${(0, index_13.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
+            this._updateTotalAmount();
+        }
+        onDurationUnitChanged() {
+            this._updateEndDate();
+            this._updateTotalAmount();
         }
         async init() {
             super.init();
@@ -3352,8 +3396,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Duration", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-stack", { direction: "horizontal", width: "50%", alignItems: "center", gap: "0.5rem" },
-                                                    this.$render("i-input", { id: 'edtDuration', height: 36, width: "100%", class: index_css_3.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, onChanged: this.onDurationChanged }),
-                                                    this.$render("i-label", { caption: "Days", font: { bold: true, size: '1rem' } }))),
+                                                    this.$render("i-panel", { width: "50%" },
+                                                        this.$render("i-input", { id: 'edtDuration', height: 36, width: "100%", class: index_css_3.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, onChanged: this.onDurationChanged })),
+                                                    this.$render("i-panel", { width: "50%" },
+                                                        this.$render("i-combo-box", { id: "comboDurationUnit", height: 36, width: "100%", icon: { width: 14, height: 14, name: 'angle-down', fill: Theme.divider }, border: { width: 1, style: 'solid', color: Theme.divider, radius: 5 }, items: DurationUnits, selectedItem: DurationUnits[0], onChanged: this.onDurationUnitChanged })))),
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Ends", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lblEndDate", font: { size: '1rem' } }))),

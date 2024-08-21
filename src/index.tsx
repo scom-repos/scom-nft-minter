@@ -18,7 +18,9 @@ import {
   Form,
   StackLayout,
   Datepicker,
-  moment
+  moment,
+  ComboBox,
+  IComboItem
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
@@ -66,6 +68,21 @@ interface ScomNftMinterElement extends ControlElement {
 
 const Theme = Styles.Theme.ThemeVars;
 
+const DurationUnits = [
+  {
+    label: 'Day(s)',
+    value: 'days'
+  },
+  {
+    label: 'Month(s)',
+    value: 'months'
+  },
+  {
+    label: 'Year(s)',
+    value: 'years'
+  }
+]
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -97,6 +114,7 @@ export default class ScomNftMinter extends Module {
   private pnlSubscriptionPeriod: StackLayout;
   private edtStartDate: Datepicker;
   private edtDuration: Input;
+  private comboDurationUnit: ComboBox;
   private lblEndDate: Label;
   private lblBalance: Label;
   private btnSubmit: Button;
@@ -661,6 +679,7 @@ export default class ScomNftMinter extends Module {
     }
     this.edtStartDate.value = undefined;
     this.edtDuration.value = '';
+    this.comboDurationUnit.selectedItem = DurationUnits[0];
     await this.refreshDApp();
   }
 
@@ -1360,6 +1379,11 @@ export default class ScomNftMinter extends Module {
         this.updateSubmitButton(false);
         return;
       }
+      if (!this.edtDuration.value) {
+        this.showTxStatusModal('error', 'Duration Required');
+        this.updateSubmitButton(false);
+        return;
+      }
       await this.buyToken();
     } else {
       if (!this.tokenInput.value) {
@@ -1441,7 +1465,8 @@ export default class ScomNftMinter extends Module {
     }
     else if (this.productType === ProductType.Subscription) {
       const startTime = this.edtStartDate.value.unix();
-      await subscribe(this.state, this.productId, startTime, callback,
+      const days = this.getDurationInDays();
+      await subscribe(this.state, this.productId, startTime, days * 86400, callback,
         async () => {
           await this.updateTokenBalance();
           this.productInfo = await getProductInfo(this.state, this.productId);
@@ -1465,6 +1490,20 @@ export default class ScomNftMinter extends Module {
     }
   }
 
+  private getDurationInDays() {
+    const unit = ((this.comboDurationUnit.selectedItem as IComboItem)?.value || DurationUnits[0].value) as 'days' | 'months' | 'years';
+    const duration = Number(this.edtDuration.value) || 0;
+    if (unit === 'days') {
+      return duration;
+    } else {
+      const dateFormat = 'YYYY-MM-DD';
+      const startDate = this.edtStartDate.value ? moment(this.edtStartDate.value.format(dateFormat), dateFormat) : moment();
+      const endDate = moment(startDate).add(duration, unit);
+      const diff = endDate.diff(startDate, 'days');
+      return diff;
+    }
+  }
+
   private _updateEndDate() {
     const dateFormat = 'YYYY-MM-DD';
     if (!this.edtStartDate.value) {
@@ -1472,8 +1511,19 @@ export default class ScomNftMinter extends Module {
       return;
     }
     const startDate = moment(this.edtStartDate.value.format(dateFormat), dateFormat);
-    const days = Number(this.edtDuration.value) || 0;
-    this.lblEndDate.caption = startDate.add(days, 'days').format('DD/MM/YYYY');
+    const unit = ((this.comboDurationUnit.selectedItem as IComboItem)?.value || DurationUnits[0].value) as 'days' | 'months' | 'years';
+    const duration = Number(this.edtDuration.value) || 0;
+    this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
+  }
+
+  private _updateTotalAmount() {
+    const duration = Number(this.edtDuration.value) || 0;
+    if (!duration) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
+    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+    const pricePerDay = price.div(this.productInfo.priceDuration.div(86400));
+    const days = this.getDurationInDays();
+    const amount = pricePerDay.times(days).toNumber();
+    this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 
   private onStartDateChanged() {
@@ -1482,11 +1532,12 @@ export default class ScomNftMinter extends Module {
   
   private onDurationChanged() {
     this._updateEndDate();
-    const days = Number(this.edtDuration.value) || 0;
-    if (!days) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
-    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-    const amount = price.times(days * 86400).div(this.productInfo.priceDuration);
-    this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
+    this._updateTotalAmount();
+  }
+  
+  private onDurationUnitChanged() {
+    this._updateEndDate();
+    this._updateTotalAmount();
   }
 
   async init() {
@@ -1662,19 +1713,32 @@ export default class ScomNftMinter extends Module {
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>
                         <i-stack direction="horizontal" width="50%" alignItems="center" gap="0.5rem">
-                          <i-input
-                            id='edtDuration'
-                            height={36}
-                            width="100%"
-                            class={inputStyle}
-                            inputType='number'
-                            font={{ size: '1rem' }}
-                            border={{ radius: 4, style: 'none' }}
-                            padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
-                            onChanged={this.onDurationChanged}
-                          >
-                          </i-input>
-                          <i-label caption="Days" font={{ bold: true, size: '1rem' }}></i-label>
+                          <i-panel width="50%">
+                            <i-input
+                              id='edtDuration'
+                              height={36}
+                              width="100%"
+                              class={inputStyle}
+                              inputType='number'
+                              font={{ size: '1rem' }}
+                              border={{ radius: 4, style: 'none' }}
+                              padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
+                              onChanged={this.onDurationChanged}
+                            >
+                            </i-input>
+                          </i-panel>
+                          <i-panel width="50%">
+                            <i-combo-box
+                              id="comboDurationUnit"
+                              height={36}
+                              width="100%"
+                              icon={{ width: 14, height: 14, name: 'angle-down', fill: Theme.divider }}
+                              border={{ width: 1, style: 'solid', color: Theme.divider, radius: 5 }}
+                              items={DurationUnits}
+                              selectedItem={DurationUnits[0]}
+                              onChanged={this.onDurationUnitChanged}
+                            ></i-combo-box>
+                          </i-panel>
                         </i-stack>
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
