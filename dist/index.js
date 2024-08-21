@@ -808,12 +808,13 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 confirmation: confirmationCallback
             });
             if (product.token === index_5.nullAddress) {
+                const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
                 receipt = await productMarketplace.subscribe({
                     to: wallet.address,
                     productId: productId,
                     startTime: startTime,
                     duration: duration
-                }, product.price);
+                }, amount);
             }
             else {
                 receipt = await productMarketplace.subscribe({

@@ -444,12 +444,13 @@ async function subscribe(
             confirmation: confirmationCallback
         });
         if (product.token === nullAddress) {
+            const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
             receipt = await productMarketplace.subscribe({
                 to: wallet.address,
                 productId: productId,
                 startTime: startTime,
                 duration: duration
-            }, product.price)
+            }, amount)
         } else {
             receipt = await productMarketplace.subscribe({
                 to: wallet.address,
