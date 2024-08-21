@@ -97,6 +97,7 @@ export default class ScomNftMinter extends Module {
   private edtQty: Input;
   private pnlSubscriptionPeriod: StackLayout;
   private edtStartDate: Datepicker;
+  private edtDuration: Input;
   private lblEndDate: Label;
   private lblBalance: Label;
   private btnSubmit: Button;
@@ -662,6 +663,7 @@ export default class ScomNftMinter extends Module {
       if (productId) this._data.productId = productId;
     }
     this.edtStartDate.value = undefined;
+    this.edtDuration.value = '';
     await this.refreshDApp();
   }
 
@@ -987,9 +989,14 @@ export default class ScomNftMinter extends Module {
           this.tokenInput.inputReadOnly = true;
           this.pnlQty.visible = false;
           this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
-          if (this._type === ProductType.Subscription && !this.edtStartDate.value) {
-            this.edtStartDate.value = moment();
-            this.onStartDateChanaged();
+          if (this._type === ProductType.Subscription) {
+            if (!this.edtStartDate.value) {
+              this.edtStartDate.value = moment();
+            }
+            if (!this.edtDuration.value) {
+              this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+            }
+            this.onStartDateChanged();
           }
           //this.pnlQty.visible = true;
           this.pnlTokenInput.visible = false;
@@ -1469,11 +1476,28 @@ export default class ScomNftMinter extends Module {
     }
   }
 
-  private onStartDateChanaged() {
+  private _updateEndDate() {
     const dateFormat = 'YYYY-MM-DD';
+    if (!this.edtStartDate.value) {
+      this.lblEndDate.caption = '-';
+      return;
+    }
     const startDate = moment(this.edtStartDate.value.format(dateFormat), dateFormat);
-    const duration = this.productInfo.priceDuration.toNumber();
-    this.lblEndDate.caption = startDate.add(duration, 'seconds').format('DD/MM/YYYY');
+    const days = Number(this.edtDuration.value) || 0;
+    this.lblEndDate.caption = startDate.add(days, 'days').format('DD/MM/YYYY');
+  }
+
+  private onStartDateChanged() {
+    this._updateEndDate();
+  }
+  
+  private onDurationChanged() {
+    this._updateEndDate();
+    const days = Number(this.edtDuration.value) || 0;
+    if (!days) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
+    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+    const amount = price.times(days * 86400).div(this.productInfo.priceDuration);
+    this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 
   async init() {
@@ -1641,11 +1665,30 @@ export default class ScomNftMinter extends Module {
                             width="100%"
                             type="date"
                             placeholder="dd/mm/yyyy"
-                            background={{ color: Theme.colors.secondary.dark }}
+                            background={{ color: Theme.input.background }}
+                            font={{ size: '1rem' }}
                             border={{ radius: "0.375rem" }}
-                            onChanged={this.onStartDateChanaged}
+                            onChanged={this.onStartDateChanged}
                           ></i-datepicker>
                         </i-panel>
+                      </i-stack>
+                      <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
+                        <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-stack direction="horizontal" width="50%" alignItems="center" gap="0.5rem">
+                          <i-input
+                            id='edtDuration'
+                            height={36}
+                            width="100%"
+                            class={inputStyle}
+                            inputType='number'
+                            font={{ size: '1rem' }}
+                            border={{ radius: 4, style: 'none' }}
+                            padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
+                            onChanged={this.onDurationChanged}
+                          >
+                          </i-input>
+                          <i-label caption="Days" font={{ bold: true, size: '1rem' }}></i-label>
+                        </i-stack>
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Ends" font={{ bold: true, size: '1rem' }}></i-label>

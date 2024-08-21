@@ -1107,6 +1107,7 @@ declare module "@scom/scom-nft-minter" {
         private edtQty;
         private pnlSubscriptionPeriod;
         private edtStartDate;
+        private edtDuration;
         private lblEndDate;
         private lblBalance;
         private btnSubmit;
@@ -1308,7 +1309,9 @@ declare module "@scom/scom-nft-minter" {
         private onSubmit;
         private mintNft;
         private buyToken;
-        private onStartDateChanaged;
+        private _updateEndDate;
+        private onStartDateChanged;
+        private onDurationChanged;
         init(): Promise<void>;
         render(): any;
     }

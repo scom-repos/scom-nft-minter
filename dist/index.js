@@ -2594,6 +2594,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this._data.productId = productId;
             }
             this.edtStartDate.value = undefined;
+            this.edtDuration.value = '';
             await this.refreshDApp();
         }
         getTag() {
@@ -2774,9 +2775,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.tokenInput.inputReadOnly = true;
                         this.pnlQty.visible = false;
                         this.pnlSubscriptionPeriod.visible = this._type === index_12.ProductType.Subscription;
-                        if (this._type === index_12.ProductType.Subscription && !this.edtStartDate.value) {
-                            this.edtStartDate.value = (0, components_6.moment)();
-                            this.onStartDateChanaged();
+                        if (this._type === index_12.ProductType.Subscription) {
+                            if (!this.edtStartDate.value) {
+                                this.edtStartDate.value = (0, components_6.moment)();
+                            }
+                            if (!this.edtDuration.value) {
+                                this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                            }
+                            this.onStartDateChanged();
                         }
                         //this.pnlQty.visible = true;
                         this.pnlTokenInput.visible = false;
@@ -3235,11 +3241,27 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 });
             }
         }
-        onStartDateChanaged() {
+        _updateEndDate() {
             const dateFormat = 'YYYY-MM-DD';
+            if (!this.edtStartDate.value) {
+                this.lblEndDate.caption = '-';
+                return;
+            }
             const startDate = (0, components_6.moment)(this.edtStartDate.value.format(dateFormat), dateFormat);
-            const duration = this.productInfo.priceDuration.toNumber();
-            this.lblEndDate.caption = startDate.add(duration, 'seconds').format('DD/MM/YYYY');
+            const days = Number(this.edtDuration.value) || 0;
+            this.lblEndDate.caption = startDate.add(days, 'days').format('DD/MM/YYYY');
+        }
+        onStartDateChanged() {
+            this._updateEndDate();
+        }
+        onDurationChanged() {
+            this._updateEndDate();
+            const days = Number(this.edtDuration.value) || 0;
+            if (!days)
+                this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
+            const price = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+            const amount = price.times(days * 86400).div(this.productInfo.priceDuration);
+            this.lbOrderTotal.caption = `${(0, index_13.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         async init() {
             super.init();
@@ -3339,7 +3361,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Starts", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-panel", { width: "50%" },
-                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "date", placeholder: "dd/mm/yyyy", background: { color: Theme.colors.secondary.dark }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanaged }))),
+                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "date", placeholder: "dd/mm/yyyy", background: { color: Theme.input.background }, font: { size: '1rem' }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanged }))),
+                                            this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
+                                                this.$render("i-label", { caption: "Duration", font: { bold: true, size: '1rem' } }),
+                                                this.$render("i-stack", { direction: "horizontal", width: "50%", alignItems: "center", gap: "0.5rem" },
+                                                    this.$render("i-input", { id: 'edtDuration', height: 36, width: "100%", class: index_css_3.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, onChanged: this.onDurationChanged }),
+                                                    this.$render("i-label", { caption: "Days", font: { bold: true, size: '1rem' } }))),
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Ends", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lblEndDate", font: { size: '1rem' } }))),
