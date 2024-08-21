@@ -67,7 +67,6 @@ export interface IEmbedData {
   wallets: IWalletPlugin[];
   networks: any[];
   showHeader?: boolean;
-  requiredQuantity?: number;
 }
 
 export interface IWalletPlugin {

@@ -68,7 +68,6 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         wallets: IWalletPlugin[];
         networks: any[];
         showHeader?: boolean;
-        requiredQuantity?: number;
     }
     export interface IWalletPlugin {
         name: string;
@@ -1077,7 +1076,6 @@ declare module "@scom/scom-nft-minter" {
         wallets: IWalletPlugin[];
         networks: INetworkConfig[];
         showHeader?: boolean;
-        requiredQuantity?: number;
         onMintedNFT?: () => void;
     }
     global {
@@ -1251,7 +1249,6 @@ declare module "@scom/scom-nft-minter" {
                 wallets: IWalletPlugin[];
                 networks: any[];
                 showHeader?: boolean;
-                requiredQuantity?: number;
             };
             setData: any;
             getTag: any;

@@ -61,7 +61,6 @@ interface ScomNftMinterElement extends ControlElement {
   wallets: IWalletPlugin[];
   networks: INetworkConfig[];
   showHeader?: boolean;
-  requiredQuantity?: number;
   onMintedNFT?: () => void;
 }
 
@@ -407,7 +406,6 @@ export default class ScomNftMinter extends Module {
                 logoUrl,
                 description,
                 link,
-                requiredQuantity,
                 erc1155Index,
                 nftType,
                 chainId,
@@ -430,7 +428,6 @@ export default class ScomNftMinter extends Module {
                 logoUrl,
                 description,
                 link,
-                requiredQuantity,
                 erc1155Index,
                 nftType,
                 chainId,
@@ -981,7 +978,8 @@ export default class ScomNftMinter extends Module {
           this.updateTokenAddress(token.address);
           this.lbOwn.caption = formatNumber(nftBalance, 0);
           this.pnlMintFee.visible = true;
-          const duration = this._type === ProductType.Subscription ? ` for ${Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400)} days` : '';
+          const days = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+          const duration = this._type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
           this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}${duration}`;
           this.lblTitle.caption = this._data.title;
           this.lblRef.caption = 'smart contract:';
@@ -1006,16 +1004,7 @@ export default class ScomNftMinter extends Module {
           } else {
             this.imgUri.visible = false;
           }
-          if (this._data.requiredQuantity != null) {
-            let qty = Number(this._data.requiredQuantity);
-            if (nftBalance) {
-              this.edtQty.value = Math.max(qty - Number(nftBalance), 0);
-            } else {
-              this.edtQty.value = qty;
-            }
-          } else {
-            this.edtQty.value = '1';
-          }
+          this.edtQty.value = '1';
           this.onQtyChanged();
         } else {
           this.detailWrapper.visible = false;
@@ -1521,7 +1510,6 @@ export default class ScomNftMinter extends Module {
       const wallets = this.getAttribute('wallets', true);
       const showHeader = this.getAttribute('showHeader', true);
       const defaultChainId = this.getAttribute('defaultChainId', true);
-      const requiredQuantity = this.getAttribute('requiredQuantity', true);
       const tokenToMint = this.getAttribute('tokenToMint', true);
       const customMintToken = this.getAttribute('customMintToken', true);
       const priceToMint = this.getAttribute('priceToMint', true);
@@ -1538,7 +1526,6 @@ export default class ScomNftMinter extends Module {
         title,
         chainSpecificProperties,
         defaultChainId,
-        requiredQuantity,
         tokenToMint,
         customMintToken,
         priceToMint,

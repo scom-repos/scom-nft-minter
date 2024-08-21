@@ -2348,7 +2348,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return {
                             execute: async () => {
                                 oldData = JSON.parse(JSON.stringify(this._data));
-                                const { name, title, productType, logoUrl, description, link, requiredQuantity, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, tokenToMint, customMintToken, priceToMint, maxQty, txnMaxQty, uri, ...themeSettings } = userInputData;
+                                const { name, title, productType, logoUrl, description, link, erc1155Index, nftType, chainId, nftAddress, chainSpecificProperties, defaultChainId, tokenToMint, customMintToken, priceToMint, maxQty, txnMaxQty, uri, ...themeSettings } = userInputData;
                                 const generalSettings = {
                                     name,
                                     title,
@@ -2356,7 +2356,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                     logoUrl,
                                     description,
                                     link,
-                                    requiredQuantity,
                                     erc1155Index,
                                     nftType,
                                     chainId,
@@ -2767,7 +2766,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.updateTokenAddress(token.address);
                         this.lbOwn.caption = (0, index_13.formatNumber)(nftBalance, 0);
                         this.pnlMintFee.visible = true;
-                        const duration = this._type === index_12.ProductType.Subscription ? ` for ${Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400)} days` : '';
+                        const days = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                        const duration = this._type === index_12.ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
                         this.lblMintFee.caption = `${price ? (0, index_13.formatNumber)(price) : ""} ${token?.symbol || ""}${duration}`;
                         this.lblTitle.caption = this._data.title;
                         this.lblRef.caption = 'smart contract:';
@@ -2793,18 +2793,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         else {
                             this.imgUri.visible = false;
                         }
-                        if (this._data.requiredQuantity != null) {
-                            let qty = Number(this._data.requiredQuantity);
-                            if (nftBalance) {
-                                this.edtQty.value = Math.max(qty - Number(nftBalance), 0);
-                            }
-                            else {
-                                this.edtQty.value = qty;
-                            }
-                        }
-                        else {
-                            this.edtQty.value = '1';
-                        }
+                        this.edtQty.value = '1';
                         this.onQtyChanged();
                     }
                     else {
@@ -3284,7 +3273,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const wallets = this.getAttribute('wallets', true);
                 const showHeader = this.getAttribute('showHeader', true);
                 const defaultChainId = this.getAttribute('defaultChainId', true);
-                const requiredQuantity = this.getAttribute('requiredQuantity', true);
                 const tokenToMint = this.getAttribute('tokenToMint', true);
                 const customMintToken = this.getAttribute('customMintToken', true);
                 const priceToMint = this.getAttribute('priceToMint', true);
@@ -3301,7 +3289,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     title,
                     chainSpecificProperties,
                     defaultChainId,
-                    requiredQuantity,
                     tokenToMint,
                     customMintToken,
                     priceToMint,
