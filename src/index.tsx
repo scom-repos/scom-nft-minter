@@ -772,7 +772,7 @@ export default class ScomNftMinter extends Module {
         token?.address || nullAddress,
         token?.decimals || 18,
         uri,
-        this._data.durationInDays * 86400 || 0,
+        1 * 86400, // per day
         callback,
         confirmationCallback
       );
@@ -841,14 +841,10 @@ export default class ScomNftMinter extends Module {
           return resolve(false);
         }
         try {
-          const { tokenToMint, customMintToken, uri, paymentModel, durationInDays } = this._data;
+          const { tokenToMint, customMintToken, uri } = this._data;
           const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
           if (!tokenToMint || (isCustomToken && !customMintToken)) {
             this.showTxStatusModal('error', 'TokenToMint is missing!');
-            return resolve(false);
-          }
-          if (paymentModel === PaymentModel.Subscription && !durationInDays) {
-            this.showTxStatusModal('error', 'Duration is missing!');
             return resolve(false);
           }
           const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
