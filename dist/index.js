@@ -2173,6 +2173,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
                             this._data.priceToMint = eth_wallet_5.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
                             this._data.tokenToMint = this.productInfo.token.address;
+                            this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
                             return resolve(true);
                         };
                         if (!(0, index_15.isClientWalletConnected)()) {

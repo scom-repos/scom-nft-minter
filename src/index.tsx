@@ -818,6 +818,7 @@ export default class ScomNftMinter extends Module {
           this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
           this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
           this._data.tokenToMint = this.productInfo.token.address;
+          this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
           return resolve(true);
         }
         if (!isClientWalletConnected()) {
