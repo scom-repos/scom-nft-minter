@@ -585,6 +585,46 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return productId;
     }
     exports.getProductIdFromEvent = getProductIdFromEvent;
+    async function getDiscountRules(state, productId) {
+        let discountRules = [];
+        let promotionAddress = state.getContractAddress('Promotion');
+        if (!promotionAddress)
+            return discountRules;
+        try {
+            const wallet = state.getRpcWallet();
+            const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
+            const ruleCount = await promotion.getDiscountRuleCount(productId);
+            let contractCalls = [];
+            for (let i = 0; i < ruleCount.toNumber(); i++) {
+                contractCalls.push({
+                    contract: promotion,
+                    methodName: 'discountRules',
+                    params: [productId, i],
+                    to: promotionAddress
+                });
+            }
+            const multicallResults = await wallet.doMulticall(contractCalls);
+            for (let i = 0; i < multicallResults.length; i++) {
+                const multicallResult = multicallResults[i];
+                if (!multicallResult)
+                    continue;
+                const discountRule = multicallResult;
+                discountRules.push({
+                    id: discountRule.id.toNumber(),
+                    minDuration: discountRule.minDuration,
+                    discountPercentage: discountRule.discountPercentage.toNumber(),
+                    fixedPrice: discountRule.fixedPrice,
+                    startTime: discountRule.startTime.toNumber(),
+                    endTime: discountRule.endTime.toNumber(),
+                    discountApplication: discountRule.discountApplication.toNumber()
+                });
+            }
+        }
+        catch {
+            console.error('failed to get discount rules');
+        }
+        return discountRules;
+    }
     async function newProduct(productMarketplaceAddress, productType, quantity, // max quantity of this nft can be exist at anytime
     maxQuantity, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
@@ -822,7 +862,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function subscribe(state, productId, startTime, duration, callback, confirmationCallback) {
+    async function subscribe(state, productId, startTime, duration, discountRuleId = 0, callback, confirmationCallback) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
@@ -839,7 +879,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     to: wallet.address,
                     productId: productId,
                     startTime: startTime,
-                    duration: duration
+                    duration: duration,
+                    discountRuleId: discountRuleId
                 }, amount);
             }
             else {
@@ -847,7 +888,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     to: wallet.address,
                     productId: productId,
                     startTime: startTime,
-                    duration: duration
+                    duration: duration,
+                    discountRuleId: discountRuleId
                 });
             }
         }
@@ -975,15 +1017,35 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
     exports.default = {
         "infuraId": "adc596bf88b648e2a8902bc9093930c5",
         "contractInfo": {
-            "43113": {
+            "97": {
                 "ProductMarketplace": {
-                    "address": "0x61ae6893E10d2B527f9568c369C1dc95696AF792"
+                    "address": "0x9FcD44B7e2eE6Cd05E72b18CEB8bF15D918BCd60"
                 },
                 "OneTimePurchaseNFT": {
-                    "address": "0xDB301a9Ef98843376C835aFB41608d6A319e138D"
+                    "address": "0x6061FDC4f37a77e9A7333aD4d575ea32eEc44eE0"
                 },
                 "SubscriptionNFTFactory": {
-                    "address": "0xdC152515a9Ee063f2ce07B2c519D9a11935D2C3B"
+                    "address": "0x40E83b8211338E204926E447C54477F7FCAB1cF8"
+                },
+                "Promotion": {
+                    "address": "0xC1074403b4893D8Fe6aaB93780398e5F67ba2Bf0"
+                },
+                "Proxy": {
+                    "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
+                },
+            },
+            "43113": {
+                "ProductMarketplace": {
+                    "address": "0x3b97dF29d6B9518F96b8Bc19f4cfEaf7Ee88f412"
+                },
+                "OneTimePurchaseNFT": {
+                    "address": "0xcf43916aaBa8955A0e034Fd2741269eA421F6428"
+                },
+                "SubscriptionNFTFactory": {
+                    "address": "0xC6d85c98b4A1428337aB784B5932Da11B7a1A707"
+                },
+                "Promotion": {
+                    "address": "0x0E1C3B28Cba10dCeDa742Aa567c7D28C4932B81d"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
@@ -1345,7 +1407,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getProjectOwnerSchema3 = exports.getProjectOwnerSchema2 = exports.getProjectOwnerSchema1 = exports.getBuilderSchema = void 0;
-    const chainIds = [43113];
+    const chainIds = [97, 43113];
     const networks = chainIds.map(v => { return { chainId: v }; });
     const getSupportedTokens = (chainId) => {
         return index_10.SupportedERC20Tokens[chainId] || [];
@@ -3519,7 +3581,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, callback, async () => {
+                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, 0, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);
