@@ -5,7 +5,7 @@ import { comboBoxStyle, formInputStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
-import { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "./component/index";
+import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "./component/index";
 import { PaymentModel } from "./interface/index";
 
 const chainIds = [43113];
@@ -25,6 +25,17 @@ const payment = [
         value: PaymentModel.Subscription
     }
 ]
+
+const nftTypes = [
+    {
+        label: 'ERC721',
+        value: 'ERC721'
+    },
+    {
+        label: 'ERC1155',
+        value: 'ERC1155'
+    },
+];
 
 const theme = {
     backgroundColor: {
@@ -500,6 +511,9 @@ export function getProjectOwnerSchema1() {
 
 //existing custom721 or custom1155
 export function getProjectOwnerSchema2(state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+    let cbbNftType: ComboBox;
+    let addressInput: ScomNftMinterAddressInput;
+    let edtNftId: Input;
     return {
         dataSchema: {
             type: 'object',
@@ -620,6 +634,77 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                     setData: async (control: ScomNetworkPicker, value: number) => {
                         await control.ready();
                         control.setNetworkByChainId(value);
+                    }
+                },
+                '#/properties/nftType': {
+                    render: () => {
+                        const pnlNftType = new Panel();
+                        cbbNftType = new ComboBox(pnlNftType, {
+                            height: '42px',
+                            icon: {
+                                name: 'caret-down'
+                            },
+                            items: nftTypes
+                        });
+                        cbbNftType.classList.add(comboBoxStyle);
+                        cbbNftType.onChanged = () => {
+                            if (addressInput) {
+                                addressInput.nftType = (cbbNftType.selectedItem as IComboItem)?.value as 'ERC721' | 'ERC1155';
+                                addressInput.handleAddressChanged();
+                            }
+                            if (pnlNftType['onChanged']) pnlNftType['onChanged']();
+                        }
+                        return pnlNftType;
+                    },
+                    getData: (control: ComboBox) => {
+                        return (cbbNftType.selectedItem as IComboItem)?.value;
+                    },
+                    setData: async (control: ComboBox, value: string) => {
+                        cbbNftType.selectedItem = nftTypes.find(item => item.value === value);
+                    }
+                },
+                '#/properties/nftAddress': {
+                    render: () => {
+                        addressInput = new ScomNftMinterAddressInput(undefined, {
+                            state,
+                            value: ''
+                        });
+                        return addressInput;
+                    },
+                    getData: (control: ScomNftMinterAddressInput) => {
+                        return control.value;
+                    },
+                    setData: async (control: ScomNftMinterAddressInput, value: string, rowData: any) => {
+                        await control.ready();
+                        control.nftType = rowData?.nftType;
+                        control.nftId = rowData?.erc1155Index;
+                        control.value = value;
+                        control.handleAddressChanged();
+                    }
+                },
+                '#/properties/erc1155Index': {
+                    render: () => {
+                        const pnlNftId = new Panel();
+                        edtNftId = new Input(pnlNftId, {
+                            inputType: 'number',
+                            height: '42px',
+                            width: '100%'
+                        });
+                        edtNftId.classList.add(formInputStyle);
+                        edtNftId.onChanged = () => {
+                            if (addressInput) {
+                                addressInput.nftId = edtNftId.value;
+                                addressInput.handleAddressChanged();
+                            }
+                            if (pnlNftId['onChanged']) pnlNftId['onChanged']();
+                        }
+                        return pnlNftId;
+                    },
+                    getData: (control: Input) => {
+                        return edtNftId.value;
+                    },
+                    setData: async (control: Input, value: number) => {
+                        edtNftId.value = value;
                     }
                 },
                 '#/properties/newPrice': {

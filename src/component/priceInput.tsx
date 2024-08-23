@@ -80,13 +80,12 @@ export class ScomNftMinterPriceInput extends Module {
 
   render() {
     return (
-      <i-hstack verticalAlignment="center" wrap="wrap">
+      <i-hstack verticalAlignment="center">
         <i-input
           id="inputField"
           inputType="number"
           width="100%"
           minWidth="100px"
-          maxWidth="calc(100% - 60px)"
           height="42px"
           class={formInputStyle}
           onChanged={this.onChanged}
@@ -97,6 +96,7 @@ export class ScomNftMinterPriceInput extends Module {
           visible={false}
           margin={{ left: '0.5rem' }}
           font={{ color: Theme.text.primary }}
+          stack={{ shrink: '0' }}
         />
       </i-hstack>
     )

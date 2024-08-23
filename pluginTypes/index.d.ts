@@ -421,19 +421,56 @@ declare module "@scom/scom-nft-minter/component/priceInput.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-nft-minter/component/addressInput.tsx" />
+declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
+    import { ControlElement, Module } from '@ijstech/components';
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    interface ScomNftMinterAddressInputElement extends ControlElement {
+        state: State;
+        value?: number;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-nft-minter-address-input']: ScomNftMinterAddressInputElement;
+            }
+        }
+    }
+    export class ScomNftMinterAddressInput extends Module {
+        private edtAddress;
+        private pnlProductInfo;
+        private lblPaymentModel;
+        private lblPriceToMint;
+        private state;
+        private timeout;
+        private _nftType;
+        private _nftId;
+        private isInfoParentUpdated;
+        get nftType(): 'ERC721' | 'ERC1155';
+        set nftType(value: 'ERC721' | 'ERC1155');
+        get nftId(): number;
+        set nftId(value: number);
+        get value(): string;
+        set value(val: string);
+        init(): void;
+        handleAddressChanged(): void;
+        render(): void;
+    }
+}
 /// <amd-module name="@scom/scom-nft-minter/component/index.ts" />
 declare module "@scom/scom-nft-minter/component/index.ts" {
     import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/fieldUpdate.tsx";
     import { ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/priceInput.tsx";
-    export { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput };
+    import { ScomNftMinterAddressInput } from "@scom/scom-nft-minter/component/addressInput.tsx";
+    export { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput, ScomNftMinterAddressInput };
 }
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     import ScomNetworkPicker from "@scom/scom-network-picker";
     import ScomTokenInput from "@scom/scom-token-input";
-    import { ComboBox, Panel } from "@ijstech/components";
+    import { ComboBox, Input, Panel } from "@ijstech/components";
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    import { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/index.ts";
+    import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/index.ts";
     import { PaymentModel } from "@scom/scom-nft-minter/interface/index.tsx";
     export function getBuilderSchema(): {
         dataSchema: {
@@ -784,6 +821,21 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
             };
+            '#/properties/nftType': {
+                render: () => Panel;
+                getData: (control: ComboBox) => string;
+                setData: (control: ComboBox, value: string) => Promise<void>;
+            };
+            '#/properties/nftAddress': {
+                render: () => ScomNftMinterAddressInput;
+                getData: (control: ScomNftMinterAddressInput) => string;
+                setData: (control: ScomNftMinterAddressInput, value: string, rowData: any) => Promise<void>;
+            };
+            '#/properties/erc1155Index': {
+                render: () => Panel;
+                getData: (control: Input) => any;
+                setData: (control: Input, value: number) => Promise<void>;
+            };
             '#/properties/newPrice': {
                 render: () => ScomNftMinterFieldUpdate;
                 getData: (control: ScomNftMinterFieldUpdate) => number | "";
@@ -1049,6 +1101,21 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomNetworkPicker;
                 getData: (control: ScomNetworkPicker) => number;
                 setData: (control: ScomNetworkPicker, value: number) => Promise<void>;
+            };
+            '#/properties/nftType': {
+                render: () => Panel;
+                getData: (control: ComboBox) => string;
+                setData: (control: ComboBox, value: string) => Promise<void>;
+            };
+            '#/properties/nftAddress': {
+                render: () => ScomNftMinterAddressInput;
+                getData: (control: ScomNftMinterAddressInput) => string;
+                setData: (control: ScomNftMinterAddressInput, value: string, rowData: any) => Promise<void>;
+            };
+            '#/properties/erc1155Index': {
+                render: () => Panel;
+                getData: (control: Input) => any;
+                setData: (control: Input, value: number) => Promise<void>;
             };
             '#/properties/newPrice': {
                 render: () => ScomNftMinterFieldUpdate;
