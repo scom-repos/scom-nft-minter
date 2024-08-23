@@ -264,6 +264,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const tokenSelectionStyle: string;
     export const linkStyle: string;
     export const formInputStyle: string;
+    export const comboBoxStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
@@ -392,17 +393,48 @@ declare module "@scom/scom-nft-minter/component/fieldUpdate.tsx" {
         render(): any;
     }
 }
+/// <amd-module name="@scom/scom-nft-minter/component/priceInput.tsx" />
+declare module "@scom/scom-nft-minter/component/priceInput.tsx" {
+    import { ControlElement, Module, Container } from '@ijstech/components';
+    interface ScomNftMinterPriceInputElement extends ControlElement {
+        value?: number;
+        isUnitShown?: boolean;
+    }
+    global {
+        namespace JSX {
+            interface IntrinsicElements {
+                ['i-scom-nft-minter-price-input']: ScomNftMinterPriceInputElement;
+            }
+        }
+    }
+    export class ScomNftMinterPriceInput extends Module {
+        private inputField;
+        private lbUnit;
+        static create(options?: ScomNftMinterPriceInputElement, parent?: Container): Promise<ScomNftMinterPriceInput>;
+        constructor(parent?: Container, options?: ScomNftMinterPriceInputElement);
+        get value(): number;
+        set value(val: number);
+        set isUnitShown(val: boolean);
+        onChanged(): void;
+        private isNumber;
+        init(): void;
+        render(): any;
+    }
+}
 /// <amd-module name="@scom/scom-nft-minter/component/index.ts" />
 declare module "@scom/scom-nft-minter/component/index.ts" {
     import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/fieldUpdate.tsx";
-    export { ScomNftMinterFieldUpdate };
+    import { ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/priceInput.tsx";
+    export { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput };
 }
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     import ScomNetworkPicker from "@scom/scom-network-picker";
     import ScomTokenInput from "@scom/scom-token-input";
+    import { ComboBox, Panel } from "@ijstech/components";
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/index.ts";
+    import { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/index.ts";
+    import { PaymentModel } from "@scom/scom-nft-minter/interface/index.tsx";
     export function getBuilderSchema(): {
         dataSchema: {
             type: string;
@@ -542,15 +574,9 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     oneOf: {
                         title: string;
-                        const: string;
+                        const: PaymentModel;
                     }[];
                     required: boolean;
-                };
-                durationInDays: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
                 };
                 dark: {
                     type: string;
@@ -600,6 +626,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
+                elements: {
+                    type: string;
+                    scope: string;
+                }[];
+                scope?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
                 scope: string;
                 rule: {
                     effect: string;
@@ -614,28 +648,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             } | {
                 type: string;
                 scope: string;
-                rule?: undefined;
                 elements?: undefined;
-            } | {
-                type: string;
-                elements: ({
-                    type: string;
-                    scope: string;
-                    rule?: undefined;
-                } | {
-                    type: string;
-                    scope: string;
-                    rule: {
-                        effect: string;
-                        condition: {
-                            scope: string;
-                            schema: {
-                                const: string;
-                            };
-                        };
-                    };
-                })[];
-                scope?: undefined;
                 rule?: undefined;
             })[];
         };
@@ -649,6 +662,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomTokenInput;
                 getData: (control: ScomTokenInput) => string;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
+            };
+            '#/properties/paymentModel': {
+                render: () => Panel;
+                getData: (control: ComboBox) => string;
+                setData: (control: ComboBox, value: string) => Promise<void>;
+            };
+            '#/properties/priceToMint': {
+                render: () => ScomNftMinterPriceInput;
+                getData: (control: ScomNftMinterPriceInput) => number;
+                setData: (control: ScomNftMinterPriceInput, value: number) => Promise<void>;
             };
         };
     };
@@ -822,15 +845,9 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     oneOf: {
                         title: string;
-                        const: string;
+                        const: PaymentModel;
                     }[];
                     required: boolean;
-                };
-                durationInDays: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
                 };
                 dark: {
                     type: string;
@@ -880,6 +897,14 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             type: string;
             elements: ({
                 type: string;
+                elements: {
+                    type: string;
+                    scope: string;
+                }[];
+                scope?: undefined;
+                rule?: undefined;
+            } | {
+                type: string;
                 scope: string;
                 rule: {
                     effect: string;
@@ -894,28 +919,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             } | {
                 type: string;
                 scope: string;
-                rule?: undefined;
                 elements?: undefined;
-            } | {
-                type: string;
-                elements: ({
-                    type: string;
-                    scope: string;
-                    rule?: undefined;
-                } | {
-                    type: string;
-                    scope: string;
-                    rule: {
-                        effect: string;
-                        condition: {
-                            scope: string;
-                            schema: {
-                                const: string;
-                            };
-                        };
-                    };
-                })[];
-                scope?: undefined;
                 rule?: undefined;
             })[];
         };
@@ -929,6 +933,16 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 render: () => ScomTokenInput;
                 getData: (control: ScomTokenInput) => string;
                 setData: (control: ScomTokenInput, value: string, rowData: any) => Promise<void>;
+            };
+            '#/properties/paymentModel': {
+                render: () => Panel;
+                getData: (control: ComboBox) => string;
+                setData: (control: ComboBox, value: string) => Promise<void>;
+            };
+            '#/properties/priceToMint': {
+                render: () => ScomNftMinterPriceInput;
+                getData: (control: ScomNftMinterPriceInput) => number;
+                setData: (control: ScomNftMinterPriceInput, value: number) => Promise<void>;
             };
         };
     } | {

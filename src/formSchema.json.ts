@@ -1,11 +1,12 @@
 import ScomNetworkPicker from "@scom/scom-network-picker";
 import ScomTokenInput, { CUSTOM_TOKEN } from "@scom/scom-token-input";
-import { Input } from "@ijstech/components";
-import { formInputStyle } from "./index.css";
+import { ComboBox, IComboItem, Input, Label, Panel } from "@ijstech/components";
+import { comboBoxStyle, formInputStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
-import { ScomNftMinterFieldUpdate } from "./component/index";
+import { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "./component/index";
+import { PaymentModel } from "./interface/index";
 
 const chainIds = [43113];
 const networks = chainIds.map(v => { return { chainId: v } });
@@ -14,6 +15,16 @@ const getSupportedTokens = (chainId: number) => {
     return SupportedERC20Tokens[chainId] || [];
 }
 
+const payment = [
+    {
+        label: 'One-Time Purchase',
+        value: PaymentModel.OneTimePurchase
+    },
+    {
+        label: 'Subscription',
+        value: PaymentModel.Subscription
+    }
+]
 
 const theme = {
     backgroundColor: {
@@ -415,20 +426,14 @@ export function getProjectOwnerSchema1() {
                     oneOf: [
                         {
                             title: 'One-Time Purchase',
-                            const: 'OneTimePurchase'
+                            const: PaymentModel.OneTimePurchase
                         },
                         {
                             title: 'Subscription',
-                            const: 'Subscription'
+                            const: PaymentModel.Subscription
                         }
                     ],
                     required: true
-                },
-                durationInDays: {
-                    type: 'integer',
-                    title: 'Duration (Days)',
-                    tooltip: 'The period of time in which a subscription remains in effect',
-                    minimum: 1,
                 },
                 dark: {
                     type: 'object',
@@ -474,26 +479,8 @@ export function getProjectOwnerSchema1() {
                     scope: '#/properties/paymentModel',
                 },
                 {
-                    type: 'HorizontalLayout',
-                    elements: [
-                        {
-                            type: 'Control',
-                            scope: '#/properties/priceToMint',
-                        },
-                        {
-                            type: 'Control',
-                            scope: '#/properties/durationInDays',
-                            rule: {
-                                effect: 'SHOW',
-                                condition: {
-                                    scope: '#/properties/paymentModel',
-                                    schema: {
-                                        const: 'Subscription'
-                                    }
-                                }
-                            }
-                        },
-                    ]
+                    type: 'Control',
+                    scope: '#/properties/priceToMint',
                 },
                 {
                     type: 'Control',
@@ -688,6 +675,8 @@ const getCustomControls = (isCustomToken?: boolean) => {
     let networkPicker: ScomNetworkPicker;
     let tokenInput: ScomTokenInput;
     let customTokenInput: Input;
+    let cbbPaymentModel: ComboBox;
+    let priceInput: ScomNftMinterPriceInput;
 
     const controls = {
         '#/properties/chainId': {
@@ -786,6 +775,51 @@ const getCustomControls = (isCustomToken?: boolean) => {
                         if (customTokenInput.value) (customTokenInput as any).onChanged();
                     }
                 }
+            }
+        },
+        '#/properties/paymentModel': {
+            render: () => {
+                const pnl = new Panel();
+                cbbPaymentModel = new ComboBox(pnl, {
+                    height: '42px',
+                    icon: {
+                        name: 'caret-down'
+                    },
+                    items: payment
+                });
+                cbbPaymentModel.classList.add(comboBoxStyle);
+                cbbPaymentModel.onChanged = () => {
+                    const value = (cbbPaymentModel.selectedItem as IComboItem)?.value;
+                    if (priceInput) {
+                        priceInput.isUnitShown = value === PaymentModel.Subscription;
+                    }
+                    (pnl as any).onChanged()
+                }
+                (pnl as any).onChanged = () => {};
+                return pnl;
+            },
+            getData: (control: ComboBox) => {
+                return (cbbPaymentModel.selectedItem as IComboItem)?.value;
+            },
+            setData: async (control: ComboBox, value: string) => {
+                cbbPaymentModel.selectedItem = payment.find(v => v.value === value);
+                if (priceInput) {
+                    priceInput.isUnitShown = value === PaymentModel.Subscription;
+                }
+            }
+        },
+        '#/properties/priceToMint': {
+            render: () => {
+                priceInput = new ScomNftMinterPriceInput(undefined, {
+                    isUnitShown: (cbbPaymentModel?.selectedItem as IComboItem)?.value === PaymentModel.Subscription
+                });
+                return priceInput;
+            },
+            getData: (control: ScomNftMinterPriceInput) => {
+                return control.value;
+            },
+            setData: async (control: ScomNftMinterPriceInput, value: number) => {
+                control.value = value;
             }
         }
     }
