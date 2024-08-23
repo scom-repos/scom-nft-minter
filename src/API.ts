@@ -1,5 +1,5 @@
 import { BigNumber, IMulticallContractCall, Utils, Wallet } from '@ijstech/eth-wallet';
-import { ProductType, ICommissionInfo, IProductInfo } from './interface/index';
+import { ProductType, ICommissionInfo, IProductInfo, IDiscountRule } from './interface/index';
 import { Contracts as ProductContracts } from '@scom/scom-product-contract';
 import { Contracts as ProxyContracts } from '@scom/scom-commission-proxy-contract';
 import { Contracts as OswapNftContracts } from "@scom/oswap-troll-nft-contract";
@@ -107,6 +107,44 @@ function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any) 
     } catch {
     }
     return productId;
+}
+
+async function getDiscountRules(state: State, productId: number) {
+    let discountRules: IDiscountRule[] = [];
+    let promotionAddress = state.getContractAddress('Promotion');
+    if (!promotionAddress) return discountRules;
+    try {
+        const wallet = state.getRpcWallet();
+        const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
+        const ruleCount = await promotion.getDiscountRuleCount(productId);
+        let contractCalls: IMulticallContractCall[] = [];
+        for (let i = 0; i < ruleCount.toNumber(); i++) {
+            contractCalls.push({
+                contract: promotion,
+                methodName: 'discountRules',
+                params: [productId, i],
+                to: promotionAddress
+            });
+        }
+        const multicallResults = await wallet.doMulticall(contractCalls);
+        for (let i = 0; i < multicallResults.length; i++) {
+            const multicallResult = multicallResults[i];
+            if (!multicallResult) continue;
+            const discountRule = multicallResult;
+            discountRules.push({
+                id: discountRule.id.toNumber(),
+                minDuration: discountRule.minDuration,
+                discountPercentage: discountRule.discountPercentage.toNumber(),
+                fixedPrice: discountRule.fixedPrice,
+                startTime: discountRule.startTime.toNumber(),
+                endTime: discountRule.endTime.toNumber(),
+                discountApplication: discountRule.discountApplication.toNumber()
+            });
+        }
+    } catch {
+        console.error('failed to get discount rules');
+    }
+    return discountRules;
 }
 
 async function newProduct(
@@ -430,6 +468,7 @@ async function subscribe(
     productId: number,
     startTime: number,
     duration: number,
+    discountRuleId: number = 0,
     callback?: any,
     confirmationCallback?: any
 ) {
@@ -449,14 +488,16 @@ async function subscribe(
                 to: wallet.address,
                 productId: productId,
                 startTime: startTime,
-                duration: duration
+                duration: duration,
+                discountRuleId: discountRuleId
             }, amount)
         } else {
             receipt = await productMarketplace.subscribe({
                 to: wallet.address,
                 productId: productId,
                 startTime: startTime,
-                duration: duration
+                duration: duration,
+                discountRuleId: discountRuleId
             })
         }
     } catch (err) {

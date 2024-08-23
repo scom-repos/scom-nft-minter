@@ -8,7 +8,7 @@ import { State, SupportedERC20Tokens } from "./store/index";
 import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "./component/index";
 import { PaymentModel } from "./interface/index";
 
-const chainIds = [43113];
+const chainIds = [97, 43113];
 const networks = chainIds.map(v => { return { chainId: v } });
 
 const getSupportedTokens = (chainId: number) => {

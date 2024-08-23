@@ -1463,7 +1463,7 @@ export default class ScomNftMinter extends Module {
     else if (this.productType === ProductType.Subscription) {
       const startTime = this.edtStartDate.value.unix();
       const days = this.getDurationInDays();
-      await subscribe(this.state, this.productId, startTime, days * 86400, callback,
+      await subscribe(this.state, this.productId, startTime, days * 86400, 0 ,callback,
         async () => {
           await this.updateTokenBalance();
           this.productInfo = await getProductInfo(this.state, this.productId);

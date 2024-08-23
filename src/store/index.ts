@@ -7,12 +7,13 @@ export interface IContractDetailInfo {
   address: string;
 }
 
-export type ContractType = 'ProductMarketplace' | 'OneTimePurchaseNFT' | 'SubscriptionNFTFactory' | 'Proxy';
+export type ContractType = 'ProductMarketplace' | 'OneTimePurchaseNFT' | 'SubscriptionNFTFactory' | 'Promotion' | 'Proxy';
 
 export interface IContractInfo {
   ProductMarketplace: IContractDetailInfo;
   OneTimePurchaseNFT: IContractDetailInfo;
   SubscriptionNFTFactory: IContractDetailInfo;
+  Promotion: IContractDetailInfo;
   Proxy: IContractDetailInfo;
 }
 
