@@ -3246,7 +3246,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async initApprovalAction() {
             if (!this.approvalModelAction) {
                 //this.contractAddress = this.nftType === 'ERC721' ? this.nftAddress : this.state.getContractAddress('Proxy');
-                this.contractAddress = this.nftAddress;
+                this.contractAddress = this.state.getContractAddress('ProductMarketplace');
                 this.approvalModelAction = await this.state.setApprovalModelAction({
                     sender: this,
                     payAction: async () => {
@@ -3315,7 +3315,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         updateContractAddress() {
             if (this.approvalModelAction) {
                 //if (this.nftType === 'ERC721') {
-                this.contractAddress = this.nftAddress;
+                // this.contractAddress = this.nftAddress;
                 //}
                 //else {//if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
                 //  this.contractAddress = this.state.getContractAddress('ProductInfo');
@@ -3323,6 +3323,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 //else {
                 //  this.contractAddress = this.state.getContractAddress('Proxy');
                 //}
+                this.contractAddress = this.state.getContractAddress('ProductMarketplace');
                 this.state.approvalModel.spenderAddress = this.contractAddress;
             }
         }
@@ -3360,7 +3361,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async onApprove() {
             if (this.nftType === 'ERC721' && !this.productId) {
                 const { price, token } = this.oswapTrollInfo;
-                const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
+                // const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
+                const contractAddress = this.state.getContractAddress('ProductMarketplace');
                 const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
                 this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
                 await this.approvalModelAction.doApproveAction(token, price.toFixed());
