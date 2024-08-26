@@ -112,6 +112,7 @@ export default class ScomNftMinter extends Module {
   private pnlQty: HStack;
   private edtQty: Input;
   private pnlSubscriptionPeriod: StackLayout;
+  private edtRecipient: Input;
   private edtStartDate: Datepicker;
   private edtDuration: Input;
   private comboDurationUnit: ComboBox;
@@ -208,8 +209,8 @@ export default class ScomNftMinter extends Module {
     return this._data.txnMaxQty;
   }
 
-  get donateTo() {
-    return this._data.donateTo ?? this._data.chainSpecificProperties?.[this.chainId]?.donateTo ?? '';
+  get recipient() {
+    return this._data.recipient ?? this._data.chainSpecificProperties?.[this.chainId]?.recipient ?? '';
   }
 
   get link() {
@@ -697,6 +698,7 @@ export default class ScomNftMinter extends Module {
       let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
       if (productId) this._data.productId = productId;
     }
+    this.edtRecipient.value = this._data.recipient;
     this.edtStartDate.value = undefined;
     this.edtDuration.value = '';
     this.comboDurationUnit.selectedItem = DurationUnits[0];
@@ -1476,7 +1478,7 @@ export default class ScomNftMinter extends Module {
     };
     const token = this.productInfo.token;
     if (this.productType == ProductType.DonateToOwner || this.productType == ProductType.DonateToEveryone) {
-      await donate(this.state, this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback,
+      await donate(this.state, this.productId, this.recipient, this.tokenInput.value, this._data.commissions, token, callback,
         async () => {
           await this.updateTokenBalance();
         }
@@ -1485,7 +1487,7 @@ export default class ScomNftMinter extends Module {
     else if (this.productType === ProductType.Subscription) {
       const startTime = this.edtStartDate.value.unix();
       const days = this.getDurationInDays();
-      await subscribe(this.state, this.productId, startTime, days * 86400, 0 ,callback,
+      await subscribe(this.state, this.productId, startTime, days * 86400, this.recipient, 0, callback,
         async () => {
           await this.updateTokenBalance();
           this.productInfo = await getProductInfo(this.state, this.productId);
@@ -1712,6 +1714,19 @@ export default class ScomNftMinter extends Module {
                         </i-input>
                       </i-panel>
                     </i-hstack>
+                    <i-stack id='pnlRecipient' width='100%' direction="horizontal" alignItems="center" justifyContent="space-between" gap={10}>
+                      <i-label caption='Recipient' font={{ bold: true, size: '1rem' }}></i-label>
+                      <i-input
+                        id='edtRecipient'
+                        height={35}
+                        width="100%"
+                        class={inputStyle}
+                        font={{ size: '1rem' }}
+                        border={{ radius: 4, style: 'none' }}
+                        padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
+                      >
+                      </i-input>
+                    </i-stack>
                     <i-stack id="pnlSubscriptionPeriod" direction="vertical" width="100%" gap="0.5rem" visible={false}>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Starts" font={{ bold: true, size: '1rem' }}></i-label>

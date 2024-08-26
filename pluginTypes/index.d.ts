@@ -37,7 +37,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
     }
     export interface IChainSpecificProperties {
         productId: number;
-        donateTo: string;
+        recipient: string;
     }
     export interface IEmbedData {
         productId?: number;
@@ -58,7 +58,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         priceDuration?: number;
         txnMaxQty?: number;
         uri?: string;
-        donateTo?: string;
+        recipient?: string;
         logoUrl?: string;
         description?: string;
         link?: string;
@@ -300,7 +300,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function subscribe(state: State, productId: number, startTime: number, duration: number, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
     function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
@@ -1217,6 +1217,7 @@ declare module "@scom/scom-nft-minter" {
         private pnlQty;
         private edtQty;
         private pnlSubscriptionPeriod;
+        private edtRecipient;
         private edtStartDate;
         private edtDuration;
         private comboDurationUnit;
@@ -1266,7 +1267,7 @@ declare module "@scom/scom-nft-minter" {
         get newPrice(): number;
         get newMaxQty(): number;
         get newTxnMaxQty(): number;
-        get donateTo(): string;
+        get recipient(): string;
         get link(): string;
         set link(value: string);
         get productId(): number;
@@ -1355,7 +1356,7 @@ declare module "@scom/scom-nft-minter" {
                 priceDuration?: number;
                 txnMaxQty?: number;
                 uri?: string;
-                donateTo?: string;
+                recipient?: string;
                 logoUrl?: string;
                 description?: string;
                 link?: string;

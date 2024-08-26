@@ -492,6 +492,7 @@ async function subscribe(
     productId: number,
     startTime: number,
     duration: number,
+    recipient: string,
     discountRuleId: number = 0,
     callback?: any,
     confirmationCallback?: any
@@ -509,7 +510,7 @@ async function subscribe(
         if (product.token === nullAddress) {
             const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
             receipt = await productMarketplace.subscribe({
-                to: wallet.address,
+                to: recipient || wallet.address,
                 productId: productId,
                 startTime: startTime,
                 duration: duration,
@@ -517,7 +518,7 @@ async function subscribe(
             }, amount)
         } else {
             receipt = await productMarketplace.subscribe({
-                to: wallet.address,
+                to: recipient || wallet.address,
                 productId: productId,
                 startTime: startTime,
                 duration: duration,

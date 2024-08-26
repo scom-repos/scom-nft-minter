@@ -35,7 +35,7 @@ export interface IProductInfo {
 
 export interface IChainSpecificProperties {
   productId: number;
-  donateTo: string;
+  recipient: string;
 }
 
 export interface IEmbedData {
@@ -57,7 +57,7 @@ export interface IEmbedData {
   priceDuration?: number;
   txnMaxQty?: number;
   uri?: string;
-  donateTo?: string;
+  recipient?: string;
   logoUrl?: string;
   description?: string;
   link?: string;

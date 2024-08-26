@@ -264,13 +264,13 @@ function getProjectOwnerSchema(isDonation?: boolean) {
     };
     const donateElements = [];
     if (isDonation) {
-        dataSchema.properties["donateTo"] = {
+        dataSchema.properties["recipient"] = {
             type: 'string',
             format: 'wallet-address'
         };
         donateElements.push({
             type: 'Control',
-            scope: '#/properties/donateTo',
+            scope: '#/properties/recipient',
         });
     }
     return {

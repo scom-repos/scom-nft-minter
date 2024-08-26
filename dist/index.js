@@ -881,7 +881,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function subscribe(state, productId, startTime, duration, discountRuleId = 0, callback, confirmationCallback) {
+    async function subscribe(state, productId, startTime, duration, recipient, discountRuleId = 0, callback, confirmationCallback) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
@@ -895,7 +895,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             if (product.token === index_5.nullAddress) {
                 const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
                 receipt = await productMarketplace.subscribe({
-                    to: wallet.address,
+                    to: recipient || wallet.address,
                     productId: productId,
                     startTime: startTime,
                     duration: duration,
@@ -904,7 +904,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             }
             else {
                 receipt = await productMarketplace.subscribe({
-                    to: wallet.address,
+                    to: recipient || wallet.address,
                     productId: productId,
                     startTime: startTime,
                     duration: duration,
@@ -1675,13 +1675,13 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
         };
         const donateElements = [];
         if (isDonation) {
-            dataSchema.properties["donateTo"] = {
+            dataSchema.properties["recipient"] = {
                 type: 'string',
                 format: 'wallet-address'
             };
             donateElements.push({
                 type: 'Control',
-                scope: '#/properties/donateTo',
+                scope: '#/properties/recipient',
             });
         }
         return {
@@ -2558,8 +2558,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         get newTxnMaxQty() {
             return this._data.txnMaxQty;
         }
-        get donateTo() {
-            return this._data.donateTo ?? this._data.chainSpecificProperties?.[this.chainId]?.donateTo ?? '';
+        get recipient() {
+            return this._data.recipient ?? this._data.chainSpecificProperties?.[this.chainId]?.recipient ?? '';
         }
         get link() {
             return this._data.link ?? '';
@@ -2997,6 +2997,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 if (productId)
                     this._data.productId = productId;
             }
+            this.edtRecipient.value = this._data.recipient;
             this.edtStartDate.value = undefined;
             this.edtDuration.value = '';
             this.comboDurationUnit.selectedItem = DurationUnits[0];
@@ -3616,14 +3617,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             };
             const token = this.productInfo.token;
             if (this.productType == index_13.ProductType.DonateToOwner || this.productType == index_13.ProductType.DonateToEveryone) {
-                await (0, API_3.donate)(this.state, this.productId, this.donateTo, this.tokenInput.value, this._data.commissions, token, callback, async () => {
+                await (0, API_3.donate)(this.state, this.productId, this.recipient, this.tokenInput.value, this._data.commissions, token, callback, async () => {
                     await this.updateTokenBalance();
                 });
             }
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, 0, callback, async () => {
+                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, 0, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);
@@ -3783,6 +3784,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-label", { caption: 'Quantity', font: { bold: true, size: '1rem' } }),
                                             this.$render("i-panel", { width: "50%" },
                                                 this.$render("i-input", { id: 'edtQty', height: 35, width: "100%", onChanged: this.onQtyChanged.bind(this), class: index_css_5.inputStyle, inputType: 'number', font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } }))),
+                                        this.$render("i-stack", { id: 'pnlRecipient', width: '100%', direction: "horizontal", alignItems: "center", justifyContent: "space-between", gap: 10 },
+                                            this.$render("i-label", { caption: 'Recipient', font: { bold: true, size: '1rem' } }),
+                                            this.$render("i-input", { id: 'edtRecipient', height: 35, width: "100%", class: index_css_5.inputStyle, font: { size: '1rem' }, border: { radius: 4, style: 'none' }, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' } })),
                                         this.$render("i-stack", { id: "pnlSubscriptionPeriod", direction: "vertical", width: "100%", gap: "0.5rem", visible: false },
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Starts", font: { bold: true, size: '1rem' } }),
