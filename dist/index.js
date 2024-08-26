@@ -472,7 +472,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.updateDiscountRules = exports.getDiscountRules = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -625,6 +625,25 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
         return discountRules;
     }
+    exports.getDiscountRules = getDiscountRules;
+    async function updateDiscountRules(state, productId, rules, ruleIdsToDelete = [], callback, confirmationCallback) {
+        let promotionAddress = state.getContractAddress('Promotion');
+        if (!promotionAddress)
+            throw new Error('Promotion contract not found');
+        const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
+        (0, index_5.registerSendTxEvents)({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
+        let receipt = await promotion.updateDiscountRules({
+            productId,
+            rules: rules || [],
+            ruleIdsToDelete
+        });
+        return receipt;
+    }
+    exports.updateDiscountRules = updateDiscountRules;
     async function newProduct(productMarketplaceAddress, productType, quantity, // max quantity of this nft can be exist at anytime
     maxQuantity, // max quantity for one buy() txn
     price, maxPrice, //for donation only, no max price when it is 0
@@ -2850,6 +2869,27 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             }
                         }
                         return true;
+                    },
+                    updateDiscountRules: async (productId, rules, ruleIdsToDelete = []) => {
+                        return new Promise(async (resolve, reject) => {
+                            const callback = (err, receipt) => {
+                                if (err) {
+                                    this.showTxStatusModal('error', err);
+                                }
+                            };
+                            const confirmationCallback = async (receipt) => {
+                                const discountRules = await (0, API_3.getDiscountRules)(this.state, productId);
+                                resolve(discountRules);
+                            };
+                            try {
+                                await (0, API_3.updateDiscountRules)(this.state, productId, rules, ruleIdsToDelete, callback, confirmationCallback);
+                            }
+                            catch (error) {
+                                this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
+                                console.log('updateDiscountRules', error);
+                                resolve([]);
+                            }
+                        });
                     },
                     getTag: this.getTag.bind(this),
                     setTag: this.setTag.bind(this)

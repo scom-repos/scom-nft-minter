@@ -84,7 +84,7 @@ export interface IDiscountRule {
   id: number;
   minDuration: BigNumber;
   discountPercentage: number;
-  fixedPrice: BigNumber;
+  fixedPrice: BigNumber | number;
   startTime: number;
   endTime: number;
   discountApplication: number; // 0: FirstTimeOnly, 1: RenewalsOnly, 2: All

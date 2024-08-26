@@ -23,11 +23,11 @@ import {
   IComboItem
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
+import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe, updateDiscountRules } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -571,6 +571,26 @@ export default class ScomNftMinter extends Module {
             }
           }
           return true;
+        },
+        updateDiscountRules: async (productId: number, rules: IDiscountRule[], ruleIdsToDelete: number[] = []) => {
+          return new Promise(async (resolve, reject) => {
+            const callback = (err: Error, receipt?: string) => {
+              if (err) {
+                this.showTxStatusModal('error', err);
+              }
+            };
+            const confirmationCallback = async (receipt: any) => {
+              const discountRules = await getDiscountRules(this.state, productId);
+              resolve(discountRules);
+            };
+            try {
+              await updateDiscountRules(this.state, productId, rules, ruleIdsToDelete, callback, confirmationCallback);
+            } catch (error) {
+              this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
+              console.log('updateDiscountRules', error);
+              resolve([]);
+            }
+          });
         },
         getTag: this.getTag.bind(this),
         setTag: this.setTag.bind(this)

@@ -147,6 +147,30 @@ async function getDiscountRules(state: State, productId: number) {
     return discountRules;
 }
 
+async function updateDiscountRules(
+    state: State,
+    productId: number,
+    rules: IDiscountRule[],
+    ruleIdsToDelete: number[] = [],
+    callback?: any,
+    confirmationCallback?: any
+) {
+    let promotionAddress = state.getContractAddress('Promotion');
+    if (!promotionAddress) throw new Error('Promotion contract not found');
+    const wallet = Wallet.getClientInstance();
+    const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
+    registerSendTxEvents({
+        transactionHash: callback,
+        confirmation: confirmationCallback
+    });
+    let receipt = await promotion.updateDiscountRules({
+        productId,
+        rules: rules || [],
+        ruleIdsToDelete
+    });
+    return receipt;
+}
+
 async function newProduct(
     productMarketplaceAddress: string,
 
@@ -615,6 +639,8 @@ export {
     getNFTBalance,
     getProductId,
     getProductIdFromEvent,
+    getDiscountRules,
+    updateDiscountRules,
     newProduct,
     createSubscriptionNFT,
     newDefaultBuyProduct,

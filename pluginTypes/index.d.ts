@@ -82,7 +82,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         id: number;
         minDuration: BigNumber;
         discountPercentage: number;
-        fixedPrice: BigNumber;
+        fixedPrice: BigNumber | number;
         startTime: number;
         endTime: number;
         discountApplication: number;
@@ -279,7 +279,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
     import { BigNumber } from '@ijstech/eth-wallet';
-    import { ProductType, ICommissionInfo, IProductInfo } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ProductType, ICommissionInfo, IProductInfo, IDiscountRule } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ITokenObject } from '@scom/scom-token-list';
     import { State } from "@scom/scom-nft-minter/store/index.ts";
     function getProductInfo(state: State, productId: number): Promise<IProductInfo>;
@@ -287,6 +287,8 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getNFTBalance(state: State, productId: number): Promise<string>;
     function getProductId(state: State, nftAddress: string, nftId?: number): Promise<number>;
     function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any): number;
+    function getDiscountRules(state: State, productId: number): Promise<IDiscountRule[]>;
+    function updateDiscountRules(state: State, productId: number, rules: IDiscountRule[], ruleIdsToDelete?: number[], callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
     maxQuantity: number, // max quantity for one buy() txn
     price: string, maxPrice: string, //for donation only, no max price when it is 0
@@ -308,7 +310,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, getProductOwner, updateProductUri, updateProductPrice, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -1163,7 +1165,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IEmbedData, INetworkConfig, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
@@ -1304,6 +1306,7 @@ declare module "@scom/scom-nft-minter" {
             getTag: any;
             setTag: any;
             setupData?: undefined;
+            updateDiscountRules?: undefined;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
@@ -1315,6 +1318,7 @@ declare module "@scom/scom-nft-minter" {
             getData: any;
             setData: (data: IEmbedData) => Promise<void>;
             setupData: (data: IEmbedData) => Promise<boolean>;
+            updateDiscountRules: (productId: number, rules: IDiscountRule[], ruleIdsToDelete?: number[]) => Promise<unknown>;
             getTag: any;
             setTag: any;
             getProxySelectors?: undefined;
@@ -1368,6 +1372,7 @@ declare module "@scom/scom-nft-minter" {
             getProxySelectors?: undefined;
             getActions?: undefined;
             setupData?: undefined;
+            updateDiscountRules?: undefined;
         } | {
             name: string;
             target: string;
@@ -1378,6 +1383,7 @@ declare module "@scom/scom-nft-minter" {
             setTag: any;
             getProxySelectors?: undefined;
             setupData?: undefined;
+            updateDiscountRules?: undefined;
             elementName?: undefined;
             getLinkParams?: undefined;
             setLinkParams?: undefined;
