@@ -42,7 +42,7 @@ export class ScomNftMinterPriceInput extends Module {
 
   get value() {
     const val = this.inputField?.value;
-    return this.isNumber(val) ? parseInt(val) : undefined;
+    return this.isNumber(val) ? Number(val) : undefined;
   }
 
   set value(val: number) {

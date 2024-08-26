@@ -135,7 +135,7 @@ async function getDiscountRules(state: State, productId: number) {
                 id: discountRule.id.toNumber(),
                 minDuration: discountRule.minDuration,
                 discountPercentage: discountRule.discountPercentage.toNumber(),
-                fixedPrice: discountRule.fixedPrice,
+                fixedPrice: Utils.fromDecimals(discountRule.fixedPrice),
                 startTime: discountRule.startTime.toNumber(),
                 endTime: discountRule.endTime.toNumber(),
                 discountApplication: discountRule.discountApplication.toNumber()

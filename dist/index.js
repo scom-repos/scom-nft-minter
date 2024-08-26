@@ -613,7 +613,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     id: discountRule.id.toNumber(),
                     minDuration: discountRule.minDuration,
                     discountPercentage: discountRule.discountPercentage.toNumber(),
-                    fixedPrice: discountRule.fixedPrice,
+                    fixedPrice: eth_wallet_3.Utils.fromDecimals(discountRule.fixedPrice),
                     startTime: discountRule.startTime.toNumber(),
                     endTime: discountRule.endTime.toNumber(),
                     discountApplication: discountRule.discountApplication.toNumber()
@@ -1285,7 +1285,7 @@ define("@scom/scom-nft-minter/component/priceInput.tsx", ["require", "exports", 
         }
         get value() {
             const val = this.inputField?.value;
-            return this.isNumber(val) ? parseInt(val) : undefined;
+            return this.isNumber(val) ? Number(val) : undefined;
         }
         set value(val) {
             if (this.inputField) {
