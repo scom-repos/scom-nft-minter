@@ -508,7 +508,20 @@ async function subscribe(
             confirmation: confirmationCallback
         });
         if (product.token === nullAddress) {
-            const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
+            let basePrice: BigNumber = product.price;
+            if (discountRuleId !== 0) {
+                let promotionAddress = state.getContractAddress('Promotion');
+                const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
+                const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+                const rule = await promotion.discountRules({ param1: productId, param2: index });
+                if (rule.discountPercentage.gt(0)) {
+                    const discount = product.price.times(rule.discountPercentage).div(100);
+                    basePrice = product.price.minus(discount);
+                } else {
+                    basePrice = rule.fixedPrice;
+                }
+            }
+            const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
             receipt = await productMarketplace.subscribe({
                 to: recipient || wallet.address,
                 productId: productId,

@@ -893,7 +893,21 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 confirmation: confirmationCallback
             });
             if (product.token === index_5.nullAddress) {
-                const amount = product.priceDuration.eq(duration) ? product.price : product.price.times(duration).div(product.priceDuration);
+                let basePrice = product.price;
+                if (discountRuleId !== 0) {
+                    let promotionAddress = state.getContractAddress('Promotion');
+                    const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
+                    const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+                    const rule = await promotion.discountRules({ param1: productId, param2: index });
+                    if (rule.discountPercentage.gt(0)) {
+                        const discount = product.price.times(rule.discountPercentage).div(100);
+                        basePrice = product.price.minus(discount);
+                    }
+                    else {
+                        basePrice = rule.fixedPrice;
+                    }
+                }
+                const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
                 receipt = await productMarketplace.subscribe({
                     to: recipient || wallet.address,
                     productId: productId,
