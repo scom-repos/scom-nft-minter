@@ -564,6 +564,15 @@ export default class ScomNftMinter extends Module {
           } else {
             await this.resetRpcWallet();
             await this.initWallet();
+            if (!isClientWalletConnected()) {
+              this.connectWallet();
+              return;
+            }
+            if (!this.state.isRpcWalletConnected()) {
+              const clientWallet = Wallet.getClientInstance();
+              await clientWallet.switchNetwork(this.chainId);
+              return;
+            }
             if (this.nftType === 'ERC721' && this._data.erc1155Index != null) this._data.erc1155Index = undefined;
             let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
             if (productId) {
