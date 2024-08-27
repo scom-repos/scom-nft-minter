@@ -610,17 +610,17 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     continue;
                 const discountRule = multicallResult;
                 discountRules.push({
-                    id: discountRule.id.toNumber(),
-                    minDuration: discountRule.minDuration,
-                    discountPercentage: discountRule.discountPercentage.toNumber(),
-                    fixedPrice: eth_wallet_3.Utils.fromDecimals(discountRule.fixedPrice),
-                    startTime: discountRule.startTime.toNumber(),
-                    endTime: discountRule.endTime.toNumber(),
-                    discountApplication: discountRule.discountApplication.toNumber()
+                    id: discountRule[0].toNumber(),
+                    minDuration: discountRule[1],
+                    discountPercentage: discountRule[2].toNumber(),
+                    fixedPrice: eth_wallet_3.Utils.fromDecimals(discountRule[3]),
+                    startTime: discountRule[4].toNumber(),
+                    endTime: discountRule[5].toNumber(),
+                    discountApplication: discountRule[6].toNumber()
                 });
             }
         }
-        catch {
+        catch (err) {
             console.error('failed to get discount rules');
         }
         return discountRules;
@@ -2384,6 +2384,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.tag = {};
             this.defaultEdit = true;
             this.rpcWalletEvents = [];
+            this.isRenewal = false;
             this.onChainChanged = async () => {
                 this.tokenInput.chainId = this.state.getChainId();
                 this.onSetupPage();
@@ -2978,6 +2979,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async setData(data) {
             this._data = data;
+            this.discountRules = null;
             await this.resetRpcWallet();
             if (!this.tokenInput.isConnected)
                 await this.tokenInput.ready();
@@ -3158,6 +3160,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.edtQty.readOnly = true;
                 this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                 if (this.productInfo) {
+                    if (!this.discountRules) {
+                        this.discountRules = await (0, API_3.getDiscountRules)(this.state, this._data.productId);
+                    }
                     const token = this.productInfo.token;
                     this.pnlInputFields.visible = true;
                     this.pnlUnsupportedNetwork.visible = false;
@@ -3671,25 +3676,63 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const duration = Number(this.edtDuration.value) || 0;
             this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
         }
+        _updateDiscount() {
+            this.discountApplied = undefined;
+            const duration = Number(this.edtDuration.value) || 0;
+            if (!this.discountRules?.length || !duration || !this.edtStartDate.value)
+                return;
+            const startTime = this.edtStartDate.value.unix();
+            const days = this.getDurationInDays();
+            const durationInSec = days * 86400;
+            for (let rule of this.discountRules) {
+                if (rule.discountApplication === 0 && this.isRenewal)
+                    continue;
+                if (rule.discountApplication === 1 && !this.isRenewal)
+                    continue;
+                if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec))
+                    continue;
+                this.discountApplied = rule;
+                break;
+            }
+        }
         _updateTotalAmount() {
             const duration = Number(this.edtDuration.value) || 0;
             if (!duration)
                 this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
             const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-            const pricePerDay = price.div(this.productInfo.priceDuration.div(86400));
+            let basePrice = price;
+            if (this.discountApplied) {
+                if (this.discountApplied.discountPercentage > 0) {
+                    basePrice = price.times(1 - this.discountApplied.discountPercentage / 100);
+                    this.lblDiscount.caption = `Discount (${this.discountApplied.discountPercentage}% off)`;
+                }
+                else {
+                    basePrice = this.discountApplied.fixedPrice;
+                    this.lblDiscount.caption = "Discount";
+                }
+            }
+            this.pnlDiscount.visible = this.discountApplied != null;
+            const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
             const amount = pricePerDay.times(days).toNumber();
+            if (this.discountApplied) {
+                const discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days).toNumber();
+                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+            }
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
             this._updateEndDate();
+            this._updateDiscount();
         }
         onDurationChanged() {
             this._updateEndDate();
+            this._updateDiscount();
             this._updateTotalAmount();
         }
         onDurationUnitChanged() {
             this._updateEndDate();
+            this._updateDiscount();
             this._updateTotalAmount();
         }
         async init() {
@@ -3802,6 +3845,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Ends", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-label", { id: "lblEndDate", font: { size: '1rem' } }))),
+                                        this.$render("i-stack", { id: "pnlDiscount", direction: "horizontal", width: "100%", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", lineHeight: 1.5, visible: false },
+                                            this.$render("i-label", { id: "lblDiscount", caption: "Discount", font: { bold: true, size: '1rem' } }),
+                                            this.$render("i-label", { id: "lblDiscountAmount", font: { size: '1rem' } })),
                                         this.$render("i-hstack", { width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5 },
                                             this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { id: "lbOrderTotalTitle", caption: 'Total', font: { bold: true, size: '1rem' } }),

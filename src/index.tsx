@@ -125,6 +125,9 @@ export default class ScomNftMinter extends Module {
   private lblAddress: Label;
   private tokenInput: ScomTokenInput;
   private txStatusModal: ScomTxStatusModal;
+  private pnlDiscount: StackLayout;
+  private lblDiscount: Label;
+  private lblDiscountAmount: Label;
   private lbOrderTotal: Label;
   private lbOrderTotalTitle: Label;
   private iconOrderTotal: Icon;
@@ -155,6 +158,9 @@ export default class ScomNftMinter extends Module {
   private btnDetail: Button;
   private isConfigNewIndex: boolean;
   private isOnChangeUpdated: boolean;
+  private discountRules: IDiscountRule[];
+  private discountApplied: IDiscountRule;
+  private isRenewal = false;
   public onMintedNFT: () => void;
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
@@ -683,6 +689,7 @@ export default class ScomNftMinter extends Module {
 
   private async setData(data: IEmbedData) {
     this._data = data;
+    this.discountRules = null;
     await this.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
     this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
@@ -1000,6 +1007,9 @@ export default class ScomNftMinter extends Module {
       this.edtQty.readOnly = true;
       this.productInfo = await getProductInfo(this.state, this.productId);
       if (this.productInfo) {
+        if (!this.discountRules) {
+          this.discountRules = await getDiscountRules(this.state, this._data.productId);
+        }
         const token = this.productInfo.token;
         this.pnlInputFields.visible = true;
         this.pnlUnsupportedNetwork.visible = false;
@@ -1487,7 +1497,7 @@ export default class ScomNftMinter extends Module {
     else if (this.productType === ProductType.Subscription) {
       const startTime = this.edtStartDate.value.unix();
       const days = this.getDurationInDays();
-      await subscribe(this.state, this.productId, startTime, days * 86400, this.recipient, 0, callback,
+      await subscribe(this.state, this.productId, startTime, days * 86400, this.recipient, this.discountApplied?.id ?? 0, callback,
         async () => {
           await this.updateTokenBalance();
           this.productInfo = await getProductInfo(this.state, this.productId);
@@ -1537,27 +1547,61 @@ export default class ScomNftMinter extends Module {
     this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
   }
 
+  private _updateDiscount() {
+    this.discountApplied = undefined;
+    const duration = Number(this.edtDuration.value) || 0;
+    if (!this.discountRules?.length || !duration || !this.edtStartDate.value) return;
+    const startTime = this.edtStartDate.value.unix();
+    const days = this.getDurationInDays();
+    const durationInSec = days * 86400;
+    for (let rule of this.discountRules) {
+      if (rule.discountApplication === 0 && this.isRenewal) continue;
+      if (rule.discountApplication === 1 && !this.isRenewal) continue;
+      if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec)) continue;
+      this.discountApplied = rule;
+      break;
+    }
+  }
+
   private _updateTotalAmount() {
     const duration = Number(this.edtDuration.value) || 0;
     if (!duration) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
     const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-    const pricePerDay = price.div(this.productInfo.priceDuration.div(86400));
+    let basePrice: BigNumber = price;
+    if (this.discountApplied) {
+      if (this.discountApplied.discountPercentage > 0) {
+        basePrice = price.times(1 - this.discountApplied.discountPercentage / 100);
+        this.lblDiscount.caption = `Discount (${this.discountApplied.discountPercentage}% off)`;
+      } else {
+        basePrice = this.discountApplied.fixedPrice as BigNumber;
+        this.lblDiscount.caption = "Discount";
+      }
+    }
+    this.pnlDiscount.visible = this.discountApplied != null;
+    const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
     const amount = pricePerDay.times(days).toNumber();
+    if (this.discountApplied) {
+      const discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days).toNumber();
+      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+    }
     this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 
   private onStartDateChanged() {
     this._updateEndDate();
+    this._updateDiscount();
   }
   
   private onDurationChanged() {
     this._updateEndDate();
+    this._updateDiscount();
     this._updateTotalAmount();
   }
   
   private onDurationUnitChanged() {
     this._updateEndDate();
+    this._updateDiscount();
     this._updateTotalAmount();
   }
 
@@ -1779,6 +1823,19 @@ export default class ScomNftMinter extends Module {
                         <i-label caption="Ends" font={{ bold: true, size: '1rem' }}></i-label>
                         <i-label id="lblEndDate" font={{ size: '1rem' }} />
                       </i-stack>
+                    </i-stack>
+                    <i-stack
+                      id="pnlDiscount"
+                      direction="horizontal"
+                      width="100%"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      gap="0.5rem"
+                      lineHeight={1.5}
+                      visible={false}
+                    >
+                      <i-label id="lblDiscount" caption="Discount" font={{ bold: true, size: '1rem' }}></i-label>
+                      <i-label id="lblDiscountAmount" font={{ size: '1rem' }}></i-label>
                     </i-stack>
                     <i-hstack
                       width="100%"

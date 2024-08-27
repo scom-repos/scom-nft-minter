@@ -132,16 +132,16 @@ async function getDiscountRules(state: State, productId: number) {
             if (!multicallResult) continue;
             const discountRule = multicallResult;
             discountRules.push({
-                id: discountRule.id.toNumber(),
-                minDuration: discountRule.minDuration,
-                discountPercentage: discountRule.discountPercentage.toNumber(),
-                fixedPrice: Utils.fromDecimals(discountRule.fixedPrice),
-                startTime: discountRule.startTime.toNumber(),
-                endTime: discountRule.endTime.toNumber(),
-                discountApplication: discountRule.discountApplication.toNumber()
+                id: discountRule[0].toNumber(),
+                minDuration: discountRule[1],
+                discountPercentage: discountRule[2].toNumber(),
+                fixedPrice: Utils.fromDecimals(discountRule[3]),
+                startTime: discountRule[4].toNumber(),
+                endTime: discountRule[5].toNumber(),
+                discountApplication: discountRule[6].toNumber()
             });
         }
-    } catch {
+    } catch (err) {
         console.error('failed to get discount rules');
     }
     return discountRules;

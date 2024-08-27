@@ -1230,6 +1230,9 @@ declare module "@scom/scom-nft-minter" {
         private lblAddress;
         private tokenInput;
         private txStatusModal;
+        private pnlDiscount;
+        private lblDiscount;
+        private lblDiscountAmount;
         private lbOrderTotal;
         private lbOrderTotalTitle;
         private iconOrderTotal;
@@ -1255,6 +1258,9 @@ declare module "@scom/scom-nft-minter" {
         private btnDetail;
         private isConfigNewIndex;
         private isOnChangeUpdated;
+        private discountRules;
+        private discountApplied;
+        private isRenewal;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
@@ -1427,6 +1433,7 @@ declare module "@scom/scom-nft-minter" {
         private buyToken;
         private getDurationInDays;
         private _updateEndDate;
+        private _updateDiscount;
         private _updateTotalAmount;
         private onStartDateChanged;
         private onDurationChanged;
