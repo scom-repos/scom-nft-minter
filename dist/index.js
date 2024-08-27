@@ -2869,6 +2869,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         else {
                             await this.resetRpcWallet();
                             await this.initWallet();
+                            if (!(0, index_15.isClientWalletConnected)()) {
+                                this.connectWallet();
+                                return;
+                            }
+                            if (!this.state.isRpcWalletConnected()) {
+                                const clientWallet = eth_wallet_6.Wallet.getClientInstance();
+                                await clientWallet.switchNetwork(this.chainId);
+                                return;
+                            }
                             if (this.nftType === 'ERC721' && this._data.erc1155Index != null)
                                 this._data.erc1155Index = undefined;
                             let productId = await (0, API_3.getProductId)(this.state, this.nftAddress, this._data.erc1155Index);
