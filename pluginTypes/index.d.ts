@@ -62,6 +62,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         logoUrl?: string;
         description?: string;
         link?: string;
+        discountRuleId?: number;
         commissions?: ICommissionInfo[];
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         defaultChainId: number;
@@ -1366,6 +1367,7 @@ declare module "@scom/scom-nft-minter" {
                 logoUrl?: string;
                 description?: string;
                 link?: string;
+                discountRuleId?: number;
                 commissions?: import("@scom/scom-nft-minter/interface/index.tsx").ICommissionInfo[];
                 chainSpecificProperties?: Record<number, IChainSpecificProperties>;
                 defaultChainId: number;

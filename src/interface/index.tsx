@@ -61,6 +61,7 @@ export interface IEmbedData {
   logoUrl?: string;
   description?: string;
   link?: string;
+  discountRuleId?: number;
   commissions?: ICommissionInfo[];
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   defaultChainId: number;

@@ -470,7 +470,7 @@ export default class ScomNftMinter extends Module {
               Object.assign(this._data, generalSettings);
               await this.resetRpcWallet();
               if (builder?.setData) builder.setData(this._data);
-              this.refreshDApp();
+              this.refreshDApp(true);
 
               oldTag = JSON.parse(JSON.stringify(this.tag));
               if (builder?.setTag) builder.setTag(themeSettings);
@@ -479,7 +479,7 @@ export default class ScomNftMinter extends Module {
             },
             undo: () => {
               this._data = JSON.parse(JSON.stringify(oldData));
-              this.refreshDApp();
+              this.refreshDApp(true);
               if (builder?.setData) builder.setData(this._data);
 
               this.tag = JSON.parse(JSON.stringify(oldTag));
@@ -689,7 +689,7 @@ export default class ScomNftMinter extends Module {
 
   private async setData(data: IEmbedData) {
     this._data = data;
-    this.discountRules = null;
+    this.discountRules = [];
     await this.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
     this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
@@ -709,7 +709,7 @@ export default class ScomNftMinter extends Module {
     this.edtStartDate.value = undefined;
     this.edtDuration.value = '';
     this.comboDurationUnit.selectedItem = DurationUnits[0];
-    await this.refreshDApp();
+    await this.refreshDApp(true);
   }
 
   private getTag() {
@@ -955,7 +955,7 @@ export default class ScomNftMinter extends Module {
     this.lblTitle.caption = data.title || '';
   }
 
-  private async refreshDApp() {
+  private async refreshDApp(isDataUpdated: boolean = false) {
     setTimeout(async () => {
       this._type = this.productType;
       await this.updateDAppUI(this._data);
@@ -1007,7 +1007,7 @@ export default class ScomNftMinter extends Module {
       this.edtQty.readOnly = true;
       this.productInfo = await getProductInfo(this.state, this.productId);
       if (this.productInfo) {
-        if (!this.discountRules) {
+        if (isDataUpdated && this._type === ProductType.Subscription) {
           this.discountRules = await getDiscountRules(this.state, this._data.productId);
         }
         const token = this.productInfo.token;
@@ -1035,14 +1035,19 @@ export default class ScomNftMinter extends Module {
           this.tokenInput.inputReadOnly = true;
           this.pnlQty.visible = false;
           this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
-          if (this._type === ProductType.Subscription) {
-            if (!this.edtStartDate.value) {
-              this.edtStartDate.value = moment();
-            }
-            if (!this.edtDuration.value) {
+          if (isDataUpdated && this._type === ProductType.Subscription) {
+            this.edtStartDate.value = moment();
+            const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
+            if (rule) {
+              this.edtDuration.value = rule.minDuration.div(86400).toNumber();
+              this.comboDurationUnit.selectedItem = DurationUnits[0];
+              this.discountApplied = rule;
+              this._updateEndDate();
+              this._updateTotalAmount();
+            } else {
               this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+              this.onDurationChanged();
             }
-            this.onStartDateChanged();
           }
           //this.pnlQty.visible = true;
           this.pnlTokenInput.visible = false;
@@ -1053,7 +1058,7 @@ export default class ScomNftMinter extends Module {
             this.imgUri.visible = false;
           }
           this.edtQty.value = '1';
-          this.onQtyChanged();
+          if (this._type !== ProductType.Subscription) this.onQtyChanged();
         } else {
           this.detailWrapper.visible = false;
           this.btnDetail.visible = false;
@@ -1567,9 +1572,6 @@ export default class ScomNftMinter extends Module {
         discountAmount = tmpDiscountAmount;
       }
     }
-    if (this.discountApplied) {
-      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
-    }
   }
 
   private _updateTotalAmount() {
@@ -1590,6 +1592,10 @@ export default class ScomNftMinter extends Module {
     const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
     const amount = pricePerDay.times(days).toNumber();
+    if (this.discountApplied) {
+      let discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+    }
     this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 

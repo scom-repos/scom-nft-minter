@@ -2772,7 +2772,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 await this.resetRpcWallet();
                                 if (builder?.setData)
                                     builder.setData(this._data);
-                                this.refreshDApp();
+                                this.refreshDApp(true);
                                 oldTag = JSON.parse(JSON.stringify(this.tag));
                                 if (builder?.setTag)
                                     builder.setTag(themeSettings);
@@ -2783,7 +2783,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             },
                             undo: () => {
                                 this._data = JSON.parse(JSON.stringify(oldData));
-                                this.refreshDApp();
+                                this.refreshDApp(true);
                                 if (builder?.setData)
                                     builder.setData(this._data);
                                 this.tag = JSON.parse(JSON.stringify(oldTag));
@@ -2993,7 +2993,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         async setData(data) {
             this._data = data;
-            this.discountRules = null;
+            this.discountRules = [];
             await this.resetRpcWallet();
             if (!this.tokenInput.isConnected)
                 await this.tokenInput.ready();
@@ -3017,7 +3017,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.edtStartDate.value = undefined;
             this.edtDuration.value = '';
             this.comboDurationUnit.selectedItem = DurationUnits[0];
-            await this.refreshDApp();
+            await this.refreshDApp(true);
         }
         getTag() {
             return this.tag;
@@ -3119,7 +3119,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             (!this.lblTitle.isConnected) && await this.lblTitle.ready();
             this.lblTitle.caption = data.title || '';
         }
-        async refreshDApp() {
+        async refreshDApp(isDataUpdated = false) {
             setTimeout(async () => {
                 this._type = this.productType;
                 await this.updateDAppUI(this._data);
@@ -3174,7 +3174,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.edtQty.readOnly = true;
                 this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                 if (this.productInfo) {
-                    if (!this.discountRules) {
+                    if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
                         this.discountRules = await (0, API_3.getDiscountRules)(this.state, this._data.productId);
                     }
                     const token = this.productInfo.token;
@@ -3202,14 +3202,20 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.tokenInput.inputReadOnly = true;
                         this.pnlQty.visible = false;
                         this.pnlSubscriptionPeriod.visible = this._type === index_13.ProductType.Subscription;
-                        if (this._type === index_13.ProductType.Subscription) {
-                            if (!this.edtStartDate.value) {
-                                this.edtStartDate.value = (0, components_8.moment)();
+                        if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
+                            this.edtStartDate.value = (0, components_8.moment)();
+                            const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
+                            if (rule) {
+                                this.edtDuration.value = rule.minDuration.div(86400).toNumber();
+                                this.comboDurationUnit.selectedItem = DurationUnits[0];
+                                this.discountApplied = rule;
+                                this._updateEndDate();
+                                this._updateTotalAmount();
                             }
-                            if (!this.edtDuration.value) {
+                            else {
                                 this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                                this.onDurationChanged();
                             }
-                            this.onStartDateChanged();
                         }
                         //this.pnlQty.visible = true;
                         this.pnlTokenInput.visible = false;
@@ -3221,7 +3227,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this.imgUri.visible = false;
                         }
                         this.edtQty.value = '1';
-                        this.onQtyChanged();
+                        if (this._type !== index_13.ProductType.Subscription)
+                            this.onQtyChanged();
                     }
                     else {
                         this.detailWrapper.visible = false;
@@ -3714,9 +3721,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     discountAmount = tmpDiscountAmount;
                 }
             }
-            if (this.discountApplied) {
-                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
-            }
         }
         _updateTotalAmount() {
             const duration = Number(this.edtDuration.value) || 0;
@@ -3738,6 +3742,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
             const amount = pricePerDay.times(days).toNumber();
+            if (this.discountApplied) {
+                let discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+            }
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
