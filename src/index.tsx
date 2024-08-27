@@ -1551,15 +1551,24 @@ export default class ScomNftMinter extends Module {
     this.discountApplied = undefined;
     const duration = Number(this.edtDuration.value) || 0;
     if (!this.discountRules?.length || !duration || !this.edtStartDate.value) return;
+    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
     const startTime = this.edtStartDate.value.unix();
     const days = this.getDurationInDays();
     const durationInSec = days * 86400;
+    let discountAmount: BigNumber;
     for (let rule of this.discountRules) {
       if (rule.discountApplication === 0 && this.isRenewal) continue;
       if (rule.discountApplication === 1 && !this.isRenewal) continue;
       if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec)) continue;
-      this.discountApplied = rule;
-      break;
+      let basePrice: BigNumber = rule.discountPercentage > 0 ? price.times(1 - rule.discountPercentage / 100) : rule.fixedPrice as BigNumber;
+      let tmpDiscountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+      if (!this.discountApplied || tmpDiscountAmount.gt(discountAmount)) {
+        this.discountApplied = rule;
+        discountAmount = tmpDiscountAmount;
+      }
+    }
+    if (this.discountApplied) {
+      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
     }
   }
 
@@ -1581,10 +1590,6 @@ export default class ScomNftMinter extends Module {
     const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
     const amount = pricePerDay.times(days).toNumber();
-    if (this.discountApplied) {
-      const discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days).toNumber();
-      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
-    }
     this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 

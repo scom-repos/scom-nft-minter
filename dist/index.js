@@ -3629,7 +3629,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, 0, callback, async () => {
+                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this.discountApplied?.id ?? 0, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);
@@ -3681,9 +3681,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const duration = Number(this.edtDuration.value) || 0;
             if (!this.discountRules?.length || !duration || !this.edtStartDate.value)
                 return;
+            const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
             const startTime = this.edtStartDate.value.unix();
             const days = this.getDurationInDays();
             const durationInSec = days * 86400;
+            let discountAmount;
             for (let rule of this.discountRules) {
                 if (rule.discountApplication === 0 && this.isRenewal)
                     continue;
@@ -3691,8 +3693,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     continue;
                 if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec))
                     continue;
-                this.discountApplied = rule;
-                break;
+                let basePrice = rule.discountPercentage > 0 ? price.times(1 - rule.discountPercentage / 100) : rule.fixedPrice;
+                let tmpDiscountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+                if (!this.discountApplied || tmpDiscountAmount.gt(discountAmount)) {
+                    this.discountApplied = rule;
+                    discountAmount = tmpDiscountAmount;
+                }
+            }
+            if (this.discountApplied) {
+                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
             }
         }
         _updateTotalAmount() {
@@ -3715,10 +3724,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
             const amount = pricePerDay.times(days).toNumber();
-            if (this.discountApplied) {
-                const discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days).toNumber();
-                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
-            }
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
