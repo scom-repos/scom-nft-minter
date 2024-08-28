@@ -3214,7 +3214,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
                             this.edtStartDate.value = (0, components_8.moment)();
                             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
-                            if (rule) {
+                            const isExpired = rule.endTime && rule.endTime < (0, components_8.moment)().unix();
+                            if (isExpired)
+                                this._data.discountRuleId = undefined;
+                            if (rule && !isExpired) {
+                                if (rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
+                                    this.edtStartDate.value = (0, components_8.moment)(rule.startTime * 1000);
+                                }
                                 this.edtDuration.value = rule.minDuration.div(86400).toNumber();
                                 this.comboDurationUnit.selectedItem = DurationUnits[0];
                                 this.discountApplied = rule;

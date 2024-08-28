@@ -1047,7 +1047,12 @@ export default class ScomNftMinter extends Module {
           if (isDataUpdated && this._type === ProductType.Subscription) {
             this.edtStartDate.value = moment();
             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
-            if (rule) {
+            const isExpired = rule.endTime && rule.endTime < moment().unix();
+            if (isExpired) this._data.discountRuleId = undefined;
+            if (rule && !isExpired) {
+              if (rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
+                this.edtStartDate.value = moment(rule.startTime * 1000);
+              }
               this.edtDuration.value = rule.minDuration.div(86400).toNumber();
               this.comboDurationUnit.selectedItem = DurationUnits[0];
               this.discountApplied = rule;
