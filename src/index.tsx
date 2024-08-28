@@ -971,7 +971,7 @@ export default class ScomNftMinter extends Module {
       this.determineBtnSubmitCaption();
       if (!this.nftType) return;
       await this.initWallet();
-      this.btnSubmit.enabled = !isClientWalletConnected() || !this.state.isRpcWalletConnected();
+      this.btnSubmit.enabled = isClientWalletConnected() && this.state.isRpcWalletConnected();
       // OswapTroll
       if (this.nftType === 'ERC721' && !this.productId) {
         this.lblTitle.caption = this._data.title;
