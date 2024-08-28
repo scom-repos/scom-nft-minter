@@ -603,6 +603,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                     to: promotionAddress
                 });
             }
+            if (contractCalls.length === 0)
+                return discountRules;
             const multicallResults = await wallet.doMulticall(contractCalls);
             for (let i = 0; i < multicallResults.length; i++) {
                 const multicallResult = multicallResults[i];
@@ -2911,7 +2913,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             catch (error) {
                                 this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
                                 console.log('updateDiscountRules', error);
-                                resolve([]);
+                                reject(error);
                             }
                         });
                     },
@@ -3214,7 +3216,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
                             this.edtStartDate.value = (0, components_8.moment)();
                             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
-                            const isExpired = rule.endTime && rule.endTime < (0, components_8.moment)().unix();
+                            const isExpired = rule && rule.endTime && rule.endTime < (0, components_8.moment)().unix();
                             if (isExpired)
                                 this._data.discountRuleId = undefined;
                             if (rule && !isExpired) {

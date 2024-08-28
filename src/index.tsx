@@ -604,7 +604,7 @@ export default class ScomNftMinter extends Module {
             } catch (error) {
               this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
               console.log('updateDiscountRules', error);
-              resolve([]);
+              reject(error);
             }
           });
         },
@@ -1047,7 +1047,7 @@ export default class ScomNftMinter extends Module {
           if (isDataUpdated && this._type === ProductType.Subscription) {
             this.edtStartDate.value = moment();
             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
-            const isExpired = rule.endTime && rule.endTime < moment().unix();
+            const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
             if (isExpired) this._data.discountRuleId = undefined;
             if (rule && !isExpired) {
               if (rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {

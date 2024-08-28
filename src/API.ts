@@ -126,6 +126,7 @@ async function getDiscountRules(state: State, productId: number) {
                 to: promotionAddress
             });
         }
+        if (contractCalls.length === 0) return discountRules;
         const multicallResults = await wallet.doMulticall(contractCalls);
         for (let i = 0; i < multicallResults.length; i++) {
             const multicallResult = multicallResults[i];
