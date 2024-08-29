@@ -1058,6 +1058,9 @@ export default class ScomNftMinter extends Module {
               this.discountApplied = rule;
               this._updateEndDate();
               this._updateTotalAmount();
+              if (this.approvalModelAction) {
+                this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+              }
             } else {
               this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
               this.onDurationChanged();
@@ -1240,6 +1243,9 @@ export default class ScomNftMinter extends Module {
         }
       });
       this.state.approvalModel.spenderAddress = this.contractAddress;
+      if (this.productInfo?.token?.address !== nullAddress && this.tokenAmountIn) {
+        this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      }
     }
   }
 
@@ -1596,7 +1602,7 @@ export default class ScomNftMinter extends Module {
   private _updateTotalAmount() {
     const duration = Number(this.edtDuration.value) || 0;
     if (!duration) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
-    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+    const price = this.productInfo.price;
     let basePrice: BigNumber = price;
     this.pnlDiscount.visible = false;
     if (this.discountApplied) {
@@ -1612,11 +1618,14 @@ export default class ScomNftMinter extends Module {
     }
     const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
-    const amount = pricePerDay.times(days).toNumber();
+    const amountRaw = pricePerDay.times(days);
+    this.tokenAmountIn = amountRaw.toFixed();
     if (this.discountApplied) {
-      let discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+      const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+      const discountAmount = Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
       this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
     }
+    const amount = Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
     this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 
@@ -1629,12 +1638,18 @@ export default class ScomNftMinter extends Module {
     this._updateEndDate();
     this._updateDiscount();
     this._updateTotalAmount();
+    if (this.approvalModelAction) {
+      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+    }
   }
   
   private onDurationUnitChanged() {
     this._updateEndDate();
     this._updateDiscount();
     this._updateTotalAmount();
+    if (this.approvalModelAction) {
+      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+    }
   }
 
   async init() {

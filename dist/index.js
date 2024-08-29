@@ -3228,6 +3228,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.discountApplied = rule;
                                 this._updateEndDate();
                                 this._updateTotalAmount();
+                                if (this.approvalModelAction) {
+                                    this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+                                }
                             }
                             else {
                                 this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
@@ -3394,6 +3397,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     }
                 });
                 this.state.approvalModel.spenderAddress = this.contractAddress;
+                if (this.productInfo?.token?.address !== index_14.nullAddress && this.tokenAmountIn) {
+                    this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+                }
             }
         }
         updateContractAddress() {
@@ -3749,7 +3755,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const duration = Number(this.edtDuration.value) || 0;
             if (!duration)
                 this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
-            const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
+            const price = this.productInfo.price;
             let basePrice = price;
             this.pnlDiscount.visible = false;
             if (this.discountApplied) {
@@ -3766,11 +3772,14 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
-            const amount = pricePerDay.times(days).toNumber();
+            const amountRaw = pricePerDay.times(days);
+            this.tokenAmountIn = amountRaw.toFixed();
             if (this.discountApplied) {
-                let discountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+                const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
+                const discountAmount = eth_wallet_6.Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
                 this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
             }
+            const amount = eth_wallet_6.Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
@@ -3781,11 +3790,17 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this._updateEndDate();
             this._updateDiscount();
             this._updateTotalAmount();
+            if (this.approvalModelAction) {
+                this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+            }
         }
         onDurationUnitChanged() {
             this._updateEndDate();
             this._updateDiscount();
             this._updateTotalAmount();
+            if (this.approvalModelAction) {
+                this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+            }
         }
         async init() {
             super.init();
