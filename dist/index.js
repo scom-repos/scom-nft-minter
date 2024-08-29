@@ -3731,7 +3731,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     continue;
                 if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec))
                     continue;
-                let basePrice = rule.discountPercentage > 0 ? price.times(1 - rule.discountPercentage / 100) : rule.fixedPrice;
+                let basePrice = price;
+                if (rule.discountPercentage > 0) {
+                    basePrice = price.times(1 - rule.discountPercentage / 100);
+                }
+                else if (rule.fixedPrice.gt(0)) {
+                    basePrice = rule.fixedPrice;
+                }
                 let tmpDiscountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
                 if (!this.discountApplied || tmpDiscountAmount.gt(discountAmount)) {
                     this.discountApplied = rule;
@@ -3745,17 +3751,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
             const price = eth_wallet_6.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
             let basePrice = price;
+            this.pnlDiscount.visible = false;
             if (this.discountApplied) {
                 if (this.discountApplied.discountPercentage > 0) {
                     basePrice = price.times(1 - this.discountApplied.discountPercentage / 100);
                     this.lblDiscount.caption = `Discount (${this.discountApplied.discountPercentage}% off)`;
+                    this.pnlDiscount.visible = true;
                 }
-                else {
+                else if (this.discountApplied.fixedPrice.gt(0)) {
                     basePrice = this.discountApplied.fixedPrice;
                     this.lblDiscount.caption = "Discount";
+                    this.pnlDiscount.visible = true;
                 }
             }
-            this.pnlDiscount.visible = this.discountApplied != null;
             const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
             const amount = pricePerDay.times(days).toNumber();

@@ -1579,7 +1579,12 @@ export default class ScomNftMinter extends Module {
       if (rule.discountApplication === 0 && this.isRenewal) continue;
       if (rule.discountApplication === 1 && !this.isRenewal) continue;
       if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec)) continue;
-      let basePrice: BigNumber = rule.discountPercentage > 0 ? price.times(1 - rule.discountPercentage / 100) : rule.fixedPrice as BigNumber;
+      let basePrice: BigNumber = price;
+      if (rule.discountPercentage > 0) {
+        basePrice = price.times(1 - rule.discountPercentage / 100)
+      } else if (rule.fixedPrice.gt(0)) {
+        basePrice = rule.fixedPrice;
+      }
       let tmpDiscountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
       if (!this.discountApplied || tmpDiscountAmount.gt(discountAmount)) {
         this.discountApplied = rule;
@@ -1593,16 +1598,18 @@ export default class ScomNftMinter extends Module {
     if (!duration) this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
     const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
     let basePrice: BigNumber = price;
+    this.pnlDiscount.visible = false;
     if (this.discountApplied) {
       if (this.discountApplied.discountPercentage > 0) {
         basePrice = price.times(1 - this.discountApplied.discountPercentage / 100);
         this.lblDiscount.caption = `Discount (${this.discountApplied.discountPercentage}% off)`;
-      } else {
+        this.pnlDiscount.visible = true;
+      } else if (this.discountApplied.fixedPrice.gt(0)) {
         basePrice = this.discountApplied.fixedPrice as BigNumber;
         this.lblDiscount.caption = "Discount";
+        this.pnlDiscount.visible = true;
       }
     }
-    this.pnlDiscount.visible = this.discountApplied != null;
     const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
     const amount = pricePerDay.times(days).toNumber();

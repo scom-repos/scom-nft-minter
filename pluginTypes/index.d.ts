@@ -83,7 +83,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         id: number;
         minDuration: BigNumber;
         discountPercentage: number;
-        fixedPrice: BigNumber | number;
+        fixedPrice: BigNumber;
         startTime: number;
         endTime: number;
         discountApplication: number;
