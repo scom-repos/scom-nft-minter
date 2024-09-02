@@ -17,7 +17,7 @@ export default {
                 "address": "0xC1074403b4893D8Fe6aaB93780398e5F67ba2Bf0"
             },
             "Proxy": {
-                "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
+                "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
             },
         },
         "43113": {
