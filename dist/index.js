@@ -883,11 +883,35 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function subscribe(state, productId, startTime, duration, recipient, discountRuleId = 0, callback, confirmationCallback) {
+    async function subscribe(state, productId, startTime, duration, recipient, commissions, discountRuleId = 0, callback, confirmationCallback) {
+        let proxyAddress = state.getContractAddress('Proxy');
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         const product = await productMarketplace.products(productId);
+        let basePrice = product.price;
+        if (discountRuleId !== 0) {
+            let promotionAddress = state.getContractAddress('Promotion');
+            const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
+            const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+            const rule = await promotion.discountRules({ param1: productId, param2: index });
+            if (rule.discountPercentage.gt(0)) {
+                const discount = product.price.times(rule.discountPercentage).div(100);
+                basePrice = product.price.minus(discount);
+            }
+            else {
+                basePrice = rule.fixedPrice;
+            }
+        }
+        const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
+        const _commissions = (commissions || []).map(v => {
+            return {
+                to: v.walletAddress,
+                amount: amount.times(v.share)
+            };
+        });
+        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_3.BigNumber(0);
         let receipt;
         try {
             (0, index_5.registerSendTxEvents)({
@@ -895,37 +919,60 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 confirmation: confirmationCallback
             });
             if (product.token === index_5.nullAddress) {
-                let basePrice = product.price;
-                if (discountRuleId !== 0) {
-                    let promotionAddress = state.getContractAddress('Promotion');
-                    const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
-                    const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
-                    const rule = await promotion.discountRules({ param1: productId, param2: index });
-                    if (rule.discountPercentage.gt(0)) {
-                        const discount = product.price.times(rule.discountPercentage).div(100);
-                        basePrice = product.price.minus(discount);
-                    }
-                    else {
-                        basePrice = rule.fixedPrice;
-                    }
+                if (commissionsAmount.isZero()) {
+                    receipt = await productMarketplace.subscribe({
+                        to: recipient || wallet.address,
+                        productId: productId,
+                        startTime: startTime,
+                        duration: duration,
+                        discountRuleId: discountRuleId
+                    }, amount);
                 }
-                const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
-                receipt = await productMarketplace.subscribe({
-                    to: recipient || wallet.address,
-                    productId: productId,
-                    startTime: startTime,
-                    duration: duration,
-                    discountRuleId: discountRuleId
-                }, amount);
+                else {
+                    const txData = await productMarketplace.subscribe.txData({
+                        to: recipient || wallet.address,
+                        productId: productId,
+                        startTime: startTime,
+                        duration: duration,
+                        discountRuleId: discountRuleId
+                    }, amount);
+                    receipt = await proxy.ethIn({
+                        target: productMarketplaceAddress,
+                        commissions: _commissions,
+                        data: txData
+                    }, amount.plus(commissionsAmount));
+                }
             }
             else {
-                receipt = await productMarketplace.subscribe({
-                    to: recipient || wallet.address,
-                    productId: productId,
-                    startTime: startTime,
-                    duration: duration,
-                    discountRuleId: discountRuleId
-                });
+                if (commissionsAmount.isZero()) {
+                    receipt = await productMarketplace.subscribe({
+                        to: recipient || wallet.address,
+                        productId: productId,
+                        startTime: startTime,
+                        duration: duration,
+                        discountRuleId: discountRuleId
+                    });
+                }
+                else {
+                    const txData = await productMarketplace.subscribe.txData({
+                        to: recipient || wallet.address,
+                        productId: productId,
+                        startTime: startTime,
+                        duration: duration,
+                        discountRuleId: discountRuleId
+                    });
+                    const tokensIn = {
+                        token: product.token,
+                        amount: amount.plus(commissionsAmount),
+                        directTransfer: false,
+                        commissions: _commissions
+                    };
+                    receipt = await proxy.tokenIn({
+                        target: productMarketplaceAddress,
+                        tokensIn,
+                        data: txData
+                    });
+                }
             }
         }
         catch (err) {
@@ -3673,7 +3720,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this.discountApplied?.id ?? 0, callback, async () => {
+                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this._data.commissions, this.discountApplied?.id ?? 0, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);

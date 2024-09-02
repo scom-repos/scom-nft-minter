@@ -494,14 +494,38 @@ async function subscribe(
     startTime: number,
     duration: number,
     recipient: string,
+    commissions: ICommissionInfo[],
     discountRuleId: number = 0,
     callback?: any,
     confirmationCallback?: any
 ) {
+    let proxyAddress = state.getContractAddress('Proxy');
     let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
     const wallet = Wallet.getClientInstance();
+    const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
     const product = await productMarketplace.products(productId);
+    let basePrice: BigNumber = product.price;
+    if (discountRuleId !== 0) {
+        let promotionAddress = state.getContractAddress('Promotion');
+        const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
+        const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+        const rule = await promotion.discountRules({ param1: productId, param2: index });
+        if (rule.discountPercentage.gt(0)) {
+            const discount = product.price.times(rule.discountPercentage).div(100);
+            basePrice = product.price.minus(discount);
+        } else {
+            basePrice = rule.fixedPrice;
+        }
+    }
+    const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
+    const _commissions = (commissions || []).map(v => {
+        return {
+            to: v.walletAddress,
+            amount: amount.times(v.share)
+        }
+    })
+    const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
     let receipt;
     try {
         registerSendTxEvents({
@@ -509,35 +533,58 @@ async function subscribe(
             confirmation: confirmationCallback
         });
         if (product.token === nullAddress) {
-            let basePrice: BigNumber = product.price;
-            if (discountRuleId !== 0) {
-                let promotionAddress = state.getContractAddress('Promotion');
-                const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
-                const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
-                const rule = await promotion.discountRules({ param1: productId, param2: index });
-                if (rule.discountPercentage.gt(0)) {
-                    const discount = product.price.times(rule.discountPercentage).div(100);
-                    basePrice = product.price.minus(discount);
-                } else {
-                    basePrice = rule.fixedPrice;
-                }
+            if (commissionsAmount.isZero()) {
+                receipt = await productMarketplace.subscribe({
+                    to: recipient || wallet.address,
+                    productId: productId,
+                    startTime: startTime,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                }, amount)
+            } else {
+                const txData = await productMarketplace.subscribe.txData({
+                    to: recipient || wallet.address,
+                    productId: productId,
+                    startTime: startTime,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                }, amount);
+                receipt = await proxy.ethIn({
+                    target: productMarketplaceAddress,
+                    commissions: _commissions,
+                    data: txData
+                }, amount.plus(commissionsAmount));
             }
-            const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
-            receipt = await productMarketplace.subscribe({
-                to: recipient || wallet.address,
-                productId: productId,
-                startTime: startTime,
-                duration: duration,
-                discountRuleId: discountRuleId
-            }, amount)
         } else {
-            receipt = await productMarketplace.subscribe({
-                to: recipient || wallet.address,
-                productId: productId,
-                startTime: startTime,
-                duration: duration,
-                discountRuleId: discountRuleId
-            })
+            if (commissionsAmount.isZero()) {
+                receipt = await productMarketplace.subscribe({
+                    to: recipient || wallet.address,
+                    productId: productId,
+                    startTime: startTime,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                })
+            } else {
+                const txData = await productMarketplace.subscribe.txData({
+                    to: recipient || wallet.address,
+                    productId: productId,
+                    startTime: startTime,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                });
+                const tokensIn =
+                {
+                    token: product.token,
+                    amount: amount.plus(commissionsAmount),
+                    directTransfer: false,
+                    commissions: _commissions
+                };
+                receipt = await proxy.tokenIn({
+                    target: productMarketplaceAddress,
+                    tokensIn,
+                    data: txData
+                });
+            }
         }
     } catch (err) {
         console.error(err);
