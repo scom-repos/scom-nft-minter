@@ -522,9 +522,8 @@ async function subscribe(
     let tokenInAmount: BigNumber;
     if (referrer) {
         let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
-        if (campaign?.referrers?.includes(referrer)) {
-            const index = campaign.inTokens.indexOf(product.token);
-            const commissionRate = campaign.commissionInTokenConfig[index].rate;
+        if (campaign?.affiliates?.includes(referrer)) {
+            const commissionRate = campaign.commissionRate;
             tokenInAmount = Utils.toDecimals(new BigNumber(amount).dividedBy(new BigNumber(1).minus(commissionRate))).decimalPlaces(0);
         }
     }
@@ -552,15 +551,9 @@ async function subscribe(
                     discountRuleId: discountRuleId
                 }, amount);
                 receipt = await commission.proxyCall({
-                    referrer: referrer,
+                    affiliate: referrer,
                     campaignId: productId,
-                    target: productMarketplaceAddress,
-                    tokensIn: [
-                        {
-                            token: product.token,
-                            amount: tokenInAmount
-                        }
-                    ],
+                    amount: tokenInAmount,
                     data: txData
                 }, tokenInAmount);
             }
@@ -582,15 +575,9 @@ async function subscribe(
                     discountRuleId: discountRuleId
                 });
                 receipt = await commission.proxyCall({
-                    referrer: referrer,
+                    affiliate: referrer,
                     campaignId: productId,
-                    target: productMarketplaceAddress,
-                    tokensIn: [
-                        {
-                            token: product.token,
-                            amount: tokenInAmount
-                        }
-                    ],
+                    amount: tokenInAmount,
                     data: txData
                 });
             }

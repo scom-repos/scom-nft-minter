@@ -908,9 +908,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         let tokenInAmount;
         if (referrer) {
             let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
-            if (campaign?.referrers?.includes(referrer)) {
-                const index = campaign.inTokens.indexOf(product.token);
-                const commissionRate = campaign.commissionInTokenConfig[index].rate;
+            if (campaign?.affiliates?.includes(referrer)) {
+                const commissionRate = campaign.commissionRate;
                 tokenInAmount = eth_wallet_3.Utils.toDecimals(new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate))).decimalPlaces(0);
             }
         }
@@ -939,15 +938,9 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         discountRuleId: discountRuleId
                     }, amount);
                     receipt = await commission.proxyCall({
-                        referrer: referrer,
+                        affiliate: referrer,
                         campaignId: productId,
-                        target: productMarketplaceAddress,
-                        tokensIn: [
-                            {
-                                token: product.token,
-                                amount: tokenInAmount
-                            }
-                        ],
+                        amount: tokenInAmount,
                         data: txData
                     }, tokenInAmount);
                 }
@@ -971,15 +964,9 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         discountRuleId: discountRuleId
                     });
                     receipt = await commission.proxyCall({
-                        referrer: referrer,
+                        affiliate: referrer,
                         campaignId: productId,
-                        target: productMarketplaceAddress,
-                        tokensIn: [
-                            {
-                                token: product.token,
-                                amount: tokenInAmount
-                            }
-                        ],
+                        amount: tokenInAmount,
                         data: txData
                     });
                 }
