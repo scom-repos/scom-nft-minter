@@ -64,6 +64,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         link?: string;
         discountRuleId?: number;
         commissions?: ICommissionInfo[];
+        referrer?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         defaultChainId: number;
         wallets: IWalletPlugin[];
@@ -205,12 +206,13 @@ declare module "@scom/scom-nft-minter/store/index.ts" {
     export interface IContractDetailInfo {
         address: string;
     }
-    export type ContractType = 'ProductMarketplace' | 'OneTimePurchaseNFT' | 'SubscriptionNFTFactory' | 'Promotion' | 'Proxy';
+    export type ContractType = 'ProductMarketplace' | 'OneTimePurchaseNFT' | 'SubscriptionNFTFactory' | 'Promotion' | 'Commission' | 'Proxy';
     export interface IContractInfo {
         ProductMarketplace: IContractDetailInfo;
         OneTimePurchaseNFT: IContractDetailInfo;
         SubscriptionNFTFactory: IContractDetailInfo;
         Promotion: IContractDetailInfo;
+        Commission: IContractDetailInfo;
         Proxy: IContractDetailInfo;
     }
     interface IExtendedNetwork extends INetwork {
@@ -301,7 +303,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, commissions: ICommissionInfo[], discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, referrer: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
     function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function fetchUserNftBalance(state: State, address: string): Promise<string>;
@@ -331,6 +333,9 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                 Promotion: {
                     address: string;
                 };
+                Commission: {
+                    address: string;
+                };
                 Proxy: {
                     address: string;
                 };
@@ -346,6 +351,9 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
                     address: string;
                 };
                 Promotion: {
+                    address: string;
+                };
+                Commission: {
                     address: string;
                 };
                 Proxy: {
@@ -1369,6 +1377,7 @@ declare module "@scom/scom-nft-minter" {
                 link?: string;
                 discountRuleId?: number;
                 commissions?: import("@scom/scom-nft-minter/interface/index.tsx").ICommissionInfo[];
+                referrer?: string;
                 chainSpecificProperties?: Record<number, IChainSpecificProperties>;
                 defaultChainId: number;
                 wallets: IWalletPlugin[];

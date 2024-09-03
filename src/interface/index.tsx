@@ -63,6 +63,7 @@ export interface IEmbedData {
   link?: string;
   discountRuleId?: number;
   commissions?: ICommissionInfo[];
+  referrer?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
   defaultChainId: number;
   wallets: IWalletPlugin[];

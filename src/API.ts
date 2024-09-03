@@ -494,15 +494,15 @@ async function subscribe(
     startTime: number,
     duration: number,
     recipient: string,
-    commissions: ICommissionInfo[],
+    referrer: string,
     discountRuleId: number = 0,
     callback?: any,
     confirmationCallback?: any
 ) {
-    let proxyAddress = state.getContractAddress('Proxy');
+    let commissionAddress = state.getContractAddress('Commission');
     let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
     const wallet = Wallet.getClientInstance();
-    const proxy = new ProxyContracts.Proxy(wallet, proxyAddress);
+    const commission = new ProductContracts.Commission(wallet, commissionAddress);
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
     const product = await productMarketplace.products(productId);
     let basePrice: BigNumber = product.price;
@@ -519,13 +519,15 @@ async function subscribe(
         }
     }
     const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
-    const _commissions = (commissions || []).map(v => {
-        return {
-            to: v.walletAddress,
-            amount: amount.times(v.share)
+    let tokenInAmount: BigNumber;
+    if (referrer) {
+        let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
+        if (campaign?.referrers?.includes(referrer)) {
+            const index = campaign.inTokens.indexOf(product.token);
+            const commissionRate = campaign.commissionInTokenConfig[index].rate;
+            tokenInAmount = Utils.toDecimals(new BigNumber(amount).dividedBy(new BigNumber(1).minus(commissionRate))).decimalPlaces(0);
         }
-    })
-    const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new BigNumber(0);
+    }
     let receipt;
     try {
         registerSendTxEvents({
@@ -533,7 +535,7 @@ async function subscribe(
             confirmation: confirmationCallback
         });
         if (product.token === nullAddress) {
-            if (commissionsAmount.isZero()) {
+            if (!tokenInAmount || tokenInAmount.isZero()) {
                 receipt = await productMarketplace.subscribe({
                     to: recipient || wallet.address,
                     productId: productId,
@@ -549,14 +551,21 @@ async function subscribe(
                     duration: duration,
                     discountRuleId: discountRuleId
                 }, amount);
-                receipt = await proxy.ethIn({
+                receipt = await commission.proxyCall({
+                    referrer: referrer,
+                    campaignId: productId,
                     target: productMarketplaceAddress,
-                    commissions: _commissions,
+                    tokensIn: [
+                        {
+                            token: product.token,
+                            amount: tokenInAmount
+                        }
+                    ],
                     data: txData
-                }, amount.plus(commissionsAmount));
+                }, tokenInAmount);
             }
         } else {
-            if (commissionsAmount.isZero()) {
+            if (!tokenInAmount || tokenInAmount.isZero()) {
                 receipt = await productMarketplace.subscribe({
                     to: recipient || wallet.address,
                     productId: productId,
@@ -572,16 +581,16 @@ async function subscribe(
                     duration: duration,
                     discountRuleId: discountRuleId
                 });
-                const tokensIn =
-                {
-                    token: product.token,
-                    amount: amount.plus(commissionsAmount),
-                    directTransfer: false,
-                    commissions: _commissions
-                };
-                receipt = await proxy.tokenIn({
+                receipt = await commission.proxyCall({
+                    referrer: referrer,
+                    campaignId: productId,
                     target: productMarketplaceAddress,
-                    tokensIn,
+                    tokensIn: [
+                        {
+                            token: product.token,
+                            amount: tokenInAmount
+                        }
+                    ],
                     data: txData
                 });
             }

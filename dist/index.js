@@ -883,11 +883,11 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
-    async function subscribe(state, productId, startTime, duration, recipient, commissions, discountRuleId = 0, callback, confirmationCallback) {
-        let proxyAddress = state.getContractAddress('Proxy');
+    async function subscribe(state, productId, startTime, duration, recipient, referrer, discountRuleId = 0, callback, confirmationCallback) {
+        let commissionAddress = state.getContractAddress('Commission');
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         const wallet = eth_wallet_3.Wallet.getClientInstance();
-        const proxy = new scom_commission_proxy_contract_1.Contracts.Proxy(wallet, proxyAddress);
+        const commission = new scom_product_contract_2.Contracts.Commission(wallet, commissionAddress);
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
         const product = await productMarketplace.products(productId);
         let basePrice = product.price;
@@ -905,13 +905,15 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             }
         }
         const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
-        const _commissions = (commissions || []).map(v => {
-            return {
-                to: v.walletAddress,
-                amount: amount.times(v.share)
-            };
-        });
-        const commissionsAmount = _commissions.length ? _commissions.map(v => v.amount).reduce((a, b) => a.plus(b)) : new eth_wallet_3.BigNumber(0);
+        let tokenInAmount;
+        if (referrer) {
+            let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
+            if (campaign?.referrers?.includes(referrer)) {
+                const index = campaign.inTokens.indexOf(product.token);
+                const commissionRate = campaign.commissionInTokenConfig[index].rate;
+                tokenInAmount = eth_wallet_3.Utils.toDecimals(new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate))).decimalPlaces(0);
+            }
+        }
         let receipt;
         try {
             (0, index_5.registerSendTxEvents)({
@@ -919,7 +921,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                 confirmation: confirmationCallback
             });
             if (product.token === index_5.nullAddress) {
-                if (commissionsAmount.isZero()) {
+                if (!tokenInAmount || tokenInAmount.isZero()) {
                     receipt = await productMarketplace.subscribe({
                         to: recipient || wallet.address,
                         productId: productId,
@@ -936,15 +938,22 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         duration: duration,
                         discountRuleId: discountRuleId
                     }, amount);
-                    receipt = await proxy.ethIn({
+                    receipt = await commission.proxyCall({
+                        referrer: referrer,
+                        campaignId: productId,
                         target: productMarketplaceAddress,
-                        commissions: _commissions,
+                        tokensIn: [
+                            {
+                                token: product.token,
+                                amount: tokenInAmount
+                            }
+                        ],
                         data: txData
-                    }, amount.plus(commissionsAmount));
+                    }, tokenInAmount);
                 }
             }
             else {
-                if (commissionsAmount.isZero()) {
+                if (!tokenInAmount || tokenInAmount.isZero()) {
                     receipt = await productMarketplace.subscribe({
                         to: recipient || wallet.address,
                         productId: productId,
@@ -961,15 +970,16 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
                         duration: duration,
                         discountRuleId: discountRuleId
                     });
-                    const tokensIn = {
-                        token: product.token,
-                        amount: amount.plus(commissionsAmount),
-                        directTransfer: false,
-                        commissions: _commissions
-                    };
-                    receipt = await proxy.tokenIn({
+                    receipt = await commission.proxyCall({
+                        referrer: referrer,
+                        campaignId: productId,
                         target: productMarketplaceAddress,
-                        tokensIn,
+                        tokensIn: [
+                            {
+                                token: product.token,
+                                amount: tokenInAmount
+                            }
+                        ],
                         data: txData
                     });
                 }
@@ -1101,16 +1111,19 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
         "contractInfo": {
             "97": {
                 "ProductMarketplace": {
-                    "address": "0x9FcD44B7e2eE6Cd05E72b18CEB8bF15D918BCd60"
+                    "address": "0x93e684ad2AEE178e23675fbE5bA88c3e4e7467f4"
                 },
                 "OneTimePurchaseNFT": {
-                    "address": "0x6061FDC4f37a77e9A7333aD4d575ea32eEc44eE0"
+                    "address": "0x5aE9c7f08572D52e2DB8508B502D767A1ECf21Bf"
                 },
                 "SubscriptionNFTFactory": {
-                    "address": "0x40E83b8211338E204926E447C54477F7FCAB1cF8"
+                    "address": "0x0055e4edb49425A29784Bd9a7986F5b56dcc8f6b"
                 },
                 "Promotion": {
-                    "address": "0xC1074403b4893D8Fe6aaB93780398e5F67ba2Bf0"
+                    "address": "0x13d23201a8A6661881d701E1cF56A30A8eb0aE90"
+                },
+                "Commission": {
+                    "address": "0x7c3D10BEF2768519A605c64dfB59ec46791E59FD"
                 },
                 "Proxy": {
                     "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
@@ -1118,16 +1131,19 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
             },
             "43113": {
                 "ProductMarketplace": {
-                    "address": "0x3b97dF29d6B9518F96b8Bc19f4cfEaf7Ee88f412"
+                    "address": "0xeC3747eAbf71D4BDF15Abb70398C04B642363D10"
                 },
                 "OneTimePurchaseNFT": {
-                    "address": "0xcf43916aaBa8955A0e034Fd2741269eA421F6428"
+                    "address": "0x404eeCC44F7aFc1f7561b2A9bC475513206D4b15"
                 },
                 "SubscriptionNFTFactory": {
-                    "address": "0xC6d85c98b4A1428337aB784B5932Da11B7a1A707"
+                    "address": "0x9231761Bd5f32c8f6465d82168BAdaB109D23290"
                 },
                 "Promotion": {
-                    "address": "0x0E1C3B28Cba10dCeDa742Aa567c7D28C4932B81d"
+                    "address": "0x22786FF4E595f1B517242549ec1D263e62dc6F26"
+                },
+                "Commission": {
+                    "address": "0x7EcBbE9C35B280840633C4D53b4c32CC0c46827e"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
@@ -3720,7 +3736,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this._data.commissions, this.discountApplied?.id ?? 0, callback, async () => {
+                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, async () => {
                     await this.updateTokenBalance();
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);
