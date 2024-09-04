@@ -8,7 +8,7 @@ import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import { State } from './store/index';
 import getNetworkList from '@scom/scom-network-list';
 
-async function getProductInfo(state: State, productId: number):Promise<IProductInfo> {
+async function getProductInfo(state: State, productId: number): Promise<IProductInfo> {
     let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
     if (!productMarketplaceAddress) return null;
     try {
@@ -17,15 +17,15 @@ async function getProductInfo(state: State, productId: number):Promise<IProductI
         const product = await productMarketplace.products(productId);
         const chainId = wallet.chainId;
         if (product.token && product.token === nullAddress) {
-            let net = getNetworkList().find(net=>net.chainId===chainId);
+            let net = getNetworkList().find(net => net.chainId === chainId);
             return {
                 ...product,
-                token:{
-                    chainId:wallet.chainId,
-                    address:product.token,
-                    decimals:net.nativeCurrency.decimals,
-                    symbol:net.nativeCurrency.symbol,
-                    name:net.nativeCurrency.symbol,
+                token: {
+                    chainId: wallet.chainId,
+                    address: product.token,
+                    decimals: net.nativeCurrency.decimals,
+                    symbol: net.nativeCurrency.symbol,
+                    name: net.nativeCurrency.symbol,
                 }
             };
         }
@@ -271,14 +271,14 @@ async function newDefaultBuyProduct(
     //hard requirement for the contract
     if (
         !(//tokenAddress is a valid address &&
-        new BigNumber(tokenDecimals).gt(0) &&
-        new BigNumber(qty).gt(0)
+            new BigNumber(tokenDecimals).gt(0) &&
+            new BigNumber(qty).gt(0)
         )
     ) {
         console.log("newDefaultBuyProduct() error! require tokenDecimals and qty > 0");
         return;
     }
-    
+
     if (!new BigNumber(price).gt(0)) {
         //warn that it will be free to mint
         console.log("newDefaultBuyProduct() warning! price = 0");
@@ -588,6 +588,43 @@ async function subscribe(
     return receipt;
 }
 
+async function updateCommissionCampaign(
+    state: State, 
+    productId: number, 
+    commissionRate: string, 
+    affiliates: string[], 
+    callback?: any,
+    confirmationCallback?: any
+) {
+    let commissionAddress = state.getContractAddress('Commission');
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    const wallet = Wallet.getClientInstance();
+    const commission = new ProductContracts.Commission(wallet, commissionAddress);
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    let selectors = ["subscribe"];
+    selectors = selectors.map(e => e + "(" + productMarketplace._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")");
+    selectors = selectors.map(e => wallet.soliditySha3(e).substring(0, 10));
+    let campaign = {
+        id: productId,
+        affiliatesRequireApproval: true,
+        selectors: selectors,
+        commissionRate: Utils.toDecimals(commissionRate, 6),
+        affiliates: affiliates
+    };
+    let receipt;
+    try {
+        registerSendTxEvents({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
+        receipt = await commission.updateCampaign(campaign);
+    }
+    catch (err) {
+        console.error(err);
+    }
+    return receipt;
+}
+
 async function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string) {
     let wallet = Wallet.getClientInstance();
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
@@ -598,7 +635,7 @@ async function updateProductUri(productMarketplaceAddress: string, productId: nu
 async function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number) {
     let wallet = Wallet.getClientInstance();
     const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
-    const receipt = await productMarketplace.updateProductPrice({ productId, price:BigNumber(price).shiftedBy(tokenDecimals) });
+    const receipt = await productMarketplace.updateProductPrice({ productId, price: BigNumber(price).shiftedBy(tokenDecimals) });
     return receipt;
 }
 //
@@ -709,7 +746,7 @@ export {
     getProductOwner,
     updateProductUri,
     updateProductPrice,
-
+    updateCommissionCampaign,
     fetchOswapTrollNftInfo,
     fetchUserNftBalance,
     mintOswapTrollNft

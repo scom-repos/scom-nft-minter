@@ -472,7 +472,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.updateDiscountRules = exports.getDiscountRules = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateCommissionCampaign = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.updateDiscountRules = exports.getDiscountRules = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -978,6 +978,36 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.subscribe = subscribe;
+    async function updateCommissionCampaign(state, productId, commissionRate, affiliates, callback, confirmationCallback) {
+        let commissionAddress = state.getContractAddress('Commission');
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const commission = new scom_product_contract_2.Contracts.Commission(wallet, commissionAddress);
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        let selectors = ["subscribe"];
+        selectors = selectors.map(e => e + "(" + productMarketplace._abi.filter(f => f.name == e)[0].inputs.map(f => f.type).join(',') + ")");
+        selectors = selectors.map(e => wallet.soliditySha3(e).substring(0, 10));
+        let campaign = {
+            id: productId,
+            affiliatesRequireApproval: true,
+            selectors: selectors,
+            commissionRate: eth_wallet_3.Utils.toDecimals(commissionRate, 6),
+            affiliates: affiliates
+        };
+        let receipt;
+        try {
+            (0, index_5.registerSendTxEvents)({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
+            receipt = await commission.updateCampaign(campaign);
+        }
+        catch (err) {
+            console.error(err);
+        }
+        return receipt;
+    }
+    exports.updateCommissionCampaign = updateCommissionCampaign;
     async function updateProductUri(productMarketplaceAddress, productId, uri) {
         let wallet = eth_wallet_3.Wallet.getClientInstance();
         const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
@@ -2963,6 +2993,26 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             catch (error) {
                                 this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
                                 console.log('updateDiscountRules', error);
+                                reject(error);
+                            }
+                        });
+                    },
+                    updateCommissionCampaign: async (productId, commissionRate, affiliates) => {
+                        return new Promise(async (resolve, reject) => {
+                            const callback = (err, receipt) => {
+                                if (err) {
+                                    this.showTxStatusModal('error', err);
+                                }
+                            };
+                            const confirmationCallback = async (receipt) => {
+                                resolve(true);
+                            };
+                            try {
+                                await (0, API_3.updateCommissionCampaign)(this.state, productId, commissionRate, affiliates, callback, confirmationCallback);
+                            }
+                            catch (error) {
+                                this.showTxStatusModal('error', 'Something went wrong updating commission campaign!');
+                                console.log('updateCommissionCampaign', error);
                                 reject(error);
                             }
                         });

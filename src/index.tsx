@@ -27,7 +27,7 @@ import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IP
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe, updateDiscountRules } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe, updateCommissionCampaign, updateDiscountRules } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -64,6 +64,19 @@ interface ScomNftMinterElement extends ControlElement {
   networks: INetworkConfig[];
   showHeader?: boolean;
   onMintedNFT?: () => void;
+}
+
+export interface IBuilderConfigurator {
+  name: string;
+  target: string;
+  getActions: (category?: string) => any[];
+  getData: () => IEmbedData;
+  setData: (data: IEmbedData) => Promise<void>;
+  setupData?: (data: IEmbedData) => Promise<boolean>;
+  getTag: () => any;
+  setTag: (value: any) => void;
+  updateDiscountRules?: (productId: number, rules: IDiscountRule[], ruleIdsToDelete: number[]) => Promise<IDiscountRule[]>;
+  updateCommissionCampaign?: (productId: number, commissionRate: string, affiliates: string[]) => Promise<boolean>;
 }
 
 const Theme = Styles.Theme.ThemeVars;
@@ -604,6 +617,25 @@ export default class ScomNftMinter extends Module {
             } catch (error) {
               this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
               console.log('updateDiscountRules', error);
+              reject(error);
+            }
+          });
+        },
+        updateCommissionCampaign: async (productId: number, commissionRate: string, affiliates: string[]) => {
+          return new Promise(async (resolve, reject) => {
+            const callback = (err: Error, receipt?: string) => {
+              if (err) {
+                this.showTxStatusModal('error', err);
+              }
+            };
+            const confirmationCallback = async (receipt: any) => {
+              resolve(true);
+            };
+            try {
+              await updateCommissionCampaign(this.state, productId, commissionRate, affiliates, callback, confirmationCallback);
+            } catch (error) {
+              this.showTxStatusModal('error', 'Something went wrong updating commission campaign!');
+              console.log('updateCommissionCampaign', error);
               reject(error);
             }
           });
