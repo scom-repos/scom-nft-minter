@@ -1212,7 +1212,6 @@ export default class ScomNftMinter extends Module {
   private async initApprovalAction() {
     if (!this.approvalModelAction) {
       //this.contractAddress = this.nftType === 'ERC721' ? this.nftAddress : this.state.getContractAddress('Proxy');
-      this.contractAddress = this.state.getContractAddress('ProductMarketplace');
       this.approvalModelAction = await this.state.setApprovalModelAction({
         sender: this,
         payAction: async () => {
@@ -1274,7 +1273,7 @@ export default class ScomNftMinter extends Module {
           this.showTxStatusModal('error', err);
         }
       });
-      this.state.approvalModel.spenderAddress = this.contractAddress;
+      this.updateContractAddress();
       if (this.productInfo?.token?.address !== nullAddress && this.tokenAmountIn) {
         this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
       }
@@ -1283,16 +1282,12 @@ export default class ScomNftMinter extends Module {
 
   private updateContractAddress() {
     if (this.approvalModelAction) {
-      //if (this.nftType === 'ERC721') {
-      // this.contractAddress = this.nftAddress;
-      //}
-      //else {//if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
-      //  this.contractAddress = this.state.getContractAddress('ProductInfo');
-      //}
-      //else {
-      //  this.contractAddress = this.state.getContractAddress('Proxy');
-      //}
-      this.contractAddress = this.state.getContractAddress('ProductMarketplace');
+      if (this._data.referrer) {
+        this.contractAddress = this.state.getContractAddress('Commission');
+      }
+      else {
+        this.contractAddress = this.state.getContractAddress('ProductMarketplace');
+      }
       this.state.approvalModel.spenderAddress = this.contractAddress;
     }
   }

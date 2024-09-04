@@ -909,8 +909,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         if (referrer) {
             let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
             if (campaign?.affiliates?.includes(referrer)) {
-                const commissionRate = campaign.commissionRate;
-                tokenInAmount = eth_wallet_3.Utils.toDecimals(new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate))).decimalPlaces(0);
+                const commissionRate = eth_wallet_3.Utils.fromDecimals(campaign.commissionRate, 6);
+                tokenInAmount = new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate)).decimalPlaces(0);
             }
         }
         let receipt;
@@ -1140,7 +1140,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
                     "address": "0x13d23201a8A6661881d701E1cF56A30A8eb0aE90"
                 },
                 "Commission": {
-                    "address": "0x7c3D10BEF2768519A605c64dfB59ec46791E59FD"
+                    "address": "0x1efce0fd8695720d32513f4ebab94a9b34081910"
                 },
                 "Proxy": {
                     "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
@@ -1160,7 +1160,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
                     "address": "0x22786FF4E595f1B517242549ec1D263e62dc6F26"
                 },
                 "Commission": {
-                    "address": "0x7EcBbE9C35B280840633C4D53b4c32CC0c46827e"
+                    "address": "0xb41df1F781d02bCBb79a0BABC601D3Bab61dDF89"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
@@ -3433,7 +3433,6 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         async initApprovalAction() {
             if (!this.approvalModelAction) {
                 //this.contractAddress = this.nftType === 'ERC721' ? this.nftAddress : this.state.getContractAddress('Proxy');
-                this.contractAddress = this.state.getContractAddress('ProductMarketplace');
                 this.approvalModelAction = await this.state.setApprovalModelAction({
                     sender: this,
                     payAction: async () => {
@@ -3496,7 +3495,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.showTxStatusModal('error', err);
                     }
                 });
-                this.state.approvalModel.spenderAddress = this.contractAddress;
+                this.updateContractAddress();
                 if (this.productInfo?.token?.address !== index_14.nullAddress && this.tokenAmountIn) {
                     this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
                 }
@@ -3504,16 +3503,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateContractAddress() {
             if (this.approvalModelAction) {
-                //if (this.nftType === 'ERC721') {
-                // this.contractAddress = this.nftAddress;
-                //}
-                //else {//if (!this._data.commissions || this._data.commissions.length == 0 || !this._data.commissions.find(v => v.chainId == this.chainId)) {
-                //  this.contractAddress = this.state.getContractAddress('ProductInfo');
-                //}
-                //else {
-                //  this.contractAddress = this.state.getContractAddress('Proxy');
-                //}
-                this.contractAddress = this.state.getContractAddress('ProductMarketplace');
+                if (this._data.referrer) {
+                    this.contractAddress = this.state.getContractAddress('Commission');
+                }
+                else {
+                    this.contractAddress = this.state.getContractAddress('ProductMarketplace');
+                }
                 this.state.approvalModel.spenderAddress = this.contractAddress;
             }
         }

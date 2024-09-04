@@ -17,7 +17,7 @@ export default {
                 "address": "0x13d23201a8A6661881d701E1cF56A30A8eb0aE90"
             },
             "Commission": {
-                "address": "0x7c3D10BEF2768519A605c64dfB59ec46791E59FD"
+                "address": "0x1efce0fd8695720d32513f4ebab94a9b34081910"
             },
             "Proxy": {
                 "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
@@ -37,7 +37,7 @@ export default {
                 "address": "0x22786FF4E595f1B517242549ec1D263e62dc6F26"
             },
             "Commission": {
-                "address": "0x7EcBbE9C35B280840633C4D53b4c32CC0c46827e"
+                "address": "0xb41df1F781d02bCBb79a0BABC601D3Bab61dDF89"
             },
             "Proxy": {
                 "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
