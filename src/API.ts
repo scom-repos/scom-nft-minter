@@ -522,7 +522,8 @@ async function subscribe(
     let tokenInAmount: BigNumber;
     if (referrer) {
         let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
-        if (campaign?.affiliates?.includes(referrer)) {
+        const affiliates = (campaign?.affiliates || []).map(a => a.toLowerCase());
+        if (affiliates.includes(referrer.toLowerCase())) {
             const commissionRate = Utils.fromDecimals(campaign.commissionRate, 6);
             tokenInAmount = new BigNumber(amount).dividedBy(new BigNumber(1).minus(commissionRate)).decimalPlaces(0);
         }

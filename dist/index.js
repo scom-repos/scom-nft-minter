@@ -908,7 +908,8 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         let tokenInAmount;
         if (referrer) {
             let campaign = await commission.getCampaign({ campaignId: productId, returnArrays: true });
-            if (campaign?.affiliates?.includes(referrer)) {
+            const affiliates = (campaign?.affiliates || []).map(a => a.toLowerCase());
+            if (affiliates.includes(referrer.toLowerCase())) {
                 const commissionRate = eth_wallet_3.Utils.fromDecimals(campaign.commissionRate, 6);
                 tokenInAmount = new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate)).decimalPlaces(0);
             }
