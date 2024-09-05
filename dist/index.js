@@ -361,7 +361,7 @@ define("@scom/scom-nft-minter/utils/index.ts", ["require", "exports", "@scom/sco
 define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.comboBoxStyle = exports.formInputStyle = exports.linkStyle = exports.tokenSelectionStyle = exports.inputStyle = exports.markdownStyle = void 0;
+    exports.readOnlyStyle = exports.comboBoxStyle = exports.formInputStyle = exports.linkStyle = exports.tokenSelectionStyle = exports.inputStyle = exports.markdownStyle = void 0;
     const Theme = components_3.Styles.Theme.ThemeVars;
     exports.markdownStyle = components_3.Styles.style({
         color: Theme.text.primary,
@@ -465,6 +465,15 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
                 borderColor: Theme.input.background,
                 borderRadius: '0.625rem',
                 width: '42px'
+            }
+        }
+    });
+    exports.readOnlyStyle = components_3.Styles.style({
+        opacity: 0.8,
+        cursor: 'default',
+        $nest: {
+            '*': {
+                cursor: 'default'
             }
         }
     });
@@ -1457,6 +1466,13 @@ define("@scom/scom-nft-minter/component/addressInput.tsx", ["require", "exports"
             const val = this.getAttribute('value', true);
             if (val)
                 this.edtAddress.value = val;
+            const readOnly = this.getAttribute('readOnly', true, false);
+            this.edtAddress.readOnly = readOnly;
+            if (readOnly) {
+                this.edtAddress.classList.add(index_css_3.readOnlyStyle);
+                this.lblPaymentModel.classList.add(index_css_3.readOnlyStyle);
+                this.lblPriceToMint.classList.add(index_css_3.readOnlyStyle);
+            }
         }
         handleAddressChanged() {
             if (this['onChanged'])
@@ -1481,8 +1497,11 @@ define("@scom/scom-nft-minter/component/addressInput.tsx", ["require", "exports"
                 this.pnlProductInfo.visible = !!productId;
                 if (productId) {
                     const productInfo = await (0, API_2.getProductInfo)(this.state, productId);
-                    this.lblPaymentModel.caption = productInfo.productType.toNumber() === 1 ? 'Subscription' : 'One-Time Purchase';
-                    this.lblPriceToMint.caption = components_6.FormatUtils.formatNumber(eth_wallet_5.Utils.fromDecimals(productInfo.price, productInfo.token.decimals).toFixed(), { minValue: '0.0000001', hasTrailingZero: false });
+                    const isSubscription = productInfo.productType.toNumber() === 1;
+                    this.lblPaymentModel.caption = isSubscription ? 'Subscription' : 'One-Time Purchase';
+                    const price = components_6.FormatUtils.formatNumber(eth_wallet_5.Utils.fromDecimals(productInfo.price, productInfo.token.decimals).toFixed(), { minValue: '0.0000001', hasTrailingZero: false });
+                    const symbol = productInfo.token?.symbol || '';
+                    this.lblPriceToMint.caption = `${price} ${symbol} ${isSubscription ? 'per day' : ''}`;
                 }
             });
         }
@@ -1935,7 +1954,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     uri: {
                         type: 'string',
                         title: 'URI',
-                        tooltip: 'Usually an link of a image to represent the NFT',
+                        tooltip: 'Usually a link of an image to represent the NFT'
                     },
                     paymentModel: {
                         type: 'string',
@@ -2016,7 +2035,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
     }
     exports.getProjectOwnerSchema1 = getProjectOwnerSchema1;
     //existing custom721 or custom1155
-    function getProjectOwnerSchema2(state, functions) {
+    function getProjectOwnerSchema2(state, readonly, functions) {
         let cbbNftType;
         let addressInput;
         let edtNftId;
@@ -2031,17 +2050,20 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                             'ERC721',
                             'ERC1155',
                         ],
+                        readonly,
                         required: true
                     },
                     chainId: {
                         type: 'number',
                         title: 'Chain',
                         enum: chainIds,
+                        readonly,
                         required: true
                     },
                     nftAddress: {
                         type: 'string',
                         title: 'Custom NFT Address',
+                        readonly,
                         required: true
                     },
                     erc1155Index: {
@@ -2049,6 +2071,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         title: 'Index',
                         tooltip: 'The index of your NFT inside the ERC1155 contract',
                         minimum: 1,
+                        readonly
                     },
                     newPrice: {
                         type: 'number',
@@ -2130,8 +2153,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         render: () => {
                             const networkPicker = new scom_network_picker_1.default(undefined, {
                                 type: 'combobox',
-                                networks
+                                networks,
+                                readOnly: readonly
                             });
+                            if (readonly) {
+                                networkPicker.classList.add(index_css_4.readOnlyStyle);
+                            }
                             return networkPicker;
                         },
                         getData: (control) => {
@@ -2150,8 +2177,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                                 icon: {
                                     name: 'caret-down'
                                 },
-                                items: nftTypes
+                                items: nftTypes,
+                                readOnly: readonly
                             });
+                            if (readonly) {
+                                cbbNftType.classList.add(index_css_4.readOnlyStyle);
+                            }
                             cbbNftType.classList.add(index_css_4.comboBoxStyle);
                             cbbNftType.onChanged = () => {
                                 if (addressInput) {
@@ -2174,7 +2205,8 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                         render: () => {
                             addressInput = new index_11.ScomNftMinterAddressInput(undefined, {
                                 state,
-                                value: ''
+                                value: '',
+                                readOnly: readonly
                             });
                             return addressInput;
                         },
@@ -2195,8 +2227,12 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                             edtNftId = new components_7.Input(pnlNftId, {
                                 inputType: 'number',
                                 height: '42px',
-                                width: '100%'
+                                width: '100%',
+                                readOnly: readonly
                             });
+                            if (readonly) {
+                                edtNftId.classList.add(index_css_4.readOnlyStyle);
+                            }
                             edtNftId.classList.add(index_css_4.formInputStyle);
                             edtNftId.onChanged = () => {
                                 if (addressInput) {
@@ -2261,8 +2297,8 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
         };
     }
     exports.getProjectOwnerSchema2 = getProjectOwnerSchema2;
-    function getProjectOwnerSchema3(isDefault1155New, state, functions) {
-        return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, functions);
+    function getProjectOwnerSchema3(isDefault1155New, readonly, state, functions) {
+        return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, readonly, functions);
     }
     exports.getProjectOwnerSchema3 = getProjectOwnerSchema3;
     const getCustomControls = (isCustomToken) => {
@@ -2885,9 +2921,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             return actions;
         }
-        getProjectOwnerActions(isDefault1155New) {
+        getProjectOwnerActions(isDefault1155New, readonly) {
             //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema3)(isDefault1155New, this.state, {
+            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema3)(isDefault1155New, readonly, this.state, {
                 refreshUI: this.refreshDApp,
                 connectWallet: this.connectWallet,
                 showTxStatusModal: this.showTxStatusModal
@@ -2902,7 +2938,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             ];
             return actions;
         }
-        getConfigurators(type) {
+        getConfigurators(type, readonly) {
             let isNew1155 = (type && type === 'new1155');
             const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = data_json_1.default;
             const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
@@ -2918,7 +2954,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return selectors;
                     },
                     getActions: () => {
-                        return this.getProjectOwnerActions(isNew1155);
+                        return this.getProjectOwnerActions(isNew1155, readonly);
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
@@ -3063,7 +3099,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     name: 'Editor',
                     target: 'Editor',
                     getActions: (category) => {
-                        const actions = this.getProjectOwnerActions(isNew1155);
+                        const actions = this.getProjectOwnerActions(isNew1155, readonly);
                         return actions;
                     },
                     getData: this.getData.bind(this),

@@ -11,7 +11,7 @@ import {
 } from '@ijstech/components';
 import { Utils } from '@ijstech/eth-wallet';
 import { getProductId, getProductInfo } from '../API';
-import { formInputStyle } from '../index.css';
+import { formInputStyle, readOnlyStyle } from '../index.css';
 import { State } from '../store/index';
 
 const Theme = Styles.Theme.ThemeVars;
@@ -19,6 +19,7 @@ const Theme = Styles.Theme.ThemeVars;
 interface ScomNftMinterAddressInputElement extends ControlElement {
     state: State;
     value?: number;
+    readOnly?: boolean;
 }
 
 declare global {
@@ -39,6 +40,7 @@ export class ScomNftMinterAddressInput extends Module {
     private timeout: any;
     private _nftType: 'ERC721' | 'ERC1155';
     private _nftId: number;
+    private _readonly: boolean;
     private isInfoParentUpdated = false;
 
     get nftType() {
@@ -70,6 +72,13 @@ export class ScomNftMinterAddressInput extends Module {
         this.state = this.getAttribute('state', true);
         const val = this.getAttribute('value', true);
         if (val) this.edtAddress.value = val;
+        const readOnly = this.getAttribute('readOnly', true, false);
+        this.edtAddress.readOnly = readOnly;
+        if (readOnly) {
+            this.edtAddress.classList.add(readOnlyStyle);
+            this.lblPaymentModel.classList.add(readOnlyStyle);
+            this.lblPriceToMint.classList.add(readOnlyStyle);
+        }
     }
 
     handleAddressChanged() {
@@ -90,11 +99,14 @@ export class ScomNftMinterAddressInput extends Module {
             this.pnlProductInfo.visible = !!productId;
             if (productId) {
                 const productInfo = await getProductInfo(this.state, productId);
-                this.lblPaymentModel.caption = productInfo.productType.toNumber() === 1 ? 'Subscription' : 'One-Time Purchase';
-                this.lblPriceToMint.caption = FormatUtils.formatNumber(
+                const isSubscription = productInfo.productType.toNumber() === 1;
+                this.lblPaymentModel.caption = isSubscription ? 'Subscription' : 'One-Time Purchase';
+                const price = FormatUtils.formatNumber(
                     Utils.fromDecimals(productInfo.price, productInfo.token.decimals).toFixed(),
                     { minValue: '0.0000001', hasTrailingZero: false }
                 );
+                const symbol = productInfo.token?.symbol || '';
+                this.lblPriceToMint.caption = `${price} ${symbol} ${isSubscription ? 'per day' : ''}`;
             }
         })
     }

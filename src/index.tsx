@@ -510,9 +510,9 @@ export default class ScomNftMinter extends Module {
     return actions;
   }
 
-  private getProjectOwnerActions(isDefault1155New: boolean) {
+  private getProjectOwnerActions(isDefault1155New: boolean, readonly?: boolean) {
     //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-    const formSchema = getProjectOwnerSchema(isDefault1155New, this.state, {
+    const formSchema = getProjectOwnerSchema(isDefault1155New, readonly, this.state, {
       refreshUI: this.refreshDApp,
       connectWallet: this.connectWallet,
       showTxStatusModal: this.showTxStatusModal
@@ -528,7 +528,7 @@ export default class ScomNftMinter extends Module {
     return actions;
   }
 
-  getConfigurators(type?: 'new1155' | 'customNft') {
+  getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean) {
     let isNew1155 = (type && type === 'new1155');
     const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
     const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft as IEmbedData;
@@ -545,7 +545,7 @@ export default class ScomNftMinter extends Module {
           return selectors;
         },
         getActions: () => {
-          return this.getProjectOwnerActions(isNew1155);
+          return this.getProjectOwnerActions(isNew1155, readonly);
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
@@ -686,7 +686,7 @@ export default class ScomNftMinter extends Module {
         name: 'Editor',
         target: 'Editor',
         getActions: (category?: string) => {
-          const actions = this.getProjectOwnerActions(isNew1155);
+          const actions = this.getProjectOwnerActions(isNew1155, readonly);
           return actions;
         },
         getData: this.getData.bind(this),

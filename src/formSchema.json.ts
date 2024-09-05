@@ -1,7 +1,7 @@
 import ScomNetworkPicker from "@scom/scom-network-picker";
 import ScomTokenInput, { CUSTOM_TOKEN } from "@scom/scom-token-input";
 import { ComboBox, IComboItem, Input, Label, Panel } from "@ijstech/components";
-import { comboBoxStyle, formInputStyle } from "./index.css";
+import { comboBoxStyle, formInputStyle, readOnlyStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
@@ -429,7 +429,7 @@ export function getProjectOwnerSchema1() {
                 uri: {
                     type: 'string',
                     title: 'URI',
-                    tooltip: 'Usually an link of a image to represent the NFT',
+                    tooltip: 'Usually a link of an image to represent the NFT'
                 },
                 paymentModel: {
                     type: 'string',
@@ -510,7 +510,7 @@ export function getProjectOwnerSchema1() {
 }
 
 //existing custom721 or custom1155
-export function getProjectOwnerSchema2(state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+export function getProjectOwnerSchema2(state: State, readonly: boolean, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
     let cbbNftType: ComboBox;
     let addressInput: ScomNftMinterAddressInput;
     let edtNftId: Input;
@@ -525,17 +525,20 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                         'ERC721',
                         'ERC1155',
                     ],
+                    readonly,
                     required: true
                 },
                 chainId: {
                     type: 'number',
                     title: 'Chain',
                     enum: chainIds,
+                    readonly,
                     required: true
                 },
                 nftAddress: {
                     type: 'string',
                     title: 'Custom NFT Address',
+                    readonly,
                     required: true
                 },
                 erc1155Index: {//for 1155 only
@@ -543,6 +546,7 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                     title: 'Index',
                     tooltip: 'The index of your NFT inside the ERC1155 contract',
                     minimum: 1,
+                    readonly
                 },
                 newPrice: {
                     type: 'number',
@@ -624,8 +628,12 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                     render: () => {
                         const networkPicker = new ScomNetworkPicker(undefined, {
                             type: 'combobox',
-                            networks
+                            networks,
+                            readOnly: readonly
                         });
+                        if (readonly) {
+                            networkPicker.classList.add(readOnlyStyle);
+                        }
                         return networkPicker;
                     },
                     getData: (control: ScomNetworkPicker) => {
@@ -644,8 +652,12 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                             icon: {
                                 name: 'caret-down'
                             },
-                            items: nftTypes
+                            items: nftTypes,
+                            readOnly: readonly
                         });
+                        if (readonly) {
+                            cbbNftType.classList.add(readOnlyStyle);
+                        }
                         cbbNftType.classList.add(comboBoxStyle);
                         cbbNftType.onChanged = () => {
                             if (addressInput) {
@@ -667,7 +679,8 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                     render: () => {
                         addressInput = new ScomNftMinterAddressInput(undefined, {
                             state,
-                            value: ''
+                            value: '',
+                            readOnly: readonly
                         });
                         return addressInput;
                     },
@@ -688,8 +701,12 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
                         edtNftId = new Input(pnlNftId, {
                             inputType: 'number',
                             height: '42px',
-                            width: '100%'
+                            width: '100%',
+                            readOnly: readonly
                         });
+                        if (readonly) {
+                            edtNftId.classList.add(readOnlyStyle);
+                        }
                         edtNftId.classList.add(formInputStyle);
                         edtNftId.onChanged = () => {
                             if (addressInput) {
@@ -752,8 +769,8 @@ export function getProjectOwnerSchema2(state: State, functions: { connectWallet:
     }
 }
 
-export function getProjectOwnerSchema3(isDefault1155New: boolean, state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
-    return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, functions);
+export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+    return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, readonly, functions);
 }
 
 const getCustomControls = (isCustomToken?: boolean) => {
