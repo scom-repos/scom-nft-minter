@@ -278,6 +278,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const linkStyle: string;
     export const formInputStyle: string;
     export const comboBoxStyle: string;
+    export const readOnlyStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/API.ts" />
 declare module "@scom/scom-nft-minter/API.ts" {
@@ -470,6 +471,7 @@ declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
     interface ScomNftMinterAddressInputElement extends ControlElement {
         state: State;
         value?: number;
+        readOnly?: boolean;
     }
     global {
         namespace JSX {
@@ -487,6 +489,7 @@ declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
         private timeout;
         private _nftType;
         private _nftId;
+        private _readonly;
         private isInfoParentUpdated;
         get nftType(): 'ERC721' | 'ERC1155';
         set nftType(value: 'ERC721' | 'ERC1155');
@@ -754,7 +757,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
         };
     };
-    export function getProjectOwnerSchema2(state: State, functions: {
+    export function getProjectOwnerSchema2(state: State, readonly: boolean, functions: {
         connectWallet: any;
         showTxStatusModal: any;
         refreshUI: any;
@@ -766,17 +769,20 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                     enum: string[];
+                    readonly: boolean;
                     required: boolean;
                 };
                 chainId: {
                     type: string;
                     title: string;
                     enum: number[];
+                    readonly: boolean;
                     required: boolean;
                 };
                 nftAddress: {
                     type: string;
                     title: string;
+                    readonly: boolean;
                     required: boolean;
                 };
                 erc1155Index: {
@@ -784,6 +790,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     tooltip: string;
                     minimum: number;
+                    readonly: boolean;
                 };
                 newPrice: {
                     type: string;
@@ -890,7 +897,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
         };
     };
-    export function getProjectOwnerSchema3(isDefault1155New: boolean, state: State, functions: {
+    export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, state: State, functions: {
         connectWallet: any;
         showTxStatusModal: any;
         refreshUI: any;
@@ -1047,17 +1054,20 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                     enum: string[];
+                    readonly: boolean;
                     required: boolean;
                 };
                 chainId: {
                     type: string;
                     title: string;
                     enum: number[];
+                    readonly: boolean;
                     required: boolean;
                 };
                 nftAddress: {
                     type: string;
                     title: string;
+                    readonly: boolean;
                     required: boolean;
                 };
                 erc1155Index: {
@@ -1065,6 +1075,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     title: string;
                     tooltip: string;
                     minimum: number;
+                    readonly: boolean;
                 };
                 newPrice: {
                     type: string;
@@ -1325,7 +1336,7 @@ declare module "@scom/scom-nft-minter" {
         private onSetupPage;
         private getBuilderActions;
         private getProjectOwnerActions;
-        getConfigurators(type?: 'new1155' | 'customNft'): ({
+        getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean): ({
             name: string;
             target: string;
             getProxySelectors: (chainId: number) => Promise<string[]>;

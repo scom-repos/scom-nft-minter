@@ -12,8 +12,8 @@
     "devDependencies": {
         "@ijstech/cli": "^0.1.28",
         "@ijstech/compiler": "^0.1.22",
-        "@scom/scom-token-input": "https://github.com/scom-repos/scom-token-input.git",
-        "@scom/scom-widget-test": "https://github.com/scom-repos/scom-widget-test.git",
+        "@scom/scom-token-input": "^0.1.17",
+        "@scom/scom-widget-test": "^0.1.1",
         "@scom/scom-nft-minter": "file:./ref"
     },
     "scripts": {

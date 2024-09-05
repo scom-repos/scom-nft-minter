@@ -113,3 +113,13 @@ export const comboBoxStyle = Styles.style({
     }
   }
 })
+
+export const readOnlyStyle = Styles.style({
+  opacity: 0.8,
+  cursor: 'default',
+  $nest: {
+    '*': {
+      cursor: 'default'
+    }
+  }
+})
