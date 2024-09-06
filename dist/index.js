@@ -1154,7 +1154,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
                     "address": "0x13d23201a8A6661881d701E1cF56A30A8eb0aE90"
                 },
                 "Commission": {
-                    "address": "0x1efce0fd8695720d32513f4ebab94a9b34081910"
+                    "address": "0xcdc39C8bC8F9fDAF31D79f461B47477606770c62"
                 },
                 "Proxy": {
                     "address": "0x9602cB9A782babc72b1b6C96E050273F631a6870"
@@ -1174,7 +1174,7 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
                     "address": "0x22786FF4E595f1B517242549ec1D263e62dc6F26"
                 },
                 "Commission": {
-                    "address": "0xb41df1F781d02bCBb79a0BABC601D3Bab61dDF89"
+                    "address": "0x2Ed01CB805e7f52c92cfE9eC02E7Dc899cA53BCa"
                 },
                 "Proxy": {
                     "address": "0x7f1EAB0db83c02263539E3bFf99b638E61916B96"
