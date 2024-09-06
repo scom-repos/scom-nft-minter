@@ -3867,7 +3867,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     continue;
                 if (rule.discountApplication === 1 && !this.isRenewal)
                     continue;
-                if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec))
+                if ((rule.startTime > 0 && startTime < rule.startTime) || (rule.endTime > 0 && startTime > rule.endTime) || rule.minDuration.gt(durationInSec))
                     continue;
                 let basePrice = price;
                 if (rule.discountPercentage > 0) {

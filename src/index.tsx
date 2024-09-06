@@ -1611,7 +1611,7 @@ export default class ScomNftMinter extends Module {
     for (let rule of this.discountRules) {
       if (rule.discountApplication === 0 && this.isRenewal) continue;
       if (rule.discountApplication === 1 && !this.isRenewal) continue;
-      if (startTime < rule.startTime || startTime > rule.endTime || rule.minDuration.gt(durationInSec)) continue;
+      if ((rule.startTime > 0 && startTime < rule.startTime) || (rule.endTime > 0 && startTime > rule.endTime) || rule.minDuration.gt(durationInSec)) continue;
       let basePrice: BigNumber = price;
       if (rule.discountPercentage > 0) {
         basePrice = price.times(1 - rule.discountPercentage / 100)
