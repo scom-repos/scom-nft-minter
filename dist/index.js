@@ -907,10 +907,14 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             const rule = await promotion.discountRules({ param1: productId, param2: index });
             if (rule.discountPercentage.gt(0)) {
                 const discount = product.price.times(rule.discountPercentage).div(100);
-                basePrice = product.price.minus(discount);
+                if (product.price.gt(discount))
+                    basePrice = product.price.minus(discount);
+            }
+            else if (rule.fixedPrice.gt(0)) {
+                basePrice = rule.fixedPrice;
             }
             else {
-                basePrice = rule.fixedPrice;
+                discountRuleId = 0;
             }
         }
         const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
