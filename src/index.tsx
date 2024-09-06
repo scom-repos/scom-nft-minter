@@ -510,9 +510,9 @@ export default class ScomNftMinter extends Module {
     return actions;
   }
 
-  private getProjectOwnerActions(isDefault1155New: boolean, readonly?: boolean) {
+  private getProjectOwnerActions(isDefault1155New: boolean, readonly?: boolean, isPocily?: boolean) {
     //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-    const formSchema = getProjectOwnerSchema(isDefault1155New, readonly, this.state, {
+    const formSchema = getProjectOwnerSchema(isDefault1155New, readonly, isPocily, this.state, {
       refreshUI: this.refreshDApp,
       connectWallet: this.connectWallet,
       showTxStatusModal: this.showTxStatusModal
@@ -528,7 +528,7 @@ export default class ScomNftMinter extends Module {
     return actions;
   }
 
-  getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean) {
+  getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean) {
     let isNew1155 = (type && type === 'new1155');
     const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
     const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft as IEmbedData;
@@ -545,7 +545,7 @@ export default class ScomNftMinter extends Module {
           return selectors;
         },
         getActions: () => {
-          return this.getProjectOwnerActions(isNew1155, readonly);
+          return this.getProjectOwnerActions(isNew1155, readonly, isPocily);
         },
         getData: this.getData.bind(this),
         setData: async (data: IEmbedData) => {
@@ -567,6 +567,9 @@ export default class ScomNftMinter extends Module {
         setupData: async (data: IEmbedData) => {
           this._data = { ...defaultBuilderData, ...data };
           if (!this.nftType) {
+            if (isPocily) {
+              this._data.maxQty = new BigNumber(10).pow(12).toNumber();
+            }
             if (new BigNumber(this.newMaxQty).lte(0)) {
               return false;
             }
@@ -686,7 +689,7 @@ export default class ScomNftMinter extends Module {
         name: 'Editor',
         target: 'Editor',
         getActions: (category?: string) => {
-          const actions = this.getProjectOwnerActions(isNew1155, readonly);
+          const actions = this.getProjectOwnerActions(isNew1155, readonly, isPocily);
           return actions;
         },
         getData: this.getData.bind(this),
@@ -1139,6 +1142,17 @@ export default class ScomNftMinter extends Module {
       }
       this.determineBtnSubmitCaption();
     });
+  }
+
+  async getProductInfo() {
+    if (!this.productId || !this.productInfo) return null;
+    if (this.productInfo.productId.isEqualTo(this.productId)) return this.productInfo;
+    try {
+      const productInfo = await getProductInfo(this.state, this.productId);
+      return productInfo;
+    } catch {
+      return null;
+    }
   }
 
   private updateTokenAddress(address: string) {

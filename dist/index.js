@@ -1915,118 +1915,122 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
         };
     }
     //1155NewIndex
-    function getProjectOwnerSchema1() {
-        return {
-            dataSchema: {
+    function getProjectOwnerSchema1(isPolicy) {
+        const properties = {
+            chainId: {
+                type: 'number',
+                title: 'Chain',
+                enum: chainIds,
+                required: true
+            },
+            tokenToMint: {
+                type: 'string',
+                title: 'Currency',
+                tooltip: 'Token to pay for the subscription',
+                required: true
+            },
+            customMintToken: {
+                type: 'string',
+                title: 'Currency Address',
+                tooltip: 'Token address to pay for the subscription',
+                required: true
+            },
+            priceToMint: {
+                type: 'number',
+                title: 'Subscription Price',
+                tooltip: 'Amount of token to pay for the subscription',
+                required: true
+            },
+            uri: {
+                type: 'string',
+                title: isPolicy ? 'Image Link' : 'URI',
+                tooltip: isPolicy ? 'An image to represent the token' : 'Usually a link of an image to represent the NFT'
+            },
+            paymentModel: {
+                type: 'string',
+                title: 'Payment Model',
+                oneOf: [
+                    {
+                        title: 'One-Time Purchase',
+                        const: index_12.PaymentModel.OneTimePurchase
+                    },
+                    {
+                        title: 'Subscription',
+                        const: index_12.PaymentModel.Subscription
+                    }
+                ],
+                required: true
+            },
+            dark: {
                 type: 'object',
-                properties: {
-                    chainId: {
-                        type: 'number',
-                        title: 'Chain',
-                        enum: chainIds,
-                        required: true
+                properties: theme
+            },
+            light: {
+                type: 'object',
+                properties: theme
+            }
+        };
+        const elements = [
+            {
+                type: 'HorizontalLayout',
+                elements: [
+                    {
+                        type: 'Control',
+                        scope: '#/properties/chainId'
                     },
-                    tokenToMint: {
-                        type: 'string',
-                        title: 'Currency',
-                        tooltip: 'Token to pay for the subscription',
-                        required: true
-                    },
-                    customMintToken: {
-                        type: 'string',
-                        title: 'Currency Address',
-                        tooltip: 'Token address to pay for the subscription',
-                        required: true
-                    },
-                    priceToMint: {
-                        type: 'number',
-                        title: 'Subscription Price',
-                        tooltip: 'Amount of token to pay for the subscription',
-                        required: true
-                    },
-                    maxQty: {
-                        type: 'integer',
-                        title: 'Max Subscription Allowed',
-                        tooltip: 'Max quantity of this subscription existing',
-                        minimum: 1,
-                        required: true
-                    },
-                    uri: {
-                        type: 'string',
-                        title: 'URI',
-                        tooltip: 'Usually a link of an image to represent the NFT'
-                    },
-                    paymentModel: {
-                        type: 'string',
-                        title: 'Payment Model',
-                        oneOf: [
-                            {
-                                title: 'One-Time Purchase',
-                                const: index_12.PaymentModel.OneTimePurchase
-                            },
-                            {
-                                title: 'Subscription',
-                                const: index_12.PaymentModel.Subscription
-                            }
-                        ],
-                        required: true
-                    },
-                    dark: {
-                        type: 'object',
-                        properties: theme
-                    },
-                    light: {
-                        type: 'object',
-                        properties: theme
+                    {
+                        type: 'Control',
+                        scope: '#/properties/tokenToMint'
+                    }
+                ]
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/customMintToken',
+                rule: {
+                    effect: 'ENABLE',
+                    condition: {
+                        scope: '#/properties/tokenToMint',
+                        schema: {
+                            const: scom_token_input_1.CUSTOM_TOKEN.address
+                        }
                     }
                 }
             },
+            {
+                type: 'Control',
+                scope: '#/properties/paymentModel',
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/priceToMint',
+            },
+            {
+                type: 'Control',
+                scope: '#/properties/uri',
+            }
+        ];
+        if (!isPolicy) {
+            properties['maxQty'] = {
+                type: 'integer',
+                title: 'Max Subscription Allowed',
+                tooltip: 'Max quantity of this subscription existing',
+                minimum: 1,
+                required: true
+            };
+            elements.splice(elements.length - 1, 0, {
+                type: 'Control',
+                scope: '#/properties/maxQty',
+            });
+        }
+        return {
+            dataSchema: {
+                type: 'object',
+                properties: properties
+            },
             uiSchema: {
                 type: 'VerticalLayout',
-                elements: [
-                    {
-                        type: 'HorizontalLayout',
-                        elements: [
-                            {
-                                type: 'Control',
-                                scope: '#/properties/chainId'
-                            },
-                            {
-                                type: 'Control',
-                                scope: '#/properties/tokenToMint'
-                            }
-                        ]
-                    },
-                    {
-                        type: 'Control',
-                        scope: '#/properties/customMintToken',
-                        rule: {
-                            effect: 'ENABLE',
-                            condition: {
-                                scope: '#/properties/tokenToMint',
-                                schema: {
-                                    const: scom_token_input_1.CUSTOM_TOKEN.address
-                                }
-                            }
-                        }
-                    },
-                    {
-                        type: 'Control',
-                        scope: '#/properties/paymentModel',
-                    },
-                    {
-                        type: 'Control',
-                        scope: '#/properties/priceToMint',
-                    },
-                    {
-                        type: 'Control',
-                        scope: '#/properties/maxQty',
-                    },
-                    {
-                        type: 'Control',
-                        scope: '#/properties/uri',
-                    }
-                ]
+                elements: elements
             },
             customControls() {
                 return getCustomControls(true);
@@ -2035,7 +2039,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
     }
     exports.getProjectOwnerSchema1 = getProjectOwnerSchema1;
     //existing custom721 or custom1155
-    function getProjectOwnerSchema2(state, readonly, functions) {
+    function getProjectOwnerSchema2(state, readonly, isPolicy, functions) {
         let cbbNftType;
         let addressInput;
         let edtNftId;
@@ -2079,7 +2083,7 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
                     },
                     newUri: {
                         type: 'string',
-                        title: 'Update URI To',
+                        title: isPolicy ? 'Update Image Link To' : 'Update URI To',
                     },
                     dark: {
                         type: 'object',
@@ -2297,8 +2301,8 @@ define("@scom/scom-nft-minter/formSchema.json.ts", ["require", "exports", "@scom
         };
     }
     exports.getProjectOwnerSchema2 = getProjectOwnerSchema2;
-    function getProjectOwnerSchema3(isDefault1155New, readonly, state, functions) {
-        return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, readonly, functions);
+    function getProjectOwnerSchema3(isDefault1155New, readonly, isPolicy, state, functions) {
+        return isDefault1155New ? getProjectOwnerSchema1(isPolicy) : getProjectOwnerSchema2(state, readonly, isPolicy, functions);
     }
     exports.getProjectOwnerSchema3 = getProjectOwnerSchema3;
     const getCustomControls = (isCustomToken) => {
@@ -2921,9 +2925,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             return actions;
         }
-        getProjectOwnerActions(isDefault1155New, readonly) {
+        getProjectOwnerActions(isDefault1155New, readonly, isPocily) {
             //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema3)(isDefault1155New, readonly, this.state, {
+            const formSchema = (0, formSchema_json_1.getProjectOwnerSchema3)(isDefault1155New, readonly, isPocily, this.state, {
                 refreshUI: this.refreshDApp,
                 connectWallet: this.connectWallet,
                 showTxStatusModal: this.showTxStatusModal
@@ -2938,7 +2942,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             ];
             return actions;
         }
-        getConfigurators(type, readonly) {
+        getConfigurators(type, readonly, isPocily) {
             let isNew1155 = (type && type === 'new1155');
             const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = data_json_1.default;
             const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft;
@@ -2954,7 +2958,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         return selectors;
                     },
                     getActions: () => {
-                        return this.getProjectOwnerActions(isNew1155, readonly);
+                        return this.getProjectOwnerActions(isNew1155, readonly, isPocily);
                     },
                     getData: this.getData.bind(this),
                     setData: async (data) => {
@@ -2976,6 +2980,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     setupData: async (data) => {
                         this._data = { ...defaultBuilderData, ...data };
                         if (!this.nftType) {
+                            if (isPocily) {
+                                this._data.maxQty = new eth_wallet_6.BigNumber(10).pow(12).toNumber();
+                            }
                             if (new eth_wallet_6.BigNumber(this.newMaxQty).lte(0)) {
                                 return false;
                             }
@@ -3099,7 +3106,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     name: 'Editor',
                     target: 'Editor',
                     getActions: (category) => {
-                        const actions = this.getProjectOwnerActions(isNew1155, readonly);
+                        const actions = this.getProjectOwnerActions(isNew1155, readonly, isPocily);
                         return actions;
                     },
                     getData: this.getData.bind(this),
@@ -3417,6 +3424,19 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 this.determineBtnSubmitCaption();
             });
+        }
+        async getProductInfo() {
+            if (!this.productId || !this.productInfo)
+                return null;
+            if (this.productInfo.productId.isEqualTo(this.productId))
+                return this.productInfo;
+            try {
+                const productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
+                return productInfo;
+            }
+            catch {
+                return null;
+            }
         }
         updateTokenAddress(address) {
             const isNativeToken = !address || address === index_14.nullAddress || !address.startsWith('0x');
