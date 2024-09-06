@@ -390,118 +390,122 @@ function getProjectOwnerSchema(isDonation?: boolean) {
 }
 
 //1155NewIndex
-export function getProjectOwnerSchema1() {
-    return {
-        dataSchema: {
+export function getProjectOwnerSchema1(isPolicy?: boolean) {
+    const properties = {
+        chainId: {
+            type: 'number',
+            title: 'Chain',
+            enum: chainIds,
+            required: true
+        },
+        tokenToMint: {
+            type: 'string',
+            title: 'Currency',
+            tooltip: 'Token to pay for the subscription',
+            required: true
+        },
+        customMintToken: {
+            type: 'string',
+            title: 'Currency Address',
+            tooltip: 'Token address to pay for the subscription',
+            required: true
+        },
+        priceToMint: {
+            type: 'number',
+            title: 'Subscription Price',
+            tooltip: 'Amount of token to pay for the subscription',
+            required: true
+        },
+        uri: {
+            type: 'string',
+            title: isPolicy ? 'Image Link' : 'URI',
+            tooltip: isPolicy ? 'An image to represent the token' : 'Usually a link of an image to represent the NFT'
+        },
+        paymentModel: {
+            type: 'string',
+            title: 'Payment Model',
+            oneOf: [
+                {
+                    title: 'One-Time Purchase',
+                    const: PaymentModel.OneTimePurchase
+                },
+                {
+                    title: 'Subscription',
+                    const: PaymentModel.Subscription
+                }
+            ],
+            required: true
+        },
+        dark: {
             type: 'object',
-            properties: {
-                chainId: {
-                    type: 'number',
-                    title: 'Chain',
-                    enum: chainIds,
-                    required: true
+            properties: theme
+        },
+        light: {
+            type: 'object',
+            properties: theme
+        }
+    }
+    const elements = [
+        {
+            type: 'HorizontalLayout',
+            elements: [
+                {
+                    type: 'Control',
+                    scope: '#/properties/chainId'
                 },
-                tokenToMint: {
-                    type: 'string',
-                    title: 'Currency',
-                    tooltip: 'Token to pay for the subscription',
-                    required: true
-                },
-                customMintToken: {
-                    type: 'string',
-                    title: 'Currency Address',
-                    tooltip: 'Token address to pay for the subscription',
-                    required: true
-                },
-                priceToMint: {
-                    type: 'number',
-                    title: 'Subscription Price',
-                    tooltip: 'Amount of token to pay for the subscription',
-                    required: true
-                },
-                maxQty: {
-                    type: 'integer',
-                    title: 'Max Subscription Allowed',
-                    tooltip: 'Max quantity of this subscription existing',
-                    minimum: 1,
-                    required: true
-                },
-                uri: {
-                    type: 'string',
-                    title: 'URI',
-                    tooltip: 'Usually a link of an image to represent the NFT'
-                },
-                paymentModel: {
-                    type: 'string',
-                    title: 'Payment Model',
-                    oneOf: [
-                        {
-                            title: 'One-Time Purchase',
-                            const: PaymentModel.OneTimePurchase
-                        },
-                        {
-                            title: 'Subscription',
-                            const: PaymentModel.Subscription
-                        }
-                    ],
-                    required: true
-                },
-                dark: {
-                    type: 'object',
-                    properties: theme
-                },
-                light: {
-                    type: 'object',
-                    properties: theme
+                {
+                    type: 'Control',
+                    scope: '#/properties/tokenToMint'
+                }
+            ]
+        },
+        {
+            type: 'Control',
+            scope: '#/properties/customMintToken',
+            rule: {
+                effect: 'ENABLE',
+                condition: {
+                    scope: '#/properties/tokenToMint',
+                    schema: {
+                        const: CUSTOM_TOKEN.address
+                    }
                 }
             }
         },
+        {
+            type: 'Control',
+            scope: '#/properties/paymentModel',
+        },
+        {
+            type: 'Control',
+            scope: '#/properties/priceToMint',
+        },
+        {
+            type: 'Control',
+            scope: '#/properties/uri',
+        }
+    ]
+    if (!isPolicy) {
+        properties['maxQty'] = {
+            type: 'integer',
+            title: 'Max Subscription Allowed',
+            tooltip: 'Max quantity of this subscription existing',
+            minimum: 1,
+            required: true
+        }
+        elements.splice(elements.length - 1, 0, {
+            type: 'Control',
+            scope: '#/properties/maxQty',
+        })
+    }
+    return {
+        dataSchema: {
+            type: 'object',
+            properties: properties
+        },
         uiSchema: {
             type: 'VerticalLayout',
-            elements: [
-                {
-                    type: 'HorizontalLayout',
-                    elements: [
-                        {
-                            type: 'Control',
-                            scope: '#/properties/chainId'
-                        },
-                        {
-                            type: 'Control',
-                            scope: '#/properties/tokenToMint'
-                        }
-                    ]
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/customMintToken',
-                    rule: {
-                        effect: 'ENABLE',
-                        condition: {
-                            scope: '#/properties/tokenToMint',
-                            schema: {
-                                const: CUSTOM_TOKEN.address
-                            }
-                        }
-                    }
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/paymentModel',
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/priceToMint',
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/maxQty',
-                },
-                {
-                    type: 'Control',
-                    scope: '#/properties/uri',
-                }
-            ]
+            elements: elements
         },
         customControls() {
             return getCustomControls(true);
@@ -510,7 +514,7 @@ export function getProjectOwnerSchema1() {
 }
 
 //existing custom721 or custom1155
-export function getProjectOwnerSchema2(state: State, readonly: boolean, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+export function getProjectOwnerSchema2(state: State, readonly: boolean, isPolicy: boolean, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
     let cbbNftType: ComboBox;
     let addressInput: ScomNftMinterAddressInput;
     let edtNftId: Input;
@@ -554,7 +558,7 @@ export function getProjectOwnerSchema2(state: State, readonly: boolean, function
                 },
                 newUri: {
                     type: 'string',
-                    title: 'Update URI To',
+                    title: isPolicy ? 'Update Image Link To' : 'Update URI To',
                 },
                 dark: {
                     type: 'object',
@@ -769,8 +773,8 @@ export function getProjectOwnerSchema2(state: State, readonly: boolean, function
     }
 }
 
-export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
-    return isDefault1155New ? getProjectOwnerSchema1() : getProjectOwnerSchema2(state, readonly, functions);
+export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, isPolicy: boolean, state: State, functions: { connectWallet: any, showTxStatusModal: any, refreshUI: any }) {
+    return isDefault1155New ? getProjectOwnerSchema1(isPolicy) : getProjectOwnerSchema2(state, readonly, isPolicy, functions);
 }
 
 const getCustomControls = (isCustomToken?: boolean) => {
@@ -897,7 +901,7 @@ const getCustomControls = (isCustomToken?: boolean) => {
                     }
                     (pnl as any).onChanged()
                 }
-                (pnl as any).onChanged = () => {};
+                (pnl as any).onChanged = () => { };
                 return pnl;
             },
             getData: (control: ComboBox) => {

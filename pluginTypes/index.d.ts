@@ -611,7 +611,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             })[];
         };
     };
-    export function getProjectOwnerSchema1(): {
+    export function getProjectOwnerSchema1(isPolicy?: boolean): {
         dataSchema: {
             type: string;
             properties: {
@@ -637,13 +637,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                     tooltip: string;
-                    required: boolean;
-                };
-                maxQty: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
                     required: boolean;
                 };
                 uri: {
@@ -757,7 +750,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
         };
     };
-    export function getProjectOwnerSchema2(state: State, readonly: boolean, functions: {
+    export function getProjectOwnerSchema2(state: State, readonly: boolean, isPolicy: boolean, functions: {
         connectWallet: any;
         showTxStatusModal: any;
         refreshUI: any;
@@ -897,7 +890,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
             };
         };
     };
-    export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, state: State, functions: {
+    export function getProjectOwnerSchema3(isDefault1155New: boolean, readonly: boolean, isPolicy: boolean, state: State, functions: {
         connectWallet: any;
         showTxStatusModal: any;
         refreshUI: any;
@@ -927,13 +920,6 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     type: string;
                     title: string;
                     tooltip: string;
-                    required: boolean;
-                };
-                maxQty: {
-                    type: string;
-                    title: string;
-                    tooltip: string;
-                    minimum: number;
                     required: boolean;
                 };
                 uri: {
@@ -1186,7 +1172,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
@@ -1336,7 +1322,7 @@ declare module "@scom/scom-nft-minter" {
         private onSetupPage;
         private getBuilderActions;
         private getProjectOwnerActions;
-        getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean): ({
+        getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean): ({
             name: string;
             target: string;
             getProxySelectors: (chainId: number) => Promise<string[]>;
@@ -1450,6 +1436,7 @@ declare module "@scom/scom-nft-minter" {
         private initWallet;
         private updateDAppUI;
         private refreshDApp;
+        getProductInfo(): Promise<IProductInfo>;
         private updateTokenAddress;
         private updateSpotsRemaining;
         private onToggleDetail;
