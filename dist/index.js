@@ -2542,10 +2542,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 }
                 catch { }
             };
-            this.newProduct = async () => {
+            this.newProduct = async (maxQty) => {
                 return new Promise(async (resolve, reject) => {
                     let contract = this.state.getContractAddress('ProductMarketplace');
-                    const maxQty = this.newMaxQty;
                     // const txnMaxQty = this.newTxnMaxQty;
                     const price = new eth_wallet_6.BigNumber(this.newPrice).toFixed();
                     if ((!this.nftType) && new eth_wallet_6.BigNumber(maxQty).gt(0)) {
@@ -2991,10 +2990,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             if (new eth_wallet_6.BigNumber(this.newMaxQty).lte(0)) {
                                 return false;
                             }
+                            const maxQty = this.newMaxQty;
                             this._data.erc1155Index = undefined;
                             await this.resetRpcWallet();
                             await this.initWallet();
-                            return await this.newProduct();
+                            return await this.newProduct(maxQty);
                         }
                         else {
                             await this.resetRpcWallet();

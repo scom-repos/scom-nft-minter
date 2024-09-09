@@ -573,10 +573,11 @@ export default class ScomNftMinter extends Module {
             if (new BigNumber(this.newMaxQty).lte(0)) {
               return false;
             }
+            const maxQty = this.newMaxQty;
             this._data.erc1155Index = undefined;
             await this.resetRpcWallet();
             await this.initWallet();
-            return await this.newProduct();
+            return await this.newProduct(maxQty);
           } else {
             await this.resetRpcWallet();
             await this.initWallet();
@@ -863,10 +864,9 @@ export default class ScomNftMinter extends Module {
     }
   }
 
-  private newProduct = async () => {
+  private newProduct = async (maxQty: number) => {
     return new Promise<boolean>(async (resolve, reject) => {
       let contract = this.state.getContractAddress('ProductMarketplace');
-      const maxQty = this.newMaxQty;
       // const txnMaxQty = this.newTxnMaxQty;
       const price = new BigNumber(this.newPrice).toFixed();
       if ((!this.nftType) && new BigNumber(maxQty).gt(0)) {
