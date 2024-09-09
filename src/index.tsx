@@ -1660,13 +1660,13 @@ export default class ScomNftMinter extends Module {
     const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
     const days = this.getDurationInDays();
     const amountRaw = pricePerDay.times(days);
-    this.tokenAmountIn = amountRaw.toFixed();
+    const amount = Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
+    this.tokenAmountIn = amount.toFixed();
     if (this.discountApplied) {
       const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
       const discountAmount = Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
       this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
     }
-    const amount = Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
     this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
   }
 

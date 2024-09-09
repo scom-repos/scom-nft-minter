@@ -3929,13 +3929,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const pricePerDay = basePrice.div(this.productInfo.priceDuration.div(86400));
             const days = this.getDurationInDays();
             const amountRaw = pricePerDay.times(days);
-            this.tokenAmountIn = amountRaw.toFixed();
+            const amount = eth_wallet_6.Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
+            this.tokenAmountIn = amount.toFixed();
             if (this.discountApplied) {
                 const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
                 const discountAmount = eth_wallet_6.Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
                 this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
             }
-            const amount = eth_wallet_6.Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
