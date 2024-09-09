@@ -1775,6 +1775,7 @@ export default class ScomNftMinter extends Module {
                       width={280}
                       maxWidth="100%"
                       height="auto"
+                      maxHeight={150}
                       margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}
                     />
                     <i-hstack id="detailWrapper" horizontalAlignment="space-between" gap={10} visible={false} wrap="wrap">

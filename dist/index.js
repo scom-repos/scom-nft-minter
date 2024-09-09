@@ -4021,7 +4021,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-label", { id: 'lblTitle', font: { bold: true, size: '1.5rem' } }),
                                         this.$render("i-markdown", { id: 'markdownViewer', class: index_css_5.markdownStyle, width: '100%', height: '100%', margin: { bottom: '0.563rem' } })),
                                     this.$render("i-vstack", { gap: "0.5rem", id: "pnlInputFields" },
-                                        this.$render("i-image", { visible: false, id: "imgUri", width: 280, maxWidth: "100%", height: "auto", margin: { top: 4, bottom: 16, left: 'auto', right: 'auto' } }),
+                                        this.$render("i-image", { visible: false, id: "imgUri", width: 280, maxWidth: "100%", height: "auto", maxHeight: 150, margin: { top: 4, bottom: 16, left: 'auto', right: 'auto' } }),
                                         this.$render("i-hstack", { id: "detailWrapper", horizontalAlignment: "space-between", gap: 10, visible: false, wrap: "wrap" },
                                             this.$render("i-hstack", { id: "erc1155Wrapper", width: "100%", justifyContent: "space-between", visible: false, gap: "0.5rem", lineHeight: 1.5 },
                                                 this.$render("i-label", { caption: "ERC1155 Index", font: { bold: true, size: '1rem' } }),
