@@ -588,6 +588,7 @@ async function subscribe(
         }
     } catch (err) {
         console.error(err);
+        throw err;
     }
     return receipt;
 }

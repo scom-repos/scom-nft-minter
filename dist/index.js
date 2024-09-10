@@ -988,6 +988,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         }
         catch (err) {
             console.error(err);
+            throw err;
         }
         return receipt;
     }
@@ -2528,9 +2529,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.isRenewal = false;
             this.onChainChanged = async () => {
                 this.tokenInput.chainId = this.state.getChainId();
-                this.onSetupPage();
+                await this.onSetupPage();
                 this.updateContractAddress();
-                this.refreshDApp();
+                await this.refreshDApp();
             };
             this.updateTokenBalance = async () => {
                 const token = this.productInfo?.token;
@@ -2898,7 +2899,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 await this.resetRpcWallet();
                                 if (builder?.setData)
                                     builder.setData(this._data);
-                                this.refreshDApp(true);
+                                await this.refreshDApp(true);
                                 oldTag = JSON.parse(JSON.stringify(this.tag));
                                 if (builder?.setTag)
                                     builder.setTag(themeSettings);
@@ -2907,9 +2908,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 if (this.containerDapp)
                                     this.containerDapp.setTag(themeSettings);
                             },
-                            undo: () => {
+                            undo: async () => {
                                 this._data = JSON.parse(JSON.stringify(oldData));
-                                this.refreshDApp(true);
+                                await this.refreshDApp(true);
                                 if (builder?.setData)
                                     builder.setData(this._data);
                                 this.tag = JSON.parse(JSON.stringify(oldTag));
@@ -3128,15 +3129,15 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.removeRpcWalletEvents();
             const rpcWalletId = await this.state.initRpcWallet(this._data.chainId || this.defaultChainId);
             const rpcWallet = this.rpcWallet;
-            this.updateFormConfig();
+            await this.updateFormConfig();
             const chainChangedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_6.Constants.RpcWalletEvent.ChainChanged, async (chainId) => {
-                this.onChainChanged();
+                await this.onChainChanged();
             });
             const connectedEvent = rpcWallet.registerWalletEvent(this, eth_wallet_6.Constants.RpcWalletEvent.Connected, async (connected) => {
-                this.updateFormConfig(true);
-                this.onSetupPage();
+                await this.updateFormConfig(true);
+                await this.onSetupPage();
                 this.updateContractAddress();
-                this.refreshDApp();
+                await this.refreshDApp();
             });
             this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
             const chainId = this._data.chainId;
@@ -3232,7 +3233,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             btnConfirm.caption = !(0, index_15.isClientWalletConnected)() && validation.valid ? 'Connect Wallet' : 'Confirm';
                         };
                         if (isEvent) {
-                            updateButton();
+                            await updateButton();
                         }
                         else if (!this.isOnChangeUpdated) {
                             this.isOnChangeUpdated = true;
@@ -3240,9 +3241,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             form.formOptions.onChange = async () => {
                                 if (onFormChange)
                                     onFormChange();
-                                updateButton();
+                                await updateButton();
                             };
-                            updateButton();
+                            await updateButton();
                         }
                     }
                 }
@@ -3396,7 +3397,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         }
                         this.edtQty.value = '1';
                         if (this._type !== index_13.ProductType.Subscription)
-                            this.onQtyChanged();
+                            await this.onQtyChanged();
                     }
                     else {
                         this.detailWrapper.visible = false;
@@ -3421,7 +3422,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         isNative: true,
                         address: undefined
                     } : token;
-                    this.updateTokenBalance();
+                    await this.updateTokenBalance();
                 }
                 else {
                     this.pnlInputFields.visible = false;
@@ -3703,69 +3704,75 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
             const token = this.productInfo.token;
             const balance = await (0, index_14.getTokenBalance)(this.rpcWallet, token);
-            if (this._type === index_13.ProductType.Buy) {
-                if (this.edtQty.value && new eth_wallet_6.BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
-                    this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
-                    this.showTxStatusModal('error', 'Invalid Quantity');
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
-                if (this.productId >= 0) {
-                    const product = await (0, API_3.getProductInfo)(this.state, this.productId);
-                    if (product.quantity.lt(requireQty)) {
-                        this.showTxStatusModal('error', 'Out of stock');
+            try {
+                if (this._type === index_13.ProductType.Buy) {
+                    if (this.edtQty.value && new eth_wallet_6.BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
+                        this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
                         this.updateSubmitButton(false);
                         return;
                     }
+                    if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
+                        this.showTxStatusModal('error', 'Invalid Quantity');
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
+                    if (this.productId >= 0) {
+                        const product = await (0, API_3.getProductInfo)(this.state, this.productId);
+                        if (product.quantity.lt(requireQty)) {
+                            this.showTxStatusModal('error', 'Out of stock');
+                            this.updateSubmitButton(false);
+                            return;
+                        }
+                    }
+                    const maxOrderQty = new eth_wallet_6.BigNumber(this.productInfo.maxQuantity ?? 0);
+                    if (maxOrderQty.minus(requireQty).lt(0)) {
+                        this.showTxStatusModal('error', 'Over Maximum Order Quantity');
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
+                    if (balance.lt(amount)) {
+                        this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    await this.buyToken(requireQty);
                 }
-                const maxOrderQty = new eth_wallet_6.BigNumber(this.productInfo.maxQuantity ?? 0);
-                if (maxOrderQty.minus(requireQty).lt(0)) {
-                    this.showTxStatusModal('error', 'Over Maximum Order Quantity');
-                    this.updateSubmitButton(false);
-                    return;
+                else if (this._type === index_13.ProductType.Subscription) {
+                    if (!this.edtStartDate.value) {
+                        this.showTxStatusModal('error', 'Start Date Required');
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    if (!this.edtDuration.value) {
+                        this.showTxStatusModal('error', 'Duration Required');
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    await this.buyToken();
                 }
-                const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
-                if (balance.lt(amount)) {
-                    this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-                    this.updateSubmitButton(false);
-                    return;
+                else {
+                    if (!this.tokenInput.value) {
+                        this.showTxStatusModal('error', 'Amount Required');
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    if (balance.lt(this.tokenInput.value)) {
+                        this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
+                        this.updateSubmitButton(false);
+                        return;
+                    }
+                    await this.buyToken();
                 }
-                await this.buyToken(requireQty);
+                this.updateSubmitButton(false);
+                if (this.txStatusModal)
+                    this.txStatusModal.closeModal();
             }
-            else if (this._type === index_13.ProductType.Subscription) {
-                if (!this.edtStartDate.value) {
-                    this.showTxStatusModal('error', 'Start Date Required');
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                if (!this.edtDuration.value) {
-                    this.showTxStatusModal('error', 'Duration Required');
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                await this.buyToken();
+            catch (error) {
+                this.showTxStatusModal('error', error);
+                this.updateSubmitButton(false);
             }
-            else {
-                if (!this.tokenInput.value) {
-                    this.showTxStatusModal('error', 'Amount Required');
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                if (balance.lt(this.tokenInput.value)) {
-                    this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-                    this.updateSubmitButton(false);
-                    return;
-                }
-                await this.buyToken();
-            }
-            this.updateSubmitButton(false);
-            if (this.txStatusModal)
-                this.txStatusModal.closeModal();
         }
         async onSubmit() {
             if (!(0, index_15.isClientWalletConnected)()) {

@@ -345,9 +345,9 @@ export default class ScomNftMinter extends Module {
 
   private onChainChanged = async () => {
     this.tokenInput.chainId = this.state.getChainId();
-    this.onSetupPage();
+    await this.onSetupPage();
     this.updateContractAddress();
-    this.refreshDApp();
+    await this.refreshDApp();
   }
 
   private updateTokenBalance = async () => {
@@ -483,16 +483,16 @@ export default class ScomNftMinter extends Module {
               Object.assign(this._data, generalSettings);
               await this.resetRpcWallet();
               if (builder?.setData) builder.setData(this._data);
-              this.refreshDApp(true);
+              await this.refreshDApp(true);
 
               oldTag = JSON.parse(JSON.stringify(this.tag));
               if (builder?.setTag) builder.setTag(themeSettings);
               else this.setTag(themeSettings);
               if (this.containerDapp) this.containerDapp.setTag(themeSettings);
             },
-            undo: () => {
+            undo: async () => {
               this._data = JSON.parse(JSON.stringify(oldData));
-              this.refreshDApp(true);
+              await this.refreshDApp(true);
               if (builder?.setData) builder.setData(this._data);
 
               this.tag = JSON.parse(JSON.stringify(oldTag));
@@ -709,15 +709,15 @@ export default class ScomNftMinter extends Module {
     this.removeRpcWalletEvents();
     const rpcWalletId = await this.state.initRpcWallet(this._data.chainId || this.defaultChainId);
     const rpcWallet = this.rpcWallet;
-    this.updateFormConfig();
+    await this.updateFormConfig();
     const chainChangedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.ChainChanged, async (chainId: number) => {
-      this.onChainChanged();
+      await this.onChainChanged();
     });
     const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
-      this.updateFormConfig(true);
-      this.onSetupPage();
+      await this.updateFormConfig(true);
+      await this.onSetupPage();
       this.updateContractAddress();
-      this.refreshDApp();
+      await this.refreshDApp();
     });
     this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
 
@@ -814,15 +814,15 @@ export default class ScomNftMinter extends Module {
             btnConfirm.caption = !isClientWalletConnected() && validation.valid ? 'Connect Wallet' : 'Confirm';
           }
           if (isEvent) {
-            updateButton();
+            await updateButton();
           } else if (!this.isOnChangeUpdated) {
             this.isOnChangeUpdated = true;
             const onFormChange = form.formOptions.onChange;
             form.formOptions.onChange = async () => {
               if (onFormChange) onFormChange();
-              updateButton();
+              await updateButton();
             }
-            updateButton();
+            await updateButton();
           }
         }
       } catch { }
@@ -1110,7 +1110,7 @@ export default class ScomNftMinter extends Module {
             this.imgUri.visible = false;
           }
           this.edtQty.value = '1';
-          if (this._type !== ProductType.Subscription) this.onQtyChanged();
+          if (this._type !== ProductType.Subscription) await this.onQtyChanged();
         } else {
           this.detailWrapper.visible = false;
           this.btnDetail.visible = false;
@@ -1134,7 +1134,7 @@ export default class ScomNftMinter extends Module {
           isNative: true,
           address: undefined
         } : token;
-        this.updateTokenBalance();
+        await this.updateTokenBalance();
       }
       else {
         this.pnlInputFields.visible = false;
@@ -1436,67 +1436,72 @@ export default class ScomNftMinter extends Module {
     }
     const token = this.productInfo.token
     const balance = await getTokenBalance(this.rpcWallet, token);
-    if (this._type === ProductType.Buy) {
-      if (this.edtQty.value && new BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
-        this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
-        this.updateSubmitButton(false);
-        return;
-      }
-      if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
-        this.showTxStatusModal('error', 'Invalid Quantity');
-        this.updateSubmitButton(false);
-        return;
-      }
-      const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
-      if (this.productId >= 0) {
-        const product = await getProductInfo(this.state, this.productId);
-        if (product.quantity.lt(requireQty)) {
-          this.showTxStatusModal('error', 'Out of stock');
+    try {
+      if (this._type === ProductType.Buy) {
+        if (this.edtQty.value && new BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
+          this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
           this.updateSubmitButton(false);
           return;
         }
-      }
-      const maxOrderQty = new BigNumber(this.productInfo.maxQuantity ?? 0);
-      if (maxOrderQty.minus(requireQty).lt(0)) {
-        this.showTxStatusModal('error', 'Over Maximum Order Quantity');
-        this.updateSubmitButton(false);
-        return;
-      }
+        if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
+          this.showTxStatusModal('error', 'Invalid Quantity');
+          this.updateSubmitButton(false);
+          return;
+        }
+        const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
+        if (this.productId >= 0) {
+          const product = await getProductInfo(this.state, this.productId);
+          if (product.quantity.lt(requireQty)) {
+            this.showTxStatusModal('error', 'Out of stock');
+            this.updateSubmitButton(false);
+            return;
+          }
+        }
+        const maxOrderQty = new BigNumber(this.productInfo.maxQuantity ?? 0);
+        if (maxOrderQty.minus(requireQty).lt(0)) {
+          this.showTxStatusModal('error', 'Over Maximum Order Quantity');
+          this.updateSubmitButton(false);
+          return;
+        }
 
-      const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
-      if (balance.lt(amount)) {
-        this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-        this.updateSubmitButton(false);
-        return;
+        const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
+        if (balance.lt(amount)) {
+          this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
+          this.updateSubmitButton(false);
+          return;
+        }
+        await this.buyToken(requireQty);
+      } else if (this._type === ProductType.Subscription) {
+        if (!this.edtStartDate.value) {
+          this.showTxStatusModal('error', 'Start Date Required');
+          this.updateSubmitButton(false);
+          return;
+        }
+        if (!this.edtDuration.value) {
+          this.showTxStatusModal('error', 'Duration Required');
+          this.updateSubmitButton(false);
+          return;
+        }
+        await this.buyToken();
+      } else {
+        if (!this.tokenInput.value) {
+          this.showTxStatusModal('error', 'Amount Required');
+          this.updateSubmitButton(false);
+          return;
+        }
+        if (balance.lt(this.tokenInput.value)) {
+          this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
+          this.updateSubmitButton(false);
+          return;
+        }
+        await this.buyToken();
       }
-      await this.buyToken(requireQty);
-    } else if (this._type === ProductType.Subscription) {
-      if (!this.edtStartDate.value) {
-        this.showTxStatusModal('error', 'Start Date Required');
-        this.updateSubmitButton(false);
-        return;
-      }
-      if (!this.edtDuration.value) {
-        this.showTxStatusModal('error', 'Duration Required');
-        this.updateSubmitButton(false);
-        return;
-      }
-      await this.buyToken();
-    } else {
-      if (!this.tokenInput.value) {
-        this.showTxStatusModal('error', 'Amount Required');
-        this.updateSubmitButton(false);
-        return;
-      }
-      if (balance.lt(this.tokenInput.value)) {
-        this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-        this.updateSubmitButton(false);
-        return;
-      }
-      await this.buyToken();
+      this.updateSubmitButton(false);
+      if (this.txStatusModal) this.txStatusModal.closeModal();
+    } catch (error) {
+      this.showTxStatusModal('error', error);
+      this.updateSubmitButton(false);
     }
-    this.updateSubmitButton(false);
-    if (this.txStatusModal) this.txStatusModal.closeModal();
   }
 
   private async onSubmit() {
