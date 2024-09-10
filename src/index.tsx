@@ -1041,7 +1041,7 @@ export default class ScomNftMinter extends Module {
         this.pnlSubscriptionPeriod.visible = false;
         this.edtQty.readOnly = true;
         this.edtQty.value = '1';
-        this.lbOrderTotal.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
+        this.lbOrderTotal.caption = `${formatNumber(price, 6)} ${token?.symbol || ''}`;
         this.pnlTokenInput.visible = false;
         this.imgUri.visible = false;
         this.determineBtnSubmitCaption();
@@ -1368,7 +1368,7 @@ export default class ScomNftMinter extends Module {
       this.tokenInput.value = amount.toFixed();
       const commissionFee = this.state.embedderCommissionFee;
       const total = amount.plus(amount.times(commissionFee));
-      this.lbOrderTotal.caption = `${formatNumber(total)} ${this.productInfo.token?.symbol || ''}`;
+      this.lbOrderTotal.caption = `${formatNumber(total, 6)} ${this.productInfo.token?.symbol || ''}`;
     }
     if (this.productInfo && this.state.isRpcWalletConnected()) {
       if (this.productInfo.token?.address !== nullAddress) {
@@ -1396,7 +1396,7 @@ export default class ScomNftMinter extends Module {
     const commissionFee = this.state.embedderCommissionFee;
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
     const token = this.productInfo?.token
-    this.lbOrderTotal.caption = `${formatNumber(total)} ${token?.symbol || ''}`;
+    this.lbOrderTotal.caption = `${formatNumber(total, 6)} ${token?.symbol || ''}`;
     if (token && this.state.isRpcWalletConnected() && token?.address !== nullAddress) {
       if (token?.address !== nullAddress) {
         this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
@@ -1667,7 +1667,7 @@ export default class ScomNftMinter extends Module {
       const discountAmount = Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
       this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
     }
-    this.lbOrderTotal.caption = `${formatNumber(amount)} ${this.productInfo.token?.symbol || ''}`;
+    this.lbOrderTotal.caption = `${formatNumber(amount, 6)} ${this.productInfo.token?.symbol || ''}`;
   }
 
   private onStartDateChanged() {

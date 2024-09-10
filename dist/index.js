@@ -3323,7 +3323,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     this.pnlSubscriptionPeriod.visible = false;
                     this.edtQty.readOnly = true;
                     this.edtQty.value = '1';
-                    this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(price)} ${token?.symbol || ''}`;
+                    this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(price, 6)} ${token?.symbol || ''}`;
                     this.pnlTokenInput.visible = false;
                     this.imgUri.visible = false;
                     this.determineBtnSubmitCaption();
@@ -3632,7 +3632,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.tokenInput.value = amount.toFixed();
                 const commissionFee = this.state.embedderCommissionFee;
                 const total = amount.plus(amount.times(commissionFee));
-                this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(total)} ${this.productInfo.token?.symbol || ''}`;
+                this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(total, 6)} ${this.productInfo.token?.symbol || ''}`;
             }
             if (this.productInfo && this.state.isRpcWalletConnected()) {
                 if (this.productInfo.token?.address !== index_14.nullAddress) {
@@ -3661,7 +3661,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const commissionFee = this.state.embedderCommissionFee;
             const total = new eth_wallet_6.BigNumber(amount).plus(new eth_wallet_6.BigNumber(amount).times(commissionFee));
             const token = this.productInfo?.token;
-            this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(total)} ${token?.symbol || ''}`;
+            this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(total, 6)} ${token?.symbol || ''}`;
             if (token && this.state.isRpcWalletConnected() && token?.address !== index_14.nullAddress) {
                 if (token?.address !== index_14.nullAddress) {
                     this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
@@ -3936,7 +3936,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 const discountAmount = eth_wallet_6.Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
                 this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
             }
-            this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount)} ${this.productInfo.token?.symbol || ''}`;
+            this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount, 6)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
             this._updateEndDate();
