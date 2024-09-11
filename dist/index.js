@@ -924,7 +924,7 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
             const affiliates = (campaign?.affiliates || []).map(a => a.toLowerCase());
             if (affiliates.includes(referrer.toLowerCase())) {
                 const commissionRate = eth_wallet_3.Utils.fromDecimals(campaign.commissionRate, 6);
-                tokenInAmount = new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate)).decimalPlaces(0);
+                tokenInAmount = new eth_wallet_3.BigNumber(amount).dividedBy(new eth_wallet_3.BigNumber(1).minus(commissionRate)).decimalPlaces(0, eth_wallet_3.BigNumber.ROUND_DOWN);
             }
         }
         let receipt;

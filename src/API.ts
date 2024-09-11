@@ -528,7 +528,7 @@ async function subscribe(
         const affiliates = (campaign?.affiliates || []).map(a => a.toLowerCase());
         if (affiliates.includes(referrer.toLowerCase())) {
             const commissionRate = Utils.fromDecimals(campaign.commissionRate, 6);
-            tokenInAmount = new BigNumber(amount).dividedBy(new BigNumber(1).minus(commissionRate)).decimalPlaces(0);
+            tokenInAmount = new BigNumber(amount).dividedBy(new BigNumber(1).minus(commissionRate)).decimalPlaces(0, BigNumber.ROUND_DOWN);
         }
     }
     let receipt;
