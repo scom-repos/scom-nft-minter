@@ -1259,6 +1259,8 @@ declare module "@scom/scom-nft-minter" {
         private pnlUnsupportedNetwork;
         private imgUri;
         private containerDapp;
+        private pnlLoading;
+        private gridMain;
         private mdWallet;
         private productInfo;
         private _type;
@@ -1428,6 +1430,8 @@ declare module "@scom/scom-nft-minter" {
         })[];
         private getData;
         private resetRpcWallet;
+        showLoading(): void;
+        hideLoading(): void;
         private setData;
         private getTag;
         private updateTag;

@@ -20,7 +20,8 @@ import {
   Datepicker,
   moment,
   ComboBox,
-  IComboItem
+  IComboItem,
+  GridLayout
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
@@ -148,6 +149,8 @@ export default class ScomNftMinter extends Module {
   private pnlUnsupportedNetwork: VStack;
   private imgUri: Image;
   private containerDapp: ScomDappContainer;
+  private pnlLoading: StackLayout;
+  private gridMain: GridLayout;
   private mdWallet: ScomWalletModal;
 
   private productInfo: IProductInfo;
@@ -751,7 +754,18 @@ export default class ScomNftMinter extends Module {
     if (this.containerDapp?.setData) await this.containerDapp.setData(data);
   }
 
+  showLoading() {
+    this.pnlLoading.visible = true;
+    this.gridMain.visible = false;
+  }
+
+  hideLoading() {
+    this.pnlLoading.visible = false;
+    this.gridMain.visible = true;
+  }
+
   private async setData(data: IEmbedData) {
+    this.showLoading();
     this._data = data;
     this.discountRules = [];
     await this.resetRpcWallet();
@@ -1020,146 +1034,150 @@ export default class ScomNftMinter extends Module {
 
   private async refreshDApp(isDataUpdated: boolean = false) {
     setTimeout(async () => {
-      this._type = this.productType;
-      await this.updateDAppUI(this._data);
-      this.determineBtnSubmitCaption();
-      if (!this.nftType) return;
-      await this.initWallet();
-      this.btnSubmit.enabled = isClientWalletConnected() && this.state.isRpcWalletConnected();
-      // OswapTroll
-      if (this.nftType === 'ERC721' && !this.productId) {
-        this.lblTitle.caption = this._data.title;
-        if (!this.nftAddress) return;
-        const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
-        if (!oswapTroll) {
-          this.pnlUnsupportedNetwork.visible = true;
-          this.pnlInputFields.visible = false;
-          return;
-        };
-        const nftBalance = isClientWalletConnected() ? await fetchUserNftBalance(this.state, this.nftAddress) : 0;
-        const { price, cap, tokenAddress } = oswapTroll;
-        let token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
-        if (!token) {
-          token = await getTokenInfo(tokenAddress, this.chainId);
-        }
-        this.pnlInputFields.visible = true;
-        this.pnlUnsupportedNetwork.visible = false;
-        this.detailWrapper.visible = true;
-        this.onToggleDetail();
-        this.btnDetail.visible = true;
-        this.erc1155Wrapper.visible = false;
-        this.lbContract.caption = FormatUtils.truncateWalletAddress(this.nftAddress);
-        this.updateTokenAddress(tokenAddress);
-        this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
-        this.pnlMintFee.visible = true;
-        this.oswapTrollInfo = { token, price };
-        this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
-        this.lblSpotsRemaining.caption = formatNumber(cap, 0);
-        this.cap = cap.toNumber();
-        //this.pnlQty.visible = true;
-        this.pnlSubscriptionPeriod.visible = false;
-        this.edtQty.readOnly = true;
-        this.edtQty.value = '1';
-        this.lbOrderTotal.caption = `${formatNumber(price, 6)} ${token?.symbol || ''}`;
-        this.pnlTokenInput.visible = false;
-        this.imgUri.visible = false;
+      try {
+        this._type = this.productType;
+        await this.updateDAppUI(this._data);
         this.determineBtnSubmitCaption();
-        return;
-      }
-      //this.edtQty.readOnly = false;
-      this.edtQty.readOnly = true;
-      this.productInfo = await getProductInfo(this.state, this.productId);
-      if (this.productInfo) {
-        if (isDataUpdated && this._type === ProductType.Subscription) {
-          this.discountRules = await getDiscountRules(this.state, this._data.productId);
-        }
-        const token = this.productInfo.token;
-        this.pnlInputFields.visible = true;
-        this.pnlUnsupportedNetwork.visible = false;
-        const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
-        (!this.lblRef.isConnected) && await this.lblRef.ready();
-        if (this._type === ProductType.Buy || this._type === ProductType.Subscription) {
-          const nftBalance = isClientWalletConnected() ? await getNFTBalance(this.state, this.productId) : 0;
+        if (!this.nftType) return;
+        await this.initWallet();
+        this.btnSubmit.enabled = isClientWalletConnected() && this.state.isRpcWalletConnected();
+        // OswapTroll
+        if (this.nftType === 'ERC721' && !this.productId) {
+          this.lblTitle.caption = this._data.title;
+          if (!this.nftAddress) return;
+          const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
+          if (!oswapTroll) {
+            this.pnlUnsupportedNetwork.visible = true;
+            this.pnlInputFields.visible = false;
+            return;
+          };
+          const nftBalance = isClientWalletConnected() ? await fetchUserNftBalance(this.state, this.nftAddress) : 0;
+          const { price, cap, tokenAddress } = oswapTroll;
+          let token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
+          if (!token) {
+            token = await getTokenInfo(tokenAddress, this.chainId);
+          }
+          this.pnlInputFields.visible = true;
+          this.pnlUnsupportedNetwork.visible = false;
           this.detailWrapper.visible = true;
           this.onToggleDetail();
           this.btnDetail.visible = true;
-          this.erc1155Wrapper.visible = this.nftType === 'ERC1155';
-          this.lbERC1155Index.caption = `${this.productInfo.nftId?.toNumber() || ''}`;
-          this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
-          this.updateTokenAddress(token.address);
-          this.lbOwn.caption = formatNumber(nftBalance, 0);
+          this.erc1155Wrapper.visible = false;
+          this.lbContract.caption = FormatUtils.truncateWalletAddress(this.nftAddress);
+          this.updateTokenAddress(tokenAddress);
+          this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
           this.pnlMintFee.visible = true;
-          const days = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
-          const duration = this._type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
-          this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}${duration}`;
-          this.lblTitle.caption = this._data.title;
-          this.lblRef.caption = 'smart contract:';
-          this.updateSpotsRemaining();
-          this.tokenInput.inputReadOnly = true;
-          this.pnlQty.visible = false;
-          this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
-          if (isDataUpdated && this._type === ProductType.Subscription) {
-            this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
-            const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
-            const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
-            if (isExpired) this._data.discountRuleId = undefined;
-            if (rule && !isExpired) {
-              if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
-                this.edtStartDate.value = moment(rule.startTime * 1000);
-              }
-              this.edtDuration.value = rule.minDuration.div(86400).toNumber();
-              this.comboDurationUnit.selectedItem = DurationUnits[0];
-              this.discountApplied = rule;
-              this._updateEndDate();
-              this._updateTotalAmount();
-              if (this.approvalModelAction) {
-                this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
-              }
-            } else {
-              this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
-              this.onDurationChanged();
-            }
-          }
+          this.oswapTrollInfo = { token, price };
+          this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
+          this.lblSpotsRemaining.caption = formatNumber(cap, 0);
+          this.cap = cap.toNumber();
           //this.pnlQty.visible = true;
-          this.pnlTokenInput.visible = false;
-          if (this.productInfo.uri) {
-            this.imgUri.visible = true;
-            this.imgUri.url = this.productInfo.uri;
-          } else {
-            this.imgUri.visible = false;
-          }
+          this.pnlSubscriptionPeriod.visible = false;
+          this.edtQty.readOnly = true;
           this.edtQty.value = '1';
-          if (this._type !== ProductType.Subscription) await this.onQtyChanged();
-        } else {
-          this.detailWrapper.visible = false;
-          this.btnDetail.visible = false;
-          this.pnlMintFee.visible = false;
-          this.lblTitle.caption = this._data.title || 'Make a Contributon';
-          this.lblTitle.visible = true;
-          this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
-          this.tokenInput.inputReadOnly = false;
-          this.pnlQty.visible = false;
-          this.pnlTokenInput.visible = true;
+          this.lbOrderTotal.caption = `${formatNumber(price, 6)} ${token?.symbol || ''}`;
+          this.pnlTokenInput.visible = false;
           this.imgUri.visible = false;
-          this.edtQty.value = "";
-          this.lbOrderTotal.caption = "0";
+          this.determineBtnSubmitCaption();
+          return;
         }
-        this.tokenInput.value = "";
-        this.pnlAddress.visible = this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone;
-        (!this.lblAddress.isConnected) && await this.lblAddress.ready();
-        this.lblAddress.caption = this.contractAddress || this.nftAddress;
-        this.tokenInput.token = token?.address === nullAddress ? {
-          ...token,
-          isNative: true,
-          address: undefined
-        } : token;
-        await this.updateTokenBalance();
+        //this.edtQty.readOnly = false;
+        this.edtQty.readOnly = true;
+        this.productInfo = await getProductInfo(this.state, this.productId);
+        if (this.productInfo) {
+          if (isDataUpdated && this._type === ProductType.Subscription) {
+            this.discountRules = await getDiscountRules(this.state, this._data.productId);
+          }
+          const token = this.productInfo.token;
+          this.pnlInputFields.visible = true;
+          this.pnlUnsupportedNetwork.visible = false;
+          const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+          (!this.lblRef.isConnected) && await this.lblRef.ready();
+          if (this._type === ProductType.Buy || this._type === ProductType.Subscription) {
+            const nftBalance = isClientWalletConnected() ? await getNFTBalance(this.state, this.productId) : 0;
+            this.detailWrapper.visible = true;
+            this.onToggleDetail();
+            this.btnDetail.visible = true;
+            this.erc1155Wrapper.visible = this.nftType === 'ERC1155';
+            this.lbERC1155Index.caption = `${this.productInfo.nftId?.toNumber() || ''}`;
+            this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
+            this.updateTokenAddress(token.address);
+            this.lbOwn.caption = formatNumber(nftBalance, 0);
+            this.pnlMintFee.visible = true;
+            const days = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+            const duration = this._type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
+            this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}${duration}`;
+            this.lblTitle.caption = this._data.title;
+            this.lblRef.caption = 'smart contract:';
+            this.updateSpotsRemaining();
+            this.tokenInput.inputReadOnly = true;
+            this.pnlQty.visible = false;
+            this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
+            if (isDataUpdated && this._type === ProductType.Subscription) {
+              this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
+              const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
+              const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
+              if (isExpired) this._data.discountRuleId = undefined;
+              if (rule && !isExpired) {
+                if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
+                  this.edtStartDate.value = moment(rule.startTime * 1000);
+                }
+                this.edtDuration.value = rule.minDuration.div(86400).toNumber();
+                this.comboDurationUnit.selectedItem = DurationUnits[0];
+                this.discountApplied = rule;
+                this._updateEndDate();
+                this._updateTotalAmount();
+                if (this.approvalModelAction) {
+                  this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+                }
+              } else {
+                this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                this.onDurationChanged();
+              }
+            }
+            //this.pnlQty.visible = true;
+            this.pnlTokenInput.visible = false;
+            if (this.productInfo.uri) {
+              this.imgUri.visible = true;
+              this.imgUri.url = this.productInfo.uri;
+            } else {
+              this.imgUri.visible = false;
+            }
+            this.edtQty.value = '1';
+            if (this._type !== ProductType.Subscription) await this.onQtyChanged();
+          } else {
+            this.detailWrapper.visible = false;
+            this.btnDetail.visible = false;
+            this.pnlMintFee.visible = false;
+            this.lblTitle.caption = this._data.title || 'Make a Contributon';
+            this.lblTitle.visible = true;
+            this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
+            this.tokenInput.inputReadOnly = false;
+            this.pnlQty.visible = false;
+            this.pnlTokenInput.visible = true;
+            this.imgUri.visible = false;
+            this.edtQty.value = "";
+            this.lbOrderTotal.caption = "0";
+          }
+          this.tokenInput.value = "";
+          this.pnlAddress.visible = this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone;
+          (!this.lblAddress.isConnected) && await this.lblAddress.ready();
+          this.lblAddress.caption = this.contractAddress || this.nftAddress;
+          this.tokenInput.token = token?.address === nullAddress ? {
+            ...token,
+            isNative: true,
+            address: undefined
+          } : token;
+          await this.updateTokenBalance();
+        }
+        else {
+          this.pnlInputFields.visible = false;
+          this.pnlUnsupportedNetwork.visible = true;
+        }
+        this.determineBtnSubmitCaption();
+      } finally {
+        this.hideLoading();
       }
-      else {
-        this.pnlInputFields.visible = false;
-        this.pnlUnsupportedNetwork.visible = true;
-      }
-      this.determineBtnSubmitCaption();
     });
   }
 
@@ -1774,7 +1792,19 @@ export default class ScomNftMinter extends Module {
       <i-panel>
         <i-scom-dapp-container id="containerDapp">
           <i-panel background={{ color: Theme.background.main }}>
+            <i-stack
+              id="pnlLoading"
+              direction="vertical"
+              height="100%"
+              alignItems="center"
+              justifyContent="center"
+              padding={{ top: "1rem", bottom: "1rem", left: "1rem", right: "1rem" }}
+              visible={false}
+            >
+              <i-panel class={'spinner'}></i-panel>
+            </i-stack>
             <i-grid-layout
+              id="gridMain"
               width='100%'
               height='100%'
               templateColumns={['1fr']}
