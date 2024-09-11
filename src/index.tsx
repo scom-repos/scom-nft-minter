@@ -1670,7 +1670,7 @@ export default class ScomNftMinter extends Module {
     if (this.discountApplied) {
       const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
       const discountAmount = Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
-      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+      this.lblDiscountAmount.caption = `-${formatNumber(discountAmount, 6)} ${this.productInfo.token?.symbol || ''}`;
     }
     this.lbOrderTotal.caption = `${formatNumber(amount, 6)} ${this.productInfo.token?.symbol || ''}`;
   }

@@ -3941,7 +3941,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             if (this.discountApplied) {
                 const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
                 const discountAmount = eth_wallet_6.Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
-                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount)} ${this.productInfo.token?.symbol || ''}`;
+                this.lblDiscountAmount.caption = `-${(0, index_14.formatNumber)(discountAmount, 6)} ${this.productInfo.token?.symbol || ''}`;
             }
             this.lbOrderTotal.caption = `${(0, index_14.formatNumber)(amount, 6)} ${this.productInfo.token?.symbol || ''}`;
         }
