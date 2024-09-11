@@ -2526,7 +2526,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.tag = {};
             this.defaultEdit = true;
             this.rpcWalletEvents = [];
-            this.isRenewal = false;
+            this._isRenewal = false;
             this.onChainChanged = async () => {
                 this.tokenInput.chainId = this.state.getChainId();
                 await this.onSetupPage();
@@ -2775,6 +2775,22 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         set defaultChainId(value) {
             this._data.defaultChainId = value;
+        }
+        get isRenewal() {
+            return this._isRenewal;
+        }
+        set isRenewal(value) {
+            this._isRenewal = value;
+        }
+        get renewalDate() {
+            return this._renewalDate;
+        }
+        set renewalDate(value) {
+            this._renewalDate = value;
+            if (this.productInfo) {
+                this.edtStartDate.value = value > 0 ? (0, components_8.moment)(value * 1000) : (0, components_8.moment)();
+                this.onDurationChanged();
+            }
         }
         getProductTypeByCode(code) {
             let productType;
@@ -3363,13 +3379,13 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.pnlQty.visible = false;
                         this.pnlSubscriptionPeriod.visible = this._type === index_13.ProductType.Subscription;
                         if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
-                            this.edtStartDate.value = (0, components_8.moment)();
+                            this.edtStartDate.value = this.isRenewal && this.renewalDate ? (0, components_8.moment)(this.renewalDate * 1000) : (0, components_8.moment)();
                             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
                             const isExpired = rule && rule.endTime && rule.endTime < (0, components_8.moment)().unix();
                             if (isExpired)
                                 this._data.discountRuleId = undefined;
                             if (rule && !isExpired) {
-                                if (rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
+                                if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
                                     this.edtStartDate.value = (0, components_8.moment)(rule.startTime * 1000);
                                 }
                                 this.edtDuration.value = rule.minDuration.div(86400).toNumber();

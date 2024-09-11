@@ -173,7 +173,8 @@ export default class ScomNftMinter extends Module {
   private isOnChangeUpdated: boolean;
   private discountRules: IDiscountRule[];
   private discountApplied: IDiscountRule;
-  private isRenewal = false;
+  private _isRenewal = false;
+  private _renewalDate: number;
   public onMintedNFT: () => void;
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
@@ -322,6 +323,24 @@ export default class ScomNftMinter extends Module {
   }
   set defaultChainId(value: number) {
     this._data.defaultChainId = value;
+  }
+  
+  get isRenewal() {
+    return this._isRenewal;
+  }
+  set isRenewal(value: boolean) {
+    this._isRenewal = value;
+  }
+
+  get renewalDate() {
+    return this._renewalDate;
+  }
+  set renewalDate(value: number) {
+    this._renewalDate = value;
+    if (this.productInfo) {
+      this.edtStartDate.value = value > 0 ? moment(value * 1000) : moment();
+      this.onDurationChanged();
+    }
   }
 
   private getProductTypeByCode(code: number) {
@@ -1080,12 +1099,12 @@ export default class ScomNftMinter extends Module {
           this.pnlQty.visible = false;
           this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
           if (isDataUpdated && this._type === ProductType.Subscription) {
-            this.edtStartDate.value = moment();
+            this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
             const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
             const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
             if (isExpired) this._data.discountRuleId = undefined;
             if (rule && !isExpired) {
-              if (rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
+              if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
                 this.edtStartDate.value = moment(rule.startTime * 1000);
               }
               this.edtDuration.value = rule.minDuration.div(86400).toNumber();

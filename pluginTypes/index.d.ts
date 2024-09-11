@@ -1279,7 +1279,8 @@ declare module "@scom/scom-nft-minter" {
         private isOnChangeUpdated;
         private discountRules;
         private discountApplied;
-        private isRenewal;
+        private _isRenewal;
+        private _renewalDate;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
@@ -1316,6 +1317,10 @@ declare module "@scom/scom-nft-minter" {
         set showHeader(value: boolean);
         get defaultChainId(): number;
         set defaultChainId(value: number);
+        get isRenewal(): boolean;
+        set isRenewal(value: boolean);
+        get renewalDate(): number;
+        set renewalDate(value: number);
         private getProductTypeByCode;
         private onChainChanged;
         private updateTokenBalance;
