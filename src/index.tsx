@@ -1520,8 +1520,9 @@ export default class ScomNftMinter extends Module {
           this.updateSubmitButton(false);
           return;
         }
-        if (!this.edtDuration.value) {
-          this.showTxStatusModal('error', 'Duration Required');
+        const duration = Number(this.edtDuration.value) || 0;
+        if (!this.edtDuration.value || duration <= 0 || !Number.isInteger(duration)) {
+          this.showTxStatusModal('error', !this.edtDuration.value ? 'Duration Required' : 'Invalid Duration');
           this.updateSubmitButton(false);
           return;
         }
