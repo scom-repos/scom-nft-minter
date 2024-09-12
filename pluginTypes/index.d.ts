@@ -1239,6 +1239,8 @@ declare module "@scom/scom-nft-minter" {
         private pnlSubscriptionPeriod;
         private edtRecipient;
         private edtStartDate;
+        private pnlStartDate;
+        private lblStartDate;
         private edtDuration;
         private comboDurationUnit;
         private lblEndDate;

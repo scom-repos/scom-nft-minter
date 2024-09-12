@@ -3450,6 +3450,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this.pnlSubscriptionPeriod.visible = this._type === index_13.ProductType.Subscription;
                             if (isDataUpdated && this._type === index_13.ProductType.Subscription) {
                                 this.edtStartDate.value = this.isRenewal && this.renewalDate ? (0, components_8.moment)(this.renewalDate * 1000) : (0, components_8.moment)();
+                                this.pnlStartDate.visible = !this.isRenewal;
+                                this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY');
+                                this.lblStartDate.visible = this.isRenewal;
                                 const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
                                 const isExpired = rule && rule.endTime && rule.endTime < (0, components_8.moment)().unix();
                                 if (isExpired)
@@ -3689,7 +3692,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.btnSubmit.caption = 'Mint';
             }
             else if (this._type === index_13.ProductType.Subscription) {
-                this.btnSubmit.caption = 'Subscribe';
+                this.btnSubmit.caption = this.isRenewal ? 'Renew Subscription' : 'Subscribe';
             }
             else {
                 this.btnSubmit.caption = 'Submit';
@@ -4161,8 +4164,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-stack", { id: "pnlSubscriptionPeriod", direction: "vertical", width: "100%", gap: "0.5rem", visible: false },
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Starts", font: { bold: true, size: '1rem' } }),
-                                                this.$render("i-panel", { width: "50%" },
-                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "date", placeholder: "dd/mm/yyyy", background: { color: Theme.input.background }, font: { size: '1rem' }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanged }))),
+                                                this.$render("i-panel", { id: "pnlStartDate", width: "50%" },
+                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "date", placeholder: "dd/mm/yyyy", background: { color: Theme.input.background }, font: { size: '1rem' }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanged })),
+                                                this.$render("i-label", { id: "lblStartDate", font: { size: '1rem' }, visible: false })),
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Duration", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-stack", { direction: "horizontal", width: "50%", alignItems: "center", gap: "0.5rem" },

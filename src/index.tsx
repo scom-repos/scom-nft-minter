@@ -21,7 +21,8 @@ import {
   moment,
   ComboBox,
   IComboItem,
-  GridLayout
+  GridLayout,
+  Panel
 } from '@ijstech/components';
 import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
@@ -128,6 +129,8 @@ export default class ScomNftMinter extends Module {
   private pnlSubscriptionPeriod: StackLayout;
   private edtRecipient: Input;
   private edtStartDate: Datepicker;
+  private pnlStartDate: Panel;
+  private lblStartDate: Label;
   private edtDuration: Input;
   private comboDurationUnit: ComboBox;
   private lblEndDate: Label;
@@ -1115,6 +1118,9 @@ export default class ScomNftMinter extends Module {
             this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
             if (isDataUpdated && this._type === ProductType.Subscription) {
               this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
+              this.pnlStartDate.visible = !this.isRenewal;
+              this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY');
+              this.lblStartDate.visible = this.isRenewal;
               const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
               const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
               if (isExpired) this._data.discountRuleId = undefined;
@@ -1370,7 +1376,7 @@ export default class ScomNftMinter extends Module {
       this.btnSubmit.caption = 'Mint';
     }
     else if (this._type === ProductType.Subscription) {
-      this.btnSubmit.caption = 'Subscribe';
+      this.btnSubmit.caption = this.isRenewal ? 'Renew Subscription' : 'Subscribe';
     }
     else {
       this.btnSubmit.caption = 'Submit';
@@ -1616,7 +1622,7 @@ export default class ScomNftMinter extends Module {
       if (this.isRenewal) {
         await renewSubscription(this.state, this.productId, duration, this.recipient, this.discountApplied?.id ?? 0, callback, confirmationCallback);
       } else {
-        await subscribe(this.state, this.productId, startTime,duration, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, confirmationCallback);
+        await subscribe(this.state, this.productId, startTime, duration, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, confirmationCallback);
       }
     }
     else if (this.productType == ProductType.Buy) {
@@ -1921,7 +1927,7 @@ export default class ScomNftMinter extends Module {
                     <i-stack id="pnlSubscriptionPeriod" direction="vertical" width="100%" gap="0.5rem" visible={false}>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Starts" font={{ bold: true, size: '1rem' }}></i-label>
-                        <i-panel width="50%">
+                        <i-panel id="pnlStartDate" width="50%">
                           <i-datepicker
                             id='edtStartDate'
                             height={36}
@@ -1934,6 +1940,7 @@ export default class ScomNftMinter extends Module {
                             onChanged={this.onStartDateChanged}
                           ></i-datepicker>
                         </i-panel>
+                        <i-label id="lblStartDate" font={{ size: '1rem' }} visible={false}/>
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>
