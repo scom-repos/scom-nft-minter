@@ -28,7 +28,7 @@ import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IP
 import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, subscribe, updateCommissionCampaign, updateDiscountRules } from './API';
+import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, renewSubscription, subscribe, updateCommissionCampaign, updateDiscountRules } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
 import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
@@ -1605,15 +1605,19 @@ export default class ScomNftMinter extends Module {
     else if (this.productType === ProductType.Subscription) {
       const startTime = this.edtStartDate.value.unix();
       const days = this.getDurationInDays();
-      await subscribe(this.state, this.productId, startTime, days * 86400, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback,
-        async () => {
-          await this.updateTokenBalance();
-          this.productInfo = await getProductInfo(this.state, this.productId);
-          const nftBalance = await getNFTBalance(this.state, this.productId);
-          this.lbOwn.caption = nftBalance;
-          this.updateSpotsRemaining();
-          if (this.onMintedNFT) this.onMintedNFT();
-        })
+      const duration = days * 86400;
+      const confirmationCallback = async () => {
+        this.productInfo = await getProductInfo(this.state, this.productId);
+        const nftBalance = await getNFTBalance(this.state, this.productId);
+        this.lbOwn.caption = nftBalance;
+        this.updateSpotsRemaining();
+        if (this.onMintedNFT) this.onMintedNFT();
+      };
+      if (this.isRenewal) {
+        await renewSubscription(this.state, this.productId, duration, this.recipient, this.discountApplied?.id ?? 0, callback, confirmationCallback);
+      } else {
+        await subscribe(this.state, this.productId, startTime,duration, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, confirmationCallback);
+      }
     }
     else if (this.productType == ProductType.Buy) {
       await buyProduct(this.state, this.productId, quantity, this._data.commissions, token, callback,

@@ -305,6 +305,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
     function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
     function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, referrer: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function renewSubscription(state: State, productId: number, duration: number, recipient: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
     function updateCommissionCampaign(state: State, productId: number, commissionRate: string, affiliates: string[], callback?: any, confirmationCallback?: any): Promise<any>;
     function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
     function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
@@ -315,7 +316,7 @@ declare module "@scom/scom-nft-minter/API.ts" {
         price: BigNumber;
         tokenAddress: string;
     }>;
-    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, getProductOwner, updateProductUri, updateProductPrice, updateCommissionCampaign, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
+    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, renewSubscription, getProductOwner, updateProductUri, updateProductPrice, updateCommissionCampaign, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {

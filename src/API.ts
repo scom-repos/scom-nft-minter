@@ -488,6 +488,28 @@ async function donate(
     return receipt;
 }
 
+async function getDiscount(state: State, productId: number, productPrice: BigNumber, discountRuleId: number) {
+    let basePrice: BigNumber = productPrice;
+    let promotionAddress = state.getContractAddress('Promotion');
+    const wallet = Wallet.getClientInstance();
+    const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
+    const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+    const rule = await promotion.discountRules({ param1: productId, param2: index });
+    if (rule.discountPercentage.gt(0)) {
+        const discount = productPrice.times(rule.discountPercentage).div(100);
+        if (productPrice.gt(discount))
+            basePrice = productPrice.minus(discount);
+    } else if (rule.fixedPrice.gt(0)) {
+        basePrice = rule.fixedPrice;
+    } else {
+        discountRuleId = 0;
+    }
+    return {
+        price: basePrice,
+        id: discountRuleId
+    }
+}
+
 async function subscribe(
     state: State,
     productId: number,
@@ -507,19 +529,9 @@ async function subscribe(
     const product = await productMarketplace.products(productId);
     let basePrice: BigNumber = product.price;
     if (discountRuleId !== 0) {
-        let promotionAddress = state.getContractAddress('Promotion');
-        const promotion = new ProductContracts.Promotion(wallet, promotionAddress);
-        const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
-        const rule = await promotion.discountRules({ param1: productId, param2: index });
-        if (rule.discountPercentage.gt(0)) {
-            const discount = product.price.times(rule.discountPercentage).div(100);
-            if (product.price.gt(discount))
-                basePrice = product.price.minus(discount);
-        } else if (rule.fixedPrice.gt(0)) {
-            basePrice = rule.fixedPrice;
-        } else {
-            discountRuleId = 0;
-        }
+        const discount = await getDiscount(state, productId, product.price, discountRuleId);
+        basePrice = discount.price;
+        if (discount.id === 0) discountRuleId = 0;
     }
     const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
     let tokenInAmount: BigNumber;
@@ -585,6 +597,59 @@ async function subscribe(
                     data: txData
                 });
             }
+        }
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+    return receipt;
+}
+
+async function renewSubscription(
+    state: State,
+    productId: number,
+    duration: number,
+    recipient: string,
+    discountRuleId: number = 0,
+    callback?: any,
+    confirmationCallback?: any
+) {
+    let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+    const wallet = Wallet.getClientInstance();
+    const productMarketplace = new ProductContracts.ProductMarketplace(wallet, productMarketplaceAddress);
+    const product = await productMarketplace.products(productId);
+    const subscriptionNFT = new ProductContracts.SubscriptionNFT(wallet, product.nft);
+    let nftId = await subscriptionNFT.tokenOfOwnerByIndex({
+        owner: recipient,
+        index: 0
+    });
+    let basePrice: BigNumber = product.price;
+    if (discountRuleId !== 0) {
+        const discount = await getDiscount(state, productId, product.price, discountRuleId);
+        basePrice = discount.price;
+        if (discount.id === 0) discountRuleId = 0;
+    }
+    const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
+    let receipt;
+    try {
+        registerSendTxEvents({
+            transactionHash: callback,
+            confirmation: confirmationCallback
+        });
+        if (product.token === nullAddress) {
+            receipt = await productMarketplace.renewSubscription({
+                productId: productId,
+                nftId: nftId,
+                duration: duration,
+                discountRuleId: discountRuleId
+            }, amount);
+        } else {
+            receipt = await productMarketplace.renewSubscription({
+                productId: productId,
+                nftId: nftId,
+                duration: duration,
+                discountRuleId: discountRuleId
+            });
         }
     } catch (err) {
         console.error(err);
@@ -748,6 +813,7 @@ export {
     buyProduct,
     donate,
     subscribe,
+    renewSubscription,
     getProductOwner,
     updateProductUri,
     updateProductPrice,

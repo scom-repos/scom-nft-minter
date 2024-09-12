@@ -481,7 +481,7 @@ define("@scom/scom-nft-minter/index.css.ts", ["require", "exports", "@ijstech/co
 define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-product-contract", "@scom/scom-commission-proxy-contract", "@scom/oswap-troll-nft-contract", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-token-list", "@scom/scom-network-list"], function (require, exports, eth_wallet_3, index_4, scom_product_contract_2, scom_commission_proxy_contract_1, oswap_troll_nft_contract_1, index_5, scom_token_list_5, scom_network_list_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateCommissionCampaign = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.updateDiscountRules = exports.getDiscountRules = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
+    exports.mintOswapTrollNft = exports.fetchUserNftBalance = exports.fetchOswapTrollNftInfo = exports.updateCommissionCampaign = exports.updateProductPrice = exports.updateProductUri = exports.getProductOwner = exports.renewSubscription = exports.subscribe = exports.donate = exports.buyProduct = exports.getProxyTokenAmountIn = exports.newDefaultBuyProduct = exports.createSubscriptionNFT = exports.newProduct = exports.updateDiscountRules = exports.getDiscountRules = exports.getProductIdFromEvent = exports.getProductId = exports.getNFTBalance = exports.getProductInfo = void 0;
     async function getProductInfo(state, productId) {
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
         if (!productMarketplaceAddress)
@@ -892,6 +892,29 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.donate = donate;
+    async function getDiscount(state, productId, productPrice, discountRuleId) {
+        let basePrice = productPrice;
+        let promotionAddress = state.getContractAddress('Promotion');
+        const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
+        const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
+        const rule = await promotion.discountRules({ param1: productId, param2: index });
+        if (rule.discountPercentage.gt(0)) {
+            const discount = productPrice.times(rule.discountPercentage).div(100);
+            if (productPrice.gt(discount))
+                basePrice = productPrice.minus(discount);
+        }
+        else if (rule.fixedPrice.gt(0)) {
+            basePrice = rule.fixedPrice;
+        }
+        else {
+            discountRuleId = 0;
+        }
+        return {
+            price: basePrice,
+            id: discountRuleId
+        };
+    }
     async function subscribe(state, productId, startTime, duration, recipient, referrer, discountRuleId = 0, callback, confirmationCallback) {
         let commissionAddress = state.getContractAddress('Commission');
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
@@ -901,21 +924,10 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         const product = await productMarketplace.products(productId);
         let basePrice = product.price;
         if (discountRuleId !== 0) {
-            let promotionAddress = state.getContractAddress('Promotion');
-            const promotion = new scom_product_contract_2.Contracts.Promotion(wallet, promotionAddress);
-            const index = await promotion.discountRuleIdToIndex({ param1: productId, param2: discountRuleId });
-            const rule = await promotion.discountRules({ param1: productId, param2: index });
-            if (rule.discountPercentage.gt(0)) {
-                const discount = product.price.times(rule.discountPercentage).div(100);
-                if (product.price.gt(discount))
-                    basePrice = product.price.minus(discount);
-            }
-            else if (rule.fixedPrice.gt(0)) {
-                basePrice = rule.fixedPrice;
-            }
-            else {
+            const discount = await getDiscount(state, productId, product.price, discountRuleId);
+            basePrice = discount.price;
+            if (discount.id === 0)
                 discountRuleId = 0;
-            }
         }
         const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
         let tokenInAmount;
@@ -993,6 +1005,54 @@ define("@scom/scom-nft-minter/API.ts", ["require", "exports", "@ijstech/eth-wall
         return receipt;
     }
     exports.subscribe = subscribe;
+    async function renewSubscription(state, productId, duration, recipient, discountRuleId = 0, callback, confirmationCallback) {
+        let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
+        const wallet = eth_wallet_3.Wallet.getClientInstance();
+        const productMarketplace = new scom_product_contract_2.Contracts.ProductMarketplace(wallet, productMarketplaceAddress);
+        const product = await productMarketplace.products(productId);
+        const subscriptionNFT = new scom_product_contract_2.Contracts.SubscriptionNFT(wallet, product.nft);
+        let nftId = await subscriptionNFT.tokenOfOwnerByIndex({
+            owner: recipient,
+            index: 0
+        });
+        let basePrice = product.price;
+        if (discountRuleId !== 0) {
+            const discount = await getDiscount(state, productId, product.price, discountRuleId);
+            basePrice = discount.price;
+            if (discount.id === 0)
+                discountRuleId = 0;
+        }
+        const amount = product.priceDuration.eq(duration) ? basePrice : basePrice.times(duration).div(product.priceDuration);
+        let receipt;
+        try {
+            (0, index_5.registerSendTxEvents)({
+                transactionHash: callback,
+                confirmation: confirmationCallback
+            });
+            if (product.token === index_5.nullAddress) {
+                receipt = await productMarketplace.renewSubscription({
+                    productId: productId,
+                    nftId: nftId,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                }, amount);
+            }
+            else {
+                receipt = await productMarketplace.renewSubscription({
+                    productId: productId,
+                    nftId: nftId,
+                    duration: duration,
+                    discountRuleId: discountRuleId
+                });
+            }
+        }
+        catch (err) {
+            console.error(err);
+            throw err;
+        }
+        return receipt;
+    }
+    exports.renewSubscription = renewSubscription;
     async function updateCommissionCampaign(state, productId, commissionRate, affiliates, callback, confirmationCallback) {
         let commissionAddress = state.getContractAddress('Commission');
         let productMarketplaceAddress = state.getContractAddress('ProductMarketplace');
@@ -3866,15 +3926,21 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             else if (this.productType === index_13.ProductType.Subscription) {
                 const startTime = this.edtStartDate.value.unix();
                 const days = this.getDurationInDays();
-                await (0, API_3.subscribe)(this.state, this.productId, startTime, days * 86400, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, async () => {
-                    await this.updateTokenBalance();
+                const duration = days * 86400;
+                const confirmationCallback = async () => {
                     this.productInfo = await (0, API_3.getProductInfo)(this.state, this.productId);
                     const nftBalance = await (0, API_3.getNFTBalance)(this.state, this.productId);
                     this.lbOwn.caption = nftBalance;
                     this.updateSpotsRemaining();
                     if (this.onMintedNFT)
                         this.onMintedNFT();
-                });
+                };
+                if (this.isRenewal) {
+                    await (0, API_3.renewSubscription)(this.state, this.productId, duration, this.recipient, this.discountApplied?.id ?? 0, callback, confirmationCallback);
+                }
+                else {
+                    await (0, API_3.subscribe)(this.state, this.productId, startTime, duration, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, confirmationCallback);
+                }
             }
             else if (this.productType == index_13.ProductType.Buy) {
                 await (0, API_3.buyProduct)(this.state, this.productId, quantity, this._data.commissions, token, callback, async () => {
