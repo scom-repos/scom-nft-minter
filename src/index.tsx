@@ -15,7 +15,6 @@ import {
   Icon,
   application,
   FormatUtils,
-  Form,
   StackLayout,
   Datepicker,
   moment,
@@ -24,20 +23,19 @@ import {
   GridLayout,
   Panel
 } from '@ijstech/components';
-import { BigNumber, Constants, IERC20ApprovalAction, IEventBusRegistry, TransactionReceipt, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from './interface/index';
-import { delay, formatNumber, getProxySelectors, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
+import { BigNumber, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
+import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
+import { formatNumber, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, createSubscriptionNFT, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductId, getProductIdFromEvent, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, newDefaultBuyProduct, renewSubscription, subscribe, updateCommissionCampaign, updateDiscountRules } from './API';
+import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, renewSubscription, subscribe } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
-import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
-import { ChainNativeTokenByChainId, ITokenObject, tokenStore } from '@scom/scom-token-list';
+import { ITokenObject, tokenStore } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
-import ScomTokenInput, { CUSTOM_TOKEN } from '@scom/scom-token-input';
+import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
-import { getBuilderSchema, getProjectOwnerSchema3 as getProjectOwnerSchema } from './formSchema.json';
+import { ConfigModel } from './model';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -155,6 +153,7 @@ export default class ScomNftMinter extends Module {
   private pnlLoading: StackLayout;
   private gridMain: GridLayout;
   private mdWallet: ScomWalletModal;
+  private configModel: ConfigModel;
 
   private productInfo: IProductInfo;
   private _type: ProductType | undefined;
@@ -185,20 +184,35 @@ export default class ScomNftMinter extends Module {
 
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
-    this.state = new State(configData);
+    this.initModels();
   }
 
   removeRpcWalletEvents() {
-    const rpcWallet = this.rpcWallet;
-    for (let event of this.rpcWalletEvents) {
-      rpcWallet.unregisterWalletEvent(event);
-    }
-    this.rpcWalletEvents = [];
+    this.configModel.removeRpcWalletEvents();
   }
 
   onHide() {
     this.containerDapp.onHide();
     this.removeRpcWalletEvents();
+  }
+
+  initModels() {
+    if (!this.state) {
+      this.state = new State(configData);
+    }
+    if (!this.configModel) {
+      this.configModel = new ConfigModel(this.state, this, {
+        updateUIBySetData: () => this.updateUIBySetData(),
+        refreshWidget: (isDataUpdated?: boolean) => this.refreshWidget(isDataUpdated),
+        refreshDappContainer: () => this.refreshDappContainer(),
+        setContaiterTag: (value: any) => this.setContaiterTag(value),
+        updateTheme: () => this.updateTheme(),
+        onChainChanged: () => this.onChainChanged(),
+        onWalletConnected: () => this.onWalletConnected(),
+        connectWallet: () => this.connectWallet(),
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => this.showTxStatusModal(status, content, exMessage)
+      });
+    }
   }
 
   static async create(options?: ScomNftMinterElement, parent?: Container) {
@@ -208,129 +222,126 @@ export default class ScomNftMinter extends Module {
   }
 
   private get chainId() {
-    return this.state.getChainId();
+    return this.configModel.chainId;
   }
 
   private get rpcWallet() {
-    return this.state.getRpcWallet();
+    return this.configModel.rpcWallet;
   }
 
   get nftType() {
-    return this._data.nftType;
+    return this.configModel.nftType;
   }
 
   get nftAddress() {
-    return this._data.nftAddress;
+    return this.configModel.nftAddress;
   }
 
   get newPrice() {
-    return this._data.priceToMint;
+    return this.configModel.newPrice;
   }
 
   get newMaxQty() {
-    return this._data.maxQty;
+    return this.configModel.newMaxQty;
   }
 
   get newTxnMaxQty() {
-    return this._data.txnMaxQty;
+    return this.configModel.newTxnMaxQty;
   }
 
   get recipient() {
-    return this._data.recipient ?? this._data.chainSpecificProperties?.[this.chainId]?.recipient ?? '';
+    return this.configModel.recipient;
   }
 
   get link() {
-    return this._data.link ?? '';
+    return this.configModel.link;
   }
 
   set link(value: string) {
-    this._data.link = value;
+    this.configModel.link = value;
   }
 
   get productId() {
-    return this._data.productId ?? this._data.chainSpecificProperties?.[this.chainId]?.productId ?? 0;
+    return this.configModel.productId;
   }
 
   get productType() {
-    return this._data.productType ?? ProductType.Buy;
+    return this.configModel.productType;
   }
 
   set productType(value: ProductType) {
-    this._data.productType = value;
+    this.configModel.productType = value;
   }
 
   get name() {
-    return this._data.name ?? '';
+    return this.configModel.name;
   }
 
   set name(value: string) {
-    this._data.name = value;
+    this.configModel.name = value;
   }
 
   get description() {
-    return this._data.description ?? '';
+    return this.configModel.description;
   }
 
   set description(value: string) {
-    this._data.description = value;
+    this.configModel.description = value;
   }
 
   get logoUrl() {
-    return this._data.logoUrl;
+    return this.configModel.logoUrl;
   }
 
   set logoUrl(value: string) {
-    this._data.logoUrl = value;
+    this.configModel.logoUrl = value;
   }
 
   get commissions() {
-    return this._data.commissions ?? [];
+    return this.configModel.commissions;
   }
 
   set commissions(value: any) {
-    this._data.commissions = value;
+    this.configModel.commissions = value;
   }
 
   get chainSpecificProperties() {
-    return this._data.chainSpecificProperties ?? {};
+    return this.configModel.chainSpecificProperties;
   }
 
   set chainSpecificProperties(value: any) {
-    this._data.chainSpecificProperties = value;
+    this.configModel.chainSpecificProperties = value;
   }
 
   get wallets() {
-    return this._data.wallets ?? [];
-  }
-  set wallets(value: IWalletPlugin[]) {
-    this._data.wallets = value;
-  }
+		return this.configModel.wallets;
+	}
+	set wallets(value: IWalletPlugin[]) {
+		this.configModel.wallets = value;
+	}
 
   get networks() {
-    const nets = this._data.networks ?? configData.defaultBuilderData.networks;
-    if (this._data.chainId && this.nftType === 'ERC721' && !nets.some(v => v.chainId === this._data.chainId)) {
-      nets.push({ chainId: this._data.chainId });
-    }
-    return nets;
+    return this.configModel.networks;
   }
   set networks(value: INetworkConfig[]) {
-    this._data.networks = value;
+    this.configModel.networks = value;
   }
 
   get showHeader() {
-    return this._data.showHeader ?? true;
-  }
-  set showHeader(value: boolean) {
-    this._data.showHeader = value;
-  }
+		return this.configModel.showHeader;
+	}
+	set showHeader(value: boolean) {
+		this.configModel.showHeader = value;
+	}
 
   get defaultChainId() {
-    return this._data.defaultChainId;
+    return this.configModel.defaultChainId;
   }
   set defaultChainId(value: number) {
-    this._data.defaultChainId = value;
+    this.configModel.defaultChainId = value;
   }
-  
+
+  //nft
   get isRenewal() {
     return this._isRenewal;
   }
@@ -349,30 +360,17 @@ export default class ScomNftMinter extends Module {
     }
   }
 
-  private getProductTypeByCode(code: number) {
-    let productType: ProductType;
-    switch (code) {
-      case 0:
-        productType = ProductType.Buy;
-        break;
-      case 1:
-        productType = ProductType.Subscription;
-        break;
-      case 2:
-        productType = ProductType.DonateToOwner;
-        break;
-      case 3:
-        productType = ProductType.DonateToEveryone;
-        break;
-    }
-    return productType;
-  }
-
   private onChainChanged = async () => {
     this.tokenInput.chainId = this.state.getChainId();
     await this.onSetupPage();
     this.updateContractAddress();
-    await this.refreshDApp();
+    await this.refreshWidget();
+  }
+
+  private onWalletConnected = async () => {
+    await this.onSetupPage();
+    this.updateContractAddress();
+    await this.refreshWidget();
   }
 
   private updateTokenBalance = async () => {
@@ -388,373 +386,22 @@ export default class ScomNftMinter extends Module {
     if (this.state.isRpcWalletConnected()) await this.initApprovalAction();
   }
 
-  private getBuilderActions(category?: string) {
-    let self = this;
-    const formSchema = getBuilderSchema();
-    const actions: any = [
-      {
-        name: 'Commissions',
-        icon: 'dollar-sign',
-        command: (builder: any, userInputData: any) => {
-          let _oldData: IEmbedData = {
-            wallets: [],
-            networks: [],
-            defaultChainId: 0
-          };
-          return {
-            execute: async () => {
-              _oldData = { ...this._data };
-              let resultingData = {
-                ...self._data,
-                commissions: userInputData.commissions
-              };
-              await self.setData(resultingData);
-              if (builder?.setData) builder.setData(this._data);
-            },
-            undo: async () => {
-              this._data = { ..._oldData };
-              await self.setData(this._data);
-              if (builder?.setData) builder.setData(this._data);
-            },
-            redo: () => { }
-          }
-        },
-        customUI: {
-          render: (data?: any, onConfirm?: (result: boolean, data: any) => void) => {
-            const vstack = new VStack();
-            const config = new ScomCommissionFeeSetup(null, {
-              commissions: self._data.commissions,
-              fee: this.state.embedderCommissionFee,
-              networks: self._data.networks
-            });
-            const hstack = new HStack(null, {
-              verticalAlignment: 'center',
-            });
-            const button = new Button(hstack, {
-              caption: 'Confirm',
-              width: '100%',
-              height: 40,
-              font: { color: Theme.colors.primary.contrastText }
-            });
-            vstack.append(config);
-            vstack.append(hstack);
-            button.onClick = async () => {
-              const commissions = config.commissions;
-              if (onConfirm) onConfirm(true, { commissions });
-            }
-            return vstack;
-          }
-        }
-      }
-    ];
-
-    if (category && category !== 'offers') {
-      actions.push({
-        name: 'Edit',
-        icon: 'edit',
-        command: (builder: any, userInputData: any) => {
-          let oldData: IEmbedData = {
-            wallets: [],
-            networks: [],
-            defaultChainId: 0
-          };
-          let oldTag = {};
-          return {
-            execute: async () => {
-              oldData = JSON.parse(JSON.stringify(this._data));
-              const {
-                name,
-                title,
-                productType,
-                logoUrl,
-                description,
-                link,
-                erc1155Index,
-                nftType,
-                chainId,
-                nftAddress,
-                chainSpecificProperties,
-                defaultChainId,
-                tokenToMint,
-                customMintToken,
-                priceToMint,
-                maxQty,
-                txnMaxQty,
-                uri,
-                ...themeSettings
-              } = userInputData;
-
-              const generalSettings = {
-                name,
-                title,
-                productType,
-                logoUrl,
-                description,
-                link,
-                erc1155Index,
-                nftType,
-                chainId,
-                nftAddress,
-                chainSpecificProperties,
-                defaultChainId,
-                tokenToMint,
-                customMintToken,
-                priceToMint,
-                maxQty,
-                txnMaxQty,
-                uri
-              };
-
-              Object.assign(this._data, generalSettings);
-              await this.resetRpcWallet();
-              if (builder?.setData) builder.setData(this._data);
-              await this.refreshDApp(true);
-
-              oldTag = JSON.parse(JSON.stringify(this.tag));
-              if (builder?.setTag) builder.setTag(themeSettings);
-              else this.setTag(themeSettings);
-              if (this.containerDapp) this.containerDapp.setTag(themeSettings);
-            },
-            undo: async () => {
-              this._data = JSON.parse(JSON.stringify(oldData));
-              await this.refreshDApp(true);
-              if (builder?.setData) builder.setData(this._data);
-
-              this.tag = JSON.parse(JSON.stringify(oldTag));
-              if (builder?.setTag) builder.setTag(this.tag);
-              else this.setTag(this.tag);
-              if (this.containerDapp) this.containerDapp.setTag(this.tag);
-            },
-            redo: () => { }
-          }
-        },
-        userInputDataSchema: formSchema.dataSchema,
-        userInputUISchema: formSchema.uiSchema
-      });
-    }
-    return actions;
-  }
-
-  private getProjectOwnerActions(isDefault1155New: boolean, readonly?: boolean, isPocily?: boolean) {
-    //const isDonation = this._data.productType === ProductType.DonateToOwner || this._data.productType === ProductType.DonateToEveryone;
-    const formSchema = getProjectOwnerSchema(isDefault1155New, readonly, isPocily, this.state, {
-      refreshUI: this.refreshDApp,
-      connectWallet: this.connectWallet,
-      showTxStatusModal: this.showTxStatusModal
-    });
-    const actions: any[] = [
-      {
-        name: 'Settings',
-        userInputDataSchema: formSchema.dataSchema,
-        userInputUISchema: formSchema.uiSchema,
-        customControls: formSchema.customControls()
-      }
-    ];
-    return actions;
-  }
-
   getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean) {
-    let isNew1155 = (type && type === 'new1155');
-    const { defaultBuilderData, defaultExistingNft, defaultCreate1155Index } = configData;
-    const defaultData = isNew1155 ? defaultCreate1155Index : defaultExistingNft as IEmbedData;
-    this.isConfigNewIndex = isNew1155;
-    this.isOnChangeUpdated = false;
-
-    let self = this;
-    return [
-      {
-        name: 'Project Owner Configurator',
-        target: 'Project Owners',
-        getProxySelectors: async (chainId: number) => {
-          const selectors = await getProxySelectors(this.state, chainId);
-          return selectors;
-        },
-        getActions: () => {
-          return this.getProjectOwnerActions(isNew1155, readonly, isPocily);
-        },
-        getData: this.getData.bind(this),
-        setData: async (data: IEmbedData) => {
-          await this.setData({ ...defaultBuilderData, ...defaultData, ...data });
-        },
-        getTag: this.getTag.bind(this),
-        setTag: this.setTag.bind(this)
-      },
-      {
-        name: 'Builder Configurator',
-        target: 'Builders',
-        getActions: (category?: string) => {
-          return this.getBuilderActions(category);
-        },
-        getData: this.getData.bind(this),
-        setData: async (data: IEmbedData) => {
-          await this.setData({ ...defaultBuilderData, ...defaultData, ...data });
-        },
-        setupData: async (data: IEmbedData) => {
-          this._data = { ...defaultBuilderData, ...data };
-          if (!this.nftType) {
-            if (isPocily) {
-              this._data.maxQty = new BigNumber(10).pow(12).toNumber();
-            }
-            if (new BigNumber(this.newMaxQty).lte(0)) {
-              return false;
-            }
-            const maxQty = this.newMaxQty;
-            this._data.erc1155Index = undefined;
-            await this.resetRpcWallet();
-            await this.initWallet();
-            return await this.newProduct(maxQty);
-          } else {
-            await this.resetRpcWallet();
-            await this.initWallet();
-            if (!isClientWalletConnected()) {
-              this.connectWallet();
-              return;
-            }
-            if (!this.state.isRpcWalletConnected()) {
-              const clientWallet = Wallet.getClientInstance();
-              await clientWallet.switchNetwork(this.chainId);
-              return;
-            }
-            if (this.nftType === 'ERC721' && this._data.erc1155Index != null) this._data.erc1155Index = undefined;
-            let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
-            if (productId) {
-              this._data.productId = productId;
-              this.productInfo = await getProductInfo(this.state, this.productId);
-              this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
-              this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
-              this._data.tokenToMint = this.productInfo.token.address;
-              if (this._data.productType === ProductType.Subscription) {
-                this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
-              }
-            }
-          }
-          return true;
-        },
-        updateDiscountRules: async (productId: number, rules: IDiscountRule[], ruleIdsToDelete: number[] = []) => {
-          return new Promise(async (resolve, reject) => {
-            const callback = (err: Error, receipt?: string) => {
-              if (err) {
-                this.showTxStatusModal('error', err);
-              }
-            };
-            const confirmationCallback = async (receipt: any) => {
-              const discountRules = await getDiscountRules(this.state, productId);
-              resolve(discountRules);
-            };
-            try {
-              await updateDiscountRules(this.state, productId, rules, ruleIdsToDelete, callback, confirmationCallback);
-            } catch (error) {
-              this.showTxStatusModal('error', 'Something went wrong updating discount rule!');
-              console.log('updateDiscountRules', error);
-              reject(error);
-            }
-          });
-        },
-        updateCommissionCampaign: async (productId: number, commissionRate: string, affiliates: string[]) => {
-          return new Promise(async (resolve, reject) => {
-            const callback = (err: Error, receipt?: string) => {
-              if (err) {
-                this.showTxStatusModal('error', err);
-              }
-            };
-            const confirmationCallback = async (receipt: any) => {
-              resolve(true);
-            };
-            try {
-              await updateCommissionCampaign(this.state, productId, commissionRate, affiliates, callback, confirmationCallback);
-            } catch (error) {
-              this.showTxStatusModal('error', 'Something went wrong updating commission campaign!');
-              console.log('updateCommissionCampaign', error);
-              reject(error);
-            }
-          });
-        },
-        getTag: this.getTag.bind(this),
-        setTag: this.setTag.bind(this)
-      },
-      {
-        name: 'Emdedder Configurator',
-        target: 'Embedders',
-        elementName: 'i-scom-commission-fee-setup',
-        getLinkParams: () => {
-          const commissions = self._data.commissions || [];
-          return {
-            data: window.btoa(JSON.stringify(commissions))
-          }
-        },
-        setLinkParams: async (params: any) => {
-          if (params.data) {
-            const decodedString = window.atob(params.data);
-            const commissions = JSON.parse(decodedString);
-            let resultingData = {
-              ...self._data,
-              commissions
-            };
-            await self.setData(resultingData);
-          }
-        },
-        bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => {
-          element.onChanged = async (data: any) => {
-            let resultingData = {
-              ...self._data,
-              ...data
-            };
-            await self.setData(resultingData);
-            await callback(data);
-          }
-        },
-        getData: () => {
-          const fee = this.state.embedderCommissionFee;
-          return { ...this.getData(), fee }
-        },
-        setData: this.setData.bind(this),
-        getTag: this.getTag.bind(this),
-        setTag: this.setTag.bind(this)
-      },
-      {
-        name: 'Editor',
-        target: 'Editor',
-        getActions: (category?: string) => {
-          const actions = this.getProjectOwnerActions(isNew1155, readonly, isPocily);
-          return actions;
-        },
-        getData: this.getData.bind(this),
-        setData: this.setData.bind(this),
-        getTag: this.getTag.bind(this),
-        setTag: this.setTag.bind(this)
-      }
-    ]
+    this.initModels();
+		return this.configModel.getConfigurators(type, readonly, isPocily);
   }
 
-  private getData() {
-    return this._data;
-  }
-
-  private async resetRpcWallet() {
-    this.removeRpcWalletEvents();
-    const rpcWalletId = await this.state.initRpcWallet(this._data.chainId || this.defaultChainId);
+  private refreshDappContainer = () => {
     const rpcWallet = this.rpcWallet;
-    await this.updateFormConfig();
-    const chainChangedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.ChainChanged, async (chainId: number) => {
-      await this.onChainChanged();
-    });
-    const connectedEvent = rpcWallet.registerWalletEvent(this, Constants.RpcWalletEvent.Connected, async (connected: boolean) => {
-      await this.updateFormConfig(true);
-      await this.onSetupPage();
-      this.updateContractAddress();
-      await this.refreshDApp();
-    });
-    this.rpcWalletEvents.push(chainChangedEvent, connectedEvent);
-
-    const chainId = this._data.chainId;
-    const data = {
+    const chainId = this.configModel.getData().chainId || this.configModel.chainId;
+    const containerData = {
       defaultChainId: chainId || this.defaultChainId,
       wallets: this.wallets,
       networks: chainId ? [{ chainId: chainId }] : this.networks,
       showHeader: this.showHeader,
       rpcWalletId: rpcWallet.instanceId
     }
-    if (this.containerDapp?.setData) await this.containerDapp.setData(data);
+    if (this.containerDapp?.setData) this.containerDapp.setData(containerData);
   }
 
   showLoading() {
@@ -767,64 +414,33 @@ export default class ScomNftMinter extends Module {
     this.gridMain.visible = true;
   }
 
-  private async setData(data: IEmbedData) {
-    this.showLoading();
-    this._data = data;
-    this.discountRules = [];
-    await this.resetRpcWallet();
-    if (!this.tokenInput.isConnected) await this.tokenInput.ready();
-    this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
-    await this.onSetupPage();
-    const commissionFee = this.state.embedderCommissionFee;
-    if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
-    this.lbOrderTotalTitle.caption = `You are going to pay`;
-    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
-    this.updateContractAddress();
-    if (this.nftType === 'ERC721' && this._data.erc1155Index != null) this._data.erc1155Index = undefined;
-    if (!this.productId && this.nftAddress && (this.nftType === 'ERC721' || this._data.erc1155Index)) {
-      await this.initWallet();
-      let productId = await getProductId(this.state, this.nftAddress, this._data.erc1155Index);
-      if (productId) this._data.productId = productId;
-    }
-    this.edtRecipient.value = this._data.recipient;
-    this.edtStartDate.value = undefined;
-    this.edtDuration.value = '';
-    this.comboDurationUnit.selectedItem = DurationUnits[0];
-    await this.refreshDApp(true);
+  async getData() {
+		return this.configModel.getData();
+	}
+
+  async setData(data: IEmbedData) {
+    this.configModel.setData(data);
   }
 
-  private getTag() {
+  getTag() {
     return this.tag;
   }
 
-  private updateTag(type: 'light' | 'dark', value: any) {
-    this.tag[type] = this.tag[type] ?? {};
-    for (let prop in value) {
-      if (value.hasOwnProperty(prop))
-        this.tag[type][prop] = value[prop];
-    }
-  }
+  async setTag(value: any) {
+		this.configModel.setTag(value);
+	}
 
-  private async setTag(value: any) {
-    const newValue = value || {};
-    for (let prop in newValue) {
-      if (newValue.hasOwnProperty(prop)) {
-        if (prop === 'light' || prop === 'dark')
-          this.updateTag(prop, newValue[prop]);
-        else
-          this.tag[prop] = newValue[prop];
-      }
-    }
-    if (this.containerDapp)
-      this.containerDapp.setTag(this.tag);
-    this.updateTheme();
-  }
+  private setContaiterTag(value: any) {
+		if (this.containerDapp) this.containerDapp.setTag(value);
+	}
 
   private updateStyle(name: string, value: any) {
-    value ?
-      this.style.setProperty(name, value) :
-      this.style.removeProperty(name);
-  }
+		if (value) {
+			this.style.setProperty(name, value);
+		} else {
+			this.style.removeProperty(name);
+		}
+	}
 
   private updateTheme() {
     const themeVar = this.containerDapp?.theme || 'dark';
@@ -835,176 +451,6 @@ export default class ScomNftMinter extends Module {
     this.updateStyle('--colors-primary-main', this.tag[themeVar]?.buttonBackgroundColor);
   }
 
-  private async updateFormConfig(isEvent?: boolean) {
-    if (this.isConfigNewIndex) {
-      try {
-        const wrapper = this.parentElement?.parentElement;
-        if (!wrapper) return;
-        const form = (wrapper.querySelector('i-form') || wrapper.parentElement?.querySelector('i-form')) as Form;
-        if (!form) return;
-        const btnConfirm = form.lastElementChild?.lastElementChild as Button;
-        if (btnConfirm) {
-          const updateButton = async () => {
-            const data = await form.getFormData();
-            const validation = form.validate(data, form.jsonSchema, { changing: false });
-            btnConfirm.caption = !isClientWalletConnected() && validation.valid ? 'Connect Wallet' : 'Confirm';
-          }
-          if (isEvent) {
-            await updateButton();
-          } else if (!this.isOnChangeUpdated) {
-            this.isOnChangeUpdated = true;
-            const onFormChange = form.formOptions.onChange;
-            form.formOptions.onChange = async () => {
-              if (onFormChange) onFormChange();
-              await updateButton();
-            }
-            await updateButton();
-          }
-        }
-      } catch { }
-    }
-  }
-
-  private async _createProduct(
-    productMarketplaceAddress: string,
-    quantity: number,
-    price: string,
-    uri: string,
-    token?: ITokenObject,
-    callback?: any,
-    confirmationCallback?: any
-  ) {
-    if (this._data.paymentModel === PaymentModel.Subscription) {
-      await createSubscriptionNFT(
-        productMarketplaceAddress,
-        quantity,
-        price,
-        token?.address || nullAddress,
-        token?.decimals || 18,
-        uri,
-        1 * 86400, // per day
-        callback,
-        confirmationCallback
-      );
-    } else {
-      await newDefaultBuyProduct(
-        productMarketplaceAddress,
-        quantity,
-        price,
-        token?.address || nullAddress,
-        token?.decimals || 18,
-        uri,
-        callback,
-        confirmationCallback
-      );
-    }
-  }
-
-  private newProduct = async (maxQty: number) => {
-    return new Promise<boolean>(async (resolve, reject) => {
-      let contract = this.state.getContractAddress('ProductMarketplace');
-      // const txnMaxQty = this.newTxnMaxQty;
-      const price = new BigNumber(this.newPrice).toFixed();
-      if ((!this.nftType) && new BigNumber(maxQty).gt(0)) {
-        if (this._data.erc1155Index >= 0) {
-          this._data.nftType = 'ERC1155';
-          return resolve(true);
-        };
-        const callback = (err: Error, receipt?: string) => {
-          if (err) {
-            this.showTxStatusModal('error', err);
-          }
-        }
-        const confirmationCallback = async (receipt: any) => {
-          let productId: number = getProductIdFromEvent(contract, receipt);
-          this._data.productId = productId;
-          this._data.nftType = this._data.paymentModel === PaymentModel.Subscription ? 'ERC721' : 'ERC1155';
-          this.productInfo = await getProductInfo(this.state, this.productId);
-          if (this._data.nftType === 'ERC1155') {
-            this._data.erc1155Index = this.productInfo.nftId.toNumber();
-          }
-          this._data.nftAddress = this.productInfo.nft;
-          this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
-          this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
-          this._data.tokenToMint = this.productInfo.token.address;
-          this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
-          return resolve(true);
-        }
-        if (!isClientWalletConnected()) {
-          this.connectWallet();
-          return resolve(false);
-        }
-        if (!this.state.isRpcWalletConnected()) {
-          const clientWallet = Wallet.getClientInstance();
-          let isConnected = false;
-          try {
-            isConnected = await clientWallet.switchNetwork(this.chainId);
-          } catch {
-            return resolve(false);
-          }
-          if (!isConnected) return resolve(false);
-          await delay(3000);
-          contract = this.state.getContractAddress('ProductMarketplace');
-        }
-        if (!contract) {
-          this.showTxStatusModal('error', 'This network is not supported!');
-          return resolve(false);
-        }
-        try {
-          const { tokenToMint, customMintToken, uri } = this._data;
-          const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
-          if (!tokenToMint || (isCustomToken && !customMintToken)) {
-            this.showTxStatusModal('error', 'TokenToMint is missing!');
-            return resolve(false);
-          }
-          const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
-          if (tokenAddress === nullAddress || !tokenAddress.startsWith('0x')) {
-            const address = tokenAddress.toLowerCase();
-            const nativeToken = ChainNativeTokenByChainId[this.chainId];
-            if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
-              this.showTxStatusModal('error', 'Invalid token!');
-              return resolve(false);
-            }
-            //pay native token
-            await this._createProduct(
-              contract,
-              maxQty,
-              price,
-              uri,
-              null,
-              callback,
-              confirmationCallback
-            );
-          } else { //pay erc20
-            let token: ITokenObject;
-            if (isCustomToken) {
-              token = await getTokenInfo(tokenAddress, this.chainId);
-            } else {
-              token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
-            }
-            if (!token) {
-              this.showTxStatusModal('error', 'Invalid token!');
-              return resolve(false);
-            }
-            await this._createProduct(
-              contract,
-              maxQty,
-              price,
-              uri,
-              token,
-              callback,
-              confirmationCallback
-            );
-          }
-        } catch (error) {
-          this.showTxStatusModal('error', 'Something went wrong creating new product!');
-          console.log('newProduct', error);
-          resolve(false);
-        }
-      }
-    });
-  }
-
   private connectWallet = async () => {
     if (this.mdWallet) {
       await application.loadPackage('@scom/scom-wallet-modal', '*');
@@ -1012,13 +458,6 @@ export default class ScomNftMinter extends Module {
       this.mdWallet.wallets = this.wallets;
       this.mdWallet.showModal();
     }
-  }
-
-  private async initWallet() {
-    try {
-      await Wallet.getClientInstance().init();
-      await this.rpcWallet.init();
-    } catch { }
   }
 
   private async updateDAppUI(data: IEmbedData) {
@@ -1035,14 +474,34 @@ export default class ScomNftMinter extends Module {
     this.lblTitle.caption = data.title || '';
   }
 
-  private async refreshDApp(isDataUpdated: boolean = false) {
+  private updateUIBySetData = async () => {
+    this.showLoading();
+    this.discountRules = [];
+    await this.configModel.resetRpcWallet();
+    if (!this.tokenInput.isConnected) await this.tokenInput.ready();
+    this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
+    await this.onSetupPage();
+    const commissionFee = this.state.embedderCommissionFee;
+    if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
+    this.lbOrderTotalTitle.caption = `You are going to pay`;
+    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
+    this.updateContractAddress();
+    await this.configModel.updateDataIndex();
+    this.edtRecipient.value = this.configModel.recipient;
+    this.edtStartDate.value = undefined;
+    this.edtDuration.value = '';
+    this.comboDurationUnit.selectedItem = DurationUnits[0];
+    await this.refreshWidget(true);
+  }
+
+  private refreshWidget = async (isDataUpdated: boolean = false) => {
     setTimeout(async () => {
       try {
         this._type = this.productType;
         await this.updateDAppUI(this._data);
         this.determineBtnSubmitCaption();
         if (!this.nftType) return;
-        await this.initWallet();
+        await this.configModel.initWallet();
         this.btnSubmit.enabled = isClientWalletConnected() && this.state.isRpcWalletConnected();
         // OswapTroll
         if (this.nftType === 'ERC721' && !this.productId) {
@@ -1727,7 +1186,7 @@ export default class ScomNftMinter extends Module {
     this._updateEndDate();
     this._updateDiscount();
   }
-  
+
   private onDurationChanged() {
     this._updateEndDate();
     this._updateDiscount();
@@ -1736,7 +1195,7 @@ export default class ScomNftMinter extends Module {
       this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
     }
   }
-  
+
   private onDurationUnitChanged() {
     this._updateEndDate();
     this._updateDiscount();
@@ -1748,7 +1207,6 @@ export default class ScomNftMinter extends Module {
 
   async init() {
     super.init();
-    this._createProduct = this._createProduct.bind(this);
     this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
     if (!lazyLoad) {
@@ -1941,7 +1399,7 @@ export default class ScomNftMinter extends Module {
                             onChanged={this.onStartDateChanged}
                           ></i-datepicker>
                         </i-panel>
-                        <i-label id="lblStartDate" font={{ size: '1rem' }} visible={false}/>
+                        <i-label id="lblStartDate" font={{ size: '1rem' }} visible={false} />
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>
