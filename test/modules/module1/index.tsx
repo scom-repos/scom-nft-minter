@@ -25,6 +25,7 @@ export default class Module1 extends Module {
   private widgetModule: ScomWidgetTest;
   private pnlPreview: Module;
   private cbbType: ComboBox;
+  private widgetType: WidgetType = 'new1155';
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -67,18 +68,17 @@ export default class Module1 extends Module {
   }
 
   private async onShowConfig() {
-    let widgetType: WidgetType = 'new1155';
-    const editor = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
+    const editor = this.nftMinter.getConfigurators(this.widgetType).find(v => v.target === 'Editor');
     const widgetData = editor.getData();
     if (!this.pnlPreview) {
       const onTypeChanged = async () => {
         const item = this.cbbType.selectedItem as IComboItem;
-        if (item.value === widgetType) return;
-        widgetType = item.value as WidgetType;
-        const config = this.nftMinter.getConfigurators(widgetType).find(v => v.target === 'Editor');
+        if (item.value === this.widgetType) return;
+        this.widgetType = item.value as WidgetType;
+        const config = this.nftMinter.getConfigurators(this.widgetType).find(v => v.target === 'Editor');
         const data = config.getData();
-        this.widgetModule.widgetType = widgetType;
-        this.widgetModule.show(widgetType === 'new1155' ? undefined : data);
+        this.widgetModule.widgetType = this.widgetType;
+        this.widgetModule.show(this.widgetType === 'new1155' ? undefined : data);
       }
       this.pnlPreview = await Module.create();
       this.pnlPreview.appendChild(
@@ -89,7 +89,7 @@ export default class Module1 extends Module {
               <i-label caption="Type" font={{ bold: true, color: Theme.colors.info.main }} />
               <i-combo-box
                 id="cbbType"
-                selectedItem={configs.find(v => v.value === widgetType)}
+                selectedItem={configs.find(v => v.value === this.widgetType)}
                 items={configs}
                 onChanged={onTypeChanged}
               />
@@ -107,7 +107,7 @@ export default class Module1 extends Module {
           editor.setTag(tag);
           this.onCloseConfig();
         },
-        widgetType
+        widgetType: this.widgetType
       });
       const header = this.widgetModule.firstElementChild.firstElementChild as HStack;
       if (header) {
@@ -116,7 +116,7 @@ export default class Module1 extends Module {
       this.pnlPreview.appendChild(this.widgetModule);
     }
 
-    this.widgetModule.show(widgetType === 'new1155' ? undefined : widgetData);
+    this.widgetModule.show(this.widgetType === 'new1155' ? undefined : widgetData);
     this.pnlPreview.openModal({
       width: '90%',
       maxWidth: '90rem',
