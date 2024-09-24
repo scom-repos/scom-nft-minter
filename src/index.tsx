@@ -23,19 +23,18 @@ import {
   GridLayout,
   Panel
 } from '@ijstech/components';
-import { BigNumber, IERC20ApprovalAction, IEventBusRegistry, Utils, Wallet } from '@ijstech/eth-wallet';
-import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from './interface/index';
-import { formatNumber, getTokenBalance, registerSendTxEvents, nullAddress, getTokenInfo } from './utils/index';
+import { BigNumber, IERC20ApprovalAction, Utils, Wallet } from '@ijstech/eth-wallet';
+import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IOswapTroll, IWalletPlugin, ProductType } from './interface/index';
+import { formatNumber, nullAddress } from './utils/index';
 import { State, isClientWalletConnected } from './store/index';
 import { inputStyle, linkStyle, markdownStyle, tokenSelectionStyle } from './index.css';
-import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, renewSubscription, subscribe } from './API';
 import configData from './data.json';
 import ScomDappContainer from '@scom/scom-dapp-container';
-import { ITokenObject, tokenStore } from '@scom/scom-token-list';
+import { ITokenObject } from '@scom/scom-token-list';
 import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
-import { ConfigModel } from './model';
+import { ConfigModel, NFTMinterModel } from './model';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -154,31 +153,16 @@ export default class ScomNftMinter extends Module {
   private gridMain: GridLayout;
   private mdWallet: ScomWalletModal;
   private configModel: ConfigModel;
+  private nftMinterModel: NFTMinterModel;
 
-  private productInfo: IProductInfo;
-  private _type: ProductType | undefined;
-  private _data: IEmbedData = {
-    wallets: [],
-    networks: [],
-    defaultChainId: 0
-  };
   private approvalModelAction: IERC20ApprovalAction;
   private isApproving: boolean = false;
-  private tokenAmountIn: string;
   tag: any = {};
   defaultEdit: boolean = true;
   private contractAddress: string;
-  private rpcWalletEvents: IEventBusRegistry[] = [];
-  private cap: number;
-  private oswapTrollInfo: { token: ITokenObject; price: BigNumber };
   private detailWrapper: HStack;
   private erc1155Wrapper: HStack;
   private btnDetail: Button;
-  private isConfigNewIndex: boolean;
-  private isOnChangeUpdated: boolean;
-  private discountRules: IDiscountRule[];
-  private discountApplied: IDiscountRule;
-  private _isRenewal = false;
   private _renewalDate: number;
   public onMintedNFT: () => void;
 
@@ -199,6 +183,37 @@ export default class ScomNftMinter extends Module {
   initModels() {
     if (!this.state) {
       this.state = new State(configData);
+    }
+    if (!this.nftMinterModel) {
+      this.nftMinterModel = new NFTMinterModel(this.state, {
+        updateSubmitButton: async (submitting?: boolean) => this.updateSubmitButton(submitting),
+        onMintedNft: (oswapTroll: IOswapTroll, nftBalance: string) => {
+          if (oswapTroll) {
+            this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap, 0);
+          }
+          this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
+          this.updateSubmitButton(false);
+          if (this.onMintedNFT) this.onMintedNFT();
+        },
+        onDonated: async () => {
+          await this.updateTokenBalance();
+        },
+        onSubscribed: (nftBalance: string) => {
+          this.lbOwn.caption = nftBalance;
+          this.updateSpotsRemaining();
+          if (this.onMintedNFT) this.onMintedNFT();
+        },
+        onBoughtProduct: async (nftBalance: string) => {
+          await this.updateTokenBalance();
+          this.lbOwn.caption = nftBalance;
+          this.updateSpotsRemaining();
+          if (this.onMintedNFT) this.onMintedNFT();
+        },
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => this.showTxStatusModal(status, content, exMessage),
+        closeTxStatusModal: () => {
+          if (this.txStatusModal) this.txStatusModal.closeModal();
+        },
+      });
     }
     if (!this.configModel) {
       this.configModel = new ConfigModel(this.state, this, {
@@ -261,6 +276,14 @@ export default class ScomNftMinter extends Module {
     this.configModel.link = value;
   }
 
+  get oswapTrollInfo() {
+    return this.nftMinterModel.oswapTrollInfo;
+  }
+
+  get productInfo() {
+    return this.nftMinterModel.productInfo;
+  }
+
   get productId() {
     return this.configModel.productId;
   }
@@ -314,11 +337,11 @@ export default class ScomNftMinter extends Module {
   }
 
   get wallets() {
-		return this.configModel.wallets;
-	}
-	set wallets(value: IWalletPlugin[]) {
-		this.configModel.wallets = value;
-	}
+    return this.configModel.wallets;
+  }
+  set wallets(value: IWalletPlugin[]) {
+    this.configModel.wallets = value;
+  }
 
   get networks() {
     return this.configModel.networks;
@@ -328,11 +351,11 @@ export default class ScomNftMinter extends Module {
   }
 
   get showHeader() {
-		return this.configModel.showHeader;
-	}
-	set showHeader(value: boolean) {
-		this.configModel.showHeader = value;
-	}
+    return this.configModel.showHeader;
+  }
+  set showHeader(value: boolean) {
+    this.configModel.showHeader = value;
+  }
 
   get defaultChainId() {
     return this.configModel.defaultChainId;
@@ -341,12 +364,11 @@ export default class ScomNftMinter extends Module {
     this.configModel.defaultChainId = value;
   }
 
-  //nft
   get isRenewal() {
-    return this._isRenewal;
+    return this.nftMinterModel.isRenewal;
   }
   set isRenewal(value: boolean) {
-    this._isRenewal = value;
+    this.nftMinterModel.isRenewal = value;
   }
 
   get renewalDate() {
@@ -358,6 +380,10 @@ export default class ScomNftMinter extends Module {
       this.edtStartDate.value = value > 0 ? moment(value * 1000) : moment();
       this.onDurationChanged();
     }
+  }
+
+  get discountApplied() {
+    return this.nftMinterModel.discountApplied;
   }
 
   private onChainChanged = async () => {
@@ -374,12 +400,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private updateTokenBalance = async () => {
-    const token = this.productInfo?.token;
-    if (!token) return;
-    try {
-      const symbol = token.symbol || '';
-      this.lblBalance.caption = `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}`;
-    } catch { }
+    this.lblBalance.caption = `${formatNumber(await this.nftMinterModel.getTokenBalance())} ${this.nftMinterModel.tokenSymbol}`;
   }
 
   private async onSetupPage() {
@@ -388,7 +409,7 @@ export default class ScomNftMinter extends Module {
 
   getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean) {
     this.initModels();
-		return this.configModel.getConfigurators(type, readonly, isPocily);
+    return this.configModel.getConfigurators(type, readonly, isPocily);
   }
 
   private refreshDappContainer = () => {
@@ -415,8 +436,8 @@ export default class ScomNftMinter extends Module {
   }
 
   async getData() {
-		return this.configModel.getData();
-	}
+    return this.configModel.getData();
+  }
 
   async setData(data: IEmbedData) {
     this.configModel.setData(data);
@@ -427,20 +448,20 @@ export default class ScomNftMinter extends Module {
   }
 
   async setTag(value: any) {
-		this.configModel.setTag(value);
-	}
+    this.configModel.setTag(value);
+  }
 
   private setContaiterTag(value: any) {
-		if (this.containerDapp) this.containerDapp.setTag(value);
-	}
+    if (this.containerDapp) this.containerDapp.setTag(value);
+  }
 
   private updateStyle(name: string, value: any) {
-		if (value) {
-			this.style.setProperty(name, value);
-		} else {
-			this.style.removeProperty(name);
-		}
-	}
+    if (value) {
+      this.style.setProperty(name, value);
+    } else {
+      this.style.removeProperty(name);
+    }
+  }
 
   private updateTheme() {
     const themeVar = this.containerDapp?.theme || 'dark';
@@ -476,7 +497,7 @@ export default class ScomNftMinter extends Module {
 
   private updateUIBySetData = async () => {
     this.showLoading();
-    this.discountRules = [];
+    this.nftMinterModel.discountRules = [];
     await this.configModel.resetRpcWallet();
     if (!this.tokenInput.isConnected) await this.tokenInput.ready();
     this.tokenInput.chainId = this.state.getChainId() ?? this.defaultChainId;
@@ -497,28 +518,25 @@ export default class ScomNftMinter extends Module {
   private refreshWidget = async (isDataUpdated: boolean = false) => {
     setTimeout(async () => {
       try {
-        this._type = this.productType;
-        await this.updateDAppUI(this._data);
+        const type = this.productType;
+        const data = this.configModel.getData();
+        const { title, discountRuleId } = data;
+        await this.updateDAppUI(data);
         this.determineBtnSubmitCaption();
         if (!this.nftType) return;
         await this.configModel.initWallet();
         this.btnSubmit.enabled = isClientWalletConnected() && this.state.isRpcWalletConnected();
         // OswapTroll
         if (this.nftType === 'ERC721' && !this.productId) {
-          this.lblTitle.caption = this._data.title;
+          this.lblTitle.caption = title;
           if (!this.nftAddress) return;
-          const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
+          const oswapTroll = await this.nftMinterModel.fetchOswapTrollNftInfo(this.nftAddress);
           if (!oswapTroll) {
             this.pnlUnsupportedNetwork.visible = true;
             this.pnlInputFields.visible = false;
             return;
           };
-          const nftBalance = isClientWalletConnected() ? await fetchUserNftBalance(this.state, this.nftAddress) : 0;
-          const { price, cap, tokenAddress } = oswapTroll;
-          let token = tokenStore.getTokenList(this.chainId).find(v => v.address === tokenAddress);
-          if (!token) {
-            token = await getTokenInfo(tokenAddress, this.chainId);
-          }
+          const { price, cap, tokenAddress, nftBalance, token } = oswapTroll;
           this.pnlInputFields.visible = true;
           this.pnlUnsupportedNetwork.visible = false;
           this.detailWrapper.visible = true;
@@ -529,10 +547,8 @@ export default class ScomNftMinter extends Module {
           this.updateTokenAddress(tokenAddress);
           this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
           this.pnlMintFee.visible = true;
-          this.oswapTrollInfo = { token, price };
           this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
           this.lblSpotsRemaining.caption = formatNumber(cap, 0);
-          this.cap = cap.toNumber();
           //this.pnlQty.visible = true;
           this.pnlSubscriptionPeriod.visible = false;
           this.edtQty.readOnly = true;
@@ -545,76 +561,74 @@ export default class ScomNftMinter extends Module {
         }
         //this.edtQty.readOnly = false;
         this.edtQty.readOnly = true;
-        this.productInfo = await getProductInfo(this.state, this.productId);
-        if (this.productInfo) {
-          if (isDataUpdated && this._type === ProductType.Subscription) {
-            this.discountRules = await getDiscountRules(this.state, this._data.productId);
-          }
-          const token = this.productInfo.token;
+        await this.nftMinterModel.fetchProductInfo(this.productId, type, isDataUpdated);
+        const { productInfo, tokenAmountIn } = this.nftMinterModel;
+        if (productInfo) {
+          const { token, price, nftId, priceDuration, uri } = productInfo;
           this.pnlInputFields.visible = true;
           this.pnlUnsupportedNetwork.visible = false;
-          const price = Utils.fromDecimals(this.productInfo.price, token.decimals).toFixed();
+          const productPrice = Utils.fromDecimals(price, token.decimals).toFixed();
           (!this.lblRef.isConnected) && await this.lblRef.ready();
-          if (this._type === ProductType.Buy || this._type === ProductType.Subscription) {
-            const nftBalance = isClientWalletConnected() ? await getNFTBalance(this.state, this.productId) : 0;
+          if (type === ProductType.Buy || type === ProductType.Subscription) {
+            const nftBalance = await this.nftMinterModel.fetchNftBalance(this.productId);
             this.detailWrapper.visible = true;
             this.onToggleDetail();
             this.btnDetail.visible = true;
             this.erc1155Wrapper.visible = this.nftType === 'ERC1155';
-            this.lbERC1155Index.caption = `${this.productInfo.nftId?.toNumber() || ''}`;
+            this.lbERC1155Index.caption = `${nftId?.toNumber() ?? ''}`;
             this.lbContract.caption = FormatUtils.truncateWalletAddress(this.contractAddress || this.nftAddress);
             this.updateTokenAddress(token.address);
             this.lbOwn.caption = formatNumber(nftBalance, 0);
             this.pnlMintFee.visible = true;
-            const days = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
-            const duration = this._type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
-            this.lblMintFee.caption = `${price ? formatNumber(price) : ""} ${token?.symbol || ""}${duration}`;
-            this.lblTitle.caption = this._data.title;
+            const days = Math.ceil((priceDuration?.toNumber() || 0) / 86400);
+            const duration = type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
+            this.lblMintFee.caption = `${productPrice ? formatNumber(productPrice) : ""} ${token?.symbol || ""}${duration}`;
+            this.lblTitle.caption = title;
             this.lblRef.caption = 'smart contract:';
             this.updateSpotsRemaining();
             this.tokenInput.inputReadOnly = true;
             this.pnlQty.visible = false;
-            this.pnlSubscriptionPeriod.visible = this._type === ProductType.Subscription;
-            if (isDataUpdated && this._type === ProductType.Subscription) {
+            this.pnlSubscriptionPeriod.visible = type === ProductType.Subscription;
+            if (isDataUpdated && type === ProductType.Subscription) {
               this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
               this.pnlStartDate.visible = !this.isRenewal;
               this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY');
               this.lblStartDate.visible = this.isRenewal;
-              const rule = this._data.discountRuleId ? this.discountRules.find(rule => rule.id === this._data.discountRuleId) : null;
+              const rule = discountRuleId ? this.nftMinterModel.discountRules.find(rule => rule.id === discountRuleId) : null;
               const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
-              if (isExpired) this._data.discountRuleId = undefined;
+              if (isExpired) this.configModel.discountRuleId = undefined;
               if (rule && !isExpired) {
                 if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
                   this.edtStartDate.value = moment(rule.startTime * 1000);
                 }
                 this.edtDuration.value = rule.minDuration.div(86400).toNumber();
                 this.comboDurationUnit.selectedItem = DurationUnits[0];
-                this.discountApplied = rule;
+                this.nftMinterModel.discountApplied = rule;
                 this._updateEndDate();
                 this._updateTotalAmount();
                 if (this.approvalModelAction) {
-                  this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+                  this.approvalModelAction.checkAllowance(token, tokenAmountIn);
                 }
               } else {
-                this.edtDuration.value = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                this.edtDuration.value = Math.ceil((priceDuration?.toNumber() || 0) / 86400);
                 this.onDurationChanged();
               }
             }
             //this.pnlQty.visible = true;
             this.pnlTokenInput.visible = false;
-            if (this.productInfo.uri) {
+            if (uri) {
               this.imgUri.visible = true;
-              this.imgUri.url = this.productInfo.uri;
+              this.imgUri.url = uri;
             } else {
               this.imgUri.visible = false;
             }
             this.edtQty.value = '1';
-            if (this._type !== ProductType.Subscription) await this.onQtyChanged();
+            if (type !== ProductType.Subscription) await this.onQtyChanged();
           } else {
             this.detailWrapper.visible = false;
             this.btnDetail.visible = false;
             this.pnlMintFee.visible = false;
-            this.lblTitle.caption = this._data.title || 'Make a Contributon';
+            this.lblTitle.caption = title || 'Make a Contributon';
             this.lblTitle.visible = true;
             this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
             this.tokenInput.inputReadOnly = false;
@@ -625,7 +639,7 @@ export default class ScomNftMinter extends Module {
             this.lbOrderTotal.caption = "0";
           }
           this.tokenInput.value = "";
-          this.pnlAddress.visible = this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone;
+          this.pnlAddress.visible = type === ProductType.DonateToOwner || type === ProductType.DonateToEveryone;
           (!this.lblAddress.isConnected) && await this.lblAddress.ready();
           this.lblAddress.caption = this.contractAddress || this.nftAddress;
           this.tokenInput.token = token?.address === nullAddress ? {
@@ -647,14 +661,8 @@ export default class ScomNftMinter extends Module {
   }
 
   async getProductInfo() {
-    if (!this.productId || !this.productInfo) return null;
-    if (this.productInfo.productId.isEqualTo(this.productId)) return this.productInfo;
-    try {
-      const productInfo = await getProductInfo(this.state, this.productId);
-      return productInfo;
-    } catch {
-      return null;
-    }
+    const info = await this.nftMinterModel.getProductInfo(this.productId);
+    return info;
   }
 
   private updateTokenAddress(address: string) {
@@ -748,7 +756,7 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.visible = false;
           this.btnSubmit.visible = true;
           this.isApproving = false;
-          this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+          this.btnSubmit.enabled = new BigNumber(this.nftMinterModel.tokenAmountIn).gt(0);
           this.determineBtnSubmitCaption();
         },
         onApproving: async (token: ITokenObject, receipt?: string) => {
@@ -790,15 +798,15 @@ export default class ScomNftMinter extends Module {
         }
       });
       this.updateContractAddress();
-      if (this.productInfo?.token?.address !== nullAddress && this.tokenAmountIn) {
-        this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      if (this.productInfo?.token?.address !== nullAddress && this.nftMinterModel.tokenAmountIn) {
+        this.approvalModelAction.checkAllowance(this.productInfo.token, this.nftMinterModel.tokenAmountIn);
       }
     }
   }
 
   private updateContractAddress() {
     if (this.approvalModelAction) {
-      if (this._data.referrer) {
+      if (this.configModel.referrer) {
         this.contractAddress = this.state.getContractAddress('Commission');
       }
       else {
@@ -810,7 +818,8 @@ export default class ScomNftMinter extends Module {
 
   private async selectToken(token: ITokenObject) {
     const symbol = token?.symbol || '';
-    this.lblBalance.caption = `${formatNumber(await getTokenBalance(this.rpcWallet, token))} ${symbol}`;
+    const balance = await this.nftMinterModel.getTokenBalance(token);
+    this.lblBalance.caption = `${formatNumber(balance)} ${symbol}`;
   }
 
   private updateSubmitButton(submitting: boolean) {
@@ -828,13 +837,13 @@ export default class ScomNftMinter extends Module {
       this.btnSubmit.enabled = true;
     }
     else if (this.nftType === 'ERC721' && !this.productId) {
-      this.btnSubmit.caption = this.cap ? 'Mint' : 'Out of stock';
-      this.btnSubmit.enabled = !!this.cap;
+      this.btnSubmit.caption = this.nftMinterModel.cap ? 'Mint' : 'Out of stock';
+      this.btnSubmit.enabled = !!this.nftMinterModel.cap;
     }
-    else if (this._type === ProductType.Buy) {
+    else if (this.productType === ProductType.Buy) {
       this.btnSubmit.caption = 'Mint';
     }
-    else if (this._type === ProductType.Subscription) {
+    else if (this.productType === ProductType.Subscription) {
       this.btnSubmit.caption = this.isRenewal ? 'Renew Subscription' : 'Subscribe';
     }
     else {
@@ -852,31 +861,33 @@ export default class ScomNftMinter extends Module {
       await this.approvalModelAction.doApproveAction(token, price.toFixed());
     } else {
       this.showTxStatusModal('warning', `Approving`);
-      await this.approvalModelAction.doApproveAction(this.productInfo.token, this.tokenAmountIn);
+      await this.approvalModelAction.doApproveAction(this.productInfo.token, this.nftMinterModel.tokenAmountIn);
     }
   }
 
   private async onQtyChanged() {
     const qty = Number(this.edtQty.value);
+    const { token, price } = this.productInfo || {};
+    const commissions = this.configModel.commissions;
     if (qty === 0) {
-      this.tokenAmountIn = '0';
+      this.nftMinterModel.updateTokenAmountIn(0, []);
       this.tokenInput.value = '0';
-      this.lbOrderTotal.caption = `0 ${this.productInfo.token?.symbol || ''}`;
+      this.lbOrderTotal.caption = `0 ${token?.symbol || ''}`;
     }
     else {
-      const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-      this.tokenAmountIn = getProxyTokenAmountIn(price.toFixed(), qty, this._data.commissions);
-      const amount = price.times(qty);
+      this.nftMinterModel.updateTokenAmountIn(qty, commissions);
+      const productPrice = Utils.fromDecimals(price, token.decimals);
+      const amount = productPrice.times(qty);
       this.tokenInput.value = amount.toFixed();
       const commissionFee = this.state.embedderCommissionFee;
       const total = amount.plus(amount.times(commissionFee));
-      this.lbOrderTotal.caption = `${formatNumber(total, 6)} ${this.productInfo.token?.symbol || ''}`;
+      this.lbOrderTotal.caption = `${formatNumber(total, 6)} ${token?.symbol || ''}`;
     }
     if (this.productInfo && this.state.isRpcWalletConnected()) {
-      if (this.productInfo.token?.address !== nullAddress) {
-        this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      if (token?.address !== nullAddress) {
+        this.approvalModelAction.checkAllowance(token, this.nftMinterModel.tokenAmountIn);
       } else {
-        this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+        this.btnSubmit.enabled = new BigNumber(this.nftMinterModel.tokenAmountIn).gt(0);
         this.determineBtnSubmitCaption();
       }
     } else {
@@ -887,23 +898,22 @@ export default class ScomNftMinter extends Module {
   private async onAmountChanged() {
     let amount = Number(this.tokenInput.value);
     if (amount === 0 || !this.productInfo) {
-      this.tokenAmountIn = '0';
+      this.nftMinterModel.updateTokenAmountIn(0, []);
       this.tokenInput.value = '0';
     }
     else {
-      const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-      this.tokenAmountIn = getProxyTokenAmountIn(price.toFixed(), amount, this._data.commissions);
+      this.nftMinterModel.updateTokenAmountIn(amount, this.configModel.commissions);
     }
     amount = Number(this.tokenInput.value);
     const commissionFee = this.state.embedderCommissionFee;
     const total = new BigNumber(amount).plus(new BigNumber(amount).times(commissionFee));
-    const token = this.productInfo?.token
+    const token = this.productInfo?.token;
     this.lbOrderTotal.caption = `${formatNumber(total, 6)} ${token?.symbol || ''}`;
     if (token && this.state.isRpcWalletConnected() && token?.address !== nullAddress) {
       if (token?.address !== nullAddress) {
-        this.approvalModelAction.checkAllowance(token, this.tokenAmountIn);
+        this.approvalModelAction.checkAllowance(token, this.nftMinterModel.tokenAmountIn);
       } else {
-        this.btnSubmit.enabled = new BigNumber(this.tokenAmountIn).gt(0);
+        this.btnSubmit.enabled = new BigNumber(this.nftMinterModel.tokenAmountIn).gt(0);
         this.determineBtnSubmitCaption();
       }
     } else {
@@ -912,99 +922,16 @@ export default class ScomNftMinter extends Module {
   }
 
   private async doSubmitAction() {
-    if (!this._data || (!this.productId && this.nftType !== 'ERC721')) return;
-    this.updateSubmitButton(true);
-    if ((this._type === ProductType.DonateToOwner || this._type === ProductType.DonateToEveryone) && !this.tokenInput.token) {
-      this.showTxStatusModal('error', 'Token Required');
-      this.updateSubmitButton(false);
-      return;
-    }
-    if (this.nftType === 'ERC721' && !this.productId) {
-      const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
-      if (!oswapTroll || oswapTroll.cap.lte(0)) {
-        this.showTxStatusModal('error', 'Out of stock');
-        this.updateSubmitButton(false);
-        return;
-      }
-      const token = this.oswapTrollInfo.token;
-      const balance = await getTokenBalance(this.rpcWallet, token);
-      if (oswapTroll.price.gt(balance)) {
-        this.showTxStatusModal('error', `Insufficient ${token.symbol} Balance`);
-        this.updateSubmitButton(false);
-        return;
-      }
-      await this.mintNft();
-      return;
-    }
-    const token = this.productInfo.token
-    const balance = await getTokenBalance(this.rpcWallet, token);
-    try {
-      if (this._type === ProductType.Buy) {
-        if (this.edtQty.value && new BigNumber(this.edtQty.value).gt(this.productInfo.maxQuantity)) {
-          this.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
-          this.updateSubmitButton(false);
-          return;
-        }
-        if (this.productInfo.maxQuantity.gt(1) && (!this.edtQty.value || !Number.isInteger(Number(this.edtQty.value)))) {
-          this.showTxStatusModal('error', 'Invalid Quantity');
-          this.updateSubmitButton(false);
-          return;
-        }
-        const requireQty = this.productInfo.maxQuantity.gt(1) && this.edtQty.value ? Number(this.edtQty.value) : 1;
-        if (this.productId >= 0) {
-          const product = await getProductInfo(this.state, this.productId);
-          if (product.quantity.lt(requireQty)) {
-            this.showTxStatusModal('error', 'Out of stock');
-            this.updateSubmitButton(false);
-            return;
-          }
-        }
-        const maxOrderQty = new BigNumber(this.productInfo.maxQuantity ?? 0);
-        if (maxOrderQty.minus(requireQty).lt(0)) {
-          this.showTxStatusModal('error', 'Over Maximum Order Quantity');
-          this.updateSubmitButton(false);
-          return;
-        }
-
-        const amount = this.productInfo.price.times(requireQty).shiftedBy(-token.decimals);
-        if (balance.lt(amount)) {
-          this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-          this.updateSubmitButton(false);
-          return;
-        }
-        await this.buyToken(requireQty);
-      } else if (this._type === ProductType.Subscription) {
-        if (!this.edtStartDate.value) {
-          this.showTxStatusModal('error', 'Start Date Required');
-          this.updateSubmitButton(false);
-          return;
-        }
-        const duration = Number(this.edtDuration.value) || 0;
-        if (!this.edtDuration.value || duration <= 0 || !Number.isInteger(duration)) {
-          this.showTxStatusModal('error', !this.edtDuration.value ? 'Duration Required' : 'Invalid Duration');
-          this.updateSubmitButton(false);
-          return;
-        }
-        await this.buyToken();
-      } else {
-        if (!this.tokenInput.value) {
-          this.showTxStatusModal('error', 'Amount Required');
-          this.updateSubmitButton(false);
-          return;
-        }
-        if (balance.lt(this.tokenInput.value)) {
-          this.showTxStatusModal('error', `Insufficient ${this.tokenInput.token.symbol} Balance`);
-          this.updateSubmitButton(false);
-          return;
-        }
-        await this.buyToken();
-      }
-      this.updateSubmitButton(false);
-      if (this.txStatusModal) this.txStatusModal.closeModal();
-    } catch (error) {
-      this.showTxStatusModal('error', error);
-      this.updateSubmitButton(false);
-    }
+    const days = this.getDurationInDays();
+    await this.nftMinterModel.doSubmitAction(
+      this.configModel,
+      this.tokenInput.token,
+      this.tokenInput.value,
+      this.edtQty.value,
+      this.edtStartDate.value,
+      this.edtDuration.value,
+      days
+    );
   }
 
   private async onSubmit() {
@@ -1025,78 +952,6 @@ export default class ScomNftMinter extends Module {
       this.showTxStatusModal('warning', 'Confirming');
     }
     this.approvalModelAction.doPayAction();
-  }
-
-  private async mintNft() {
-    const txHashCallback = (err: Error, receipt?: string) => {
-      if (err) {
-        this.showTxStatusModal('error', err);
-        this.updateSubmitButton(false);
-      }
-    }
-    const confirmationCallback = async (receipt: any) => {
-      const oswapTroll = await fetchOswapTrollNftInfo(this.state, this.nftAddress);
-      if (oswapTroll) {
-        this.lblSpotsRemaining.caption = formatNumber(oswapTroll.cap, 0);
-        this.cap = oswapTroll.cap.toNumber();
-      }
-      const nftBalance = await fetchUserNftBalance(this.state, this.nftAddress);
-      this.lbOwn.caption = formatNumber(nftBalance || 0, 0);
-      this.updateSubmitButton(false);
-      if (this.onMintedNFT) this.onMintedNFT();
-    }
-    registerSendTxEvents({
-      transactionHash: txHashCallback,
-      confirmation: confirmationCallback
-    });
-
-    await mintOswapTrollNft(this.nftAddress, txHashCallback);
-  }
-
-  private async buyToken(quantity?: number) {
-    if (!this.productId) return;
-    const callback = (error: Error, receipt?: string) => {
-      if (error) {
-        this.showTxStatusModal('error', error);
-      }
-    };
-    const token = this.productInfo.token;
-    if (this.productType == ProductType.DonateToOwner || this.productType == ProductType.DonateToEveryone) {
-      await donate(this.state, this.productId, this.recipient, this.tokenInput.value, this._data.commissions, token, callback,
-        async () => {
-          await this.updateTokenBalance();
-        }
-      );
-    }
-    else if (this.productType === ProductType.Subscription) {
-      const startTime = this.edtStartDate.value.unix();
-      const days = this.getDurationInDays();
-      const duration = days * 86400;
-      const confirmationCallback = async () => {
-        this.productInfo = await getProductInfo(this.state, this.productId);
-        const nftBalance = await getNFTBalance(this.state, this.productId);
-        this.lbOwn.caption = nftBalance;
-        this.updateSpotsRemaining();
-        if (this.onMintedNFT) this.onMintedNFT();
-      };
-      if (this.isRenewal) {
-        await renewSubscription(this.state, this.productId, duration, this.recipient, this.discountApplied?.id ?? 0, callback, confirmationCallback);
-      } else {
-        await subscribe(this.state, this.productId, startTime, duration, this.recipient, this._data.referrer, this.discountApplied?.id ?? 0, callback, confirmationCallback);
-      }
-    }
-    else if (this.productType == ProductType.Buy) {
-      await buyProduct(this.state, this.productId, quantity, this._data.commissions, token, callback,
-        async () => {
-          await this.updateTokenBalance();
-          this.productInfo = await getProductInfo(this.state, this.productId);
-          const nftBalance = await getNFTBalance(this.state, this.productId);
-          this.lbOwn.caption = nftBalance;
-          this.updateSpotsRemaining();
-          if (this.onMintedNFT) this.onMintedNFT();
-        }
-      );
-    }
   }
 
   private getDurationInDays() {
@@ -1126,30 +981,9 @@ export default class ScomNftMinter extends Module {
   }
 
   private _updateDiscount() {
-    this.discountApplied = undefined;
     const duration = Number(this.edtDuration.value) || 0;
-    if (!this.discountRules?.length || !duration || !this.edtStartDate.value) return;
-    const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-    const startTime = this.edtStartDate.value.unix();
     const days = this.getDurationInDays();
-    const durationInSec = days * 86400;
-    let discountAmount: BigNumber;
-    for (let rule of this.discountRules) {
-      if (rule.discountApplication === 0 && this.isRenewal) continue;
-      if (rule.discountApplication === 1 && !this.isRenewal) continue;
-      if ((rule.startTime > 0 && startTime < rule.startTime) || (rule.endTime > 0 && startTime > rule.endTime) || rule.minDuration.gt(durationInSec)) continue;
-      let basePrice: BigNumber = price;
-      if (rule.discountPercentage > 0) {
-        basePrice = price.times(1 - rule.discountPercentage / 100)
-      } else if (rule.fixedPrice.gt(0)) {
-        basePrice = rule.fixedPrice;
-      }
-      let tmpDiscountAmount = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
-      if (!this.discountApplied || tmpDiscountAmount.gt(discountAmount)) {
-        this.discountApplied = rule;
-        discountAmount = tmpDiscountAmount;
-      }
-    }
+    this.nftMinterModel.updateDiscount(duration, this.edtStartDate.value, days);
   }
 
   private _updateTotalAmount() {
@@ -1173,7 +1007,7 @@ export default class ScomNftMinter extends Module {
     const days = this.getDurationInDays();
     const amountRaw = pricePerDay.times(days);
     const amount = Utils.fromDecimals(amountRaw, this.productInfo.token.decimals);
-    this.tokenAmountIn = amount.toFixed();
+    this.nftMinterModel.updateTokenAmountIn(0, [], amount.toFixed());
     if (this.discountApplied) {
       const discountAmountRaw = price.minus(basePrice).div(this.productInfo.priceDuration.div(86400)).times(days);
       const discountAmount = Utils.fromDecimals(discountAmountRaw, this.productInfo.token.decimals);
@@ -1192,7 +1026,8 @@ export default class ScomNftMinter extends Module {
     this._updateDiscount();
     this._updateTotalAmount();
     if (this.approvalModelAction) {
-      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      const { productInfo, tokenAmountIn } = this.nftMinterModel;
+      this.approvalModelAction.checkAllowance(productInfo.token, tokenAmountIn);
     }
   }
 
@@ -1201,7 +1036,8 @@ export default class ScomNftMinter extends Module {
     this._updateDiscount();
     this._updateTotalAmount();
     if (this.approvalModelAction) {
-      this.approvalModelAction.checkAllowance(this.productInfo.token, this.tokenAmountIn);
+      const { productInfo, tokenAmountIn } = this.nftMinterModel;
+      this.approvalModelAction.checkAllowance(productInfo.token, tokenAmountIn);
     }
   }
 

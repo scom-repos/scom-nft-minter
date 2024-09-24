@@ -1,6 +1,6 @@
 /// <reference path="@ijstech/eth-wallet/index.d.ts" />
-/// <reference path="@scom/scom-commission-proxy-contract/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@scom/scom-dapp-container/@ijstech/eth-wallet/index.d.ts" />
+/// <reference path="@scom/scom-commission-proxy-contract/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
 /// <reference path="@scom/scom-commission-fee-setup/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
@@ -288,44 +288,6 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const comboBoxStyle: string;
     export const readOnlyStyle: string;
 }
-/// <amd-module name="@scom/scom-nft-minter/API.ts" />
-declare module "@scom/scom-nft-minter/API.ts" {
-    import { BigNumber } from '@ijstech/eth-wallet';
-    import { ProductType, ICommissionInfo, IProductInfo, IDiscountRule } from "@scom/scom-nft-minter/interface/index.tsx";
-    import { ITokenObject } from '@scom/scom-token-list';
-    import { State } from "@scom/scom-nft-minter/store/index.ts";
-    function getProductInfo(state: State, productId: number): Promise<IProductInfo>;
-    function getProductOwner(state: State, productId: number): Promise<string>;
-    function getNFTBalance(state: State, productId: number): Promise<string>;
-    function getProductId(state: State, nftAddress: string, nftId?: number): Promise<number>;
-    function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any): number;
-    function getDiscountRules(state: State, productId: number): Promise<IDiscountRule[]>;
-    function updateDiscountRules(state: State, productId: number, rules: IDiscountRule[], ruleIdsToDelete?: number[], callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
-    maxQuantity: number, // max quantity for one buy() txn
-    price: string, maxPrice: string, //for donation only, no max price when it is 0
-    tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
-    tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
-    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
-    function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
-    function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, referrer: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
-    function renewSubscription(state: State, productId: number, duration: number, recipient: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
-    function updateCommissionCampaign(state: State, productId: number, commissionRate: string, affiliates: string[], callback?: any, confirmationCallback?: any): Promise<any>;
-    function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function fetchUserNftBalance(state: State, address: string): Promise<string>;
-    function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
-    function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
-        cap: BigNumber;
-        price: BigNumber;
-        tokenAddress: string;
-    }>;
-    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, renewSubscription, getProductOwner, updateProductUri, updateProductPrice, updateCommissionCampaign, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
-}
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
     const _default: {
@@ -399,6 +361,44 @@ declare module "@scom/scom-nft-minter/data.json.ts" {
         };
     };
     export default _default;
+}
+/// <amd-module name="@scom/scom-nft-minter/API.ts" />
+declare module "@scom/scom-nft-minter/API.ts" {
+    import { BigNumber } from '@ijstech/eth-wallet';
+    import { ProductType, ICommissionInfo, IProductInfo, IDiscountRule } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ITokenObject } from '@scom/scom-token-list';
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    function getProductInfo(state: State, productId: number): Promise<IProductInfo>;
+    function getProductOwner(state: State, productId: number): Promise<string>;
+    function getNFTBalance(state: State, productId: number): Promise<string>;
+    function getProductId(state: State, nftAddress: string, nftId?: number): Promise<number>;
+    function getProductIdFromEvent(productMarketplaceAddress: string, receipt: any): number;
+    function getDiscountRules(state: State, productId: number): Promise<IDiscountRule[]>;
+    function updateDiscountRules(state: State, productId: number, rules: IDiscountRule[], ruleIdsToDelete?: number[], callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function newProduct(productMarketplaceAddress: string, productType: ProductType, quantity: number, // max quantity of this nft can be exist at anytime
+    maxQuantity: number, // max quantity for one buy() txn
+    price: string, maxPrice: string, //for donation only, no max price when it is 0
+    tokenAddress: string, //Native token 0x0000000000000000000000000000000000000000
+    tokenDecimals: number, uri: string, nftName?: string, nftSymbol?: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function createSubscriptionNFT(productMarketplaceAddress: string, quantity: number, price: string, tokenAddress: string, tokenDecimals: number, uri: string, priceDuration?: number, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function newDefaultBuyProduct(productMarketplaceAddress: string, qty: number, // max quantity of this nft can be exist at anytime
+    price: string, tokenAddress: string, tokenDecimals: number, uri: string, callback?: any, confirmationCallback?: any): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function getProxyTokenAmountIn(productPrice: string, quantity: number, commissions: ICommissionInfo[]): string;
+    function buyProduct(state: State, productId: number, quantity: number, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    function donate(state: State, productId: number, donateTo: string, amountIn: string, commissions: ICommissionInfo[], token: ITokenObject, callback?: any, confirmationCallback?: any): Promise<any>;
+    function subscribe(state: State, productId: number, startTime: number, duration: number, recipient: string, referrer: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function renewSubscription(state: State, productId: number, duration: number, recipient: string, discountRuleId?: number, callback?: any, confirmationCallback?: any): Promise<any>;
+    function updateCommissionCampaign(state: State, productId: number, commissionRate: string, affiliates: string[], callback?: any, confirmationCallback?: any): Promise<any>;
+    function updateProductUri(productMarketplaceAddress: string, productId: number | BigNumber, uri: string): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function updateProductPrice(productMarketplaceAddress: string, productId: number | BigNumber, price: number | BigNumber, tokenDecimals: number): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function fetchUserNftBalance(state: State, address: string): Promise<string>;
+    function mintOswapTrollNft(address: string, callback: (err: Error, receipt?: string) => void): Promise<import("@ijstech/eth-contract").TransactionReceipt>;
+    function fetchOswapTrollNftInfo(state: State, address: string): Promise<{
+        cap: BigNumber;
+        price: BigNumber;
+        tokenAddress: string;
+    }>;
+    export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, renewSubscription, getProductOwner, updateProductUri, updateProductPrice, updateCommissionCampaign, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
 /// <amd-module name="@scom/scom-nft-minter/component/fieldUpdate.tsx" />
 declare module "@scom/scom-nft-minter/component/fieldUpdate.tsx" {
@@ -1355,14 +1355,75 @@ declare module "@scom/scom-nft-minter/model/configModel.ts" {
         private newProduct;
     }
 }
+/// <amd-module name="@scom/scom-nft-minter/model/nftMinterModel.ts" />
+declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
+    import { ITokenObject } from "@scom/scom-token-list";
+    import { BigNumber } from "@ijstech/eth-contract";
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    import { ICommissionInfo, IDiscountRule, IOswapTroll, IProductInfo, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { ConfigModel } from "@scom/scom-nft-minter/model/configModel.ts";
+    interface INFTMinterOptions {
+        updateSubmitButton: (submitting?: boolean) => void;
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
+        closeTxStatusModal: () => void;
+        onMintedNft: (oswapTroll: IOswapTroll, nftBalance: string) => void;
+        onDonated: () => Promise<void>;
+        onSubscribed: (nftBalance: string) => void;
+        onBoughtProduct: (nftBalance: string) => Promise<void>;
+    }
+    export class NFTMinterModel {
+        private state;
+        private options;
+        private _productInfo;
+        private _oswapTrollInfo;
+        private _discountRules;
+        private _discountApplied;
+        private _cap;
+        private _isRenewal;
+        private _tokenAmountIn;
+        constructor(state: State, options: INFTMinterOptions);
+        get rpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
+        get chainId(): number;
+        set productInfo(value: IProductInfo);
+        get productInfo(): IProductInfo;
+        get discountRules(): IDiscountRule[];
+        set discountRules(value: IDiscountRule[]);
+        get oswapTrollInfo(): IOswapTroll;
+        get tokenSymbol(): string;
+        get cap(): number;
+        get isRenewal(): boolean;
+        set isRenewal(value: boolean);
+        get discountApplied(): IDiscountRule;
+        set discountApplied(value: IDiscountRule);
+        get tokenAmountIn(): string;
+        updateTokenAmountIn: (qty: number, commissions: ICommissionInfo[], value?: string) => void;
+        updateDiscount: (duration: number, startDate: any, days: number) => void;
+        getTokenBalance: (_token?: ITokenObject) => Promise<BigNumber>;
+        fetchOswapTrollNftInfo: (nftAddress: string) => Promise<{
+            price: BigNumber;
+            cap: BigNumber;
+            tokenAddress: string;
+            token: ITokenObject;
+            nftBalance: string | number;
+        }>;
+        fetchProductInfo: (productId: number, type: ProductType, isDataUpdated?: boolean) => Promise<void>;
+        fetchDiscountRules: (productId: number) => Promise<void>;
+        fetchNftBalance: (productId: number) => Promise<string | 0>;
+        getProductInfo: (productId: number) => Promise<IProductInfo>;
+        doSubmitAction: (configModel: ConfigModel, token: ITokenObject, tokenValue: string, qty: string, startDate: any, duration: any, days: number) => Promise<void>;
+        private mintNft;
+        private buyToken;
+    }
+}
 /// <amd-module name="@scom/scom-nft-minter/model/index.ts" />
 declare module "@scom/scom-nft-minter/model/index.ts" {
     export { ConfigModel } from "@scom/scom-nft-minter/model/configModel.ts";
+    export { NFTMinterModel } from "@scom/scom-nft-minter/model/nftMinterModel.ts";
 }
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IOswapTroll, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -1454,26 +1515,15 @@ declare module "@scom/scom-nft-minter" {
         private gridMain;
         private mdWallet;
         private configModel;
-        private productInfo;
-        private _type;
-        private _data;
+        private nftMinterModel;
         private approvalModelAction;
         private isApproving;
-        private tokenAmountIn;
         tag: any;
         defaultEdit: boolean;
         private contractAddress;
-        private rpcWalletEvents;
-        private cap;
-        private oswapTrollInfo;
         private detailWrapper;
         private erc1155Wrapper;
         private btnDetail;
-        private isConfigNewIndex;
-        private isOnChangeUpdated;
-        private discountRules;
-        private discountApplied;
-        private _isRenewal;
         private _renewalDate;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
@@ -1491,6 +1541,8 @@ declare module "@scom/scom-nft-minter" {
         get recipient(): string;
         get link(): string;
         set link(value: string);
+        get oswapTrollInfo(): IOswapTroll;
+        get productInfo(): import("@scom/scom-nft-minter/interface/index.tsx").IProductInfo;
         get productId(): number;
         get productType(): ProductType;
         set productType(value: ProductType);
@@ -1516,6 +1568,7 @@ declare module "@scom/scom-nft-minter" {
         set isRenewal(value: boolean);
         get renewalDate(): number;
         set renewalDate(value: number);
+        get discountApplied(): IDiscountRule;
         private onChainChanged;
         private onWalletConnected;
         private updateTokenBalance;
@@ -1633,7 +1686,7 @@ declare module "@scom/scom-nft-minter" {
         private updateDAppUI;
         private updateUIBySetData;
         private refreshWidget;
-        getProductInfo(): Promise<IProductInfo>;
+        getProductInfo(): Promise<import("@scom/scom-nft-minter/interface/index.tsx").IProductInfo>;
         private updateTokenAddress;
         private updateSpotsRemaining;
         private onToggleDetail;
@@ -1652,8 +1705,6 @@ declare module "@scom/scom-nft-minter" {
         private onAmountChanged;
         private doSubmitAction;
         private onSubmit;
-        private mintNft;
-        private buyToken;
         private getDurationInDays;
         private _updateEndDate;
         private _updateDiscount;
