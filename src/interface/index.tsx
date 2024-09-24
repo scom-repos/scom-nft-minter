@@ -91,3 +91,11 @@ export interface IDiscountRule {
   endTime: number;
   discountApplication: number; // 0: FirstTimeOnly, 1: RenewalsOnly, 2: All
 }
+
+export interface IOswapTroll {
+  price: BigNumber;
+  cap: BigNumber;
+  tokenAddress: string;
+  token?: ITokenObject;
+  nftBalance?: string | number;
+}

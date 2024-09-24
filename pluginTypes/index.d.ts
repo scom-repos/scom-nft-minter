@@ -2,6 +2,7 @@
 /// <reference path="@scom/scom-commission-proxy-contract/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@scom/scom-dapp-container/@ijstech/eth-wallet/index.d.ts" />
 /// <reference path="@ijstech/eth-contract/index.d.ts" />
+/// <reference path="@scom/scom-commission-fee-setup/index.d.ts" />
 /// <amd-module name="@scom/scom-nft-minter/interface/index.tsx" />
 declare module "@scom/scom-nft-minter/interface/index.tsx" {
     import { BigNumber, IClientSideProvider } from "@ijstech/eth-wallet";
@@ -88,6 +89,13 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         startTime: number;
         endTime: number;
         discountApplication: number;
+    }
+    export interface IOswapTroll {
+        price: BigNumber;
+        cap: BigNumber;
+        tokenAddress: string;
+        token?: ITokenObject;
+        nftBalance?: string | number;
     }
 }
 /// <amd-module name="@scom/scom-nft-minter/store/tokens/mainnet/avalanche.ts" />
@@ -1170,11 +1178,191 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
         };
     };
 }
+/// <amd-module name="@scom/scom-nft-minter/model/configModel.ts" />
+declare module "@scom/scom-nft-minter/model/configModel.ts" {
+    import { Module } from "@ijstech/components";
+    import { State } from "@scom/scom-nft-minter/store/index.ts";
+    import ScomCommissionFeeSetup from "@scom/scom-commission-fee-setup";
+    import { ICommissionInfo, IDiscountRule, IEmbedData, INetworkConfig, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    interface IConfigOptions {
+        refreshWidget: (isDataUpdated?: boolean) => Promise<void>;
+        refreshDappContainer: () => void;
+        setContaiterTag: (value: any) => void;
+        updateTheme: () => void;
+        onChainChanged: () => Promise<void>;
+        onWalletConnected: () => Promise<void>;
+        connectWallet: () => Promise<void>;
+        showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
+        updateUIBySetData: () => Promise<void>;
+    }
+    export class ConfigModel {
+        private state;
+        private module;
+        private options;
+        private _data;
+        private productInfo;
+        private rpcWalletEvents;
+        private isConfigNewIndex;
+        private isOnChangeUpdated;
+        constructor(state: State, module: Module, options: IConfigOptions);
+        get chainId(): number;
+        get defaultChainId(): number;
+        set defaultChainId(value: number);
+        get wallets(): IWalletPlugin[];
+        set wallets(value: IWalletPlugin[]);
+        get networks(): INetworkConfig[];
+        set networks(value: INetworkConfig[]);
+        get showHeader(): boolean;
+        set showHeader(value: boolean);
+        get commissions(): ICommissionInfo[];
+        set commissions(value: ICommissionInfo[]);
+        get rpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
+        get nftType(): "ERC721" | "ERC1155";
+        get nftAddress(): string;
+        get newPrice(): number;
+        get newMaxQty(): number;
+        get newTxnMaxQty(): number;
+        get recipient(): string;
+        get referrer(): string;
+        get productId(): number;
+        get productType(): ProductType;
+        set productType(value: ProductType);
+        get discountRuleId(): number;
+        set discountRuleId(value: number);
+        get chainSpecificProperties(): any;
+        set chainSpecificProperties(value: any);
+        get link(): string;
+        set link(value: string);
+        get name(): string;
+        set name(value: string);
+        get description(): string;
+        set description(value: string);
+        get logoUrl(): string;
+        set logoUrl(value: string);
+        private getBuilderActions;
+        private getProjectOwnerActions;
+        getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean): ({
+            name: string;
+            target: string;
+            getProxySelectors: (chainId: number) => Promise<string[]>;
+            getActions: () => any[];
+            getData: any;
+            setData: (data: IEmbedData) => Promise<void>;
+            getTag: any;
+            setTag: any;
+            setupData?: undefined;
+            updateDiscountRules?: undefined;
+            updateCommissionCampaign?: undefined;
+            elementName?: undefined;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+            bindOnChanged?: undefined;
+        } | {
+            name: string;
+            target: string;
+            getActions: (category?: string) => any;
+            getData: any;
+            setData: (data: IEmbedData) => Promise<void>;
+            setupData: (data: IEmbedData) => Promise<boolean>;
+            updateDiscountRules: (productId: number, rules: IDiscountRule[], ruleIdsToDelete?: number[]) => Promise<unknown>;
+            updateCommissionCampaign: (productId: number, commissionRate: string, affiliates: string[]) => Promise<unknown>;
+            getTag: any;
+            setTag: any;
+            getProxySelectors?: undefined;
+            elementName?: undefined;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+            bindOnChanged?: undefined;
+        } | {
+            name: string;
+            target: string;
+            elementName: string;
+            getLinkParams: () => {
+                data: string;
+            };
+            setLinkParams: (params: any) => Promise<void>;
+            bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
+            getData: () => {
+                fee: string;
+                productId?: number;
+                name?: string;
+                title?: string;
+                nftType?: "ERC721" | "ERC1155";
+                chainId?: number;
+                nftAddress?: string;
+                productType?: ProductType;
+                erc1155Index?: number;
+                tokenToMint?: string;
+                isCustomMintToken?: boolean;
+                customMintToken?: string;
+                priceToMint?: number;
+                maxQty?: number;
+                paymentModel?: PaymentModel;
+                durationInDays?: number;
+                priceDuration?: number;
+                txnMaxQty?: number;
+                uri?: string;
+                recipient?: string;
+                logoUrl?: string;
+                description?: string;
+                link?: string;
+                discountRuleId?: number;
+                commissions?: ICommissionInfo[];
+                referrer?: string;
+                chainSpecificProperties?: Record<number, import("@scom/scom-nft-minter/interface/index.tsx").IChainSpecificProperties>;
+                defaultChainId: number;
+                wallets: IWalletPlugin[];
+                networks: any[];
+                showHeader?: boolean;
+            };
+            setData: any;
+            getTag: any;
+            setTag: any;
+            getProxySelectors?: undefined;
+            getActions?: undefined;
+            setupData?: undefined;
+            updateDiscountRules?: undefined;
+            updateCommissionCampaign?: undefined;
+        } | {
+            name: string;
+            target: string;
+            getActions: (category?: string) => any[];
+            getData: any;
+            setData: any;
+            getTag: any;
+            setTag: any;
+            getProxySelectors?: undefined;
+            setupData?: undefined;
+            updateDiscountRules?: undefined;
+            updateCommissionCampaign?: undefined;
+            elementName?: undefined;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+            bindOnChanged?: undefined;
+        })[];
+        getData(): IEmbedData;
+        setData(data: IEmbedData): Promise<void>;
+        getTag(): any;
+        setTag(value: any): void;
+        private updateTag;
+        private updateFormConfig;
+        removeRpcWalletEvents: () => void;
+        resetRpcWallet: () => Promise<void>;
+        initWallet: () => Promise<void>;
+        updateDataIndex: () => Promise<void>;
+        private getProductTypeByCode;
+        private _createProduct;
+        private newProduct;
+    }
+}
+/// <amd-module name="@scom/scom-nft-minter/model/index.ts" />
+declare module "@scom/scom-nft-minter/model/index.ts" {
+    export { ConfigModel } from "@scom/scom-nft-minter/model/configModel.ts";
+}
 /// <amd-module name="@scom/scom-nft-minter" />
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
-    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, PaymentModel, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
-    import ScomCommissionFeeSetup from '@scom/scom-commission-fee-setup';
+    import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IProductInfo, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -1265,6 +1453,7 @@ declare module "@scom/scom-nft-minter" {
         private pnlLoading;
         private gridMain;
         private mdWallet;
+        private configModel;
         private productInfo;
         private _type;
         private _data;
@@ -1290,6 +1479,7 @@ declare module "@scom/scom-nft-minter" {
         constructor(parent?: Container, options?: ScomNftMinterElement);
         removeRpcWalletEvents(): void;
         onHide(): void;
+        initModels(): void;
         static create(options?: ScomNftMinterElement, parent?: Container): Promise<ScomNftMinter>;
         private get chainId();
         private get rpcWallet();
@@ -1326,12 +1516,10 @@ declare module "@scom/scom-nft-minter" {
         set isRenewal(value: boolean);
         get renewalDate(): number;
         set renewalDate(value: number);
-        private getProductTypeByCode;
         private onChainChanged;
+        private onWalletConnected;
         private updateTokenBalance;
         private onSetupPage;
-        private getBuilderActions;
-        private getProjectOwnerActions;
         getConfigurators(type?: 'new1155' | 'customNft', readonly?: boolean, isPocily?: boolean): ({
             name: string;
             target: string;
@@ -1372,7 +1560,7 @@ declare module "@scom/scom-nft-minter" {
                 data: string;
             };
             setLinkParams: (params: any) => Promise<void>;
-            bindOnChanged: (element: ScomCommissionFeeSetup, callback: (data: any) => Promise<void>) => void;
+            bindOnChanged: (element: import("@scom/scom-commission-fee-setup").default, callback: (data: any) => Promise<void>) => void;
             getData: () => {
                 fee: string;
                 productId?: number;
@@ -1388,7 +1576,7 @@ declare module "@scom/scom-nft-minter" {
                 customMintToken?: string;
                 priceToMint?: number;
                 maxQty?: number;
-                paymentModel?: PaymentModel;
+                paymentModel?: import("@scom/scom-nft-minter/interface/index.tsx").PaymentModel;
                 durationInDays?: number;
                 priceDuration?: number;
                 txnMaxQty?: number;
@@ -1431,23 +1619,20 @@ declare module "@scom/scom-nft-minter" {
             setLinkParams?: undefined;
             bindOnChanged?: undefined;
         })[];
-        private getData;
-        private resetRpcWallet;
+        private refreshDappContainer;
         showLoading(): void;
         hideLoading(): void;
-        private setData;
-        private getTag;
-        private updateTag;
-        private setTag;
+        getData(): Promise<IEmbedData>;
+        setData(data: IEmbedData): Promise<void>;
+        getTag(): any;
+        setTag(value: any): Promise<void>;
+        private setContaiterTag;
         private updateStyle;
         private updateTheme;
-        private updateFormConfig;
-        private _createProduct;
-        private newProduct;
         private connectWallet;
-        private initWallet;
         private updateDAppUI;
-        private refreshDApp;
+        private updateUIBySetData;
+        private refreshWidget;
         getProductInfo(): Promise<IProductInfo>;
         private updateTokenAddress;
         private updateSpotsRemaining;
