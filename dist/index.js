@@ -3277,7 +3277,7 @@ define("@scom/scom-nft-minter/model/nftMinterModel.ts", ["require", "exports", "
                 if (!this.discountRules?.length || !duration || !startDate)
                     return;
                 const price = eth_wallet_7.Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-                const startTime = startDate.value.unix();
+                const startTime = startDate.unix();
                 const durationInSec = days * 86400;
                 let discountAmount;
                 for (let rule of this.discountRules) {
