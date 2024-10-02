@@ -115,7 +115,7 @@ export class NFTMinterModel {
     this.discountApplied = undefined;
     if (!this.discountRules?.length || !duration || !startDate) return;
     const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals);
-    const startTime = startDate.value.unix();
+    const startTime = startDate.unix();
     const durationInSec = days * 86400;
     let discountAmount: BigNumber;
     for (let rule of this.discountRules) {
