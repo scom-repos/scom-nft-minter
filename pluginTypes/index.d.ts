@@ -1488,7 +1488,8 @@ declare module "@scom/scom-nft-minter" {
         private pnlSubscriptionPeriod;
         private edtRecipient;
         private edtStartDate;
-        private pnlStartDate;
+        private pnlCustomStartDate;
+        private chkCustomStartDate;
         private lblStartDate;
         private edtDuration;
         private comboDurationUnit;
@@ -1712,6 +1713,7 @@ declare module "@scom/scom-nft-minter" {
         private onStartDateChanged;
         private onDurationChanged;
         private onDurationUnitChanged;
+        private handleCustomCheckboxChange;
         init(): Promise<void>;
         render(): any;
     }

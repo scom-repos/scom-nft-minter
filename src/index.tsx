@@ -21,7 +21,8 @@ import {
   ComboBox,
   IComboItem,
   GridLayout,
-  Panel
+  Panel,
+  Checkbox
 } from '@ijstech/components';
 import { BigNumber, IERC20ApprovalAction, Utils, Wallet } from '@ijstech/eth-wallet';
 import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IOswapTroll, IWalletPlugin, ProductType } from './interface/index';
@@ -126,7 +127,8 @@ export default class ScomNftMinter extends Module {
   private pnlSubscriptionPeriod: StackLayout;
   private edtRecipient: Input;
   private edtStartDate: Datepicker;
-  private pnlStartDate: Panel;
+  private pnlCustomStartDate: Panel;
+  private chkCustomStartDate: Checkbox;
   private lblStartDate: Label;
   private edtDuration: Input;
   private comboDurationUnit: ComboBox;
@@ -590,10 +592,12 @@ export default class ScomNftMinter extends Module {
             this.pnlQty.visible = false;
             this.pnlSubscriptionPeriod.visible = type === ProductType.Subscription;
             if (isDataUpdated && type === ProductType.Subscription) {
+              this.chkCustomStartDate.checked = false;
               this.edtStartDate.value = this.isRenewal && this.renewalDate ? moment(this.renewalDate * 1000) : moment();
-              this.pnlStartDate.visible = !this.isRenewal;
-              this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY');
-              this.lblStartDate.visible = this.isRenewal;
+              this.edtStartDate.enabled = false;
+              this.pnlCustomStartDate.visible = !this.isRenewal;
+              this.lblStartDate.caption = this.isRenewal ? this.edtStartDate.value.format('DD/MM/YYYY hh:mm A') : "Now";
+              this.lblStartDate.visible = true;
               const rule = discountRuleId ? this.nftMinterModel.discountRules.find(rule => rule.id === discountRuleId) : null;
               const isExpired = rule && rule.endTime && rule.endTime < moment().unix();
               if (isExpired) this.configModel.discountRuleId = undefined;
@@ -923,6 +927,9 @@ export default class ScomNftMinter extends Module {
 
   private async doSubmitAction() {
     const days = this.getDurationInDays();
+    if (!this.isRenewal && !this.chkCustomStartDate.checked) {
+      this.edtStartDate.value = moment();
+    }
     await this.nftMinterModel.doSubmitAction(
       this.configModel,
       this.tokenInput.token,
@@ -969,7 +976,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private _updateEndDate() {
-    const dateFormat = 'YYYY-MM-DD';
+    const dateFormat = 'YYYY-MM-DD hh:mm A';
     if (!this.edtStartDate.value) {
       this.lblEndDate.caption = '-';
       return;
@@ -977,7 +984,7 @@ export default class ScomNftMinter extends Module {
     const startDate = moment(this.edtStartDate.value.format(dateFormat), dateFormat);
     const unit = ((this.comboDurationUnit.selectedItem as IComboItem)?.value || DurationUnits[0].value) as 'days' | 'months' | 'years';
     const duration = Number(this.edtDuration.value) || 0;
-    this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
+    this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY hh:mm A');
   }
 
   private _updateDiscount() {
@@ -1017,6 +1024,7 @@ export default class ScomNftMinter extends Module {
   }
 
   private onStartDateChanged() {
+    this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
     this._updateEndDate();
     this._updateDiscount();
   }
@@ -1038,6 +1046,18 @@ export default class ScomNftMinter extends Module {
     if (this.approvalModelAction) {
       const { productInfo, tokenAmountIn } = this.nftMinterModel;
       this.approvalModelAction.checkAllowance(productInfo.token, tokenAmountIn);
+    }
+  }
+
+  private handleCustomCheckboxChange() {
+    const isChecked = this.chkCustomStartDate.checked;
+    this.edtStartDate.enabled = isChecked;
+    if (isChecked) {
+      this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
+    } else {
+      this.edtStartDate.value = moment();
+      this.lblStartDate.caption = "Now";
+      this._updateEndDate();
     }
   }
 
@@ -1222,20 +1242,24 @@ export default class ScomNftMinter extends Module {
                     <i-stack id="pnlSubscriptionPeriod" direction="vertical" width="100%" gap="0.5rem" visible={false}>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Starts" font={{ bold: true, size: '1rem' }}></i-label>
-                        <i-panel id="pnlStartDate" width="50%">
+                        <i-label id="lblStartDate" font={{ size: '1rem' }} />
+                      </i-stack>
+                      <i-stack id="pnlCustomStartDate" direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10} visible={false}>
+                        <i-checkbox id="chkCustomStartDate" height="auto" caption="Custom" onChanged={this.handleCustomCheckboxChange}></i-checkbox>
+                        <i-panel width="50%">
                           <i-datepicker
                             id='edtStartDate'
                             height={36}
                             width="100%"
-                            type="date"
-                            placeholder="dd/mm/yyyy"
+                            type="dateTime"
+                            dateTimeFormat="DD/MM/YYYY hh:mm A"
+                            placeholder="dd/mm/yyyy hh:mm A"
                             background={{ color: Theme.input.background }}
                             font={{ size: '1rem' }}
                             border={{ radius: "0.375rem" }}
                             onChanged={this.onStartDateChanged}
                           ></i-datepicker>
                         </i-panel>
-                        <i-label id="lblStartDate" font={{ size: '1rem' }} visible={false} />
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
                         <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>

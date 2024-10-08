@@ -3733,10 +3733,12 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                 this.pnlQty.visible = false;
                                 this.pnlSubscriptionPeriod.visible = type === index_19.ProductType.Subscription;
                                 if (isDataUpdated && type === index_19.ProductType.Subscription) {
+                                    this.chkCustomStartDate.checked = false;
                                     this.edtStartDate.value = this.isRenewal && this.renewalDate ? (0, components_9.moment)(this.renewalDate * 1000) : (0, components_9.moment)();
-                                    this.pnlStartDate.visible = !this.isRenewal;
-                                    this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY');
-                                    this.lblStartDate.visible = this.isRenewal;
+                                    this.edtStartDate.enabled = false;
+                                    this.pnlCustomStartDate.visible = !this.isRenewal;
+                                    this.lblStartDate.caption = this.isRenewal ? this.edtStartDate.value.format('DD/MM/YYYY hh:mm A') : "Now";
+                                    this.lblStartDate.visible = true;
                                     const rule = discountRuleId ? this.nftMinterModel.discountRules.find(rule => rule.id === discountRuleId) : null;
                                     const isExpired = rule && rule.endTime && rule.endTime < (0, components_9.moment)().unix();
                                     if (isExpired)
@@ -4347,7 +4349,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             }
         }
         _updateEndDate() {
-            const dateFormat = 'YYYY-MM-DD';
+            const dateFormat = 'YYYY-MM-DD hh:mm A';
             if (!this.edtStartDate.value) {
                 this.lblEndDate.caption = '-';
                 return;
@@ -4355,7 +4357,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const startDate = (0, components_9.moment)(this.edtStartDate.value.format(dateFormat), dateFormat);
             const unit = (this.comboDurationUnit.selectedItem?.value || DurationUnits[0].value);
             const duration = Number(this.edtDuration.value) || 0;
-            this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY');
+            this.lblEndDate.caption = startDate.add(duration, unit).format('DD/MM/YYYY hh:mm A');
         }
         _updateDiscount() {
             const duration = Number(this.edtDuration.value) || 0;
@@ -4394,6 +4396,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             this.lbOrderTotal.caption = `${(0, index_20.formatNumber)(amount, 6)} ${this.productInfo.token?.symbol || ''}`;
         }
         onStartDateChanged() {
+            this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
             this._updateEndDate();
             this._updateDiscount();
         }
@@ -4413,6 +4416,18 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             if (this.approvalModelAction) {
                 const { productInfo, tokenAmountIn } = this.nftMinterModel;
                 this.approvalModelAction.checkAllowance(productInfo.token, tokenAmountIn);
+            }
+        }
+        handleCustomCheckboxChange() {
+            const isChecked = this.chkCustomStartDate.checked;
+            this.edtStartDate.enabled = isChecked;
+            if (isChecked) {
+                this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
+            }
+            else {
+                this.edtStartDate.value = (0, components_9.moment)();
+                this.lblStartDate.caption = "Now";
+                this._updateEndDate();
             }
         }
         async init() {
@@ -4514,9 +4529,11 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-stack", { id: "pnlSubscriptionPeriod", direction: "vertical", width: "100%", gap: "0.5rem", visible: false },
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Starts", font: { bold: true, size: '1rem' } }),
-                                                this.$render("i-panel", { id: "pnlStartDate", width: "50%" },
-                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "date", placeholder: "dd/mm/yyyy", background: { color: Theme.input.background }, font: { size: '1rem' }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanged })),
-                                                this.$render("i-label", { id: "lblStartDate", font: { size: '1rem' }, visible: false })),
+                                                this.$render("i-label", { id: "lblStartDate", font: { size: '1rem' } })),
+                                            this.$render("i-stack", { id: "pnlCustomStartDate", direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10, visible: false },
+                                                this.$render("i-checkbox", { id: "chkCustomStartDate", height: "auto", caption: "Custom", onChanged: this.handleCustomCheckboxChange }),
+                                                this.$render("i-panel", { width: "50%" },
+                                                    this.$render("i-datepicker", { id: 'edtStartDate', height: 36, width: "100%", type: "dateTime", dateTimeFormat: "DD/MM/YYYY hh:mm A", placeholder: "dd/mm/yyyy hh:mm A", background: { color: Theme.input.background }, font: { size: '1rem' }, border: { radius: "0.375rem" }, onChanged: this.onStartDateChanged }))),
                                             this.$render("i-stack", { direction: "horizontal", width: "100%", alignItems: "center", justifyContent: "space-between", gap: 10 },
                                                 this.$render("i-label", { caption: "Duration", font: { bold: true, size: '1rem' } }),
                                                 this.$render("i-stack", { direction: "horizontal", width: "50%", alignItems: "center", gap: "0.5rem" },
