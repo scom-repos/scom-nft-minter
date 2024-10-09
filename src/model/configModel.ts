@@ -116,7 +116,7 @@ export class ConfigModel {
   }
 
   get newPrice() {
-    return this._data.priceToMint;
+    return this._data.paymentModel === PaymentModel.Subscription ? this._data.perPeriodPrice : this._data.oneTimePrice;
   }
 
   get newMaxQty() {
@@ -284,7 +284,9 @@ export class ConfigModel {
                 defaultChainId,
                 tokenToMint,
                 customMintToken,
-                priceToMint,
+                duration,
+                perPeriodPirce,
+                oneTimePirce,
                 maxQty,
                 txnMaxQty,
                 uri,
@@ -306,7 +308,9 @@ export class ConfigModel {
                 defaultChainId,
                 tokenToMint,
                 customMintToken,
-                priceToMint,
+                duration,
+                perPeriodPirce,
+                oneTimePirce,
                 maxQty,
                 txnMaxQty,
                 uri
@@ -429,10 +433,13 @@ export class ConfigModel {
               this._data.productId = productId;
               this.productInfo = await getProductInfo(this.state, this.productId);
               this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
-              this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
               this._data.tokenToMint = this.productInfo.token.address;
+              const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
               if (this._data.productType === ProductType.Subscription) {
                 this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
+                this._data.perPeriodPrice = price;
+              } else {
+                this._data.oneTimePrice = price;
               }
             }
           }
@@ -665,6 +672,7 @@ export class ConfigModel {
     quantity: number,
     price: string,
     uri: string,
+    durationInDays?: number,
     token?: ITokenObject,
     callback?: any,
     confirmationCallback?: any
@@ -677,7 +685,7 @@ export class ConfigModel {
         token?.address || nullAddress,
         token?.decimals || 18,
         uri,
-        1 * 86400, // per day
+        (durationInDays || 1) * 86400, // per day
         callback,
         confirmationCallback
       );
@@ -720,7 +728,12 @@ export class ConfigModel {
           }
           this._data.nftAddress = this.productInfo.nft;
           this._data.productType = this.getProductTypeByCode(this.productInfo.productType.toNumber());
-          this._data.priceToMint = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+          const price = Utils.fromDecimals(this.productInfo.price, this.productInfo.token.decimals).toNumber();
+          if (this._data.productType === ProductType.Subscription) {
+            this._data.perPeriodPrice = price;
+          } else {
+            this._data.oneTimePrice = price;
+          }
           this._data.tokenToMint = this.productInfo.token.address;
           this._data.durationInDays = Math.ceil((this.productInfo.priceDuration?.toNumber() || 0) / 86400);
           return resolve(true);
@@ -746,7 +759,7 @@ export class ConfigModel {
           return resolve(false);
         }
         try {
-          const { tokenToMint, customMintToken, uri } = this._data;
+          const { tokenToMint, customMintToken, uri, durationInDays } = this._data;
           const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
           if (!tokenToMint || (isCustomToken && !customMintToken)) {
             this.options.showTxStatusModal('error', 'TokenToMint is missing!');
@@ -766,6 +779,7 @@ export class ConfigModel {
               maxQty,
               price,
               uri,
+              durationInDays,
               null,
               callback,
               confirmationCallback
@@ -786,6 +800,7 @@ export class ConfigModel {
               maxQty,
               price,
               uri,
+              durationInDays,
               token,
               callback,
               confirmationCallback

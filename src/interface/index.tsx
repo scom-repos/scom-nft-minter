@@ -50,7 +50,9 @@ export interface IEmbedData {
   tokenToMint?: string;
   isCustomMintToken?: boolean;
   customMintToken?: string;
-  priceToMint?: number;
+  duration?: number;
+  perPeriodPrice?: number;
+  oneTimePrice?: number;
   maxQty?: number;
   paymentModel?: PaymentModel;
   durationInDays?: number;
