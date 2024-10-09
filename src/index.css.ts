@@ -115,11 +115,33 @@ export const comboBoxStyle = Styles.style({
 })
 
 export const readOnlyStyle = Styles.style({
-  opacity: 0.8,
+  opacity: 0.65,
   cursor: 'default',
   $nest: {
     '*': {
       cursor: 'default'
+    },
+    '.btn-cb-network': {
+      borderColor: 'transparent !important',
+      background: Theme.action.disabledBackground
+    },
+    'i-icon': {
+      display: 'none'
+    },
+    '.icon-btn': {
+      display: 'none'
+    },
+    '.selection': {
+      borderRadius: 'inherit !important',
+      maxWidth: '100%'
+    },
+  }
+})
+
+export const readOnlyInfoStyle = Styles.style({
+  $nest: {
+    '&> i-panel > i-stack > :last-child': {
+      opacity: 0.7
     }
   }
 })

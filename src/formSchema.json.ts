@@ -1,11 +1,11 @@
 import ScomNetworkPicker from "@scom/scom-network-picker";
 import ScomTokenInput, { CUSTOM_TOKEN } from "@scom/scom-token-input";
-import { ComboBox, IComboItem, Input, Label, Panel } from "@ijstech/components";
+import { ComboBox, IComboItem, Input, Panel } from "@ijstech/components";
 import { comboBoxStyle, formInputStyle, readOnlyStyle } from "./index.css";
 import { ITokenObject } from "@scom/scom-token-list";
 import { nullAddress } from "./utils/index";
 import { State, SupportedERC20Tokens } from "./store/index";
-import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "./component/index";
+import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate } from "./component/index";
 import { PaymentModel } from "./interface/index";
 
 const chainIds = [97, 43113];
@@ -227,16 +227,49 @@ function getProjectOwnerSchema(isDonation?: boolean) {
                 tooltip: 'The index of your NFT inside the ERC1155 contract',
                 minimum: 1,
             },
-
+            paymentModel: {
+                type: 'string',
+                title: 'Payment Model',
+                oneOf: [
+                    {
+                        title: 'One-Time Purchase',
+                        const: PaymentModel.OneTimePurchase
+                    },
+                    {
+                        title: 'Subscription',
+                        const: PaymentModel.Subscription
+                    }
+                ],
+                required: true
+            },
             tokenToMint: {//for 1155 new index only
                 type: 'string',
                 title: 'Currency',
                 tooltip: 'Token to pay for the subscription',
             },
-            priceToMint: {//for 1155 new index only
-                title: 'Price',
+            customMintToken: {
+                type: 'string',
+                title: 'Currency Address',
+                tooltip: 'Token address to pay for the subscription',
+                required: true
+            },
+            durationInDays: {//for 1155 new index only
+                type: 'integer',
+                title: 'Minimum Subscription Period (in Days)',
+                required: true,
+                minimum: 1
+            },
+            perPeriodPrice: {//for 1155 new index only
                 type: 'number',
+                title: 'Subscription Price per Period',
                 tooltip: 'Amount of token to pay for the subscription',
+                required: true
+            },
+            oneTimePrice: {//for 1155 new index only
+                type: 'number',
+                title: 'Price',
+                tooltip: 'Amount of token to pay for one-time purchase',
+                required: true
             },
             maxQty: {//for 1155 new index only
                 type: 'integer',
@@ -304,13 +337,43 @@ function getProjectOwnerSchema(isDonation?: boolean) {
                                 },
                                 {
                                     type: 'Control',
-                                    scope: '#/properties/priceToMint',
+                                    scope: '#/properties/paymentModel',
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/durationInDays',
                                     rule: {
-                                        effect: 'HIDE',
+                                        effect: 'SHOW',
                                         condition: {
-                                            scope: '#/properties/nftType',
+                                            scope: '#/properties/paymentModel',
                                             schema: {
-                                                enum: ['ERC721', 'ERC1155']
+                                                const: PaymentModel.Subscription
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/perPeriodPrice',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/paymentModel',
+                                            schema: {
+                                                const: PaymentModel.Subscription
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    type: 'Control',
+                                    scope: '#/properties/oneTimePrice',
+                                    rule: {
+                                        effect: 'SHOW',
+                                        condition: {
+                                            scope: '#/properties/paymentModel',
+                                            schema: {
+                                                const: PaymentModel.OneTimePurchase
                                             }
                                         }
                                     }
@@ -410,9 +473,21 @@ export function getProjectOwnerSchema1(isPolicy?: boolean) {
             tooltip: 'Token address to pay for the subscription',
             required: true
         },
-        priceToMint: {
+        durationInDays: {
+            type: 'integer',
+            title: 'Minimum Subscription Period (in Days)',
+            required: true,
+            minimum: 1
+        },
+        perPeriodPrice: {
             type: 'number',
-            title: 'Subscription Price',
+            title: 'Subscription Price per Period',
+            tooltip: 'Amount of token to pay for the subscription',
+            required: true
+        },
+        oneTimePrice: {
+            type: 'number',
+            title: 'Price',
             tooltip: 'Amount of token to pay for the subscription',
             required: true
         },
@@ -478,7 +553,42 @@ export function getProjectOwnerSchema1(isPolicy?: boolean) {
         },
         {
             type: 'Control',
-            scope: '#/properties/priceToMint',
+            scope: '#/properties/durationInDays',
+            rule: {
+                effect: 'SHOW',
+                condition: {
+                    scope: '#/properties/paymentModel',
+                    schema: {
+                        const: PaymentModel.Subscription
+                    }
+                }
+            }
+        },
+        {
+            type: 'Control',
+            scope: '#/properties/perPeriodPrice',
+            rule: {
+                effect: 'SHOW',
+                condition: {
+                    scope: '#/properties/paymentModel',
+                    schema: {
+                        const: PaymentModel.Subscription
+                    }
+                }
+            }
+        },
+        {
+            type: 'Control',
+            scope: '#/properties/oneTimePrice',
+            rule: {
+                effect: 'SHOW',
+                condition: {
+                    scope: '#/properties/paymentModel',
+                    schema: {
+                        const: PaymentModel.OneTimePurchase
+                    }
+                }
+            }
         },
         {
             type: 'Control',
@@ -782,7 +892,9 @@ const getCustomControls = (isCustomToken?: boolean) => {
     let tokenInput: ScomTokenInput;
     let customTokenInput: Input;
     let cbbPaymentModel: ComboBox;
-    let priceInput: ScomNftMinterPriceInput;
+    let durationInput: Input;
+    let perPeriodPriceInput: Input;
+    let oneTimePirceInput: Input;
 
     const controls = {
         '#/properties/chainId': {
@@ -895,10 +1007,6 @@ const getCustomControls = (isCustomToken?: boolean) => {
                 });
                 cbbPaymentModel.classList.add(comboBoxStyle);
                 cbbPaymentModel.onChanged = () => {
-                    const value = (cbbPaymentModel.selectedItem as IComboItem)?.value;
-                    if (priceInput) {
-                        priceInput.isUnitShown = value === PaymentModel.Subscription;
-                    }
                     (pnl as any).onChanged()
                 }
                 (pnl as any).onChanged = () => { };
@@ -909,22 +1017,67 @@ const getCustomControls = (isCustomToken?: boolean) => {
             },
             setData: async (control: ComboBox, value: string) => {
                 cbbPaymentModel.selectedItem = payment.find(v => v.value === value);
-                if (priceInput) {
-                    priceInput.isUnitShown = value === PaymentModel.Subscription;
-                }
             }
         },
-        '#/properties/priceToMint': {
+        '#/properties/durationInDays': {
             render: () => {
-                priceInput = new ScomNftMinterPriceInput(undefined, {
-                    isUnitShown: (cbbPaymentModel?.selectedItem as IComboItem)?.value === PaymentModel.Subscription
+                durationInput = new Input(undefined, {
+                    inputType: 'integer',
+                    height: '42px',
+                    width: '100%'
                 });
-                return priceInput;
+                durationInput.classList.add(formInputStyle);
+                return durationInput;
             },
-            getData: (control: ScomNftMinterPriceInput) => {
+            getData: (control: Input) => {
+                if ((cbbPaymentModel?.selectedItem as IComboItem)?.value === PaymentModel.OneTimePurchase) {
+                    return 1;
+                }
                 return control.value;
             },
-            setData: async (control: ScomNftMinterPriceInput, value: number) => {
+            setData: async (control: Input, value: number) => {
+                control.value = value;
+            }
+        },
+        '#/properties/perPeriodPrice': {
+            render: () => {
+                perPeriodPriceInput = new Input(undefined, {
+                    inputType: 'number',
+                    height: '42px',
+                    width: '100%'
+                });
+                perPeriodPriceInput.classList.add(formInputStyle);
+                return perPeriodPriceInput;
+            },
+            getData: (control: Input) => {
+                let value = control.value;
+                if ((cbbPaymentModel?.selectedItem as IComboItem)?.value === PaymentModel.OneTimePurchase) {
+                    value = oneTimePirceInput?.value || 0;
+                }
+                return Number(value);
+            },
+            setData: async (control: Input, value: number) => {
+                control.value = value;
+            }
+        },
+        '#/properties/oneTimePrice': {
+            render: () => {
+                oneTimePirceInput = new Input(undefined, {
+                    inputType: 'number',
+                    height: '42px',
+                    width: '100%'
+                });
+                oneTimePirceInput.classList.add(formInputStyle);
+                return oneTimePirceInput;
+            },
+            getData: (control: Input) => {
+                let value = control.value;
+                if ((cbbPaymentModel?.selectedItem as IComboItem)?.value === PaymentModel.Subscription) {
+                    value = perPeriodPriceInput?.value || 0;
+                }
+                return Number(value);
+            },
+            setData: async (control: Input, value: number) => {
                 control.value = value;
             }
         }

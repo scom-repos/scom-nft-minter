@@ -52,7 +52,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         tokenToMint?: string;
         isCustomMintToken?: boolean;
         customMintToken?: string;
-        priceToMint?: number;
+        duration?: number;
+        perPeriodPrice?: number;
+        oneTimePrice?: number;
         maxQty?: number;
         paymentModel?: PaymentModel;
         durationInDays?: number;
@@ -287,6 +289,7 @@ declare module "@scom/scom-nft-minter/index.css.ts" {
     export const formInputStyle: string;
     export const comboBoxStyle: string;
     export const readOnlyStyle: string;
+    export const readOnlyInfoStyle: string;
 }
 /// <amd-module name="@scom/scom-nft-minter/data.json.ts" />
 declare module "@scom/scom-nft-minter/data.json.ts" {
@@ -445,34 +448,6 @@ declare module "@scom/scom-nft-minter/component/fieldUpdate.tsx" {
         render(): any;
     }
 }
-/// <amd-module name="@scom/scom-nft-minter/component/priceInput.tsx" />
-declare module "@scom/scom-nft-minter/component/priceInput.tsx" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
-    interface ScomNftMinterPriceInputElement extends ControlElement {
-        value?: number;
-        isUnitShown?: boolean;
-    }
-    global {
-        namespace JSX {
-            interface IntrinsicElements {
-                ['i-scom-nft-minter-price-input']: ScomNftMinterPriceInputElement;
-            }
-        }
-    }
-    export class ScomNftMinterPriceInput extends Module {
-        private inputField;
-        private lbUnit;
-        static create(options?: ScomNftMinterPriceInputElement, parent?: Container): Promise<ScomNftMinterPriceInput>;
-        constructor(parent?: Container, options?: ScomNftMinterPriceInputElement);
-        get value(): number;
-        set value(val: number);
-        set isUnitShown(val: boolean);
-        onChanged(): void;
-        private isNumber;
-        init(): void;
-        render(): any;
-    }
-}
 /// <amd-module name="@scom/scom-nft-minter/component/addressInput.tsx" />
 declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
     import { ControlElement, Module } from '@ijstech/components';
@@ -492,7 +467,10 @@ declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
     export class ScomNftMinterAddressInput extends Module {
         private edtAddress;
         private pnlProductInfo;
+        private pnlDurationInDays;
         private lblPaymentModel;
+        private lblDurationInDays;
+        private lblTitlePrice;
         private lblPriceToMint;
         private state;
         private timeout;
@@ -514,9 +492,8 @@ declare module "@scom/scom-nft-minter/component/addressInput.tsx" {
 /// <amd-module name="@scom/scom-nft-minter/component/index.ts" />
 declare module "@scom/scom-nft-minter/component/index.ts" {
     import { ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/fieldUpdate.tsx";
-    import { ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/priceInput.tsx";
     import { ScomNftMinterAddressInput } from "@scom/scom-nft-minter/component/addressInput.tsx";
-    export { ScomNftMinterFieldUpdate, ScomNftMinterPriceInput, ScomNftMinterAddressInput };
+    export { ScomNftMinterFieldUpdate, ScomNftMinterAddressInput };
 }
 /// <amd-module name="@scom/scom-nft-minter/formSchema.json.ts" />
 declare module "@scom/scom-nft-minter/formSchema.json.ts" {
@@ -524,7 +501,7 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
     import ScomTokenInput from "@scom/scom-token-input";
     import { ComboBox, Input, Panel } from "@ijstech/components";
     import { State } from "@scom/scom-nft-minter/store/index.ts";
-    import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate, ScomNftMinterPriceInput } from "@scom/scom-nft-minter/component/index.ts";
+    import { ScomNftMinterAddressInput, ScomNftMinterFieldUpdate } from "@scom/scom-nft-minter/component/index.ts";
     import { PaymentModel } from "@scom/scom-nft-minter/interface/index.tsx";
     export function getBuilderSchema(): {
         dataSchema: {
@@ -642,7 +619,19 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
-                priceToMint: {
+                durationInDays: {
+                    type: string;
+                    title: string;
+                    required: boolean;
+                    minimum: number;
+                };
+                perPeriodPrice: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                oneTimePrice: {
                     type: string;
                     title: string;
                     tooltip: string;
@@ -752,10 +741,20 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 getData: (control: ComboBox) => string;
                 setData: (control: ComboBox, value: string) => Promise<void>;
             };
-            '#/properties/priceToMint': {
-                render: () => ScomNftMinterPriceInput;
-                getData: (control: ScomNftMinterPriceInput) => number;
-                setData: (control: ScomNftMinterPriceInput, value: number) => Promise<void>;
+            '#/properties/durationInDays': {
+                render: () => Input;
+                getData: (control: Input) => any;
+                setData: (control: Input, value: number) => Promise<void>;
+            };
+            '#/properties/perPeriodPrice': {
+                render: () => Input;
+                getData: (control: Input) => number;
+                setData: (control: Input, value: number) => Promise<void>;
+            };
+            '#/properties/oneTimePrice': {
+                render: () => Input;
+                getData: (control: Input) => number;
+                setData: (control: Input, value: number) => Promise<void>;
             };
         };
     };
@@ -925,7 +924,19 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                     tooltip: string;
                     required: boolean;
                 };
-                priceToMint: {
+                durationInDays: {
+                    type: string;
+                    title: string;
+                    required: boolean;
+                    minimum: number;
+                };
+                perPeriodPrice: {
+                    type: string;
+                    title: string;
+                    tooltip: string;
+                    required: boolean;
+                };
+                oneTimePrice: {
                     type: string;
                     title: string;
                     tooltip: string;
@@ -1035,10 +1046,20 @@ declare module "@scom/scom-nft-minter/formSchema.json.ts" {
                 getData: (control: ComboBox) => string;
                 setData: (control: ComboBox, value: string) => Promise<void>;
             };
-            '#/properties/priceToMint': {
-                render: () => ScomNftMinterPriceInput;
-                getData: (control: ScomNftMinterPriceInput) => number;
-                setData: (control: ScomNftMinterPriceInput, value: number) => Promise<void>;
+            '#/properties/durationInDays': {
+                render: () => Input;
+                getData: (control: Input) => any;
+                setData: (control: Input, value: number) => Promise<void>;
+            };
+            '#/properties/perPeriodPrice': {
+                render: () => Input;
+                getData: (control: Input) => number;
+                setData: (control: Input, value: number) => Promise<void>;
+            };
+            '#/properties/oneTimePrice': {
+                render: () => Input;
+                getData: (control: Input) => number;
+                setData: (control: Input, value: number) => Promise<void>;
             };
         };
     } | {
@@ -1295,7 +1316,9 @@ declare module "@scom/scom-nft-minter/model/configModel.ts" {
                 tokenToMint?: string;
                 isCustomMintToken?: boolean;
                 customMintToken?: string;
-                priceToMint?: number;
+                duration?: number;
+                perPeriodPrice?: number;
+                oneTimePrice?: number;
                 maxQty?: number;
                 paymentModel?: PaymentModel;
                 durationInDays?: number;
@@ -1434,7 +1457,9 @@ declare module "@scom/scom-nft-minter" {
         productType?: 'Buy' | 'Subscription' | 'DonateToOwner' | 'DonateToEveryone';
         tokenToMint?: string;
         customMintToken?: string;
-        priceToMint?: string;
+        duration?: number;
+        perPeriodPrice?: number;
+        oneTimePrice?: number;
         maxQty?: number;
         txnMaxQty?: number;
         title?: string;
@@ -1628,7 +1653,9 @@ declare module "@scom/scom-nft-minter" {
                 tokenToMint?: string;
                 isCustomMintToken?: boolean;
                 customMintToken?: string;
-                priceToMint?: number;
+                duration?: number;
+                perPeriodPrice?: number;
+                oneTimePrice?: number;
                 maxQty?: number;
                 paymentModel?: import("@scom/scom-nft-minter/interface/index.tsx").PaymentModel;
                 durationInDays?: number;

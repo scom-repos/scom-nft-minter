@@ -50,7 +50,9 @@ interface ScomNftMinterElement extends ControlElement {
   //ERC1155NewIndex
   tokenToMint?: string;
   customMintToken?: string;
-  priceToMint?: string;
+  duration?: number;
+  perPeriodPrice?: number;
+  oneTimePrice?: number;
   maxQty?: number;
   txnMaxQty?: number;
 
@@ -1083,7 +1085,8 @@ export default class ScomNftMinter extends Module {
       const defaultChainId = this.getAttribute('defaultChainId', true);
       const tokenToMint = this.getAttribute('tokenToMint', true);
       const customMintToken = this.getAttribute('customMintToken', true);
-      const priceToMint = this.getAttribute('priceToMint', true);
+      const perPeriodPrice = this.getAttribute('perPeriodPrice', true);
+      const oneTimePrice = this.getAttribute('oneTimePrice', true);
       const maxQty = this.getAttribute('maxQty', true);
       const txnMaxQty = this.getAttribute('txnMaxQty', true);
       await this.setData({
@@ -1099,7 +1102,8 @@ export default class ScomNftMinter extends Module {
         defaultChainId,
         tokenToMint,
         customMintToken,
-        priceToMint,
+        perPeriodPrice,
+        oneTimePrice,
         maxQty,
         txnMaxQty,
         description,

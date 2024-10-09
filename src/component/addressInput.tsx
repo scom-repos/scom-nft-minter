@@ -11,7 +11,7 @@ import {
 } from '@ijstech/components';
 import { Utils } from '@ijstech/eth-wallet';
 import { getProductId, getProductInfo } from '../API';
-import { formInputStyle, readOnlyStyle } from '../index.css';
+import { formInputStyle, readOnlyInfoStyle, readOnlyStyle } from '../index.css';
 import { State } from '../store/index';
 
 const Theme = Styles.Theme.ThemeVars;
@@ -34,7 +34,10 @@ declare global {
 export class ScomNftMinterAddressInput extends Module {
     private edtAddress: Input;
     private pnlProductInfo: StackLayout;
+    private pnlDurationInDays: StackLayout;
     private lblPaymentModel: Label;
+    private lblDurationInDays: Label;
+    private lblTitlePrice: Label;
     private lblPriceToMint: Label;
     private state: State;
     private timeout: any;
@@ -76,8 +79,6 @@ export class ScomNftMinterAddressInput extends Module {
         this.edtAddress.readOnly = readOnly;
         if (readOnly) {
             this.edtAddress.classList.add(readOnlyStyle);
-            this.lblPaymentModel.classList.add(readOnlyStyle);
-            this.lblPriceToMint.classList.add(readOnlyStyle);
         }
     }
 
@@ -100,13 +101,17 @@ export class ScomNftMinterAddressInput extends Module {
             if (productId) {
                 const productInfo = await getProductInfo(this.state, productId);
                 const isSubscription = productInfo.productType.toNumber() === 1;
+                const durationInDays = Math.ceil((productInfo.priceDuration?.toNumber() || 0) / 86400);
                 this.lblPaymentModel.caption = isSubscription ? 'Subscription' : 'One-Time Purchase';
                 const price = FormatUtils.formatNumber(
                     Utils.fromDecimals(productInfo.price, productInfo.token.decimals).toFixed(),
                     { minValue: '0.0000001', hasTrailingZero: false }
                 );
                 const symbol = productInfo.token?.symbol || '';
-                this.lblPriceToMint.caption = `${price} ${symbol} ${isSubscription ? 'per day' : ''}`;
+                this.lblTitlePrice.caption = isSubscription ? 'Subscription Price per Period' : 'Price'
+                this.lblPriceToMint.caption = `${price} ${symbol}`;
+                this.lblDurationInDays.caption = durationInDays.toString();
+                this.pnlDurationInDays.visible = isSubscription;
             }
         })
     }
@@ -121,7 +126,7 @@ export class ScomNftMinterAddressInput extends Module {
                 class={formInputStyle}
                 onChanged={this.handleAddressChanged}
             ></i-input>
-            <i-stack id="pnlProductInfo" direction="vertical" width="100%" visible={false}>
+            <i-stack id="pnlProductInfo" class={readOnlyInfoStyle} direction="vertical" width="100%" visible={false}>
                 <i-panel padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
                     <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
                         <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
@@ -140,10 +145,28 @@ export class ScomNftMinterAddressInput extends Module {
                         </i-stack>
                     </i-stack>
                 </i-panel>
+                <i-panel id="pnlDurationInDays" visible={false} padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
+                    <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
+                        <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
+                            <i-label caption="Minimum Subscription Period (in Days)"></i-label>
+                        </i-stack>
+                        <i-stack
+                            direction="horizontal"
+                            alignItems="center"
+                            width="100%"
+                            height={42}
+                            background={{ color: Theme.input.background }}
+                            border={{ width: 0.5, style: 'solid', color: Theme.input.background, radius: '0.625rem' }}
+                            padding={{ top: '0.5rem', bottom: '0.5rem', left: '1rem', right: '1rem' }}
+                        >
+                            <i-label id="lblDurationInDays" font={{ color: Theme.input.fontColor }}></i-label>
+                        </i-stack>
+                    </i-stack>
+                </i-panel>
                 <i-panel padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
                     <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
                         <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
-                            <i-label caption="Subscription Price"></i-label>
+                            <i-label id="lblTitlePrice" caption="Subscription Price"></i-label>
                             <i-icon
                                 width="1rem"
                                 height="1rem"
