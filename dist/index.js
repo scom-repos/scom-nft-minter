@@ -4168,7 +4168,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             return this.configModel.getData();
         }
         async setData(data) {
-            this.configModel.setData(data);
+            await this.configModel.setData(data);
         }
         getTag() {
             return this.tag;

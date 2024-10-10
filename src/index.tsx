@@ -444,7 +444,7 @@ export default class ScomNftMinter extends Module {
   }
 
   async setData(data: IEmbedData) {
-    this.configModel.setData(data);
+    await this.configModel.setData(data);
   }
 
   getTag() {
