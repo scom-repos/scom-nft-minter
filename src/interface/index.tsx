@@ -67,9 +67,9 @@ export interface IEmbedData {
   commissions?: ICommissionInfo[];
   referrer?: string;
   chainSpecificProperties?: Record<number, IChainSpecificProperties>;
-  defaultChainId: number;
-  wallets: IWalletPlugin[];
-  networks: any[];
+  defaultChainId?: number;
+  wallets?: IWalletPlugin[];
+  networks?: any[];
   showHeader?: boolean;
 }
 

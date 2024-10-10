@@ -69,9 +69,9 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         commissions?: ICommissionInfo[];
         referrer?: string;
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
-        defaultChainId: number;
-        wallets: IWalletPlugin[];
-        networks: any[];
+        defaultChainId?: number;
+        wallets?: IWalletPlugin[];
+        networks?: any[];
         showHeader?: boolean;
     }
     export interface IWalletPlugin {
@@ -1333,9 +1333,9 @@ declare module "@scom/scom-nft-minter/model/configModel.ts" {
                 commissions?: ICommissionInfo[];
                 referrer?: string;
                 chainSpecificProperties?: Record<number, import("@scom/scom-nft-minter/interface/index.tsx").IChainSpecificProperties>;
-                defaultChainId: number;
-                wallets: IWalletPlugin[];
-                networks: any[];
+                defaultChainId?: number;
+                wallets?: IWalletPlugin[];
+                networks?: any[];
                 showHeader?: boolean;
             };
             setData: any;
@@ -1670,9 +1670,9 @@ declare module "@scom/scom-nft-minter" {
                 commissions?: import("@scom/scom-nft-minter/interface/index.tsx").ICommissionInfo[];
                 referrer?: string;
                 chainSpecificProperties?: Record<number, IChainSpecificProperties>;
-                defaultChainId: number;
-                wallets: IWalletPlugin[];
-                networks: any[];
+                defaultChainId?: number;
+                wallets?: IWalletPlugin[];
+                networks?: any[];
                 showHeader?: boolean;
             };
             setData: any;
