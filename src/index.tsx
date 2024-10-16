@@ -1333,6 +1333,19 @@ export default class ScomNftMinter extends Module {
                     <i-stack direction="vertical" width="100%" alignItems="center" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
                       <i-label id="lblSpotsRemaining" font={{ bold: true, size: '1rem' }} />
                     </i-stack>
+                    <i-button
+                      id="btnDetail"
+                      caption="More Information"
+                      rightIcon={{ width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }}
+                      background={{ color: 'transparent' }}
+                      border={{ width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }}
+                      width={280}
+                      maxWidth="100%"
+                      height={36}
+                      margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}
+                      onClick={this.onToggleDetail}
+                      visible={false}
+                    />
                     <i-hstack id="detailWrapper" horizontalAlignment="space-between" gap={10} visible={false} wrap="wrap">
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
                         <i-label caption="Marketplace Contract Address" font={{ bold: true, size: '1rem' }} />
@@ -1356,19 +1369,6 @@ export default class ScomNftMinter extends Module {
                         </i-hstack>
                       </i-hstack>
                     </i-hstack>
-                    <i-button
-                      id="btnDetail"
-                      caption="More Information"
-                      rightIcon={{ width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }}
-                      background={{ color: 'transparent' }}
-                      border={{ width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }}
-                      width={280}
-                      maxWidth="100%"
-                      height={36}
-                      margin={{ top: 4, bottom: 16, left: 'auto', right: 'auto' }}
-                      onClick={this.onToggleDetail}
-                      visible={false}
-                    />
                     <i-vstack
                       horizontalAlignment="center" verticalAlignment='center'
                       gap="8px" width="100%"
