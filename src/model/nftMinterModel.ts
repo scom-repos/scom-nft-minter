@@ -11,10 +11,10 @@ interface INFTMinterOptions {
   updateSubmitButton: (submitting?: boolean) => void;
   showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
   closeTxStatusModal: () => void;
-  onMintedNft: (oswapTroll: IOswapTroll, nftBalance: string) => void;
+  onMintedNft: (oswapTroll: IOswapTroll) => void;
   onDonated: () => Promise<void>;
-  onSubscribed: (nftBalance: string) => void;
-  onBoughtProduct: (nftBalance: string) => Promise<void>;
+  onSubscribed: () => void;
+  onBoughtProduct: () => Promise<void>;
 }
 
 export class NFTMinterModel {
@@ -23,10 +23,10 @@ export class NFTMinterModel {
     updateSubmitButton: async (submitting?: boolean) => { },
     showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => { },
     closeTxStatusModal: () => { },
-    onMintedNft: (oswapTroll: IOswapTroll, nftBalance: string) => { },
+    onMintedNft: (oswapTroll: IOswapTroll) => { },
     onDonated: async () => { },
-    onSubscribed: (nftBalance: string) => { },
-    onBoughtProduct: async (nftBalance: string) => { }
+    onSubscribed: () => { },
+    onBoughtProduct: async () => { }
   }
   private _productInfo: IProductInfo;
   private _oswapTrollInfo: IOswapTroll;
@@ -205,7 +205,8 @@ export class NFTMinterModel {
     qty: string,
     startDate: any,
     duration: any,
-    days: number
+    days: number,
+    recipient?: string
   ) => {
     const { productId, nftType, productType, nftAddress } = configModel;
     if (!configModel.getData() || (!productId && nftType !== 'ERC721')) return;
@@ -268,7 +269,7 @@ export class NFTMinterModel {
           this.options.updateSubmitButton(false);
           return;
         }
-        await this.buyToken(configModel, tokenValue, startDate, days, requireQty);
+        await this.buyToken(configModel, tokenValue, startDate, days, configModel.recipient, requireQty);
       } else if (productType === ProductType.Subscription) {
         if (!startDate) {
           this.options.showTxStatusModal('error', 'Start Date Required');
@@ -281,7 +282,7 @@ export class NFTMinterModel {
           this.options.updateSubmitButton(false);
           return;
         }
-        await this.buyToken(configModel, tokenValue, startDate, days);
+        await this.buyToken(configModel, tokenValue, startDate, days, recipient);
       } else {
         if (!tokenValue) {
           this.options.showTxStatusModal('error', 'Amount Required');
@@ -293,7 +294,7 @@ export class NFTMinterModel {
           this.options.updateSubmitButton(false);
           return;
         }
-        await this.buyToken(configModel, tokenValue, startDate, days);
+        await this.buyToken(configModel, tokenValue, startDate, days, configModel.recipient);
       }
       this.options.updateSubmitButton(false);
       this.options.closeTxStatusModal();
@@ -315,8 +316,7 @@ export class NFTMinterModel {
       if (oswapTroll) {
         this._cap = oswapTroll.cap.toNumber();
       }
-      const nftBalance = await fetchUserNftBalance(this.state, nftAddress);
-      this.options.onMintedNft(oswapTroll, nftBalance);
+      this.options.onMintedNft(oswapTroll);
     }
     registerSendTxEvents({
       transactionHash: txHashCallback,
@@ -331,9 +331,10 @@ export class NFTMinterModel {
     tokenValue: string,
     startDate: any,
     days: number,
+    recipient: string,
     quantity?: number
   ) {
-    const { productId, productType, recipient, referrer, commissions } = configModel;
+    const { productId, productType, referrer, commissions } = configModel;
     if (!productId) return;
     const callback = (error: Error, receipt?: string) => {
       if (error) {
@@ -353,8 +354,7 @@ export class NFTMinterModel {
       const duration = days * 86400;
       const confirmationCallback = async () => {
         this.productInfo = await getProductInfo(this.state, productId);
-        const nftBalance = await getNFTBalance(this.state, productId);
-        this.options.onSubscribed(nftBalance);
+        this.options.onSubscribed();
       };
       if (this.isRenewal) {
         await renewSubscription(this.state, productId, duration, recipient, this.discountApplied?.id ?? 0, callback, confirmationCallback);
@@ -366,8 +366,7 @@ export class NFTMinterModel {
       await buyProduct(this.state, productId, quantity, commissions, token, callback,
         async () => {
           this.productInfo = await getProductInfo(this.state, productId);
-          const nftBalance = await getNFTBalance(this.state, productId);
-          this.options.onBoughtProduct(nftBalance);
+          this.options.onBoughtProduct();
         }
       );
     }

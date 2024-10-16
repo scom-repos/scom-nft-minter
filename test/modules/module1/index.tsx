@@ -143,6 +143,7 @@ export default class Module1 extends Module {
             nftType={'ERC1155'}
             nftAddress="0xDB301a9Ef98843376C835aFB41608d6A319e138D"
             tokenToMint={nullAddress} //Native token
+            recipients={["0x0000000000000000000000000000000000000000", "0x1111111111111111111111111111111111111111"]}
             erc1155Index={1}
             chainId={43113}
             networks={[

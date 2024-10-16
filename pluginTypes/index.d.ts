@@ -62,6 +62,7 @@ declare module "@scom/scom-nft-minter/interface/index.tsx" {
         txnMaxQty?: number;
         uri?: string;
         recipient?: string;
+        recipients?: string[];
         logoUrl?: string;
         description?: string;
         link?: string;
@@ -1244,6 +1245,7 @@ declare module "@scom/scom-nft-minter/model/configModel.ts" {
         get newMaxQty(): number;
         get newTxnMaxQty(): number;
         get recipient(): string;
+        get recipients(): string[];
         get referrer(): string;
         get productId(): number;
         get productType(): ProductType;
@@ -1326,6 +1328,7 @@ declare module "@scom/scom-nft-minter/model/configModel.ts" {
                 txnMaxQty?: number;
                 uri?: string;
                 recipient?: string;
+                recipients?: string[];
                 logoUrl?: string;
                 description?: string;
                 link?: string;
@@ -1389,10 +1392,10 @@ declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
         updateSubmitButton: (submitting?: boolean) => void;
         showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
         closeTxStatusModal: () => void;
-        onMintedNft: (oswapTroll: IOswapTroll, nftBalance: string) => void;
+        onMintedNft: (oswapTroll: IOswapTroll) => void;
         onDonated: () => Promise<void>;
-        onSubscribed: (nftBalance: string) => void;
-        onBoughtProduct: (nftBalance: string) => Promise<void>;
+        onSubscribed: () => void;
+        onBoughtProduct: () => Promise<void>;
     }
     export class NFTMinterModel {
         private state;
@@ -1433,7 +1436,7 @@ declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
         fetchDiscountRules: (productId: number) => Promise<void>;
         fetchNftBalance: (productId: number) => Promise<string | 0>;
         getProductInfo: (productId: number) => Promise<IProductInfo>;
-        doSubmitAction: (configModel: ConfigModel, token: ITokenObject, tokenValue: string, qty: string, startDate: any, duration: any, days: number) => Promise<void>;
+        doSubmitAction: (configModel: ConfigModel, token: ITokenObject, tokenValue: string, qty: string, startDate: any, duration: any, days: number, recipient?: string) => Promise<void>;
         private mintNft;
         private buyToken;
     }
@@ -1466,6 +1469,7 @@ declare module "@scom/scom-nft-minter" {
         description?: string;
         logoUrl?: string;
         link?: string;
+        recipients?: string[];
         chainSpecificProperties?: Record<number, IChainSpecificProperties>;
         defaultChainId: number;
         wallets: IWalletPlugin[];
@@ -1502,16 +1506,15 @@ declare module "@scom/scom-nft-minter" {
         private pnlMintFee;
         private lblMintFee;
         private lblSpotsRemaining;
-        private lbContract;
+        private lbMarketplaceContract;
+        private lbNFTContract;
         private lbToken;
         private iconCopyToken;
-        private lbOwn;
-        private lbERC1155Index;
         private pnlTokenInput;
         private pnlQty;
         private edtQty;
         private pnlSubscriptionPeriod;
-        private edtRecipient;
+        private comboRecipient;
         private edtStartDate;
         private pnlCustomStartDate;
         private chkCustomStartDate;
@@ -1548,7 +1551,6 @@ declare module "@scom/scom-nft-minter" {
         defaultEdit: boolean;
         private contractAddress;
         private detailWrapper;
-        private erc1155Wrapper;
         private btnDetail;
         private _renewalDate;
         onMintedNFT: () => void;
@@ -1663,6 +1665,7 @@ declare module "@scom/scom-nft-minter" {
                 txnMaxQty?: number;
                 uri?: string;
                 recipient?: string;
+                recipients?: string[];
                 logoUrl?: string;
                 description?: string;
                 link?: string;
@@ -1718,9 +1721,11 @@ declare module "@scom/scom-nft-minter" {
         private updateTokenAddress;
         private updateSpotsRemaining;
         private onToggleDetail;
-        private onViewContract;
+        private onViewMarketplaceContract;
+        private onViewNFTContract;
         private onViewToken;
-        private onCopyContract;
+        private onCopyMarketplaceContract;
+        private onCopyNFTContract;
         private onCopyToken;
         private showTxStatusModal;
         private initApprovalAction;

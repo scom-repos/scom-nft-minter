@@ -60,6 +60,7 @@ export interface IEmbedData {
   txnMaxQty?: number;
   uri?: string;
   recipient?: string;
+  recipients?: string[];
   logoUrl?: string;
   description?: string;
   link?: string;

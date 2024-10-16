@@ -131,6 +131,10 @@ export class ConfigModel {
     return this._data.recipient ?? this._data.chainSpecificProperties?.[this.chainId]?.recipient ?? '';
   }
 
+  get recipients() {
+    return this._data.recipients || [];
+  }
+
   get referrer() {
     return this._data.referrer;
   }
