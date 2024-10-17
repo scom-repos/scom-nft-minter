@@ -603,7 +603,7 @@ export default class ScomNftMinter extends Module {
                 if (!this.isRenewal && rule.startTime && rule.startTime > this.edtStartDate.value.unix()) {
                   this.edtStartDate.value = moment(rule.startTime * 1000);
                 }
-                this.edtDuration.value = rule.minDuration.div(86400).toNumber();
+                this.edtDuration.value = rule.minDuration.gt(0) ? rule.minDuration.div(86400).toNumber() : 1;
                 this.comboDurationUnit.selectedItem = DurationUnits[0];
                 this.nftMinterModel.discountApplied = rule;
                 this._updateEndDate();
