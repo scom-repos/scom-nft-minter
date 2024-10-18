@@ -4227,7 +4227,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.lbToken.textDecoration = 'underline';
                 this.lbToken.font = { size: '1rem', color: Theme.colors.primary.main };
                 this.lbToken.classList.add(index_css_4.linkStyle);
-                this.lbToken.onClick = () => this.onCopyToken();
+                this.lbToken.onClick = () => this.onViewToken();
             }
             this.iconCopyToken.visible = !isNativeToken;
         }
@@ -4255,15 +4255,28 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             const token = this.nftType === 'ERC721' && !this.productId ? this.oswapTrollInfo.token : this.productInfo.token;
             this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
         }
-        onCopyMarketplaceContract() {
+        updateCopyIcon(icon) {
+            if (icon.name === 'check')
+                return;
+            icon.name = 'check';
+            icon.fill = Theme.colors.success.main;
+            setTimeout(() => {
+                icon.fill = Theme.colors.primary.contrastText;
+                icon.name = 'copy';
+            }, 1600);
+        }
+        onCopyMarketplaceContract(target) {
             components_8.application.copyToClipboard(this.state.getContractAddress('ProductMarketplace') || "");
+            this.updateCopyIcon(target);
         }
-        onCopyNFTContract() {
+        onCopyNFTContract(target) {
             components_8.application.copyToClipboard(this.nftAddress);
+            this.updateCopyIcon(target);
         }
-        onCopyToken() {
+        onCopyToken(target) {
             const token = this.nftType === 'ERC721' && !this.productId ? this.oswapTrollInfo.token : this.productInfo.token;
             components_8.application.copyToClipboard(token.address || token.symbol);
+            this.updateCopyIcon(target);
         }
         async initApprovalAction() {
             if (!this.approvalModelAction) {
@@ -4288,7 +4301,9 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.btnApprove.visible = false;
                         this.btnSubmit.visible = true;
                         this.isApproving = false;
-                        this.btnSubmit.enabled = new eth_wallet_8.BigNumber(this.nftMinterModel.tokenAmountIn).gt(0);
+                        const isSubscription = this.configModel.productType === index_19.ProductType.Subscription;
+                        const duration = Number(this.edtDuration.value) || 0;
+                        this.btnSubmit.enabled = new eth_wallet_8.BigNumber(this.nftMinterModel.tokenAmountIn).gt(0) && (!isSubscription || Number.isInteger(duration));
                         this.determineBtnSubmitCaption();
                     },
                     onApproving: async (token, receipt) => {
@@ -4566,11 +4581,16 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         handleCustomCheckboxChange() {
             const isChecked = this.chkCustomStartDate.checked;
             this.edtStartDate.enabled = isChecked;
+            const now = (0, components_8.moment)();
             if (isChecked) {
+                if (this.edtStartDate.value.isBefore(now)) {
+                    this.edtStartDate.value = now;
+                }
                 this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
+                this.edtStartDate.minDate = now;
             }
             else {
-                this.edtStartDate.value = (0, components_8.moment)();
+                this.edtStartDate.value = now;
                 this.lblStartDate.caption = "Now";
                 this._updateEndDate();
             }

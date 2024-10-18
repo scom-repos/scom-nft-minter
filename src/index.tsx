@@ -682,7 +682,7 @@ export default class ScomNftMinter extends Module {
       this.lbToken.textDecoration = 'underline';
       this.lbToken.font = { size: '1rem', color: Theme.colors.primary.main };
       this.lbToken.classList.add(linkStyle);
-      this.lbToken.onClick = () => this.onCopyToken();
+      this.lbToken.onClick = () => this.onViewToken();
     }
     this.iconCopyToken.visible = !isNativeToken;
   }
@@ -715,17 +715,30 @@ export default class ScomNftMinter extends Module {
     this.state.viewExplorerByAddress(this.chainId, token.address || token.symbol);
   }
 
-  private onCopyMarketplaceContract() {
+  private updateCopyIcon(icon: Icon) {
+    if (icon.name === 'check') return;
+    icon.name = 'check';
+    icon.fill = Theme.colors.success.main;
+    setTimeout(() => {
+      icon.fill = Theme.colors.primary.contrastText;
+      icon.name = 'copy';
+    }, 1600)
+  }
+
+  private onCopyMarketplaceContract(target: Icon) {
     application.copyToClipboard(this.state.getContractAddress('ProductMarketplace') || "");
+    this.updateCopyIcon(target);
   }
 
-  private onCopyNFTContract() {
+  private onCopyNFTContract(target: Icon) {
     application.copyToClipboard(this.nftAddress);
+    this.updateCopyIcon(target);
   }
 
-  private onCopyToken() {
+  private onCopyToken(target: Icon) {
     const token = this.nftType === 'ERC721' && !this.productId ? this.oswapTrollInfo.token : this.productInfo.token;
     application.copyToClipboard(token.address || token.symbol);
+    this.updateCopyIcon(target);
   }
 
   private showTxStatusModal = (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => {
@@ -766,7 +779,9 @@ export default class ScomNftMinter extends Module {
           this.btnApprove.visible = false;
           this.btnSubmit.visible = true;
           this.isApproving = false;
-          this.btnSubmit.enabled = new BigNumber(this.nftMinterModel.tokenAmountIn).gt(0);
+          const isSubscription = this.configModel.productType === ProductType.Subscription
+          const duration = Number(this.edtDuration.value) || 0;
+          this.btnSubmit.enabled = new BigNumber(this.nftMinterModel.tokenAmountIn).gt(0) && (!isSubscription || Number.isInteger(duration));
           this.determineBtnSubmitCaption();
         },
         onApproving: async (token: ITokenObject, receipt?: string) => {
@@ -1060,10 +1075,15 @@ export default class ScomNftMinter extends Module {
   private handleCustomCheckboxChange() {
     const isChecked = this.chkCustomStartDate.checked;
     this.edtStartDate.enabled = isChecked;
+    const now = moment();
     if (isChecked) {
+      if (this.edtStartDate.value.isBefore(now)) {
+        this.edtStartDate.value = now;
+      }
       this.lblStartDate.caption = this.edtStartDate.value.format('DD/MM/YYYY hh:mm A');
+      this.edtStartDate.minDate = now;
     } else {
-      this.edtStartDate.value = moment();
+      this.edtStartDate.value = now;
       this.lblStartDate.caption = "Now";
       this._updateEndDate();
     }

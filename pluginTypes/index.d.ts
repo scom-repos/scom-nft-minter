@@ -1724,6 +1724,7 @@ declare module "@scom/scom-nft-minter" {
         private onViewMarketplaceContract;
         private onViewNFTContract;
         private onViewToken;
+        private updateCopyIcon;
         private onCopyMarketplaceContract;
         private onCopyNFTContract;
         private onCopyToken;
