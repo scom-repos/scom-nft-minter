@@ -560,6 +560,9 @@ define("@scom/scom-nft-minter/data.json.ts", ["require", "exports", "@scom/scom-
             "wallets": [
                 {
                     "name": "metamask"
+                },
+                {
+                    "name": "walletconnect"
                 }
             ]
         },
