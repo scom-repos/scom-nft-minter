@@ -3715,8 +3715,9 @@ define("@scom/scom-nft-minter/model/index.ts", ["require", "exports", "@scom/sco
     Object.defineProperty(exports, "ConfigModel", { enumerable: true, get: function () { return configModel_1.ConfigModel; } });
     Object.defineProperty(exports, "NFTMinterModel", { enumerable: true, get: function () { return nftMinterModel_1.NFTMinterModel; } });
 });
-define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-nft-minter/model/index.ts"], function (require, exports, components_8, eth_wallet_8, index_19, index_20, index_21, index_css_4, data_json_2, model_1) {
+define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@ijstech/eth-wallet", "@scom/scom-nft-minter/interface/index.tsx", "@scom/scom-nft-minter/utils/index.ts", "@scom/scom-nft-minter/store/index.ts", "@scom/scom-nft-minter/index.css.ts", "@scom/scom-nft-minter/data.json.ts", "@scom/scom-nft-minter/model/index.ts", "@scom/scom-blocknote-sdk"], function (require, exports, components_8, eth_wallet_8, index_19, index_20, index_21, index_css_4, data_json_2, model_1, scom_blocknote_sdk_1) {
     "use strict";
+    var ScomNftMinter_1;
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_8.Styles.Theme.ThemeVars;
     const DurationUnits = [
@@ -3733,7 +3734,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             value: 'years'
         }
     ];
-    let ScomNftMinter = class ScomNftMinter extends components_8.Module {
+    let ScomNftMinter = ScomNftMinter_1 = class ScomNftMinter extends components_8.Module {
         constructor(parent, options) {
             super(parent, options);
             this.isApproving = false;
@@ -3968,6 +3969,165 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                 this.txStatusModal.showModal();
             };
             this.initModels();
+        }
+        addBlock(blocknote, executeFn, callbackFn) {
+            const blockType = 'nftMinter';
+            const moduleData = {
+                name: '@scom/scom-nft-minter',
+                localPath: 'scom-nft-minter'
+            };
+            const nftMinterRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-nft-minter\/\S+/g;
+            function getData(href) {
+                const widgetData = (0, scom_blocknote_sdk_1.parseUrl)(href);
+                if (widgetData) {
+                    const { module, properties } = widgetData;
+                    if (module.localPath === moduleData.localPath)
+                        return { ...properties };
+                }
+                return false;
+            }
+            const NftMinterBlock = blocknote.createBlockSpec({
+                type: blockType,
+                propSchema: {
+                    ...blocknote.defaultProps,
+                    productId: { default: 0 },
+                    name: { default: '' },
+                    title: { default: '' },
+                    nftType: { default: '', values: ['ERC721', 'ERC1155'] },
+                    chainId: { default: undefined },
+                    nftAddress: { default: '' },
+                    productType: { default: 'Buy' },
+                    erc1155Index: { default: undefined },
+                    tokenToMint: { default: '' },
+                    isCustomMintToken: { default: false },
+                    customMintToken: { default: '' },
+                    duration: { default: 0 },
+                    perPeriodPrice: { default: 0 },
+                    oneTimePrice: { default: 0 },
+                    maxQty: { default: 0 },
+                    paymentModel: { default: 'OneTimePurchase' },
+                    durationInDays: { default: 0 },
+                    priceDuration: { default: 0 },
+                    txnMaxQty: { default: 0 },
+                    uri: { default: '' },
+                    recipient: { default: '' },
+                    recipients: { default: [] },
+                    logoUrl: { default: '' },
+                    description: { default: '' },
+                    link: { default: '' },
+                    discountRuleId: { default: 0 },
+                    commissions: { default: [] },
+                    referrer: { default: '' },
+                    chainSpecificProperties: { default: {} },
+                    defaultChainId: { default: 0 },
+                    wallets: { default: [] },
+                    networks: { default: [] }
+                },
+                content: "none"
+            }, {
+                render: (block) => {
+                    const wrapper = new components_8.Panel();
+                    const props = JSON.parse(JSON.stringify(block.props));
+                    const customElm = new ScomNftMinter_1(wrapper, { ...props });
+                    if (typeof callbackFn === "function") {
+                        callbackFn(customElm, block);
+                    }
+                    wrapper.appendChild(customElm);
+                    return {
+                        dom: wrapper
+                    };
+                },
+                parseFn: () => {
+                    return [
+                        {
+                            tag: `div[data-content-type="${blockType}"]`,
+                            node: blockType
+                        },
+                        {
+                            tag: "a",
+                            getAttrs: (element) => {
+                                if (typeof element === "string") {
+                                    return false;
+                                }
+                                const href = element.getAttribute('href');
+                                if (href)
+                                    return getData(href);
+                                return false;
+                            },
+                            priority: 408,
+                            node: blockType
+                        },
+                        {
+                            tag: "p",
+                            getAttrs: (element) => {
+                                if (typeof element === "string") {
+                                    return false;
+                                }
+                                const child = element.firstChild;
+                                if (child?.nodeName === 'A' && child.getAttribute('href')) {
+                                    const href = child.getAttribute('href');
+                                    return getData(href);
+                                }
+                                return false;
+                            },
+                            priority: 409,
+                            node: blockType
+                        }
+                    ];
+                },
+                toExternalHTML: (block, editor) => {
+                    const link = document.createElement("a");
+                    const url = (0, scom_blocknote_sdk_1.getWidgetEmbedUrl)({
+                        type: blockType,
+                        props: { ...(block.props || {}) }
+                    }, moduleData);
+                    link.setAttribute("href", url);
+                    link.textContent = blockType;
+                    const wrapper = document.createElement("p");
+                    wrapper.appendChild(link);
+                    return { dom: wrapper };
+                },
+                pasteRules: [
+                    {
+                        find: nftMinterRegex,
+                        handler(props) {
+                            const { state, chain, range } = props;
+                            const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                            const widgetData = (0, scom_blocknote_sdk_1.parseUrl)(textContent);
+                            if (!widgetData)
+                                return null;
+                            const { properties } = widgetData;
+                            chain().BNUpdateBlock(state.selection.from, {
+                                type: blockType,
+                                props: {
+                                    ...properties
+                                },
+                            }).setTextSelection(range.from + 1);
+                        }
+                    }
+                ]
+            });
+            const NftMinterSlashItem = {
+                name: "NFT Minter",
+                execute: (editor) => {
+                    const block = {
+                        type: blockType,
+                        props: data_json_2.default.defaultBuilderData
+                    };
+                    if (typeof executeFn === 'function') {
+                        executeFn(editor, block);
+                    }
+                },
+                aliases: [blockType, "widget"],
+                group: "Widget",
+                icon: { name: 'gavel' },
+                hint: "Insert a NFT minter widget"
+            };
+            return {
+                block: NftMinterBlock,
+                slashItem: NftMinterSlashItem,
+                moduleData
+            };
         }
         removeRpcWalletEvents() {
             this.configModel.removeRpcWalletEvents();
@@ -4747,7 +4907,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                         this.$render("i-scom-tx-status-modal", { id: "txStatusModal" })))));
         }
     };
-    ScomNftMinter = __decorate([
+    ScomNftMinter = ScomNftMinter_1 = __decorate([
         components_8.customModule,
         (0, components_8.customElements)('i-scom-nft-minter')
     ], ScomNftMinter);

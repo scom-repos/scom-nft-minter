@@ -36,6 +36,7 @@ import ScomTxStatusModal from '@scom/scom-tx-status-modal';
 import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import { ConfigModel, NFTMinterModel } from './model';
+import { Block, BlockNoteEditor, BlockNoteSpecs, callbackFnType, executeFnType, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -109,7 +110,7 @@ declare global {
 
 @customModule
 @customElements('i-scom-nft-minter')
-export default class ScomNftMinter extends Module {
+export default class ScomNftMinter extends Module implements BlockNoteSpecs {
   private state: State;
   private imgLogo: Image;
   private markdownViewer: Markdown;
@@ -172,6 +173,173 @@ export default class ScomNftMinter extends Module {
   constructor(parent?: Container, options?: ScomNftMinterElement) {
     super(parent, options);
     this.initModels();
+  }
+
+  addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: callbackFnType) {
+    const blockType = 'nftMinter';
+    const moduleData = {
+      name: '@scom/scom-nft-minter',
+      localPath: 'scom-nft-minter'
+    }
+
+    const nftMinterRegex = /https:\/\/widget.noto.fan\/(#!\/)?scom\/scom-nft-minter\/\S+/g;
+    function getData(href: string) {
+      const widgetData = parseUrl(href);
+      if (widgetData) {
+        const { module, properties } = widgetData;
+        if (module.localPath === moduleData.localPath) return { ...properties };
+      }
+      return false;
+    }
+
+    const NftMinterBlock = blocknote.createBlockSpec(
+      {
+        type: blockType,
+        propSchema: {
+          ...blocknote.defaultProps,
+          productId: { default: 0 },
+          name: { default: '' },
+          title: { default: '' },
+          nftType: { default: '', values: ['ERC721', 'ERC1155'] },
+          chainId: { default: undefined },
+          nftAddress: { default: '' },
+          productType: { default: 'Buy' },
+          erc1155Index: { default: undefined },
+          tokenToMint: { default: '' },
+          isCustomMintToken: { default: false },
+          customMintToken: { default: '' },
+          duration: { default: 0 },
+          perPeriodPrice: { default: 0 },
+          oneTimePrice: { default: 0 },
+          maxQty: { default: 0 },
+          paymentModel: { default: 'OneTimePurchase' },
+          durationInDays: { default: 0 },
+          priceDuration: { default: 0 },
+          txnMaxQty: { default: 0 },
+          uri: { default: '' },
+          recipient: { default: '' },
+          recipients: { default: [] },
+          logoUrl: { default: '' },
+          description: { default: '' },
+          link: { default: '' },
+          discountRuleId: { default: 0 },
+          commissions: { default: [] },
+          referrer: { default: '' },
+          chainSpecificProperties: { default: {} },
+          defaultChainId: { default: 0 },
+          wallets: { default: [] },
+          networks: { default: [] }
+        },
+        content: "none"
+      },
+      {
+        render: (block: Block) => {
+          const wrapper = new Panel();
+          const props = JSON.parse(JSON.stringify(block.props));
+          const customElm = new ScomNftMinter(wrapper, { ...props });
+          if (typeof callbackFn === "function") {
+            callbackFn(customElm, block);
+          }
+          wrapper.appendChild(customElm);
+          return {
+            dom: wrapper
+          };
+        },
+        parseFn: () => {
+          return [
+            {
+              tag: `div[data-content-type="${blockType}"]`,
+              node: blockType
+            },
+            {
+              tag: "a",
+              getAttrs: (element: string | HTMLElement) => {
+                if (typeof element === "string") {
+                  return false;
+                }
+                const href = element.getAttribute('href');
+                if (href) return getData(href);
+                return false;
+              },
+              priority: 408,
+              node: blockType
+            },
+            {
+              tag: "p",
+              getAttrs: (element: string | HTMLElement) => {
+                if (typeof element === "string") {
+                  return false;
+                }
+                const child = element.firstChild as HTMLElement;
+                if (child?.nodeName === 'A' && child.getAttribute('href')) {
+                  const href = child.getAttribute('href');
+                  return getData(href);
+                }
+                return false;
+              },
+              priority: 409,
+              node: blockType
+            }
+          ]
+        },
+        toExternalHTML: (block: any, editor: any) => {
+          const link = document.createElement("a");
+          const url = getWidgetEmbedUrl(
+            {
+              type: blockType,
+              props: { ...(block.props || {}) }
+            },
+            moduleData
+          );
+          link.setAttribute("href", url);
+          link.textContent = blockType;
+          const wrapper = document.createElement("p");
+          wrapper.appendChild(link);
+          return { dom: wrapper };
+        },
+        pasteRules: [
+          {
+            find: nftMinterRegex,
+            handler(props: any) {
+              const { state, chain, range } = props;
+              const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+              const widgetData = parseUrl(textContent);
+              if (!widgetData) return null;
+              const { properties } = widgetData;
+              chain().BNUpdateBlock(state.selection.from, {
+                type: blockType,
+                props: {
+                  ...properties
+                },
+              }).setTextSelection(range.from + 1);
+            }
+          }
+        ]
+      }
+    );
+
+    const NftMinterSlashItem = {
+      name: "NFT Minter",
+      execute: (editor: BlockNoteEditor) => {
+        const block: any = {
+          type: blockType,
+          props: configData.defaultBuilderData
+        };
+        if (typeof executeFn === 'function') {
+          executeFn(editor, block);
+        }
+      },
+      aliases: [blockType, "widget"],
+      group: "Widget",
+      icon: { name: 'gavel' },
+      hint: "Insert a NFT minter widget"
+    };
+
+    return {
+      block: NftMinterBlock,
+      slashItem: NftMinterSlashItem,
+      moduleData
+    }
   }
 
   removeRpcWalletEvents() {

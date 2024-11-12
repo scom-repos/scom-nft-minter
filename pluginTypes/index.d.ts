@@ -1450,6 +1450,7 @@ declare module "@scom/scom-nft-minter/model/index.ts" {
 declare module "@scom/scom-nft-minter" {
     import { Module, Container, ControlElement } from '@ijstech/components';
     import { IChainSpecificProperties, IDiscountRule, IEmbedData, INetworkConfig, IOswapTroll, IWalletPlugin, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
+    import { BlockNoteEditor, BlockNoteSpecs, callbackFnType, executeFnType } from '@scom/scom-blocknote-sdk';
     interface ScomNftMinterElement extends ControlElement {
         lazyLoad?: boolean;
         name?: string;
@@ -1496,7 +1497,7 @@ declare module "@scom/scom-nft-minter" {
             }
         }
     }
-    export default class ScomNftMinter extends Module {
+    export default class ScomNftMinter extends Module implements BlockNoteSpecs {
         private state;
         private imgLogo;
         private markdownViewer;
@@ -1555,6 +1556,23 @@ declare module "@scom/scom-nft-minter" {
         private _renewalDate;
         onMintedNFT: () => void;
         constructor(parent?: Container, options?: ScomNftMinterElement);
+        addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: callbackFnType): {
+            block: any;
+            slashItem: {
+                name: string;
+                execute: (editor: BlockNoteEditor) => void;
+                aliases: string[];
+                group: string;
+                icon: {
+                    name: string;
+                };
+                hint: string;
+            };
+            moduleData: {
+                name: string;
+                localPath: string;
+            };
+        };
         removeRpcWalletEvents(): void;
         onHide(): void;
         initModels(): void;
