@@ -1,6 +1,6 @@
 {
     "name": "@scom/scom-nft-minter",
-    "version": "0.1.24",
+    "version": "0.1.25",
     "main": "dist/index.js",
     "plugin": "dist",
     "pluginTypes": "pluginTypes/index.d.ts",
