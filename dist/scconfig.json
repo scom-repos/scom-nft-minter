@@ -18,6 +18,7 @@
         "@scom/scom-commission-proxy-contract",
         "@scom/oswap-troll-nft-contract",
         "@scom/scom-commission-fee-setup",
-        "@ijstech/eth-contract"
+        "@ijstech/eth-contract",
+        "@scom/scom-blocknote-sdk"
     ]
 }
