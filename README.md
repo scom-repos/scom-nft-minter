@@ -1,6 +1,6 @@
-# Scom NFT Minter Widget
+# @scom/scom-nft-minter
 
-The Scom NFT Minter is a widget designed to facilitate the creation and management of NFTs (Non-Fungible Tokens) on various blockchain networks. This widget supports both ERC721 and ERC1155 standards, allowing users to mint, manage, and interact with NFTs seamlessly.
+The `i-scom-nft-minter` is a widget designed to facilitate the creation and management of NFTs (Non-Fungible Tokens) on various blockchain networks. This widget supports both ERC721 and ERC1155 standards, allowing users to mint, manage, and interact with NFTs seamlessly.
 
 ## Features
 
@@ -49,7 +49,7 @@ Build the library and run the tests using the command:
 docker-compose up test
 ```
 
-Access the dev server via [http://127.0.0.1:8032/](http://127.0.0.1:8032/)
+Access the dev server via [http://localhost:8080/](http://localhost:8080/)
 
 ## Usage
 To use the Scom NFT Minter Widget in your project, import it and include it in your component as follows:
