@@ -37,6 +37,7 @@ import ScomTokenInput from '@scom/scom-token-input';
 import ScomWalletModal from '@scom/scom-wallet-modal';
 import { ConfigModel, NFTMinterModel } from './model';
 import { Block, BlockNoteEditor, BlockNoteSpecs, callbackFnType, executeFnType, getWidgetEmbedUrl, parseUrl } from '@scom/scom-blocknote-sdk';
+import { mainJson } from './languages/index';
 
 interface ScomNftMinterElement extends ControlElement {
   lazyLoad?: boolean;
@@ -87,15 +88,15 @@ const Theme = Styles.Theme.ThemeVars;
 
 const DurationUnits = [
   {
-    label: 'Day(s)',
+    label: '$day_s',
     value: 'days'
   },
   {
-    label: 'Month(s)',
+    label: '$month_s',
     value: 'months'
   },
   {
-    label: 'Year(s)',
+    label: '$year_s',
     value: 'years'
   }
 ]
@@ -356,11 +357,11 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
       this.state = new State(configData);
     }
     if (!this.nftMinterModel) {
-      this.nftMinterModel = new NFTMinterModel(this.state, {
+      this.nftMinterModel = new NFTMinterModel(this, this.state, {
         updateSubmitButton: async (submitting?: boolean) => this.updateSubmitButton(submitting),
         onMintedNft: (oswapTroll: IOswapTroll) => {
           if (oswapTroll) {
-            this.lblSpotsRemaining.caption = `&#128293; Hurry! Only [ ${formatNumber(oswapTroll.cap, 0)} NFTs Left ] &#128293;`;
+            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(oswapTroll.cap, 0)});
           }
           this.updateSubmitButton(false);
           if (this.onMintedNFT) this.onMintedNFT();
@@ -672,8 +673,8 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
     await this.onSetupPage();
     const commissionFee = this.state.embedderCommissionFee;
     if (!this.lbOrderTotalTitle.isConnected) await this.lbOrderTotalTitle.ready();
-    this.lbOrderTotalTitle.caption = `You will pay`;
-    this.iconOrderTotal.tooltip.content = `A commission fee of ${new BigNumber(commissionFee).times(100)}% will be applied to the amount you input.`;
+    this.lbOrderTotalTitle.caption = "$you_will_pay";
+    this.iconOrderTotal.tooltip.content = this.i18n.get('$a_commission_fee_of_percent_will_be_applied_to_the_amount_you_input', {rate: `${new BigNumber(commissionFee).times(100)}`});
     this.updateContractAddress();
     await this.configModel.updateDataIndex();
     this.comboRecipient.items = this.configModel.recipients.map(address => ({
@@ -719,7 +720,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
           this.updateTokenAddress(tokenAddress);
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
-          this.lblSpotsRemaining.caption = `&#128293; Hurry! Only [ ${formatNumber(cap, 0)} NFTs Left ] &#128293;`;
+          this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: `${cap}`});
           //this.pnlQty.visible = true;
           this.pnlSubscriptionPeriod.visible = false;
           this.edtQty.readOnly = true;
@@ -749,10 +750,10 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
             this.updateTokenAddress(token.address);
             this.pnlMintFee.visible = true;
             const days = Math.ceil((priceDuration?.toNumber() || 0) / 86400);
-            const duration = type === ProductType.Subscription ? days > 1 ? ` for ${days} days` : ' per day' : '';
+            const duration = type === ProductType.Subscription ? days > 1 ? this.i18n.get('$for_days', {days: `${days}`}) : this.i18n.get('$per_day') : '';
             this.lblMintFee.caption = `${productPrice ? formatNumber(productPrice) : ""} ${token?.symbol || ""}${duration}`;
             this.lblTitle.caption = title;
-            this.lblRef.caption = 'smart contract:';
+            this.lblRef.caption = '$smart_contract';
             this.updateSpotsRemaining();
             this.tokenInput.inputReadOnly = true;
             this.pnlQty.visible = false;
@@ -798,9 +799,9 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
             this.detailWrapper.visible = false;
             this.btnDetail.visible = false;
             this.pnlMintFee.visible = false;
-            this.lblTitle.caption = title || 'Make a Contributon';
+            this.lblTitle.caption = title || '$make_a_contribution';
             this.lblTitle.visible = true;
-            this.lblRef.caption = 'All proceeds will go to following vetted wallet address:';
+            this.lblRef.caption = '$all_proceeds_will_go_to_following_vetted_wallet_address';
             this.tokenInput.inputReadOnly = false;
             this.pnlQty.visible = false;
             this.pnlTokenInput.visible = true;
@@ -839,7 +840,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
     const isNativeToken = !address || address === nullAddress || !address.startsWith('0x');
     if (isNativeToken) {
       const network = this.state.getNetworkInfo(this.chainId);
-      this.lbToken.caption = `${network?.chainName || ''} Native Token`;
+      this.lbToken.caption = this.i18n.get('$native_token', {chainName: network?.chainName || ''});
       this.lbToken.textDecoration = 'none';
       this.lbToken.font = { size: '1rem', color: Theme.text.primary };
       this.lbToken.style.textAlign = 'right';
@@ -857,7 +858,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
 
   private updateSpotsRemaining() {
     if (this.productId >= 0) {
-      this.lblSpotsRemaining.caption = `&#128293; Hurry! Only [ ${formatNumber(this.productInfo.quantity, 0)} NFTs Left ] &#128293;`;
+      this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(this.productInfo.quantity, 0)});
     } else {
       this.lblSpotsRemaining.caption = '';
     }
@@ -866,7 +867,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
   private onToggleDetail() {
     const isExpanding = this.detailWrapper.visible;
     this.detailWrapper.visible = !isExpanding;
-    this.btnDetail.caption = `${isExpanding ? 'More' : 'Hide'} Information`;
+    this.btnDetail.caption = isExpanding ? '$more_information' : '$hide_information';
     this.btnDetail.rightIcon.name = isExpanding ? 'caret-down' : 'caret-up';
   }
 
@@ -938,7 +939,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
           this.btnSubmit.enabled = false;
           if (!this.isApproving) {
             this.btnApprove.rightIcon.visible = false;
-            this.btnApprove.caption = 'Approve';
+            this.btnApprove.caption = '$approve';
           }
           this.btnApprove.enabled = true;
           this.isApproving = false;
@@ -956,7 +957,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
           this.isApproving = true;
           this.btnApprove.rightIcon.spin = true;
           this.btnApprove.rightIcon.visible = true;
-          this.btnApprove.caption = `Approving ${token?.symbol || ''}`;
+          this.btnApprove.caption = `${this.i18n.get('$approving')} ${token?.symbol || ''}`;
           this.btnSubmit.visible = false;
           if (receipt) {
             this.showTxStatusModal('success', receipt);
@@ -964,14 +965,14 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
         },
         onApproved: async (token: ITokenObject) => {
           this.btnApprove.rightIcon.visible = false;
-          this.btnApprove.caption = 'Approve';
+          this.btnApprove.caption = '$approve';
           this.isApproving = false;
           this.btnSubmit.visible = true;
           this.btnSubmit.enabled = true;
         },
         onApprovingError: async (token: ITokenObject, err: Error) => {
           this.showTxStatusModal('error', err);
-          this.btnApprove.caption = 'Approve';
+          this.btnApprove.caption = '$approve';
           this.btnApprove.rightIcon.visible = false;
           this.isApproving = false;
         },
@@ -1022,25 +1023,25 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
 
   private determineBtnSubmitCaption() {
     if (!isClientWalletConnected()) {
-      this.btnSubmit.caption = 'Connect Wallet';
+      this.btnSubmit.caption = '$connect_wallet';
       this.btnSubmit.enabled = true;
     }
     else if (!this.state.isRpcWalletConnected()) {
-      this.btnSubmit.caption = 'Switch Network';
+      this.btnSubmit.caption = '$switch_network';
       this.btnSubmit.enabled = true;
     }
     else if (this.nftType === 'ERC721' && !this.productId) {
-      this.btnSubmit.caption = this.nftMinterModel.cap ? 'Mint' : 'Out of stock';
+      this.btnSubmit.caption = this.nftMinterModel.cap ? "$mint" : '$out_of_stock';
       this.btnSubmit.enabled = !!this.nftMinterModel.cap;
     }
     else if (this.productType === ProductType.Buy) {
-      this.btnSubmit.caption = 'Mint';
+      this.btnSubmit.caption = '$mint';
     }
     else if (this.productType === ProductType.Subscription) {
-      this.btnSubmit.caption = this.isRenewal ? 'Renew Subscription' : 'Subscribe';
+      this.btnSubmit.caption = this.isRenewal ? '$renew_subscription' : '$subscribe';
     }
     else {
-      this.btnSubmit.caption = 'Submit';
+      this.btnSubmit.caption = '$submit';
     }
   }
 
@@ -1050,10 +1051,10 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
       // const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
       const contractAddress = this.state.getContractAddress('ProductMarketplace');
       const tokenAddress = this.state.getExplorerByAddress(this.chainId, token.address);
-      this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
+      this.showTxStatusModal('warning', this.i18n.get('$confirming'), this.i18n.get('$to_contract_with_token', {address: contractAddress, token: tokenAddress}));
       await this.approvalModelAction.doApproveAction(token, price.toFixed());
     } else {
-      this.showTxStatusModal('warning', `Approving`);
+      this.showTxStatusModal('warning', this.i18n.get('$approving'));
       await this.approvalModelAction.doApproveAction(this.productInfo.token, this.nftMinterModel.tokenAmountIn);
     }
   }
@@ -1145,9 +1146,9 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
     if (this.nftType === 'ERC721' && !this.productId) {
       const contractAddress = this.state.getExplorerByAddress(this.chainId, this.nftAddress);
       const tokenAddress = this.state.getExplorerByAddress(this.chainId, this.oswapTrollInfo.token.address);
-      this.showTxStatusModal('warning', 'Confirming', `to contract\n${contractAddress}\nwith token\n${tokenAddress}`);
+      this.showTxStatusModal('warning', this.i18n.get('$confirming'), this.i18n.get('$to_contract_with_token', {address: contractAddress, token: tokenAddress}));
     } else {
-      this.showTxStatusModal('warning', 'Confirming');
+      this.showTxStatusModal('warning', this.i18n.get('$confirming'));
     }
     this.approvalModelAction.doPayAction();
   }
@@ -1193,11 +1194,11 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
     if (this.discountApplied) {
       if (this.discountApplied.discountPercentage > 0) {
         basePrice = price.times(1 - this.discountApplied.discountPercentage / 100);
-        this.lblDiscount.caption = `Discount (${this.discountApplied.discountPercentage}%)`;
+        this.lblDiscount.caption = `${this.i18n.get('$discount')} (${this.discountApplied.discountPercentage}%)`;
         this.pnlDiscount.visible = true;
       } else if (this.discountApplied.fixedPrice.gt(0)) {
         basePrice = this.discountApplied.fixedPrice as BigNumber;
-        this.lblDiscount.caption = "Discount";
+        this.lblDiscount.caption = "$discount";
         this.pnlDiscount.visible = true;
       }
     }
@@ -1252,12 +1253,13 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
       this.edtStartDate.minDate = now;
     } else {
       this.edtStartDate.value = now;
-      this.lblStartDate.caption = "Now";
+      this.lblStartDate.caption = "$now";
       this._updateEndDate();
     }
   }
 
   async init() {
+    this.i18n.init({...mainJson});
     super.init();
     this.onMintedNFT = this.getAttribute('onMintedNFT', true) || this.onMintedNFT;
     const lazyLoad = this.getAttribute('lazyLoad', true, false);
@@ -1365,7 +1367,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                       lineHeight={1.5}
                       visible={false}
                     >
-                      <i-label caption='Quantity' font={{ bold: true, size: '1rem' }}></i-label>
+                      <i-label caption='$quantity' font={{ bold: true, size: '1rem' }}></i-label>
                       <i-panel width="50%">
                         <i-input
                           id='edtQty'
@@ -1382,7 +1384,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                       </i-panel>
                     </i-hstack>
                     <i-stack id='pnlRecipient' width='100%' direction="horizontal" alignItems="center" justifyContent="space-between" gap={10}>
-                      <i-label caption='Wallet Address to Receive NFT' stack={{ shrink: '0' }} font={{ bold: true, size: '1rem' }}></i-label>
+                      <i-label caption="$wallet_address_to_receive_nft" stack={{ shrink: '0' }} font={{ bold: true, size: '1rem' }}></i-label>
                       <i-combo-box
                         id="comboRecipient"
                         height={36}
@@ -1393,7 +1395,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                     </i-stack>
                     <i-stack id="pnlSubscriptionPeriod" direction="vertical" width="100%" gap="0.5rem" visible={false}>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
-                        <i-label caption="Start Date" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label caption="$start_date" font={{ bold: true, size: '1rem' }}></i-label>
                         <i-label id="lblStartDate" font={{ size: '1rem' }} />
                       </i-stack>
                       <i-stack id="pnlCustomStartDate" direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10} visible={false}>
@@ -1414,7 +1416,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                         </i-panel>
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
-                        <i-label caption="Duration" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label caption="$duration" font={{ bold: true, size: '1rem' }}></i-label>
                         <i-stack direction="horizontal" width="50%" alignItems="center" gap="0.5rem">
                           <i-panel width="50%">
                             <i-input
@@ -1445,12 +1447,12 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                         </i-stack>
                       </i-stack>
                       <i-stack direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
-                        <i-label caption="End Date" font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label caption="$end_date" font={{ bold: true, size: '1rem' }}></i-label>
                         <i-label id="lblEndDate" font={{ size: '1rem' }} />
                       </i-stack>
                     </i-stack>
                     <i-stack id='pnlMintFee' direction="horizontal" width="100%" alignItems="center" justifyContent="space-between" gap={10}>
-                      <i-label caption='Base Price' font={{ bold: true, size: '1rem' }}></i-label>
+                      <i-label caption='$base_price' font={{ bold: true, size: '1rem' }}></i-label>
                       <i-label id='lblMintFee' font={{ size: '1rem' }}></i-label>
                     </i-stack>
                     <i-stack
@@ -1474,16 +1476,16 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                       lineHeight={1.5}
                     >
                       <i-hstack verticalAlignment='center' gap="0.5rem">
-                        <i-label id="lbOrderTotalTitle" caption='Total' font={{ bold: true, size: '1rem' }}></i-label>
+                        <i-label id="lbOrderTotalTitle" caption='$total' font={{ bold: true, size: '1rem' }}></i-label>
                         <i-icon id="iconOrderTotal" name="question-circle" fill={Theme.background.modal} width={20} height={20}></i-icon>
                       </i-hstack>
                       <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
                     </i-hstack>
                     <i-vstack id="pnlTokenInput" gap='0.25rem' margin={{ bottom: '1rem' }} visible={false}>
                       <i-hstack horizontalAlignment='space-between' verticalAlignment='center' gap="0.5rem">
-                        <i-label caption="Your donation" font={{ weight: 500, size: '1rem' }}></i-label>
+                        <i-label caption="$your_donation" font={{ weight: 500, size: '1rem' }}></i-label>
                         <i-hstack horizontalAlignment='end' verticalAlignment='center' gap="0.5rem" opacity={0.6}>
-                          <i-label caption='Balance:' font={{ size: '1rem' }}></i-label>
+                          <i-label caption='$balance' font={{ size: '1rem' }}></i-label>
                           <i-label id='lblBalance' font={{ size: '1rem' }} caption="0.00"></i-label>
                         </i-hstack>
                       </i-hstack>
@@ -1523,7 +1525,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                     </i-stack>
                     <i-button
                       id="btnDetail"
-                      caption="More Information"
+                      caption="$more_information"
                       rightIcon={{ width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }}
                       background={{ color: 'transparent' }}
                       border={{ width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }}
@@ -1536,21 +1538,21 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                     />
                     <i-hstack id="detailWrapper" horizontalAlignment="space-between" gap={10} visible={false} wrap="wrap">
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
-                        <i-label caption="Marketplace Contract Address" font={{ bold: true, size: '1rem' }} />
+                        <i-label caption="$marketplace_contract_address" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbMarketplaceContract" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewMarketplaceContract} />
                           <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyMarketplaceContract} cursor="pointer" />
                         </i-hstack>
                       </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
-                        <i-label caption="NFT Contract Address" font={{ bold: true, size: '1rem' }} />
+                        <i-label caption="$nft_contract_address" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbNFTContract" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewNFTContract} />
                           <i-icon fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyNFTContract} cursor="pointer" />
                         </i-hstack>
                       </i-hstack>
                       <i-hstack width="100%" justifyContent="space-between" gap="0.5rem" lineHeight={1.5}>
-                        <i-label caption="Token used for payment" font={{ bold: true, size: '1rem' }} />
+                        <i-label caption="$token_used_for_payment" font={{ bold: true, size: '1rem' }} />
                         <i-hstack gap="0.25rem" verticalAlignment="center" maxWidth="calc(100% - 75px)">
                           <i-label id="lbToken" font={{ size: '1rem', color: Theme.colors.primary.main }} textDecoration="underline" class={linkStyle} onClick={this.onViewToken} />
                           <i-icon id="iconCopyToken" visible={false} fill={Theme.text.primary} name="copy" width={16} height={16} onClick={this.onCopyToken} cursor="pointer" />
@@ -1565,7 +1567,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                       <i-button
                         id="btnApprove"
                         width='100%'
-                        caption="Approve"
+                        caption="$approve"
                         padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
                         font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                         rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
@@ -1577,7 +1579,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                       <i-button
                         id='btnSubmit'
                         width='100%'
-                        caption='Submit'
+                        caption='$submit'
                         padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
                         font={{ size: '1rem', color: Theme.colors.primary.contrastText, bold: true }}
                         rightIcon={{ visible: false, fill: Theme.colors.primary.contrastText }}
@@ -1593,10 +1595,10 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                     </i-vstack>
                   </i-vstack>
                   <i-vstack id='pnlUnsupportedNetwork' visible={false} horizontalAlignment='center'>
-                    <i-label caption='This network or this token is not supported.' font={{ size: '1.5rem' }}></i-label>
+                    <i-label caption='$this_network_or_this_token_is_not_supported' font={{ size: '1.5rem' }}></i-label>
                   </i-vstack>
                   <i-hstack id='pnlLink' visible={false} verticalAlignment='center' gap='0.25rem'>
-                    <i-label caption='Details here: ' font={{ size: '1rem' }}></i-label>
+                    <i-label caption='$details_here' font={{ size: '1rem' }}></i-label>
                     <i-label id='lblLink' font={{ size: '1rem' }}></i-label>
                   </i-hstack>
                 </i-stack>

@@ -242,7 +242,7 @@ export class ConfigModel {
               verticalAlignment: 'center',
             });
             const button = new Button(hstack, {
-              caption: 'Confirm',
+              caption: '$confirm',
               width: '100%',
               height: 40,
               font: { color: Theme.colors.primary.contrastText }
@@ -463,7 +463,7 @@ export class ConfigModel {
             try {
               await updateDiscountRules(this.state, productId, rules, ruleIdsToDelete, callback, confirmationCallback);
             } catch (error) {
-              this.options.showTxStatusModal('error', 'Something went wrong updating discount rule!');
+              this.options.showTxStatusModal('error', this.module.i18n.get('$something_went_wrong_updating_discount_rule'));
               console.log('updateDiscountRules', error);
               reject(error);
             }
@@ -482,7 +482,7 @@ export class ConfigModel {
             try {
               await updateCommissionCampaign(this.state, productId, commissionRate, affiliates, callback, confirmationCallback);
             } catch (error) {
-              this.options.showTxStatusModal('error', 'Something went wrong updating commission campaign!');
+              this.options.showTxStatusModal('error', this.module.i18n.get('$something_went_wrong_updating_commission_campaign'));
               console.log('updateCommissionCampaign', error);
               reject(error);
             }
@@ -592,7 +592,7 @@ export class ConfigModel {
           const updateButton = async () => {
             const data = await form.getFormData();
             const validation = form.validate(data, form.jsonSchema, { changing: false });
-            btnConfirm.caption = !isClientWalletConnected() && validation.valid ? 'Connect Wallet' : 'Confirm';
+            btnConfirm.caption = !isClientWalletConnected() && validation.valid ? '$connect_wallet' : '$confirm';
           }
           if (isEvent) {
             await updateButton();
@@ -759,14 +759,14 @@ export class ConfigModel {
           contract = this.state.getContractAddress('ProductMarketplace');
         }
         if (!contract) {
-          this.options.showTxStatusModal('error', 'This network is not supported!');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$this_network_is_not_supported'));
           return resolve(false);
         }
         try {
           const { tokenToMint, customMintToken, uri, durationInDays } = this._data;
           const isCustomToken = tokenToMint?.toLowerCase() === CUSTOM_TOKEN.address.toLowerCase();
           if (!tokenToMint || (isCustomToken && !customMintToken)) {
-            this.options.showTxStatusModal('error', 'TokenToMint is missing!');
+            this.options.showTxStatusModal('error', this.module.i18n.get('$token_to_mint_is_missing'));
             return resolve(false);
           }
           const tokenAddress = isCustomToken ? customMintToken : tokenToMint;
@@ -774,7 +774,7 @@ export class ConfigModel {
             const address = tokenAddress.toLowerCase();
             const nativeToken = ChainNativeTokenByChainId[this.chainId];
             if (!address.startsWith('0x') && address !== nativeToken?.symbol.toLowerCase() && address !== 'native token') {
-              this.options.showTxStatusModal('error', 'Invalid token!');
+              this.options.showTxStatusModal('error', this.module.i18n.get('$invalid_token'));
               return resolve(false);
             }
             //pay native token
@@ -796,7 +796,7 @@ export class ConfigModel {
               token = tokenStore.getTokenList(this.chainId).find(v => v.address?.toLowerCase() === tokenAddress.toLowerCase());
             }
             if (!token) {
-              this.options.showTxStatusModal('error', 'Invalid token!');
+              this.options.showTxStatusModal('error', this.module.i18n.get('$invalid_token'));
               return resolve(false);
             }
             await this._createProduct(
@@ -811,7 +811,7 @@ export class ConfigModel {
             );
           }
         } catch (error) {
-          this.options.showTxStatusModal('error', 'Something went wrong creating new product!');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$something_went_wrong_creating_new_product'));
           console.log('newProduct', error);
           resolve(false);
         }

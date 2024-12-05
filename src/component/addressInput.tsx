@@ -3,7 +3,6 @@ import {
     ControlElement,
     Styles,
     Module,
-    Container,
     Input,
     Label,
     FormatUtils,
@@ -13,6 +12,7 @@ import { Utils } from '@ijstech/eth-wallet';
 import { getProductId, getProductInfo } from '../API';
 import { formInputStyle, readOnlyInfoStyle, readOnlyStyle } from '../index.css';
 import { State } from '../store/index';
+import { componentsJson } from '../languages/index';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -71,6 +71,7 @@ export class ScomNftMinterAddressInput extends Module {
     }
 
     init() {
+        this.i18n.init({...componentsJson});
         super.init();
         this.state = this.getAttribute('state', true);
         const val = this.getAttribute('value', true);
@@ -102,13 +103,13 @@ export class ScomNftMinterAddressInput extends Module {
                 const productInfo = await getProductInfo(this.state, productId);
                 const isSubscription = productInfo.productType.toNumber() === 1;
                 const durationInDays = Math.ceil((productInfo.priceDuration?.toNumber() || 0) / 86400);
-                this.lblPaymentModel.caption = isSubscription ? 'Subscription' : 'One-Time Purchase';
+                this.lblPaymentModel.caption = isSubscription ? '$subscription' : '$one_time_purchase';
                 const price = FormatUtils.formatNumber(
                     Utils.fromDecimals(productInfo.price, productInfo.token.decimals).toFixed(),
                     { minValue: '0.0000001', hasTrailingZero: false }
                 );
                 const symbol = productInfo.token?.symbol || '';
-                this.lblTitlePrice.caption = isSubscription ? 'Subscription Price per Period' : 'Price'
+                this.lblTitlePrice.caption = isSubscription ? '$subscription_price_per_period' : '$price'
                 this.lblPriceToMint.caption = `${price} ${symbol}`;
                 this.lblDurationInDays.caption = durationInDays.toString();
                 this.pnlDurationInDays.visible = isSubscription;
@@ -130,7 +131,7 @@ export class ScomNftMinterAddressInput extends Module {
                 <i-panel padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
                     <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
                         <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
-                            <i-label caption="Payment Model"></i-label>
+                            <i-label caption="$payment_model"></i-label>
                         </i-stack>
                         <i-stack
                             direction="horizontal"
@@ -148,7 +149,7 @@ export class ScomNftMinterAddressInput extends Module {
                 <i-panel id="pnlDurationInDays" visible={false} padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
                     <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
                         <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
-                            <i-label caption="Minimum Subscription Period (in Days)"></i-label>
+                            <i-label caption="$minimum_subscription_period_in_days"></i-label>
                         </i-stack>
                         <i-stack
                             direction="horizontal"
@@ -166,13 +167,13 @@ export class ScomNftMinterAddressInput extends Module {
                 <i-panel padding={{ top: 5, bottom: 5, left: 5, right: 5 }}>
                     <i-stack direction="vertical" width="100%" justifyContent="center" gap={5}>
                         <i-stack direction="horizontal" width="100%" alignItems="center" gap={2}>
-                            <i-label id="lblTitlePrice" caption="Subscription Price"></i-label>
+                            <i-label id="lblTitlePrice" caption="$subscription_price"></i-label>
                             <i-icon
                                 width="1rem"
                                 height="1rem"
                                 margin={{ left: 2 }}
                                 name="info-circle"
-                                tooltip={{ content: 'Amount of token to pay for the subscription', placement: 'bottom' }}
+                                tooltip={{ content: '$amount_of_token_to_pay_for_the_subscription', placement: 'bottom' }}
                             ></i-icon>
                         </i-stack>
                         <i-stack

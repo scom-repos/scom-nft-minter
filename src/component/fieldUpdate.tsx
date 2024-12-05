@@ -9,11 +9,11 @@ import {
   Form,
 } from '@ijstech/components';
 import { formInputStyle } from '../index.css';
-import { IEmbedData } from '../interface/index';
 import { getProductInfo, getProductOwner, updateProductPrice, updateProductUri } from '../API';
 import { isClientWalletConnected, State } from '../store/index';
 import { Constants, IEventBusRegistry, Wallet } from '@ijstech/eth-wallet';
 import { registerSendTxEvents } from '../utils/index';
+import { componentsJson } from '../languages/index';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -110,20 +110,20 @@ export class ScomNftMinterFieldUpdate extends Module {
     }
 
     if (!chainId) {
-      this.showTxStatusModal('error', `Missing Chain!`);
+      this.showTxStatusModal('error', this.i18n.get('$missing_chain'));
       return;
     }
     if (!nftAddress) {
-      this.showTxStatusModal('error', `Missing NFT Address!`);
+      this.showTxStatusModal('error', this.i18n.get('$missing_nft_address'));
       return;
     }
     if (!erc1155Index) {
-      this.showTxStatusModal('error', `Missing Index!`);
+      this.showTxStatusModal('error', this.i18n.get('$missing_index'));
       return;
     }
     const owner = await getProductOwner(this.state, erc1155Index);
     if (owner !== Wallet.getClientInstance().address) {
-      this.showTxStatusModal('error', `You are not the owner`);
+      this.showTxStatusModal('error', this.i18n.get('$you_are_not_the_owner'));
       return;
     }
 
@@ -149,7 +149,7 @@ export class ScomNftMinterFieldUpdate extends Module {
     const value = this.inputField.value;
     const text = `${this.isUri ? 'URI' : 'price'}`;
     try {
-      this.showTxStatusModal('warning', `Updating ${text}`);
+      this.showTxStatusModal('warning', `${this.i18n.get('$updating')} ${text}`);
       if (this.isUri) {
         await updateProductUri(nftAddress, erc1155Index, value);
       } else {
@@ -161,7 +161,7 @@ export class ScomNftMinterFieldUpdate extends Module {
       }
     } catch (e) {
       console.log(`Update ${text}`, e);
-      this.showTxStatusModal('error', `Something went wrong when updating ${text}!`);
+      this.showTxStatusModal('error', `${this.i18n.get('$something_went_wrong_when_updating')} ${text}!`);
     }
     this.updateEnabledInput(true);
   }
@@ -180,13 +180,13 @@ export class ScomNftMinterFieldUpdate extends Module {
   private async updateButton() {
     if (!isClientWalletConnected() || !this.state.isRpcWalletConnected()) {
       this.btnUpdate.enabled = true;
-      this.btnUpdate.caption = isClientWalletConnected() ? 'Switch Network' : 'Connect Wallet';
+      this.btnUpdate.caption = isClientWalletConnected() ? '$switch_network' : '$connect_wallet';
     } else {
       // const data = await this.getData();
       // const { chainId, erc1155Index, nftAddress } = data;
       // this.btnUpdate.enabled = !!(chainId && erc1155Index && nftAddress && this.inputField.value);
       this.btnUpdate.enabled = !!this.inputField.value;
-      this.btnUpdate.caption = 'Update';
+      this.btnUpdate.caption = '$update';
     }
   }
 
@@ -197,6 +197,7 @@ export class ScomNftMinterFieldUpdate extends Module {
   }
 
   init() {
+    this.i18n.init({...componentsJson});
     super.init();
     this.refreshUI = this.getAttribute('refreshUI', true);
     this.connectWallet = this.getAttribute('connectWallet', true);
@@ -230,7 +231,7 @@ export class ScomNftMinterFieldUpdate extends Module {
           font={{ color: Theme.colors.primary.contrastText }}
           border={{ radius: '0.5rem' }}
           enabled={false}
-          caption="Update"
+          caption="$update"
           onClick={this.onUpdate}
         />
       </i-hstack>
