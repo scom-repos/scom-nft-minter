@@ -6,6 +6,7 @@ import { getTokenBalance, getTokenInfo, registerSendTxEvents } from "../utils/in
 import { buyProduct, donate, fetchOswapTrollNftInfo, fetchUserNftBalance, getDiscountRules, getNFTBalance, getProductInfo, getProxyTokenAmountIn, mintOswapTrollNft, renewSubscription, subscribe } from "../API";
 import { Utils } from "@ijstech/eth-wallet";
 import { ConfigModel } from "./configModel";
+import { Module } from "@ijstech/components";
 
 interface INFTMinterOptions {
   updateSubmitButton: (submitting?: boolean) => void;
@@ -19,6 +20,7 @@ interface INFTMinterOptions {
 
 export class NFTMinterModel {
   private state: State;
+  private module: Module;
   private options: INFTMinterOptions = {
     updateSubmitButton: async (submitting?: boolean) => { },
     showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => { },
@@ -36,7 +38,8 @@ export class NFTMinterModel {
   private _isRenewal: boolean;
   private _tokenAmountIn: string;
 
-  constructor(state: State, options: INFTMinterOptions) {
+  constructor(module: Module, state: State, options: INFTMinterOptions) {
+    this.module = module;
     this.state = state;
     this.options = options;
   }
@@ -212,21 +215,21 @@ export class NFTMinterModel {
     if (!configModel.getData() || (!productId && nftType !== 'ERC721')) return;
     this.options.updateSubmitButton(true);
     if ((productType === ProductType.DonateToOwner || productType === ProductType.DonateToEveryone) && !token) {
-      this.options.showTxStatusModal('error', 'Token Required');
+      this.options.showTxStatusModal('error', this.module.i18n.get('$token_required'));
       this.options.updateSubmitButton(false);
       return;
     }
     if (nftType === 'ERC721' && !productId) {
       const oswapTroll = await this.fetchOswapTrollNftInfo(nftAddress);
       if (!oswapTroll || oswapTroll.cap.lte(0)) {
-        this.options.showTxStatusModal('error', 'Out of stock');
+        this.options.showTxStatusModal('error', this.module.i18n.get('$out_of_stock'));
         this.options.updateSubmitButton(false);
         return;
       }
       const token = this.oswapTrollInfo.token;
       const balance = await this.getTokenBalance(token);
       if (oswapTroll.price.gt(balance)) {
-        this.options.showTxStatusModal('error', `Insufficient ${token.symbol} Balance`);
+        this.options.showTxStatusModal('error', this.module.i18n.get('$insufficient_balance', {symbol: token.symbol}));
         this.options.updateSubmitButton(false);
         return;
       }
@@ -238,12 +241,12 @@ export class NFTMinterModel {
       const { maxQuantity, price } = this.productInfo;
       if (productType === ProductType.Buy) {
         if (qty && new BigNumber(qty).gt(maxQuantity)) {
-          this.options.showTxStatusModal('error', 'Quantity Greater Than Max Quantity');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$quantity_greater_than_max_quantity'));
           this.options.updateSubmitButton(false);
           return;
         }
         if (maxQuantity.gt(1) && (!qty || !Number.isInteger(Number(qty)))) {
-          this.options.showTxStatusModal('error', 'Invalid Quantity');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$invalid_quantity'));
           this.options.updateSubmitButton(false);
           return;
         }
@@ -251,46 +254,46 @@ export class NFTMinterModel {
         if (productId >= 0) {
           const product = await getProductInfo(this.state, productId);
           if (product.quantity.lt(requireQty)) {
-            this.options.showTxStatusModal('error', 'Out of stock');
+            this.options.showTxStatusModal('error', this.module.i18n.get('$out_of_stock'));
             this.options.updateSubmitButton(false);
             return;
           }
         }
         const maxOrderQty = new BigNumber(maxQuantity ?? 0);
         if (maxOrderQty.minus(requireQty).lt(0)) {
-          this.options.showTxStatusModal('error', 'Over Maximum Order Quantity');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$over_maximum_order_quantity'));
           this.options.updateSubmitButton(false);
           return;
         }
 
         const amount = price.times(requireQty).shiftedBy(-token.decimals);
         if (balance.lt(amount)) {
-          this.options.showTxStatusModal('error', `Insufficient ${token.symbol} Balance`);
+          this.options.showTxStatusModal('error', this.module.i18n.get('$insufficient_balance', {symbol: token.symbol}));
           this.options.updateSubmitButton(false);
           return;
         }
         await this.buyToken(configModel, tokenValue, startDate, days, configModel.recipient, requireQty);
       } else if (productType === ProductType.Subscription) {
         if (!startDate) {
-          this.options.showTxStatusModal('error', 'Start Date Required');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$start_date_required'));
           this.options.updateSubmitButton(false);
           return;
         }
         const _duration = Number(duration) || 0;
         if (!_duration || _duration <= 0 || !Number.isInteger(_duration)) {
-          this.options.showTxStatusModal('error', !duration ? 'Duration Required' : 'Invalid Duration');
+          this.options.showTxStatusModal('error', !duration ? this.module.i18n.get('$duration_required') : this.module.i18n.get('$invalid_duration'));
           this.options.updateSubmitButton(false);
           return;
         }
         await this.buyToken(configModel, tokenValue, startDate, days, recipient);
       } else {
         if (!tokenValue) {
-          this.options.showTxStatusModal('error', 'Amount Required');
+          this.options.showTxStatusModal('error', this.module.i18n.get('$amount_required'));
           this.options.updateSubmitButton(false);
           return;
         }
         if (balance.lt(tokenValue)) {
-          this.options.showTxStatusModal('error', `Insufficient ${token.symbol} Balance`);
+          this.options.showTxStatusModal('error', this.module.i18n.get('$insufficient_balance', {symbol: token.symbol}));
           this.options.updateSubmitButton(false);
           return;
         }

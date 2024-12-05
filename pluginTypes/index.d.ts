@@ -404,6 +404,191 @@ declare module "@scom/scom-nft-minter/API.ts" {
     }>;
     export { getProductInfo, getNFTBalance, getProductId, getProductIdFromEvent, getDiscountRules, updateDiscountRules, newProduct, createSubscriptionNFT, newDefaultBuyProduct, getProxyTokenAmountIn, buyProduct, donate, subscribe, renewSubscription, getProductOwner, updateProductUri, updateProductPrice, updateCommissionCampaign, fetchOswapTrollNftInfo, fetchUserNftBalance, mintOswapTrollNft };
 }
+/// <amd-module name="@scom/scom-nft-minter/languages/main.json.ts" />
+declare module "@scom/scom-nft-minter/languages/main.json.ts" {
+    const _default_1: {
+        en: {
+            day_s: string;
+            month_s: string;
+            year_s: string;
+            hurry_only_nfts_left: string;
+            you_will_pay: string;
+            a_commission_fee_of_percent_will_be_applied_to_the_amount_you_input: string;
+            confirming: string;
+            for_days: string;
+            per_day: string;
+            now: string;
+            make_a_contribution: string;
+            all_proceeds_will_go_to_following_vetted_wallet_address: string;
+            native_token: string;
+            more_information: string;
+            hide_information: string;
+            approve: string;
+            approving: string;
+            out_of_stock: string;
+            mint: string;
+            renew_subscription: string;
+            subscribe: string;
+            to_contract_with_token: string;
+            discount: string;
+            quantity: string;
+            wallet_address_to_receive_nft: string;
+            start_date: string;
+            custom: string;
+            duration: string;
+            end_date: string;
+            base_price: string;
+            total: string;
+            your_donation: string;
+            balance: string;
+            marketplace_contract_address: string;
+            nft_contract_address: string;
+            token_used_for_payment: string;
+            submit: string;
+            this_network_or_this_token_is_not_supported: string;
+            details_here: string;
+            smart_contract: string;
+            something_went_wrong_updating_discount_rule: string;
+            something_went_wrong_updating_commission_campaign: string;
+            confirm: string;
+            this_network_is_not_supported: string;
+            invalid_token: string;
+            token_to_mint_is_missing: string;
+            something_went_wrong_creating_new_product: string;
+            token_required: string;
+            insufficient_balance: string;
+            quantity_greater_than_max_quantity: string;
+            invalid_quantity: string;
+            over_maximum_order_quantity: string;
+            start_date_required: string;
+            duration_required: string;
+            invalid_duration: string;
+            amount_required: string;
+        };
+        "zh-hant": {};
+        vi: {
+            day_s: string;
+            month_s: string;
+            year_s: string;
+            hurry_only_nfts_left: string;
+            you_will_pay: string;
+            a_commission_fee_of_percent_will_be_applied_to_the_amount_you_input: string;
+            confirming: string;
+            for_days: string;
+            per_day: string;
+            now: string;
+            make_a_contribution: string;
+            all_proceeds_will_go_to_following_vetted_wallet_address: string;
+            native_token: string;
+            more_information: string;
+            hide_information: string;
+            approve: string;
+            approving: string;
+            out_of_stock: string;
+            mint: string;
+            renew_subscription: string;
+            subscribe: string;
+            to_contract_with_token: string;
+            discount: string;
+            quantity: string;
+            wallet_address_to_receive_nft: string;
+            start_date: string;
+            custom: string;
+            duration: string;
+            end_date: string;
+            base_price: string;
+            total: string;
+            your_donation: string;
+            balance: string;
+            marketplace_contract_address: string;
+            nft_contract_address: string;
+            token_used_for_payment: string;
+            submit: string;
+            this_network_or_this_token_is_not_supported: string;
+            details_here: string;
+            smart_contract: string;
+            something_went_wrong_updating_discount_rule: string;
+            something_went_wrong_updating_commission_campaign: string;
+            confirm: string;
+            this_network_is_not_supported: string;
+            invalid_token: string;
+            token_to_mint_is_missing: string;
+            something_went_wrong_creating_new_product: string;
+            token_required: string;
+            insufficient_balance: string;
+            quantity_greater_than_max_quantity: string;
+            invalid_quantity: string;
+            over_maximum_order_quantity: string;
+            start_date_required: string;
+            duration_required: string;
+            invalid_duration: string;
+            amount_required: string;
+        };
+    };
+    export default _default_1;
+}
+/// <amd-module name="@scom/scom-nft-minter/languages/components.json.ts" />
+declare module "@scom/scom-nft-minter/languages/components.json.ts" {
+    const _default_2: {
+        en: {
+            subscription: string;
+            one_time_purchase: string;
+            subscription_price_per_period: string;
+            payment_model: string;
+            minimum_subscription_period_in_days: string;
+            subscription_price: string;
+            amount_of_token_to_pay_for_the_subscription: string;
+            price: string;
+            missing_chain: string;
+            missing_nft_address: string;
+            missing_index: string;
+            you_are_not_the_owner: string;
+            updating: string;
+            something_went_wrong_when_updating: string;
+            update: string;
+        };
+        "zh-hant": {};
+        vi: {
+            subscription: string;
+            one_time_purchase: string;
+            subscription_price_per_period: string;
+            payment_model: string;
+            minimum_subscription_period_in_days: string;
+            subscription_price: string;
+            amount_of_token_to_pay_for_the_subscription: string;
+            price: string;
+            missing_chain: string;
+            missing_nft_address: string;
+            missing_index: string;
+            you_are_not_the_owner: string;
+            updating: string;
+            something_went_wrong_when_updating: string;
+            update: string;
+        };
+    };
+    export default _default_2;
+}
+/// <amd-module name="@scom/scom-nft-minter/languages/common.json.ts" />
+declare module "@scom/scom-nft-minter/languages/common.json.ts" {
+    const _default_3: {
+        en: {
+            switch_network: string;
+            connect_wallet: string;
+        };
+        "zh-hant": {};
+        vi: {
+            switch_network: string;
+            connect_wallet: string;
+        };
+    };
+    export default _default_3;
+}
+/// <amd-module name="@scom/scom-nft-minter/languages/index.ts" />
+declare module "@scom/scom-nft-minter/languages/index.ts" {
+    const mainJson: Record<string, any>;
+    const componentsJson: Record<string, any>;
+    export { mainJson, componentsJson };
+}
 /// <amd-module name="@scom/scom-nft-minter/component/fieldUpdate.tsx" />
 declare module "@scom/scom-nft-minter/component/fieldUpdate.tsx" {
     import { ControlElement, Module, Container } from '@ijstech/components';
@@ -1388,6 +1573,7 @@ declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
     import { State } from "@scom/scom-nft-minter/store/index.ts";
     import { ICommissionInfo, IDiscountRule, IOswapTroll, IProductInfo, ProductType } from "@scom/scom-nft-minter/interface/index.tsx";
     import { ConfigModel } from "@scom/scom-nft-minter/model/configModel.ts";
+    import { Module } from "@ijstech/components";
     interface INFTMinterOptions {
         updateSubmitButton: (submitting?: boolean) => void;
         showTxStatusModal: (status: 'warning' | 'success' | 'error', content?: string | Error, exMessage?: string) => void;
@@ -1399,6 +1585,7 @@ declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
     }
     export class NFTMinterModel {
         private state;
+        private module;
         private options;
         private _productInfo;
         private _oswapTrollInfo;
@@ -1407,7 +1594,7 @@ declare module "@scom/scom-nft-minter/model/nftMinterModel.ts" {
         private _cap;
         private _isRenewal;
         private _tokenAmountIn;
-        constructor(state: State, options: INFTMinterOptions);
+        constructor(module: Module, state: State, options: INFTMinterOptions);
         get rpcWallet(): import("@ijstech/eth-wallet").IRpcWallet;
         get chainId(): number;
         set productInfo(value: IProductInfo);
