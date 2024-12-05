@@ -1,12 +1,14 @@
 export default {
   "en": {
-    "switch_network": "Switch Network",
     "connect_wallet": "Connect Wallet",
+    "switch_network": "Switch Network",
   },
   "zh-hant": {
+    "connect_wallet": "連接錢包",
+    "switch_network": "切換網絡",
   },
   "vi": {
-    "switch_network": "Chuyển mạng",
     "connect_wallet": "Kết nối ví",
+    "switch_network": "Chuyển mạng",
   }
 }
