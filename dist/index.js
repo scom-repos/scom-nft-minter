@@ -4116,7 +4116,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this.updateTokenAddress(tokenAddress);
                             this.pnlMintFee.visible = true;
                             this.lblMintFee.caption = `${(0, index_22.formatNumber)(price)} ${token?.symbol || ''}`;
-                            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: `${cap}` });
+                            this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: `${cap}` });
                             //this.pnlQty.visible = true;
                             this.pnlSubscriptionPeriod.visible = false;
                             this.edtQty.readOnly = true;
@@ -4425,7 +4425,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     updateSubmitButton: async (submitting) => this.updateSubmitButton(submitting),
                     onMintedNft: (oswapTroll) => {
                         if (oswapTroll) {
-                            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(oswapTroll.cap, 0) });
+                            this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(oswapTroll.cap, 0) });
                         }
                         this.updateSubmitButton(false);
                         if (this.onMintedNFT)
@@ -4676,10 +4676,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateSpotsRemaining() {
             if (this.productId >= 0) {
-                this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(this.productInfo.quantity, 0) });
+                this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(this.productInfo.quantity, 0) });
             }
             else {
-                this.lblSpotsRemaining.caption = '';
+                this.lblSpotsRemaining.clearInnerHTML();
             }
         }
         onToggleDetail() {
@@ -4704,7 +4704,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
             icon.name = 'check';
             icon.fill = Theme.colors.success.main;
             setTimeout(() => {
-                icon.fill = Theme.colors.primary.contrastText;
+                icon.fill = Theme.text.primary;
                 icon.name = 'copy';
             }, 1600);
         }
@@ -5154,8 +5154,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                 this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_4.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
                                                         maxHeight: '50vh'
                                                     }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged }))),
-                                        this.$render("i-stack", { direction: "vertical", width: "100%", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
-                                            this.$render("i-label", { id: "lblSpotsRemaining", font: { bold: true, size: '1rem' } })),
+                                        this.$render("i-hstack", { id: "lblSpotsRemaining", width: "100%", gap: "0.5rem", lineHeight: 1.5, horizontalAlignment: 'center', font: { bold: true, size: '1rem', color: Theme.text.primary } }),
                                         this.$render("i-button", { id: "btnDetail", caption: "$more_information", rightIcon: { width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }, background: { color: 'transparent' }, border: { width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }, width: 280, maxWidth: "100%", height: 36, margin: { top: 4, bottom: 16, left: 'auto', right: 'auto' }, onClick: this.onToggleDetail, visible: false }),
                                         this.$render("i-hstack", { id: "detailWrapper", horizontalAlignment: "space-between", gap: 10, visible: false, wrap: "wrap" },
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
