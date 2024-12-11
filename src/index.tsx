@@ -120,7 +120,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
   private lblTitle: Label;
   private pnlMintFee: HStack;
   private lblMintFee: Label;
-  private lblSpotsRemaining: HStack;
+  private lblSpotsRemaining: Label;
   private lbMarketplaceContract: Label;
   private lbNFTContract: Label;
   private lbToken: Label;
@@ -361,7 +361,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
         updateSubmitButton: async (submitting?: boolean) => this.updateSubmitButton(submitting),
         onMintedNft: (oswapTroll: IOswapTroll) => {
           if (oswapTroll) {
-            this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(oswapTroll.cap, 0)});
+            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(oswapTroll.cap, 0)});
           }
           this.updateSubmitButton(false);
           if (this.onMintedNFT) this.onMintedNFT();
@@ -720,7 +720,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
           this.updateTokenAddress(tokenAddress);
           this.pnlMintFee.visible = true;
           this.lblMintFee.caption = `${formatNumber(price)} ${token?.symbol || ''}`;
-          this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', {cap: `${cap}`});
+          this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: `${cap}`});
           //this.pnlQty.visible = true;
           this.pnlSubscriptionPeriod.visible = false;
           this.edtQty.readOnly = true;
@@ -858,9 +858,9 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
 
   private updateSpotsRemaining() {
     if (this.productId >= 0) {
-      this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(this.productInfo.quantity, 0)});
+      this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', {cap: formatNumber(this.productInfo.quantity, 0)});
     } else {
-      this.lblSpotsRemaining.clearInnerHTML();
+      this.lblSpotsRemaining.caption = "";
     }
   }
 
@@ -1477,7 +1477,7 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                     >
                       <i-hstack verticalAlignment='center' gap="0.5rem">
                         <i-label id="lbOrderTotalTitle" caption='$total' font={{ bold: true, size: '1rem' }}></i-label>
-                        <i-icon id="iconOrderTotal" name="question-circle" fill={Theme.background.modal} width={20} height={20}></i-icon>
+                        <i-icon id="iconOrderTotal" name="question-circle" fill={Theme.text.secondary} width={20} height={20}></i-icon>
                       </i-hstack>
                       <i-label id='lbOrderTotal' font={{ size: '1rem' }} caption="0"></i-label>
                     </i-hstack>
@@ -1520,13 +1520,8 @@ export default class ScomNftMinter extends Module implements BlockNoteSpecs {
                         />
                       </i-stack>
                     </i-vstack>
-                    <i-hstack
-                      id="lblSpotsRemaining"
-                      width="100%"
-                      gap="0.5rem" lineHeight={1.5}
-                      horizontalAlignment='center'
-                      font={{ bold: true, size: '1rem', color: Theme.text.primary }}
-                    >
+                    <i-hstack horizontalAlignment='center'>
+                      <i-label id="lblSpotsRemaining" font={{ bold: true, size: '1rem', color: Theme.text.primary }} lineHeight={1.5}/>
                     </i-hstack>
                     <i-button
                       id="btnDetail"
