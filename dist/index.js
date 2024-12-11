@@ -1324,7 +1324,7 @@ define("@scom/scom-nft-minter/languages/main.json.ts", ["require", "exports"], f
             "end_date": "End Date",
             "for_days": " for {{days}} days",
             "hide_information": "Hide Information",
-            "hurry_only_nfts_left": "&#128293; Hurry! Only [ {{cap}} NFTs Left ] &#128293;",
+            "hurry_only_nfts_left": "🔥 Hurry! Only [ {{cap}} NFTs Left ] 🔥",
             "insufficient_balance": "Insufficient {{symbol}} Balance",
             "invalid_duration": "Invalid Duration",
             "invalid_quantity": "Invalid Quantity",
@@ -1382,7 +1382,7 @@ define("@scom/scom-nft-minter/languages/main.json.ts", ["require", "exports"], f
             "end_date": "結束日期",
             "for_days": "為期 {{days}} 天",
             "hide_information": "隱藏信息",
-            "hurry_only_nfts_left": "&#128293; 快點！僅剩 [ {{cap}} 個NFT ] &#128293;",
+            "hurry_only_nfts_left": "🔥 快點！僅剩 [ {{cap}} 個NFT ] 🔥",
             "insufficient_balance": "{{symbol}} 餘額不足",
             "invalid_duration": "無效的時長",
             "invalid_quantity": "無效的數量",
@@ -1440,7 +1440,7 @@ define("@scom/scom-nft-minter/languages/main.json.ts", ["require", "exports"], f
             "end_date": "Ngày kết thúc",
             "for_days": " trong {{days}} ngày",
             "hide_information": "Ẩn thông tin",
-            "hurry_only_nfts_left": "&#128293; Nhanh lên! Chỉ còn [ {{cap}} NFT ] &#128293;",
+            "hurry_only_nfts_left": "🔥 Nhanh lên! Chỉ còn [ {{cap}} NFT ] 🔥",
             "insufficient_balance": "Số dư {{symbol}} không đủ",
             "invalid_duration": "Thời gian không hợp lệ",
             "invalid_quantity": "Số lượng không hợp lệ",
@@ -4116,7 +4116,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                             this.updateTokenAddress(tokenAddress);
                             this.pnlMintFee.visible = true;
                             this.lblMintFee.caption = `${(0, index_22.formatNumber)(price)} ${token?.symbol || ''}`;
-                            this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: `${cap}` });
+                            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: `${cap}` });
                             //this.pnlQty.visible = true;
                             this.pnlSubscriptionPeriod.visible = false;
                             this.edtQty.readOnly = true;
@@ -4425,7 +4425,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                     updateSubmitButton: async (submitting) => this.updateSubmitButton(submitting),
                     onMintedNft: (oswapTroll) => {
                         if (oswapTroll) {
-                            this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(oswapTroll.cap, 0) });
+                            this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(oswapTroll.cap, 0) });
                         }
                         this.updateSubmitButton(false);
                         if (this.onMintedNFT)
@@ -4676,10 +4676,10 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
         }
         updateSpotsRemaining() {
             if (this.productId >= 0) {
-                this.lblSpotsRemaining.innerHTML = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(this.productInfo.quantity, 0) });
+                this.lblSpotsRemaining.caption = this.i18n.get('$hurry_only_nfts_left', { cap: (0, index_22.formatNumber)(this.productInfo.quantity, 0) });
             }
             else {
-                this.lblSpotsRemaining.clearInnerHTML();
+                this.lblSpotsRemaining.caption = "";
             }
         }
         onToggleDetail() {
@@ -5142,7 +5142,7 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                         this.$render("i-hstack", { width: "100%", justifyContent: "space-between", alignItems: 'center', gap: "0.5rem", lineHeight: 1.5 },
                                             this.$render("i-hstack", { verticalAlignment: 'center', gap: "0.5rem" },
                                                 this.$render("i-label", { id: "lbOrderTotalTitle", caption: '$total', font: { bold: true, size: '1rem' } }),
-                                                this.$render("i-icon", { id: "iconOrderTotal", name: "question-circle", fill: Theme.background.modal, width: 20, height: 20 })),
+                                                this.$render("i-icon", { id: "iconOrderTotal", name: "question-circle", fill: Theme.text.secondary, width: 20, height: 20 })),
                                             this.$render("i-label", { id: 'lbOrderTotal', font: { size: '1rem' }, caption: "0" })),
                                         this.$render("i-vstack", { id: "pnlTokenInput", gap: '0.25rem', margin: { bottom: '1rem' }, visible: false },
                                             this.$render("i-hstack", { horizontalAlignment: 'space-between', verticalAlignment: 'center', gap: "0.5rem" },
@@ -5154,7 +5154,8 @@ define("@scom/scom-nft-minter", ["require", "exports", "@ijstech/components", "@
                                                 this.$render("i-scom-token-input", { id: "tokenInput", tokenReadOnly: true, isBtnMaxShown: false, isCommonShown: false, isBalanceShown: false, isSortBalanceShown: false, class: index_css_4.tokenSelectionStyle, padding: { left: '11px' }, font: { size: '1.25rem' }, width: "100%", height: "100%", placeholder: "0.00", modalStyles: {
                                                         maxHeight: '50vh'
                                                     }, onSelectToken: this.selectToken, onInputAmountChanged: this.onAmountChanged }))),
-                                        this.$render("i-hstack", { id: "lblSpotsRemaining", width: "100%", gap: "0.5rem", lineHeight: 1.5, horizontalAlignment: 'center', font: { bold: true, size: '1rem', color: Theme.text.primary } }),
+                                        this.$render("i-hstack", { horizontalAlignment: 'center' },
+                                            this.$render("i-label", { id: "lblSpotsRemaining", font: { bold: true, size: '1rem', color: Theme.text.primary }, lineHeight: 1.5 })),
                                         this.$render("i-button", { id: "btnDetail", caption: "$more_information", rightIcon: { width: 10, height: 16, margin: { left: 5 }, fill: Theme.text.primary, name: 'caret-down' }, background: { color: 'transparent' }, border: { width: 1, style: 'solid', color: Theme.text.primary, radius: 8 }, width: 280, maxWidth: "100%", height: 36, margin: { top: 4, bottom: 16, left: 'auto', right: 'auto' }, onClick: this.onToggleDetail, visible: false }),
                                         this.$render("i-hstack", { id: "detailWrapper", horizontalAlignment: "space-between", gap: 10, visible: false, wrap: "wrap" },
                                             this.$render("i-hstack", { width: "100%", justifyContent: "space-between", gap: "0.5rem", lineHeight: 1.5 },
